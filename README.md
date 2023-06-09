@@ -21,8 +21,8 @@ To run this project locally, you need to have the following prerequisites:
 
 1. Clone this repository:
 
-   ```bash
-   git clone https://github.com/your-username/email-marketing-service.git
+```bash
+git clone https://github.com/your-username/email-marketing-service.git
 ```
 2. Navigate to the project directory
 
