@@ -17,8 +17,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	 
-
 	userCreateService, err := services.CreateUser(reqdata)
 
 	if err != nil {
