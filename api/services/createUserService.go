@@ -40,14 +40,14 @@ func CreateUser(d *model.User) (*model.User, error) {
 
 	//check if user already exists
 
-	userExists, err := repository.CheckIfEmailAlreadyExists(d)
+	// userExists, err := repository.CheckIfEmailAlreadyExists(d)
 
-	if err != nil {
-		return nil, err
-	}
-	if userExists {
-		return nil, fmt.Errorf("user already exists")
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if userExists {
+	// 	return nil, fmt.Errorf("user already exists")
+	// }
 
 	_, err = repository.CreateUser(d)
 
