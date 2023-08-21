@@ -1,31 +1,40 @@
 package utils
 
 import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 	"gopkg.in/gomail.v2"
 )
 
-func SendMail(subject string, email string, message string) {
+func SendMail(subject string, email string, message string) error {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	// Mailtrap SMTP server settings
 	smtpHost := "sandbox.smtp.mailtrap.io"
-	smtpPort := 587
-	smtpUsername := "your_mailtrap_username"
-	smtpPassword := "your_mailtrap_password"
+	smtpPort := 2525
+	smtpUsername := os.Getenv("MAIL_USERNAME")
+	smtpPassword := os.Getenv("MAIL_PASSWORD")
 
 	// Create a new email message
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", "sender@example.com")
 	msg.SetHeader("To", email)
 	msg.SetHeader("Subject", subject)
-	msg.SetBody("text/plain", message)
+	msg.SetBody("text/html", message)
 
 	// Initialize the SMTP sender
 	d := gomail.NewDialer(smtpHost, smtpPort, smtpUsername, smtpPassword)
 
 	// Send the email
 	if err := d.DialAndSend(msg); err != nil {
-		panic(err)
+		return err
 	}
 
-	println("Email sent successfully!")
+	return nil
 
 }
