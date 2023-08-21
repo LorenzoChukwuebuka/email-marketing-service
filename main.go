@@ -1,21 +1,31 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"email-marketing-service/api/database"
+	"email-marketing-service/api/routes"
+	"fmt"
 	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
-
-func welcome(c *fiber.Ctx) error {
-	return c.SendString("welcome to api")
-}
-
-func setupRoutes(app *fiber.App) {
-	app.Get("/api", welcome)
-}
 
 func main() {
 
-	app := fiber.New()
-	setupRoutes(app)
-	log.Fatal(app.Listen(":3000"))
+	// Initialize the database connection
+	dbConn, err := database.InitDB()
+	if err != nil {
+		fmt.Println("Failed to connect to the database")
+		return
+	}
+	defer dbConn.Close()
+
+	r := mux.NewRouter()
+
+	routes.RegisterRoutes(r)
+
+	http.Handle("/", r)
+
+	log.Fatal(http.ListenAndServe("localhost:9000", r))
 }
