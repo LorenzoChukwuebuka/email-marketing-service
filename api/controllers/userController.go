@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,13 +40,22 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//hash pass word
+	//hash password
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(reqdata.Password), 14)
 
 	reqdata.Password = password
+	reqdata.UUID = uuid.New().String()
 
-	userCreate := repository.CreateUser(reqdata)
+	userCreate, err := repository.CreateUser(reqdata)
+
+	if err != nil {
+		// Return a generic error response for any repository error
+		utils.ErrorResponse(w, err.Error())
+		return
+	}
+
+	// //send mail
 
 	utils.SuccessResponse(w, 200, userCreate)
 
