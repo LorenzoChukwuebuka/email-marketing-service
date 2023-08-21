@@ -28,7 +28,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 }
 
 func CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
-	var user model.User
+	//var user model.User
 	db, err := database.InitDB()
 	if err != nil {
 		return false, err
@@ -40,22 +40,9 @@ func CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
 		return false, err
 	}
 
-	err = db.QueryRow(query, d.Email).Scan(
-		&user.ID,
-		&user.UUID,
-		&user.FirstName,
-		&user.MiddleName,
-		&user.LastName,
-		&user.UserName,
-		&user.Email,
-		&user.Password,
-		&user.Verified,
-		&user.CreatedAt,
-		&user.VerifiedAt,
-		&user.UpdatedAt,
-		&user.DeletedAt,
-	)
+	row, err := db.Query(query, d.Email) //.Scan(&user.ID, &user.UUID, &user.FirstName, &user.MiddleName, &user.LastName, &user.UserName, &user.Email, &user.Password, &user.Verified, &user.CreatedAt, &user.VerifiedAt, &user.UpdatedAt, &user.DeletedAt)
 
+	row.Scan()
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No rows found")
