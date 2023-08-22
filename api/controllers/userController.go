@@ -29,6 +29,18 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func VerifyUser(w http.ResponseWriter, r *http.Request) {
+	var reqdata *model.OTP
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	err := services.VerifyUser(reqdata)
+
+	if err != nil {
+		utils.ErrorResponse(w, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, 200, "User has been successfully verifed")
 
 }
 
