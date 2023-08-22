@@ -39,9 +39,22 @@ func VerifyUser(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(w, err.Error())
 		return
 	}
-
 	utils.SuccessResponse(w, 200, "User has been successfully verifed")
+}
 
+func Login(w http.ResponseWriter, r *http.Request) {
+	var reqdata *model.LoginModel
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	result, err := services.Login(reqdata)
+
+	if err != nil {
+		utils.ErrorResponse(w, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, 200, result)
 }
 
 func ForgetPassword(w http.ResponseWriter, r *http.Request) {
