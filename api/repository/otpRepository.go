@@ -33,11 +33,11 @@ func FindOTP(d *model.OTP) (*model.OTP, error) {
 	}
 	defer db.Close()
 
-	query := "SELECT user_id, token, created_at,uuid FROM otp WHERE token = $1"
+	query := "SELECT id,user_id, token, created_at,uuid FROM otp WHERE token = $1"
 	row := db.QueryRow(query, d.Token)
 
 	var otp model.OTP
-	err = row.Scan(&otp.UserId, &otp.Token, &otp.CreatedAt, &otp.UUID)
+	err = row.Scan(&otp.Id, &otp.UserId, &otp.Token, &otp.CreatedAt, &otp.UUID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err // OTP not found, return nil without an error
@@ -46,4 +46,19 @@ func FindOTP(d *model.OTP) (*model.OTP, error) {
 	}
 
 	return &otp, nil
+}
+
+func DeleteOTP(id int) error {
+	db, err := database.InitDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	query := "DELETE FROM otp WHERE id = $1"
+	_, err = db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

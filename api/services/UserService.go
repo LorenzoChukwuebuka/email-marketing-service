@@ -6,10 +6,10 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"time"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 var err error
@@ -104,19 +104,76 @@ func VerifyUser(d *model.OTP) error {
 		return err
 	}
 
-	var userModel *model.User
+	var userModel model.User
 
 	userModel.Verified = true
 	userModel.ID = otpData.UserId
 	userModel.VerifiedAt = time.Now()
 
-	
+	err = repository.VerifyUserAccount(&userModel)
+
+	if err != nil {
+		return err
+	}
+
+	//delete otp from the database
+
+	err = DeleteOTP(otpData.Id)
+
+	if err != nil {
+		return err
+	}
+
+	//maybe send onboarding mail to them I don't know
 
 	return nil
 }
 
-func Login() {
+func Login(d *model.LoginModel) (map[string]interface{}, error) {
+	err = validate.Struct(d)
 
+	if err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		// Construct a response with validation errors
+		errorMap := make(map[string]string)
+		for _, e := range validationErrors {
+			errorMap[e.Field()] = e.Tag()
+		}
+		errorResponse := map[string]interface{}{"errors": errorMap}
+
+		return nil, fmt.Errorf("validation errors: %v", errorResponse)
+
+	}
+
+	var user model.User
+
+	user.Email = d.Email
+	user.Password = d.Password
+	userDetails, err := repository.Login(&user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//compare password
+	err = bcrypt.CompareHashAndPassword(userDetails.Password, []byte(d.Password))
+
+	if err != nil {
+		return nil, fmt.Errorf("passwords do not match:%w", err)
+	}
+
+	token, err := utils.JWTEncode(userDetails.ID, userDetails.UserName, userDetails.Email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	successMap := map[string]interface{}{
+		"status": "login successful",
+		"token":  token,
+	}
+
+	return successMap, nil
 }
 
 func ForgetPassword() {}

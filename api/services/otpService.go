@@ -23,3 +23,12 @@ func RetrieveOTP(d *model.OTP) (*model.OTP, error) {
 
 	return otpData, err
 }
+
+func DeleteOTP(id int) error {
+	err := repository.DeleteOTP(id)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

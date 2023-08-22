@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/model"
+	"fmt"
 )
 
 func CreateUser(d *model.User) (*model.User, error) {
@@ -43,6 +44,44 @@ func CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func VerifyUserAccount(d *model.User) error {
+	db, err := database.InitDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	query := "UPDATE users SET verified = $2, verified_at = $3 WHERE id = $1"
+	_, err = db.Exec(query, d.ID, d.Verified, d.VerifiedAt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Login(d *model.User) (*model.User, error) {
+	db, err := database.InitDB()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	// query := "SELECT * FROM users WHERE email = $1 AND verified = true"
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, verified_at FROM users WHERE email = $1 AND verified = true"
+	row := db.QueryRow(query, d.Email)
+
+	err = row.Scan(&d.ID, &d.UUID, &d.FirstName, &d.MiddleName, &d.LastName, &d.UserName, &d.Email, &d.Password, &d.Verified, &d.VerifiedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no user found: %w", err) // User not found, return nil without an error
+		}
+		return nil, err
+	}
+
+	return d, nil
 }
 
 func FindUserById(d *model.User) (*model.User, error) {
