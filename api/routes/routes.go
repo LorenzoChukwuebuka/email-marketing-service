@@ -5,10 +5,10 @@ import (
 	"email-marketing-service/api/controllers"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"net/http"
-	"os"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
+	"os"
 )
 
 var key = os.Getenv("JWT_KEY")
@@ -50,10 +50,11 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 var RegisterRoutes = func(router *mux.Router) {
-	router.HandleFunc("/greet", JWTMiddleware(controllers.Welcome)).Methods("GET")
-	router.HandleFunc("/user-signup", controllers.RegisterUser).Methods("POST")
-	router.HandleFunc("/verify-user", controllers.VerifyUser).Methods("POST")
-	router.HandleFunc("/user-login", controllers.Login).Methods("POST")
-	router.HandleFunc("/user-forget-password",controllers.ForgetPassword).Methods("POST")
-	router.HandleFunc("/user-reset-password",controllers.ResetPassword).Methods("POST")
+	userController := &controllers.UserController{}
+	router.HandleFunc("/greet", JWTMiddleware(userController.Welcome)).Methods("GET")
+	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST")
+	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST")
+	router.HandleFunc("/user-login", userController.Login).Methods("POST")
+	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST")
+	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST")
 }
