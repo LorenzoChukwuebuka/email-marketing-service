@@ -56,4 +56,5 @@ var RegisterRoutes = func(router *mux.Router) {
 	router.HandleFunc("/verify-user", controllers.VerifyUser).Methods("POST")
 	router.HandleFunc("/user-login", controllers.Login).Methods("POST")
 	router.HandleFunc("/user-forget-password",controllers.ForgetPassword).Methods("POST")
+	router.HandleFunc("/user-reset-password",controllers.ResetPassword).Methods("POST")
 }

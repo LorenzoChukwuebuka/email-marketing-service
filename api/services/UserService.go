@@ -12,15 +12,14 @@ import (
 	"time"
 )
 
-var err error
-
 func CreateUser(d *model.User) (*model.User, error) {
 
-	err = utils.ValidateData(d)
+	err := utils.ValidateData(d)
 
 	if err != nil {
 		return nil, err
 	}
+
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 
 	d.Password = password
@@ -69,7 +68,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 }
 
 func VerifyUser(d *model.OTP) error {
-	err = utils.ValidateData(d)
+	err := utils.ValidateData(d)
 
 	if err != nil {
 		return err
@@ -111,7 +110,7 @@ func VerifyUser(d *model.OTP) error {
 }
 
 func Login(d *model.LoginModel) (map[string]string, error) {
-	err = utils.ValidateData(d)
+	err := utils.ValidateData(d)
 
 	if err != nil {
 		return nil, err
@@ -149,7 +148,7 @@ func Login(d *model.LoginModel) (map[string]string, error) {
 }
 
 func ForgetPassword(d *model.ForgetPassword) error {
-	err = utils.ValidateData(d)
+	err := utils.ValidateData(d)
 
 	if err != nil {
 		return err
@@ -206,7 +205,39 @@ func ForgetPassword(d *model.ForgetPassword) error {
 }
 
 func ResetPassword(d *model.ResetPassword) error {
+	err := utils.ValidateData(d)
+	if err != nil {
+		return err
+	}
+
+	data := &model.OTP{
+		Token: d.Token,
+	}
+
+	otpData, err := RetrieveOTP(data)
+
+	if err != nil {
+		return err
+	}
+
+	user := &model.User{
+		ID:       otpData.UserId,
+		Password: d.Password,
+	}
+
+	err = repository.ResetPassword(user)
+
+	if err != nil {
+		return err
+	}
+
+	//delete otp from the database
+
+	err = DeleteOTP(otpData.Id)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
-
-

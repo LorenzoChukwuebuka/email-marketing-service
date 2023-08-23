@@ -135,6 +135,13 @@ func ResetPassword(d *model.User) error {
 	}
 	defer db.Close()
 
+	query := "UPDATE users SET password = $1 WHERE id = $2"
+
+	_, err = db.Exec(query, d.Password, d.ID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

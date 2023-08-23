@@ -13,7 +13,7 @@ type User struct {
 	LastName   string       `json:"lastname" validate:"required"`
 	UserName   string       `json:"username" validate:"required"`
 	Email      string       `json:"email" validate:"required,email"`
-	Password   []byte       `json:"password" validate:"required,min=8,max=50"`
+	Password   []byte       `json:"password" validate:"required"`
 	Verified   bool         `json:"verified"`
 	CreatedAt  time.Time    `json:"created_at"`
 	VerifiedAt sql.NullTime `json:"verified_at"`
@@ -31,6 +31,6 @@ type ForgetPassword struct {
 }
 
 type ResetPassword struct {
-	Password []byte `json:"password" validate:"required,min=8,max=50"`
-	Token    string `json:"token" validate:"required"`
+	Token    string `json:"token" validated:"required"`
+	Password []byte `json:"password" validate:"required"`
 }
