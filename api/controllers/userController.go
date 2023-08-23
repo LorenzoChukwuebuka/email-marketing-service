@@ -6,9 +6,23 @@ import (
 	"email-marketing-service/api/utils"
 	"fmt"
 	"net/http"
+	"github.com/golang-jwt/jwt"
 )
 
+
 func Welcome(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	username := claims["username"].(string)
+	email := claims["email"].(string)
+
+	response := fmt.Sprintf("Welcome, %s (%s)!", username, email)
+	w.Write([]byte(response))
+
 	fmt.Fprint(w, "Hello world")
 }
 

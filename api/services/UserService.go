@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"email-marketing-service/api/custom"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
@@ -44,7 +45,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 		return nil, err
 	}
 
-	fmt.Println(userExists)
+	fmt.Println(d)
 	if userExists {
 		return nil, fmt.Errorf("user already exists")
 	}
@@ -108,7 +109,10 @@ func VerifyUser(d *model.OTP) error {
 
 	userModel.Verified = true
 	userModel.ID = otpData.UserId
-	userModel.VerifiedAt = time.Now()
+	userModel.VerifiedAt = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
 
 	err = repository.VerifyUserAccount(&userModel)
 
