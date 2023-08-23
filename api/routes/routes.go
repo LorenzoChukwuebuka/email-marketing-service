@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )

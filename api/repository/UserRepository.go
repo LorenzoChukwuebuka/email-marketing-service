@@ -7,7 +7,9 @@ import (
 	"fmt"
 )
 
-func CreateUser(d *model.User) (*model.User, error) {
+type UserRepository struct{}
+
+func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 	// Initialize the database connection
 	db, err := database.InitDB()
 	if err != nil {
@@ -29,7 +31,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
-func CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
+func (r *UserRepository) CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
 	db, err := database.InitDB()
 	if err != nil {
 		return false, err
@@ -48,7 +50,7 @@ func CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
 	return exists, nil
 }
 
-func VerifyUserAccount(d *model.User) error {
+func (r *UserRepository) VerifyUserAccount(d *model.User) error {
 	db, err := database.InitDB()
 	if err != nil {
 		return err
@@ -64,7 +66,7 @@ func VerifyUserAccount(d *model.User) error {
 	return nil
 }
 
-func Login(d *model.User) (*model.User, error) {
+func (r *UserRepository) Login(d *model.User) (*model.User, error) {
 	db, err := database.InitDB()
 	if err != nil {
 		return nil, err
@@ -86,7 +88,7 @@ func Login(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
-func FindUserById(d *model.User) (*model.User, error) {
+func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
 	db, err := database.InitDB()
 	if err != nil {
 		return nil, err
@@ -107,7 +109,7 @@ func FindUserById(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
-func FindUserByEmail(d *model.User) (*model.User, error) {
+func (r *UserRepository) FindUserByEmail(d *model.User) (*model.User, error) {
 	db, err := database.InitDB()
 	if err != nil {
 		return nil, err
@@ -128,7 +130,7 @@ func FindUserByEmail(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
-func ResetPassword(d *model.User) error {
+func (r *UserRepository) ResetPassword(d *model.User) error {
 	db, err := database.InitDB()
 	if err != nil {
 		return err
@@ -145,6 +147,6 @@ func ResetPassword(d *model.User) error {
 	return nil
 }
 
-func FindAllUsers() *model.User {
+func (r *UserRepository) FindAllUsers() *model.User {
 	return nil
 }

@@ -12,7 +12,19 @@ import (
 	"time"
 )
 
-func CreateUser(d *model.User) (*model.User, error) {
+type UserService struct{}
+
+//instantiate otp service
+
+func NewOTPService() *OTPService {
+	return &OTPService{}
+}
+
+func NewUserRepository() *repository.UserRepository {
+	return &repository.UserRepository{}
+}
+
+func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 
 	err := utils.ValidateData(d)
 
@@ -26,7 +38,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 	d.UUID = uuid.New().String()
 
 	//check if user already exists
-	userExists, err := repository.CheckIfEmailAlreadyExists(d)
+	userExists, err := NewUserRepository().CheckIfEmailAlreadyExists(d)
 
 	if err != nil {
 		return nil, err
@@ -36,7 +48,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 		return nil, fmt.Errorf("user already exists")
 	}
 
-	_, err = repository.CreateUser(d)
+	_, err = NewUserRepository().CreateUser(d)
 
 	if err != nil {
 		return nil, err
@@ -52,7 +64,7 @@ func CreateUser(d *model.User) (*model.User, error) {
 	otpData.Token = otp
 	otpData.UUID = uuid.New().String()
 
-	err = CreateOTP(&otpData)
+	err = NewOTPService().CreateOTP(&otpData)
 
 	if err != nil {
 		return nil, err
@@ -67,15 +79,15 @@ func CreateUser(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
-func VerifyUser(d *model.OTP) error {
+func (s *UserService) VerifyUser(d *model.OTP) error {
 	err := utils.ValidateData(d)
 
 	if err != nil {
 		return err
 	}
 	//check if token exists in the otp table if yes, retrieve the records
-
-	otpData, err := RetrieveOTP(d)
+	otpService := NewOTPService()
+	otpData, err := otpService.RetrieveOTP(d)
 
 	if err != nil {
 		return err
@@ -90,7 +102,7 @@ func VerifyUser(d *model.OTP) error {
 		Valid: true,
 	}
 
-	err = repository.VerifyUserAccount(&userModel)
+	err = NewUserRepository().VerifyUserAccount(&userModel)
 
 	if err != nil {
 		return err
@@ -98,7 +110,7 @@ func VerifyUser(d *model.OTP) error {
 
 	//delete otp from the database
 
-	err = DeleteOTP(otpData.Id)
+	err = otpService.DeleteOTP(otpData.Id)
 
 	if err != nil {
 		return err
@@ -109,7 +121,7 @@ func VerifyUser(d *model.OTP) error {
 	return nil
 }
 
-func Login(d *model.LoginModel) (map[string]string, error) {
+func (s *UserService) Login(d *model.LoginModel) (map[string]string, error) {
 	err := utils.ValidateData(d)
 
 	if err != nil {
@@ -120,7 +132,7 @@ func Login(d *model.LoginModel) (map[string]string, error) {
 
 	user.Email = d.Email
 	user.Password = d.Password
-	userDetails, err := repository.Login(&user)
+	userDetails, err := NewUserRepository().Login(&user)
 
 	if err != nil {
 		return nil, err
@@ -147,7 +159,7 @@ func Login(d *model.LoginModel) (map[string]string, error) {
 	return successMap, nil
 }
 
-func ForgetPassword(d *model.ForgetPassword) error {
+func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 	err := utils.ValidateData(d)
 
 	if err != nil {
@@ -159,7 +171,7 @@ func ForgetPassword(d *model.ForgetPassword) error {
 	}
 
 	//check if email exists in db
-	userExists, err := repository.CheckIfEmailAlreadyExists(userEmail)
+	userExists, err := NewUserRepository().CheckIfEmailAlreadyExists(userEmail)
 
 	if err != nil {
 		return err
@@ -174,7 +186,7 @@ func ForgetPassword(d *model.ForgetPassword) error {
 	}
 
 	//get username and id and append them to the email and otp services
-	userDetails, err := repository.FindUserByEmail(email)
+	userDetails, err := NewUserRepository().FindUserByEmail(email)
 
 	if err != nil {
 		return err
@@ -189,7 +201,9 @@ func ForgetPassword(d *model.ForgetPassword) error {
 		UUID:   uuid.New().String(),
 	}
 
-	err = CreateOTP(otpData)
+	otpService := NewOTPService()
+
+	err = otpService.CreateOTP(otpData)
 
 	if err != nil {
 		return err
@@ -204,7 +218,7 @@ func ForgetPassword(d *model.ForgetPassword) error {
 	return nil
 }
 
-func ResetPassword(d *model.ResetPassword) error {
+func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 	err := utils.ValidateData(d)
 	if err != nil {
 		return err
@@ -214,7 +228,9 @@ func ResetPassword(d *model.ResetPassword) error {
 		Token: d.Token,
 	}
 
-	otpData, err := RetrieveOTP(data)
+	otpService := NewOTPService()
+
+	otpData, err := otpService.RetrieveOTP(data)
 
 	if err != nil {
 		return err
@@ -225,7 +241,7 @@ func ResetPassword(d *model.ResetPassword) error {
 		Password: d.Password,
 	}
 
-	err = repository.ResetPassword(user)
+	err = NewUserRepository().ResetPassword(user)
 
 	if err != nil {
 		return err
@@ -233,7 +249,7 @@ func ResetPassword(d *model.ResetPassword) error {
 
 	//delete otp from the database
 
-	err = DeleteOTP(otpData.Id)
+	err = otpService.DeleteOTP(otpData.Id)
 
 	if err != nil {
 		return err

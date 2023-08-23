@@ -5,8 +5,14 @@ import (
 	"email-marketing-service/api/repository"
 )
 
-func CreateOTP(d *model.OTP) error {
-	err := repository.CreateOTP(d)
+type OTPService struct{}
+
+func NewRepository() *repository.OTPRepository {
+	return &repository.OTPRepository{}
+}
+
+func (s *OTPService) CreateOTP(d *model.OTP) error {
+	err := NewRepository().CreateOTP(d)
 	if err != nil {
 		return err
 	}
@@ -14,8 +20,8 @@ func CreateOTP(d *model.OTP) error {
 	return nil
 }
 
-func RetrieveOTP(d *model.OTP) (*model.OTP, error) {
-	otpData, err := repository.FindOTP(d)
+func (s *OTPService) RetrieveOTP(d *model.OTP) (*model.OTP, error) {
+	otpData, err := NewRepository().FindOTP(d)
 
 	if err != nil {
 		return nil, err
@@ -24,8 +30,8 @@ func RetrieveOTP(d *model.OTP) (*model.OTP, error) {
 	return otpData, err
 }
 
-func DeleteOTP(id int) error {
-	err := repository.DeleteOTP(id)
+func (s *OTPService) DeleteOTP(id int) error {
+	err := NewRepository().DeleteOTP(id)
 
 	if err != nil {
 		return err
