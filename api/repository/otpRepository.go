@@ -6,7 +6,9 @@ import (
 	"email-marketing-service/api/model"
 )
 
-func CreateOTP(d *model.OTP) error {
+type OTPRepository struct{}
+
+func (r *OTPRepository) CreateOTP(d *model.OTP) error {
 
 	db, err := database.InitDB()
 	if err != nil {
@@ -26,7 +28,7 @@ func CreateOTP(d *model.OTP) error {
 
 }
 
-func FindOTP(d *model.OTP) (*model.OTP, error) {
+func (r *OTPRepository) FindOTP(d *model.OTP) (*model.OTP, error) {
 	db, err := database.InitDB()
 	if err != nil {
 		return nil, err
@@ -48,7 +50,7 @@ func FindOTP(d *model.OTP) (*model.OTP, error) {
 	return &otp, nil
 }
 
-func DeleteOTP(id int) error {
+func (r *OTPRepository) DeleteOTP(id int) error {
 	db, err := database.InitDB()
 	if err != nil {
 		return err

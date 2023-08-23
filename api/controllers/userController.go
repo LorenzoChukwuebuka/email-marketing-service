@@ -5,9 +5,16 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+
+	"github.com/golang-jwt/jwt"
 )
+
+//instantiate otp service
+
+func NewUserService() *services.UserService {
+	return &services.UserService{}
+}
 
 func Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
@@ -29,7 +36,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
 
 	utils.DecodeRequestBody(r, &reqdata)
-	userCreateService, err := services.CreateUser(reqdata)
+	userCreateService, err := NewUserService().CreateUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -45,7 +52,7 @@ func VerifyUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := services.VerifyUser(reqdata)
+	err := NewUserService().VerifyUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -59,7 +66,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	result, err := services.Login(reqdata)
+	result, err := NewUserService().Login(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -74,7 +81,7 @@ func ForgetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := services.ForgetPassword(reqdata)
+	err := NewUserService().ForgetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -89,7 +96,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := services.ResetPassword(reqdata)
+	err := NewUserService().ResetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
