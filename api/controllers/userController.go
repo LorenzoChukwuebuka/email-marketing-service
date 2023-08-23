@@ -5,10 +5,9 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"net/http"
 	"github.com/golang-jwt/jwt"
+	"net/http"
 )
-
 
 func Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
@@ -30,7 +29,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
 
 	utils.DecodeRequestBody(r, &reqdata)
-
 	userCreateService, err := services.CreateUser(reqdata)
 
 	if err != nil {
