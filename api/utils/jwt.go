@@ -2,8 +2,6 @@ package utils
 
 import (
 	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,10 +11,7 @@ import (
 var key = os.Getenv("JWT_KEY")
 
 func JWTEncode(userId int, username string, email string) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	LoadEnv()
 	// Create a new token object with claims
 	claims := jwt.MapClaims{
 		"sub":      userId,

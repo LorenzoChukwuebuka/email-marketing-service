@@ -1,19 +1,13 @@
 package utils
 
 import (
-	"log"
-	"os"
-
-	"github.com/joho/godotenv"
 	"gopkg.in/gomail.v2"
+	"os"
 )
 
 func SendMail(subject string, email string, message string) error {
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	LoadEnv()
 	// Mailtrap SMTP server settings
 	smtpHost := "sandbox.smtp.mailtrap.io"
 	smtpPort := 2525

@@ -106,3 +106,38 @@ func FindUserById(d *model.User) (*model.User, error) {
 
 	return d, nil
 }
+
+func FindUserByEmail(d *model.User) (*model.User, error) {
+	db, err := database.InitDB()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	query := "SELECT id, username, email FROM users WHERE email = $1"
+	row := db.QueryRow(query, d.Email)
+
+	err = row.Scan(&d.ID, &d.UserName, &d.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err // User not found, return nil without an error
+		}
+		return nil, err
+	}
+
+	return d, nil
+}
+
+func ResetPassword(d *model.User) error {
+	db, err := database.InitDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	return nil
+}
+
+func FindAllUsers() *model.User {
+	return nil
+}
