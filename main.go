@@ -23,8 +23,9 @@ func main() {
 
 	r := mux.NewRouter()
 
-	routes.RegisterRoutes(r)
-
+	// Create a subrouter with the "/api/v1" prefix
+	apiV1Router := r.PathPrefix("/api/v1").Subrouter()
+	routes.RegisterRoutes(apiV1Router)
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe("localhost:9000", r))

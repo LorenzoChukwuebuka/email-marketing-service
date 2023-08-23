@@ -2,24 +2,18 @@ package database
 
 import (
 	"database/sql"
+	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
+	_ "github.com/lib/pq"
 )
 
 //var db *sql.DB
 
-func init() {
-	// Load environment variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
-
 func InitDB() (*sql.DB, error) {
+
+	utils.LoadEnv()
 
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")

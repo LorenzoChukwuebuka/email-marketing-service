@@ -70,5 +70,31 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func ForgetPassword(w http.ResponseWriter, r *http.Request) {
+	var reqdata *model.ForgetPassword
 
+	utils.DecodeRequestBody(r, &reqdata)
+
+	err := services.ForgetPassword(reqdata)
+
+	if err != nil {
+		utils.ErrorResponse(w, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, 200, "email sent successfully")
+}
+
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var reqdata *model.ResetPassword
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	err := services.ResetPassword(reqdata)
+
+	if err != nil {
+		utils.ErrorResponse(w, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, 200, "password reset successfully")
 }

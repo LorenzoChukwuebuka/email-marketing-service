@@ -14,9 +14,9 @@ func CreateOTP(d *model.OTP) error {
 	}
 	defer db.Close()
 
-	query := "Insert into otp (user_id,token,created_at,uuid)Values($1,$2,$3,$4)"
+	query := "Insert into otp (user_id,token,uuid)Values($1,$2,$3)"
 
-	_, err = db.Exec(query, d.UserId, d.Token, d.CreatedAt, d.UUID)
+	_, err = db.Exec(query, d.UserId, d.Token, d.UUID)
 
 	if err != nil {
 		return err
