@@ -5,22 +5,17 @@ import (
 	"email-marketing-service/api/controllers"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 var key = os.Getenv("JWT_KEY")
 
 func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	utils.LoadEnv()
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {

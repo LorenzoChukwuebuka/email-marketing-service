@@ -13,11 +13,9 @@ func CreateUser(d *model.User) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer db.Close()
 	query := "INSERT INTO users (uuid,firstname,middlename,lastname,username, email,password) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
-
-	//var middlename sql.NullString
 
 	err = db.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID)
 
