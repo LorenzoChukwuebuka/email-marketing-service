@@ -8,6 +8,10 @@ import (
 
 type OTPRepository struct{}
 
+func NewOTPRepository() *OTPRepository {
+	return &OTPRepository{}
+}
+
 func (r *OTPRepository) CreateOTP(d *model.OTP) error {
 
 	db, err := database.InitDB()

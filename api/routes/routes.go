@@ -3,12 +3,15 @@ package routes
 import (
 	"context"
 	"email-marketing-service/api/controllers"
+	"email-marketing-service/api/repository"
+	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
 
 var key = os.Getenv("JWT_KEY")
@@ -49,8 +52,17 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+var (
+	//intialize the dependencies
+	otpRepo        = repository.NewOTPRepository()
+	OTPService     = services.NewOTPService(otpRepo)
+	UserRepo       = repository.NewUserRepository()
+	UserServices   = services.NewUserService(UserRepo, OTPService)
+	userController = controllers.NewUserController(UserServices)
+)
+
 var RegisterRoutes = func(router *mux.Router) {
-	userController := &controllers.UserController{}
+	//userController := &controllers.UserController{}
 	router.HandleFunc("/greet", JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST")
