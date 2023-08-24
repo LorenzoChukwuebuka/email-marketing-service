@@ -14,9 +14,13 @@ type UserController struct{}
 
 //instantiate otp service
 
-func NewUserService() *services.UserService {
-	return &services.UserService{}
-}
+// func NewUserService() *services.UserService {
+// 	return &services.UserService{}
+// }
+
+var (
+	userService = &services.UserService{}
+)
 
 func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
@@ -38,7 +42,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
 
 	utils.DecodeRequestBody(r, &reqdata)
-	userCreateService, err := NewUserService().CreateUser(reqdata)
+	userCreateService, err := userService.CreateUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -54,7 +58,7 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := NewUserService().VerifyUser(reqdata)
+	err := userService.VerifyUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -68,7 +72,7 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	result, err := NewUserService().Login(reqdata)
+	result, err := userService.Login(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -83,7 +87,7 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := NewUserService().ForgetPassword(reqdata)
+	err := userService.ForgetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -98,7 +102,7 @@ func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := NewUserService().ResetPassword(reqdata)
+	err := userService.ResetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
