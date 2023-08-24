@@ -9,6 +9,10 @@ import (
 
 type UserRepository struct{}
 
+func NewUserRepository() *UserRepository {
+	return &UserRepository{}
+}
+
 func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 	// Initialize the database connection
 	db, err := database.InitDB()

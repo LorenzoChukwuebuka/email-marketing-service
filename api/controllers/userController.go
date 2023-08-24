@@ -10,17 +10,15 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-type UserController struct{}
+type UserController struct {
+	userService *services.UserService
+}
 
-//instantiate otp service
-
-// func NewUserService() *services.UserService {
-// 	return &services.UserService{}
-// }
-
-var (
-	userService = &services.UserService{}
-)
+func NewUserController(userService *services.UserService) *UserController {
+	return &UserController{
+		userService: userService,
+	}
+}
 
 func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
@@ -42,7 +40,7 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
 
 	utils.DecodeRequestBody(r, &reqdata)
-	userCreateService, err := userService.CreateUser(reqdata)
+	userCreateService, err := c.userService.CreateUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -58,7 +56,7 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := userService.VerifyUser(reqdata)
+	err := c.userService.VerifyUser(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -72,7 +70,7 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	result, err := userService.Login(reqdata)
+	result, err := c.userService.Login(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -87,7 +85,7 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := userService.ForgetPassword(reqdata)
+	err := c.userService.ForgetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
@@ -102,7 +100,7 @@ func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := userService.ResetPassword(reqdata)
+	err := c.userService.ResetPassword(reqdata)
 
 	if err != nil {
 		utils.ErrorResponse(w, err.Error())
