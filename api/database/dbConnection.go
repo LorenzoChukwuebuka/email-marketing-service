@@ -4,12 +4,16 @@ import (
 	"database/sql"
 	"email-marketing-service/api/utils"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
-	_ "github.com/lib/pq"
 )
 
-//var db *sql.DB
+var db *sql.DB
+
+func GetDb() *sql.DB {
+	return db
+}
 
 func InitDB() (*sql.DB, error) {
 
@@ -27,6 +31,9 @@ func InitDB() (*sql.DB, error) {
 		log.Fatal(err)
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(10) // Set maximum number of open connections
+	db.SetMaxIdleConns(5)  // Set maximum number of idle connections
 
 	err = db.Ping()
 	if err != nil {

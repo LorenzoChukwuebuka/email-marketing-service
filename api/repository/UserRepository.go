@@ -7,23 +7,19 @@ import (
 	"fmt"
 )
 
-type UserRepository struct{}
+type UserRepository struct {
+	DB *sql.DB
+}
 
-func NewUserRepository() *UserRepository {
-	return &UserRepository{}
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{DB: db}
 }
 
 func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
-	// Initialize the database connection
-	db, err := database.InitDB()
-	if err != nil {
-		return nil, err
-	}
 
-	defer db.Close()
 	query := "INSERT INTO users (uuid,firstname,middlename,lastname,username, email,password) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
 
-	err = db.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID)
+	err := r.DB.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID)
 
 	if err != nil {
 		return nil, err
@@ -36,16 +32,11 @@ func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 }
 
 func (r *UserRepository) CheckIfEmailAlreadyExists(d *model.User) (bool, error) {
-	db, err := database.InitDB()
-	if err != nil {
-		return false, err
-	}
-	defer db.Close()
 
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)"
 
 	var exists bool
-	err = db.QueryRow(query, d.Email).Scan(&exists)
+	err := r.DB.QueryRow(query, d.Email).Scan(&exists)
 
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
@@ -55,14 +46,8 @@ func (r *UserRepository) CheckIfEmailAlreadyExists(d *model.User) (bool, error) 
 }
 
 func (r *UserRepository) VerifyUserAccount(d *model.User) error {
-	db, err := database.InitDB()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
 	query := "UPDATE users SET verified = $2, verified_at = $3 WHERE id = $1"
-	_, err = db.Exec(query, d.ID, d.Verified, d.VerifiedAt)
+	_, err := r.DB.Exec(query, d.ID, d.Verified, d.VerifiedAt)
 	if err != nil {
 		return err
 	}
@@ -71,17 +56,12 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) error {
 }
 
 func (r *UserRepository) Login(d *model.User) (*model.User, error) {
-	db, err := database.InitDB()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
 
 	// query := "SELECT * FROM users WHERE email = $1 AND verified = true"
 	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, verified_at FROM users WHERE email = $1 AND verified = true"
-	row := db.QueryRow(query, d.Email)
+	row := r.DB.QueryRow(query, d.Email)
 
-	err = row.Scan(&d.ID, &d.UUID, &d.FirstName, &d.MiddleName, &d.LastName, &d.UserName, &d.Email, &d.Password, &d.Verified, &d.VerifiedAt)
+	err := row.Scan(&d.ID, &d.UUID, &d.FirstName, &d.MiddleName, &d.LastName, &d.UserName, &d.Email, &d.Password, &d.Verified, &d.VerifiedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no user found: %w", err) // User not found, return nil without an error
@@ -93,16 +73,11 @@ func (r *UserRepository) Login(d *model.User) (*model.User, error) {
 }
 
 func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
-	db, err := database.InitDB()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
 
 	query := "SELECT id, username, email FROM users WHERE id = $1"
-	row := db.QueryRow(query, d.ID)
+	row := r.DB.QueryRow(query, d.ID)
 
-	err = row.Scan(&d.ID, &d.UserName, &d.Email)
+	err := row.Scan(&d.ID, &d.UserName, &d.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err // User not found, return nil without an error
@@ -114,16 +89,11 @@ func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
 }
 
 func (r *UserRepository) FindUserByEmail(d *model.User) (*model.User, error) {
-	db, err := database.InitDB()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
 
 	query := "SELECT id, username, email FROM users WHERE email = $1"
-	row := db.QueryRow(query, d.Email)
+	row := r.DB.QueryRow(query, d.Email)
 
-	err = row.Scan(&d.ID, &d.UserName, &d.Email)
+	err := row.Scan(&d.ID, &d.UserName, &d.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err // User not found, return nil without an error
@@ -151,6 +121,45 @@ func (r *UserRepository) ResetPassword(d *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) FindAllUsers() *model.User {
-	return nil
+func (r *UserRepository) FindAllUsers() ([]model.User, error) {
+
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users"
+
+	rows, err := r.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []model.User
+
+	for rows.Next() {
+		var user model.User
+		err := rows.Scan(
+			&user.ID,
+			&user.UUID,
+			&user.FirstName,
+			&user.MiddleName,
+			&user.LastName,
+			&user.UserName,
+			&user.Email,
+			&user.Password,
+			&user.Verified,
+			&user.CreatedAt,
+			&user.VerifiedAt,
+			&user.UpdatedAt,
+			&user.DeletedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

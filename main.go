@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
@@ -47,5 +46,10 @@ func main() {
 	routes.RegisterRoutes(apiV1Router)
 	http.Handle("/", r)
 
-	log.Fatal(http.ListenAndServe("localhost:9000", r))
+	// Define the port
+	port := 9000
+
+	// Start the server
+	fmt.Printf("Server started on port %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
 }

@@ -32,5 +32,5 @@ type ForgetPassword struct {
 
 type ResetPassword struct {
 	Token    string `json:"token" validated:"required"`
-	Password []byte `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
