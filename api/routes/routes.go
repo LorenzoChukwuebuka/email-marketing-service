@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"email-marketing-service/api/controllers"
+	"email-marketing-service/api/database"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
@@ -54,21 +55,27 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-var (
-	//intialize the user  dependencies
-	otpRepo        = repository.NewOTPRepository()
-	OTPService     = services.NewOTPService(otpRepo)
-	UserRepo       = repository.NewUserRepository()
-	UserServices   = services.NewUserService(UserRepo, OTPService)
-	userController = controllers.NewUserController(UserServices)
-)
-
 var RegisterRoutes = func(router *mux.Router) {
-	//userController := &controllers.UserController{}
+
+	// Initialize the database connection pool
+	db, err := database.InitDB()
+	if err != nil {
+		fmt.Println("Failed to connect to the database")
+		return
+	}
+
+	//intialize the user  dependencies
+	otpRepo := repository.NewOTPRepository(db)
+	OTPService := services.NewOTPService(otpRepo)
+	UserRepo := repository.NewUserRepository(db)
+	UserServices := services.NewUserService(UserRepo, OTPService)
+	userController := controllers.NewUserController(UserServices)
+
 	router.HandleFunc("/greet", JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST")
 	router.HandleFunc("/user-login", userController.Login).Methods("POST")
 	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST")
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST")
+
 }
