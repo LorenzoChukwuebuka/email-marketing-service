@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"email-marketing-service/api/utils"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
-	_ "github.com/lib/pq"
 )
 
 //var db *sql.DB
