@@ -6,28 +6,6 @@ import (
 	"strings"
 )
 
-// func ValidateData(v interface{}) map[string]string {
-// 	validate := validator.New()
-
-// 	err := validate.Struct(v)
-
-// 	if err != nil {
-// 		validationErrors, ok := err.(validator.ValidationErrors)
-// 		if !ok {
-// 			// Handle unexpected validation error type
-// 			return map[string]string{"error": err.Error()}
-// 		}
-// 		// Construct a response with validation errors
-// 		errorMap := make(map[string]string)
-// 		for _, e := range validationErrors {
-// 			errorMap[e.Field()] = e.Tag()
-// 		}
-// 		return errorMap
-// 	}
-
-// 	return nil // No validation errors
-// }
-
 func ValidateData(v interface{}) error {
 	validate := validator.New()
 
