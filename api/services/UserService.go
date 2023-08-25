@@ -224,6 +224,7 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 }
 
 func (s *UserService) ResetPassword(d *model.ResetPassword) error {
+
 	err := utils.ValidateData(d)
 	if err != nil {
 		return err
@@ -241,9 +242,11 @@ func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 		return err
 	}
 
+	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
+
 	user := &model.User{
 		ID:       otpData.UserId,
-		Password: d.Password,
+		Password: password,
 	}
 
 	err = s.userRepository.ResetPassword(user)
