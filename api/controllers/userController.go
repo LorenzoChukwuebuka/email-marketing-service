@@ -5,9 +5,8 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"net/http"
-
 	"github.com/golang-jwt/jwt"
+	"net/http"
 )
 
 type UserController struct {
@@ -19,6 +18,10 @@ func NewUserController(userService *services.UserService) *UserController {
 		userService: userService,
 	}
 }
+
+var (
+	response = &utils.ApiResponse{}
+)
 
 func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
@@ -43,11 +46,11 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	userCreateService, err := c.userService.CreateUser(reqdata)
 
 	if err != nil {
-		utils.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	utils.SuccessResponse(w, 200, userCreateService)
+	response.SuccessResponse(w, 200, userCreateService)
 
 }
 
@@ -59,10 +62,10 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	err := c.userService.VerifyUser(reqdata)
 
 	if err != nil {
-		utils.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, err.Error())
 		return
 	}
-	utils.SuccessResponse(w, 200, "User has been successfully verifed")
+	response.SuccessResponse(w, 200, "User has been successfully verifed")
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +76,11 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	result, err := c.userService.Login(reqdata)
 
 	if err != nil {
-		utils.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	utils.SuccessResponse(w, 200, result)
+	response.SuccessResponse(w, 200, result)
 }
 
 func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) {
@@ -88,11 +91,11 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 	err := c.userService.ForgetPassword(reqdata)
 
 	if err != nil {
-		utils.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	utils.SuccessResponse(w, 200, "email sent successfully")
+	response.SuccessResponse(w, 200, "email sent successfully")
 }
 
 func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
@@ -103,9 +106,9 @@ func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	err := c.userService.ResetPassword(reqdata)
 
 	if err != nil {
-		utils.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	utils.SuccessResponse(w, 200, "password reset successfully")
+	response.SuccessResponse(w, 200, "password reset successfully")
 }

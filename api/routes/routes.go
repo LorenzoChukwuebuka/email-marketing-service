@@ -18,6 +18,7 @@ var key = os.Getenv("JWT_KEY")
 
 func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	utils.LoadEnv()
+	response := &utils.ApiResponse{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
@@ -42,7 +43,8 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		jwtclaims, ok := token.Claims.(jwt.MapClaims)
 
 		if !ok {
-			utils.ErrorResponse(w, "invalid jwt claims")
+
+			response.ErrorResponse(w, "invalid jwt claims")
 			return
 		}
 
@@ -53,7 +55,7 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 var (
-	//intialize the dependencies
+	//intialize the user  dependencies
 	otpRepo        = repository.NewOTPRepository()
 	OTPService     = services.NewOTPService(otpRepo)
 	UserRepo       = repository.NewUserRepository()

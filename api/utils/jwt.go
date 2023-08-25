@@ -44,3 +44,5 @@ func ExtractTokenFromHeader(r *http.Request) string {
 
 	return tokenParts[1]
 }
+
+

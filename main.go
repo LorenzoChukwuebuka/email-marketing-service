@@ -11,6 +11,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func enableCORS(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// If the request method is OPTIONS, just return a 200 status (pre-flight request)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the actual handler
+		handler.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 
 	// Initialize the database connection
@@ -25,6 +43,7 @@ func main() {
 
 	// Create a subrouter with the "/api/v1" prefix
 	apiV1Router := r.PathPrefix("/api/v1").Subrouter()
+	apiV1Router.Use(enableCORS)
 	routes.RegisterRoutes(apiV1Router)
 	http.Handle("/", r)
 
