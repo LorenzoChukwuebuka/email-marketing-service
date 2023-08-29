@@ -55,7 +55,7 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-var RegisterRoutes = func(router *mux.Router) {
+var RegisterUserRoutes = func(router *mux.Router) {
 
 	// Initialize the database connection pool
 	db, err := database.InitDB()

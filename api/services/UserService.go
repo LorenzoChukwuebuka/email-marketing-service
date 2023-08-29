@@ -31,9 +31,7 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 
 func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 
-	err := utils.ValidateData(d)
-
-	if err != nil {
+	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
 
@@ -53,9 +51,7 @@ func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 		return nil, fmt.Errorf("user already exists")
 	}
 
-	_, err = s.userRepository.CreateUser(d)
-
-	if err != nil {
+	if _, err = s.userRepository.CreateUser(d); err != nil {
 		return nil, err
 	}
 
@@ -63,33 +59,30 @@ func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 
 	//store otp with user details in db
 
-	var otpData model.OTP
-
-	otpData.UserId = d.ID
-	otpData.Token = otp
-	otpData.UUID = uuid.New().String()
-
-	err = s.otpService.CreateOTP(&otpData)
-
-	if err != nil {
+	otpData := &model.OTP{
+		UserId: d.ID,
+		Token:  otp,
+		UUID:   uuid.New().String(),
+	}
+	if err = s.otpService.CreateOTP(otpData); err != nil {
 		return nil, err
 	}
 
 	//send mail
 
-	err = custom.SignUpMail(d.Email, d.UserName, otp)
-	if err != nil {
+	if err = custom.SignUpMail(d.Email, d.UserName, otp); err != nil {
 		return nil, err
 	}
+
 	return d, nil
 }
 
 func (s *UserService) VerifyUser(d *model.OTP) error {
-	err := utils.ValidateData(d)
 
-	if err != nil {
+	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
+
 	//check if token exists in the otp table if yes, retrieve the records
 	otpService := s.otpService
 	otpData, err := otpService.RetrieveOTP(d)
@@ -107,17 +100,13 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		Valid: true,
 	}
 
-	err = s.userRepository.VerifyUserAccount(&userModel)
-
-	if err != nil {
+	if err = s.userRepository.VerifyUserAccount(&userModel); err != nil {
 		return err
 	}
 
 	//delete otp from the database
 
-	err = otpService.DeleteOTP(otpData.Id)
-
-	if err != nil {
+	if err = otpService.DeleteOTP(otpData.Id); err != nil {
 		return err
 	}
 
@@ -126,27 +115,23 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 	return nil
 }
 
-func (s *UserService) Login(d *model.LoginModel) (map[string]string, error) {
-	err := utils.ValidateData(d)
-
-	if err != nil {
+func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error) {
+	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
 
-	var user model.User
-
-	user.Email = d.Email
-	user.Password = d.Password
-	userDetails, err := s.userRepository.Login(&user)
+	user := &model.User{
+		Email:    d.Email,
+		Password: d.Password,
+	}
+	userDetails, err := s.userRepository.Login(user)
 
 	if err != nil {
 		return nil, err
 	}
 
 	//compare password
-	err = bcrypt.CompareHashAndPassword(userDetails.Password, []byte(d.Password))
-
-	if err != nil {
+	if err = bcrypt.CompareHashAndPassword(userDetails.Password, []byte(d.Password)); err != nil {
 		return nil, fmt.Errorf("passwords do not match:%w", err)
 	}
 
@@ -156,18 +141,21 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]string, error) {
 		return nil, err
 	}
 
-	successMap := map[string]string{
-		"status": "login successful",
-		"token":  token,
+	//marshal the user details back to json
+
+	r, _ := utils.EncodeToJson(userDetails)
+
+	successMap := map[string]interface{}{
+		"status":  "login successful",
+		"token":   token,
+		"details": r,
 	}
 
 	return successMap, nil
 }
 
 func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
-	err := utils.ValidateData(d)
-
-	if err != nil {
+	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
 
@@ -208,15 +196,11 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 
 	otpService := s.otpService
 
-	err = otpService.CreateOTP(otpData)
-
-	if err != nil {
+	if err = otpService.CreateOTP(otpData); err != nil {
 		return err
 	}
 
-	err = custom.ResetPasswordMail(d.Email, userDetails.UserName, otp)
-
-	if err != nil {
+	if err = custom.ResetPasswordMail(d.Email, userDetails.UserName, otp); err != nil {
 		return err
 	}
 
@@ -225,8 +209,7 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 
 func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 
-	err := utils.ValidateData(d)
-	if err != nil {
+	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
 
@@ -249,17 +232,13 @@ func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 		Password: password,
 	}
 
-	err = s.userRepository.ResetPassword(user)
-
-	if err != nil {
+	if err = s.userRepository.ResetPassword(user); err != nil {
 		return err
 	}
 
 	//delete otp from the database
 
-	err = otpService.DeleteOTP(otpData.Id)
-
-	if err != nil {
+	if err = otpService.DeleteOTP(otpData.Id); err != nil {
 		return err
 	}
 

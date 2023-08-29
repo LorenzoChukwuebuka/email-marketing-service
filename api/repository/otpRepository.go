@@ -17,7 +17,6 @@ func NewOTPRepository(db *sql.DB) *OTPRepository {
 func (r *OTPRepository) CreateOTP(d *model.OTP) error {
 
 	query := "Insert into otp (user_id,token,uuid)Values($1,$2,$3)"
-
 	_, err := r.DB.Exec(query, d.UserId, d.Token, d.UUID)
 
 	if err != nil {

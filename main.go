@@ -4,10 +4,10 @@ import (
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/routes"
 	"fmt"
-	"log"
-	"net/http"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"log"
+	"net/http"
 )
 
 func enableCORS(handler http.Handler) http.Handler {
@@ -43,7 +43,7 @@ func main() {
 	// Create a subrouter with the "/api/v1" prefix
 	apiV1Router := r.PathPrefix("/api/v1").Subrouter()
 	apiV1Router.Use(enableCORS)
-	routes.RegisterRoutes(apiV1Router)
+	routes.RegisterUserRoutes(apiV1Router)
 	http.Handle("/", r)
 
 	// Define the port
