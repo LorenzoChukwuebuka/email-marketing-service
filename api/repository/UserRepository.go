@@ -19,15 +19,16 @@ func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 
 	query := "INSERT INTO users (uuid,firstname,middlename,lastname,username, email,password) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
 
-	err := r.DB.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID)
-
+	stmt, err := r.DB.Prepare(query)
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
-	if err != nil {
+	if err = stmt.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID); err != nil {
 		return nil, err
 	}
+
 	return d, nil
 }
 
