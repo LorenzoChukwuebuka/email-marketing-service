@@ -24,11 +24,8 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 	}
 }
 
-// var (
-// 	userRepository = &repository.UserRepository{}
-// 	otpService     = &OTPService{}
-// )
 
+// CreateUser creates a new user, sends an OTP email, and stores OTP data.
 func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 
 	if err := utils.ValidateData(d); err != nil {
@@ -77,6 +74,7 @@ func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 	return d, nil
 }
 
+// VerifyUser verifies a user account using OTP.
 func (s *UserService) VerifyUser(d *model.OTP) error {
 
 	if err := utils.ValidateData(d); err != nil {
@@ -242,5 +240,38 @@ func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error {
+
+	data := &model.User{
+		ID: userId,
+	}
+
+	userData, err := s.userRepository.FindUserById(data)
+
+	if err != nil {
+		return err
+	}
+
+	//compare password
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), d.OldPassword); err != nil {
+		return fmt.Errorf("password does not match the records")
+	}
+
+	//hash password if it passes test
+	password, _ := bcrypt.GenerateFromPassword([]byte(d.NewPassword), 14)
+
+	data.Password = password
+
+	if err := s.userRepository.ChangeUserPassword(data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) EditUser() error {
 	return nil
 }

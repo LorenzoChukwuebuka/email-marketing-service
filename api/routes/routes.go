@@ -43,13 +43,17 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		jwtclaims, ok := token.Claims.(jwt.MapClaims)
 
+		// for key, value := range jwtclaims {
+		// 	fmt.Printf("%s: %v\n", key, value)
+		// }
+
 		if !ok {
 
 			response.ErrorResponse(w, "invalid jwt claims")
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "jwtclaims", jwtclaims)
+		ctx := context.WithValue(r.Context(), "authclaims", jwtclaims)
 		// Proceed to the next handler
 		next(w, r.WithContext(ctx))
 	}
@@ -77,5 +81,6 @@ var RegisterUserRoutes = func(router *mux.Router) {
 	router.HandleFunc("/user-login", userController.Login).Methods("POST")
 	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST")
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST")
+	router.HandleFunc("/change-user-password", JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT")
 
 }

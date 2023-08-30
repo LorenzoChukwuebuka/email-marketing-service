@@ -34,3 +34,9 @@ type ResetPassword struct {
 	Token    string `json:"token" validated:"required"`
 	Password string `json:"password" validate:"required"`
 }
+
+type ChangePassword struct {
+	UserId      int    `json:"user_id" validated:"required"`
+	OldPassword []byte `json:"old_password" validated:"required"`
+	NewPassword []byte `json:"new_password" validated:"required"`
+}
