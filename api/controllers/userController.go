@@ -24,7 +24,7 @@ var (
 )
 
 func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("jwtclaims").(jwt.MapClaims)
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
@@ -88,9 +88,7 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := c.userService.ForgetPassword(reqdata)
-
-	if err != nil {
+	if err := c.userService.ForgetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
@@ -103,12 +101,33 @@ func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := c.userService.ResetPassword(reqdata)
-
-	if err != nil {
+	if err := c.userService.ResetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
 	response.SuccessResponse(w, 200, "password reset successfully")
+}
+
+func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(float64)
+
+	var reqdata *model.ChangePassword
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	err := c.userService.ChangePassword(int(userId), reqdata)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "password changed successfully")
+
 }

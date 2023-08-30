@@ -14,10 +14,12 @@ func JWTEncode(userId int, username string, email string) (string, error) {
 	LoadEnv()
 	// Create a new token object with claims
 	claims := jwt.MapClaims{
-		"sub":      userId,
+		"sub":      "The server",
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 		"username": username,                              // Include username claim
-		"email":    email,                                 // Include email claim
+		"email":    email,
+		"userId":   userId, // Include userId claim
+
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -44,5 +46,3 @@ func ExtractTokenFromHeader(r *http.Request) string {
 
 	return tokenParts[1]
 }
-
-

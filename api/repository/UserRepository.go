@@ -5,6 +5,7 @@ import (
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/model"
 	"fmt"
+	"time"
 )
 
 type UserRepository struct {
@@ -17,7 +18,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 
-	query := "INSERT INTO users (uuid,firstname,middlename,lastname,username, email,password) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
+	query := "INSERT INTO users (uuid,firstname,middlename,lastname,username, email,password,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id"
 
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
@@ -25,7 +26,7 @@ func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 	}
 	defer stmt.Close()
 
-	if err = stmt.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password).Scan(&d.ID); err != nil {
+	if err = stmt.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password, time.Now()).Scan(&d.ID); err != nil {
 		return nil, err
 	}
 
@@ -75,10 +76,22 @@ func (r *UserRepository) Login(d *model.User) (*model.User, error) {
 
 func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
 
-	query := "SELECT id, username, email FROM users WHERE id = $1"
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users WHERE id = $1"
 	row := r.DB.QueryRow(query, d.ID)
 
-	err := row.Scan(&d.ID, &d.UserName, &d.Email)
+	err := row.Scan(&d.ID,
+		&d.UUID,
+		&d.FirstName,
+		&d.MiddleName,
+		&d.LastName,
+		&d.UserName,
+		&d.Email,
+		&d.Password,
+		&d.Verified,
+		&d.CreatedAt,
+		&d.VerifiedAt,
+		&d.UpdatedAt,
+		&d.DeletedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err // User not found, return nil without an error
@@ -91,7 +104,7 @@ func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
 
 func (r *UserRepository) FindUserByEmail(d *model.User) (*model.User, error) {
 
-	query := "SELECT id, username, email FROM users WHERE email = $1"
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users WHERE id = $1"
 	row := r.DB.QueryRow(query, d.Email)
 
 	err := row.Scan(&d.ID, &d.UserName, &d.Email)
@@ -163,4 +176,21 @@ func (r *UserRepository) FindAllUsers() ([]model.User, error) {
 	}
 
 	return users, nil
+}
+
+func (r *UserRepository) ChangeUserPassword(d *model.User) error {
+	query := "UPDATE users SET password = $1 WHERE id = $2"
+
+	stmt, err := r.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(d.Password, d.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

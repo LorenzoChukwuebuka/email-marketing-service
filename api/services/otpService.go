@@ -16,8 +16,7 @@ func NewOTPService(otpRepo *repository.OTPRepository) *OTPService {
 }
 
 func (s *OTPService) CreateOTP(d *model.OTP) error {
-	err := s.otpRepository.CreateOTP(d)
-	if err != nil {
+	if err := s.otpRepository.CreateOTP(d); err != nil {
 		return err
 	}
 
@@ -31,14 +30,13 @@ func (s *OTPService) RetrieveOTP(d *model.OTP) (*model.OTP, error) {
 		return nil, err
 	}
 
-	return otpData, err
+	return otpData, nil
 }
 
 func (s *OTPService) DeleteOTP(id int) error {
-	err := s.otpRepository.DeleteOTP(id)
-
-	if err != nil {
+	if err := s.otpRepository.DeleteOTP(id); err != nil {
 		return err
 	}
+
 	return nil
 }
