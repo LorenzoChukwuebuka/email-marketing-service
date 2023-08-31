@@ -143,7 +143,7 @@ func (r *UserRepository) ResetPassword(d *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) FindAllUsers() ([]model.User, error) {
+func (r *UserRepository) FindAllUsers() ([]model.UserResponse, error) {
 
 	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users"
 
@@ -153,10 +153,11 @@ func (r *UserRepository) FindAllUsers() ([]model.User, error) {
 	}
 	defer rows.Close()
 
-	var users []model.User
+	var users []model.UserResponse
 
 	for rows.Next() {
-		var user model.User
+		var user model.UserResponse
+		var verifiedAt, updatedAt sql.NullTime
 		err := rows.Scan(
 			&user.ID,
 			&user.UUID,
@@ -168,12 +169,19 @@ func (r *UserRepository) FindAllUsers() ([]model.User, error) {
 			&user.Password,
 			&user.Verified,
 			&user.CreatedAt,
-			&user.VerifiedAt,
-			&user.UpdatedAt,
+			&verifiedAt,
+			&updatedAt,
 			&user.DeletedAt,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if verifiedAt.Valid {
+			user.VerifiedAt = verifiedAt.Time.Format(time.RFC3339Nano)
+		}
+		if updatedAt.Valid {
+			user.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
 		}
 
 		users = append(users, user)
