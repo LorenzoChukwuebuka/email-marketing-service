@@ -40,3 +40,20 @@ type ChangePassword struct {
 	OldPassword []byte `json:"old_password" validated:"required"`
 	NewPassword []byte `json:"new_password" validated:"required"`
 }
+
+
+type UserResponse struct {
+	ID         int       `json:"id"`
+	UUID       string    `json:"uuid"`
+	FirstName  string    `json:"firstname"`
+	MiddleName *string   `json:"middlename"`
+	LastName   string    `json:"lastname"`
+	UserName   string    `json:"username"`
+	Email      string    `json:"email"`
+	Password   []byte    `json:"password"`
+	Verified   bool      `json:"verified"`
+	CreatedAt  time.Time `json:"created_at"`
+	VerifiedAt string    `json:"verified_at"`
+	UpdatedAt  string    `json:"updated_at"`
+	DeletedAt  string    `json:"deleted_at"`
+}

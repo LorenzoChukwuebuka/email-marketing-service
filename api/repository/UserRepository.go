@@ -57,13 +57,17 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) Login(d *model.User) (*model.User, error) {
+func (r *UserRepository) Login(d *model.User) (*model.UserResponse, error) {
 
 	// query := "SELECT * FROM users WHERE email = $1 AND verified = true"
 	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, verified_at FROM users WHERE email = $1 AND verified = true"
 	row := r.DB.QueryRow(query, d.Email)
 
-	err := row.Scan(&d.ID, &d.UUID, &d.FirstName, &d.MiddleName, &d.LastName, &d.UserName, &d.Email, &d.Password, &d.Verified, &d.VerifiedAt)
+	var user model.UserResponse
+
+	var verifiedAt sql.NullTime
+
+	err := row.Scan(&user.ID, &user.UUID, &user.FirstName, &user.MiddleName, &user.LastName, &user.UserName, &user.Email, &user.Password, &user.Verified, &verifiedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no user found: %w", err) // User not found, return nil without an error
@@ -71,7 +75,11 @@ func (r *UserRepository) Login(d *model.User) (*model.User, error) {
 		return nil, err
 	}
 
-	return d, nil
+	if verifiedAt.Valid {
+		user.VerifiedAt = verifiedAt.Time.Format(time.RFC3339Nano)
+	}
+
+	return &user, nil
 }
 
 func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {

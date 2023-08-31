@@ -24,7 +24,6 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 	}
 }
 
-
 // CreateUser creates a new user, sends an OTP email, and stores OTP data.
 func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 
@@ -150,6 +149,7 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 	}
 
 	return successMap, nil
+
 }
 
 func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
