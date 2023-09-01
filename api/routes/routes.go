@@ -1,63 +1,16 @@
 package routes
 
 import (
-	"context"
 	"email-marketing-service/api/controllers"
 	"email-marketing-service/api/database"
+	"email-marketing-service/api/middleware"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/services"
-	"email-marketing-service/api/utils"
-	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/golang-jwt/jwt"
+	"fmt"
+
 	"github.com/gorilla/mux"
 )
-
-var key = os.Getenv("JWT_KEY")
-
-func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	utils.LoadEnv()
-	response := &utils.ApiResponse{}
-	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := utils.ExtractTokenFromHeader(r)
-		if tokenString == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Define the secret key used for verification
-		secretKey := []byte(key)
-
-		// Parse and verify the token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return secretKey, nil
-		})
-		if err != nil || !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		jwtclaims, ok := token.Claims.(jwt.MapClaims)
-
-		// for key, value := range jwtclaims {
-		// 	fmt.Printf("%s: %v\n", key, value)
-		// }
-
-		if !ok {
-
-			response.ErrorResponse(w, "invalid jwt claims")
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "authclaims", jwtclaims)
-		// Proceed to the next handler
-		next(w, r.WithContext(ctx))
-	}
-}
 
 var RegisterUserRoutes = func(router *mux.Router) {
 
@@ -75,12 +28,12 @@ var RegisterUserRoutes = func(router *mux.Router) {
 	UserServices := services.NewUserService(UserRepo, OTPService)
 	userController := controllers.NewUserController(UserServices)
 
-	router.HandleFunc("/greet", JWTMiddleware(userController.Welcome)).Methods("GET")
+	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST")
 	router.HandleFunc("/user-login", userController.Login).Methods("POST")
 	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST")
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST")
-	router.HandleFunc("/change-user-password", JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT")
+	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT")
 
 }
