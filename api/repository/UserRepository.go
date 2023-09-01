@@ -210,3 +210,23 @@ func (r *UserRepository) ChangeUserPassword(d *model.User) error {
 
 	return nil
 }
+
+func (r *UserRepository) UpdateUserRecords(d *model.User) error {
+	query := "UPDATE users  SET firstname = $1,middlename = $2,lastname = $3, username = $4,updated_at=$5 WHERE id = $6"
+
+	stmt, err := r.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(d.FirstName, d.MiddleName, d.LastName, d.UserName, time.Now(), d.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

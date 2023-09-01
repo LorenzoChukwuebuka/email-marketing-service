@@ -131,3 +131,25 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 	response.SuccessResponse(w, 200, "password changed successfully")
 
 }
+
+func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(float64)
+
+	var reqdata *model.User
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	if err := c.userService.EditUser(int(userId),reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "User edited successfully")
+
+}

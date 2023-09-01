@@ -140,12 +140,10 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 
 	//marshal the user details back to json
 
-	r, _ := utils.EncodeToJson(userDetails)
-
 	successMap := map[string]interface{}{
 		"status":  "login successful",
 		"token":   token,
-		"details": r,
+		"details": userDetails,
 	}
 
 	return successMap, nil
@@ -272,6 +270,10 @@ func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error 
 	return nil
 }
 
-func (s *UserService) EditUser() error {
+func (s *UserService) EditUser(id int, d *model.User) error {
+	if err := s.userRepository.UpdateUserRecords(d); err != nil {
+		return err
+	}
+
 	return nil
 }

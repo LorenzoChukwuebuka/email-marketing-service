@@ -42,8 +42,11 @@ func main() {
 
 	// Create a subrouter with the "/api/v1" prefix
 	apiV1Router := r.PathPrefix("/api/v1").Subrouter()
+	adminRouter := r.PathPrefix("/api/v1/admin").Subrouter()
 	apiV1Router.Use(enableCORS)
+	adminRouter.Use(enableCORS)
 	routes.RegisterUserRoutes(apiV1Router)
+	routes.RegisterAdminRoutes(adminRouter)
 	http.Handle("/", r)
 
 	// Define the port
