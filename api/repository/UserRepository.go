@@ -26,7 +26,7 @@ func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 	}
 	defer stmt.Close()
 
-	if err = stmt.QueryRow(query, d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password, time.Now()).Scan(&d.ID); err != nil {
+	if err = stmt.QueryRow(d.UUID, d.FirstName, d.MiddleName, d.LastName, d.UserName, d.Email, d.Password, time.Now()).Scan(&d.ID); err != nil {
 		return nil, err
 	}
 

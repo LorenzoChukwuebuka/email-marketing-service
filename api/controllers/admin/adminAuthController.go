@@ -21,6 +21,21 @@ var (
 	response = &utils.ApiResponse{}
 )
 
+func (c *AdminController) CreateAdmin(w http.ResponseWriter, r *http.Request) {
+	var reqdata *adminmodel.AdminModel
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	result, err := c.AdminService.CreateAdmin(reqdata)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
 func (c *AdminController) Login(w http.ResponseWriter, r *http.Request) {
 	var reqdata *adminmodel.AdminLogin
 

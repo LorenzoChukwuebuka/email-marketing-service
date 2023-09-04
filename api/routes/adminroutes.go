@@ -23,5 +23,6 @@ var RegisterAdminRoutes = func(router *mux.Router) {
 	adminService := adminservice.NewAdminService(adminRepo)
 	adminController := adminController.NewAdminController(adminService)
 
+	router.HandleFunc("/create-admin", adminController.CreateAdmin).Methods("POST")
 	router.HandleFunc("/admin-login", adminController.Login).Methods("POST")
 }
