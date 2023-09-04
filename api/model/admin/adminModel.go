@@ -1,5 +1,22 @@
 package adminmodel
 
+import (
+	"database/sql"
+	"time"
+)
+
+type AdminModel struct {
+	ID         int          `json:"id"`
+	FirstName  *string      `json:"firstname"`
+	MiddleName *string      `json:"middlename"`
+	LastName   *string      `json:"lastname"`
+	Email      string       `json:"email"`
+	Password   []byte       `json:"password"`
+	Type       string       `json:"type"`
+	CreatedAt  time.Time    `json:"created_at"`
+	DeletedAt  sql.NullTime `json:"deleted_at"`
+}
+
 type AdminLogin struct {
 	Email    string `json:"email" validate:"required"`
 	Password []byte `json:"password" validate:"required"`

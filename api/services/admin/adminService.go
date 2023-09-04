@@ -16,6 +16,25 @@ func NewAdminService(adminRepo *adminrepository.AdminRepository) *AdminService {
 	return &AdminService{AdminRepo: adminRepo}
 }
 
+func (s *AdminService) CreateAdmin(d *adminmodel.AdminModel) (*adminmodel.AdminModel, error) {
+
+	if err := utils.ValidateData(d); err != nil {
+		return nil, err
+	}
+
+	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
+
+	d.Password = password
+
+	adminUser, err := s.AdminRepo.CreateAdmin(d)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return adminUser, nil
+}
+
 func (s *AdminService) AdminLogin(d *adminmodel.AdminLogin) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
@@ -26,6 +45,8 @@ func (s *AdminService) AdminLogin(d *adminmodel.AdminLogin) (map[string]interfac
 	if err != nil {
 		return nil, fmt.Errorf("invalid email:%w", err)
 	}
+
+	fmt.Println(d.Password, adminDetails.Password)
 
 	//compare password
 	if err = bcrypt.CompareHashAndPassword(adminDetails.Password, []byte(d.Password)); err != nil {

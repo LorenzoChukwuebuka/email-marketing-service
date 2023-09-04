@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"sync"
 	"time"
 )
 
@@ -36,38 +37,74 @@ func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 	d.Password = password
 	d.UUID = uuid.New().String()
 
-	//check if user already exists
-	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
+	// Use a WaitGroup to wait for goroutines to finish.
+	var wg sync.WaitGroup
 
-	if err != nil {
-		return nil, err
-	}
+	// Channel to collect errors from goroutines.
+	errCh := make(chan error, 2)
 
-	if userExists {
-		return nil, fmt.Errorf("user already exists")
-	}
+	// Check if user already exists concurrently.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	if _, err = s.userRepository.CreateUser(d); err != nil {
-		return nil, err
-	}
+		//check if user already exists
+		userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
 
-	otp := utils.GenerateOTP(8)
+		if err != nil {
+			errCh <- err
+			return
+		}
 
-	//store otp with user details in db
+		if userExists {
+			errCh <- fmt.Errorf("user already exists")
+			return
+		}
 
-	otpData := &model.OTP{
-		UserId: d.ID,
-		Token:  otp,
-		UUID:   uuid.New().String(),
-	}
-	if err = s.otpService.CreateOTP(otpData); err != nil {
-		return nil, err
-	}
+	}()
 
-	//send mail
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	if err = custom.SignUpMail(d.Email, d.UserName, otp); err != nil {
-		return nil, err
+		if _, err := s.userRepository.CreateUser(d); err != nil {
+			errCh <- err
+			return
+		}
+
+		otp := utils.GenerateOTP(8)
+
+		//store otp with user details in db
+
+		otpData := &model.OTP{
+			UserId: d.ID,
+			Token:  otp,
+			UUID:   uuid.New().String(),
+		}
+		if err := s.otpService.CreateOTP(otpData); err != nil {
+			errCh <- err
+			return
+		}
+
+		//send mail
+
+		if err := custom.SignUpMail(d.Email, d.UserName, otp); err != nil {
+			errCh <- err
+			return
+		}
+	}()
+
+	// Close the error channel when all goroutines are done.
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	// Check for errors from goroutines.
+	for err := range errCh {
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return d, nil
