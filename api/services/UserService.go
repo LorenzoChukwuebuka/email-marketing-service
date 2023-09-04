@@ -240,6 +240,89 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 	return nil
 }
 
+// func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
+// 	if err := utils.ValidateData(d); err != nil {
+// 		return err
+// 	}
+
+// 	userEmail := &model.User{
+// 		Email: d.Email,
+// 	}
+
+// 	// Check if email exists in the database
+// 	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(userEmail)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if !userExists {
+// 		return nil
+// 	}
+
+// 	email := &model.User{
+// 		Email: d.Email,
+// 	}
+
+// 	// Use a WaitGroup to wait for goroutines to finish
+// 	var wg sync.WaitGroup
+
+// 	var userDetails *model.User
+// 	var userDetailsErr error
+
+// 	// Get username and id concurrently
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		userDetails, userDetailsErr = s.userRepository.FindUserByEmail(email)
+// 	}()
+
+// 	// Generate token concurrently
+// 	otp := utils.GenerateOTP(8)
+// 	otpData := &model.OTP{
+// 		Token: otp,
+// 		UUID:  uuid.New().String(),
+// 	}
+
+// 	otpService := s.otpService
+
+// 	var createOTPError error
+
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		createOTPError = otpService.CreateOTP(otpData)
+// 	}()
+
+// 	// Wait for both goroutines to finish
+// 	wg.Wait()
+
+// 	if userDetailsErr != nil {
+// 		return userDetailsErr
+// 	}
+
+// 	if createOTPError != nil {
+// 		return createOTPError
+// 	}
+
+// 	// Send reset password email concurrently
+// 	var sendEmailError error
+
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		sendEmailError = custom.ResetPasswordMail(d.Email, userDetails.UserName, otp)
+// 	}()
+
+// 	// Wait for the sendEmail goroutine to finish
+// 	wg.Wait()
+
+// 	if sendEmailError != nil {
+// 		return sendEmailError
+// 	}
+
+// 	return nil
+// }
+
 func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 
 	if err := utils.ValidateData(d); err != nil {
