@@ -45,8 +45,8 @@ func main() {
 	adminRouter := r.PathPrefix("/api/v1/admin").Subrouter()
 	apiV1Router.Use(enableCORS)
 	adminRouter.Use(enableCORS)
-	routes.RegisterUserRoutes(apiV1Router)
-	routes.RegisterAdminRoutes(adminRouter)
+	routes.RegisterUserRoutes(apiV1Router, dbConn)
+	routes.RegisterAdminRoutes(adminRouter, dbConn)
 	http.Handle("/", r)
 
 	// Define the port
