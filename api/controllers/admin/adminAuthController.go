@@ -50,3 +50,7 @@ func (c *AdminController) Login(w http.ResponseWriter, r *http.Request) {
 
 	response.SuccessResponse(w, 200, result)
 }
+
+func (c *AdminController) ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+}

@@ -1,25 +1,17 @@
 package routes
 
 import (
+	"database/sql"
 	"email-marketing-service/api/controllers"
-	"email-marketing-service/api/database"
+
 	"email-marketing-service/api/middleware"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/services"
 
-	"fmt"
-
 	"github.com/gorilla/mux"
 )
 
-var RegisterUserRoutes = func(router *mux.Router) {
-
-	// Initialize the database connection pool
-	db, err := database.InitDB()
-	if err != nil {
-		fmt.Println("Failed to connect to the database")
-		return
-	}
+var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//intialize the user  dependencies
 	otpRepo := repository.NewOTPRepository(db)
