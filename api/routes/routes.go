@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"email-marketing-service/api/controllers"
-
 	"email-marketing-service/api/middleware"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/services"

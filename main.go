@@ -3,12 +3,16 @@ package main
 import (
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/routes"
+	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
+
+var response = &utils.ApiResponse{}
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +30,19 @@ func enableCORS(handler http.Handler) http.Handler {
 		// Call the actual handler
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+
+	fmt.Fprintf(w, "404 Not Found: %s", r.URL.Path)
+
+	res := map[string]string{
+		"response": "404 Not Found",
+		"path":     r.URL.Path,
+	}
+
+	response.ErrorResponse(w, res)
 }
 
 func main() {
@@ -47,6 +64,8 @@ func main() {
 	adminRouter.Use(enableCORS)
 	routes.RegisterUserRoutes(apiV1Router, dbConn)
 	routes.RegisterAdminRoutes(adminRouter, dbConn)
+
+	r.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 	http.Handle("/", r)
 
 	// Define the port

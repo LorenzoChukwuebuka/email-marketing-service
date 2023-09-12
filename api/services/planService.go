@@ -48,7 +48,7 @@ func (s *PlanService) GetASinglePlan(id int) (*model.PlanResponse, error) {
 		return nil, err
 	}
 	if plan == nil {
-		return nil, fmt.Errorf("no user found: %w", err)
+		return nil, fmt.Errorf("no record found: %w", err)
 	}
 	return plan, nil
 }
