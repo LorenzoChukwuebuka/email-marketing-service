@@ -35,6 +35,16 @@ func (r *PlanRepository) CreatePlan(d *model.PlanModel) (*model.PlanModel, error
 	return d, nil
 }
 
+func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
+	query := "SELECT EXISTS(SELECT 1 FROM plans WHERE planname = $1)"
+	var count bool
+	err := r.DB.QueryRow(query, planname).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count, nil
+}
+
 func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 	query := "Select * from plans"
 
@@ -56,8 +66,10 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 			&plan.Id,
 			&plan.PlanName,
 			&plan.Duration,
+			&plan.Price,
 			&plan.Details,
 			&plan.Status,
+			&plan.CreatedAt,
 			&updatedAt,
 			&deletedAt,
 		)
@@ -94,8 +106,10 @@ func (r *PlanRepository) GetSinglePlan(id int) (*model.PlanResponse, error) {
 		&plan.Id,
 		&plan.PlanName,
 		&plan.Duration,
+		&plan.Price,
 		&plan.Details,
 		&plan.Status,
+		&plan.CreatedAt,
 		&updatedAt,
 		&deletedAt,
 	)

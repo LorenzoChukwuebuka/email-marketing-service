@@ -20,7 +20,17 @@ func (s *PlanService) CreatePlan(d *model.PlanModel) (*model.PlanModel, error) {
 		return nil, err
 	}
 
-	_, err := s.PlanRepo.CreatePlan(d)
+	planExists, err := s.PlanRepo.PlanExistsByName(d.PlanName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if planExists {
+		return nil, fmt.Errorf("plan already exists")
+	}
+
+	_, err = s.PlanRepo.CreatePlan(d)
 
 	if err != nil {
 		return nil, err
