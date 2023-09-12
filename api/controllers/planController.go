@@ -33,6 +33,8 @@ func (c *PlanController) CreatePlan(w http.ResponseWriter, r *http.Request) {
 
 	response.SuccessResponse(w, 200, result)
 }
+
+
 func (c *PlanController) GetAllPlans(w http.ResponseWriter, r *http.Request) {
 	result, err := c.PlanService.GetAllPlans()
 
@@ -42,6 +44,8 @@ func (c *PlanController) GetAllPlans(w http.ResponseWriter, r *http.Request) {
 	}
 	response.SuccessResponse(w, 200, result)
 }
+
+
 func (c *PlanController) GetSinglePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -56,6 +60,8 @@ func (c *PlanController) GetSinglePlan(w http.ResponseWriter, r *http.Request) {
 	}
 	response.SuccessResponse(w, 200, result)
 }
+
+
 func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -78,6 +84,8 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(w, 200, "plan edited successfully")
 
 }
+
+
 func (c *PlanController) DeletePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
