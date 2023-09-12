@@ -111,14 +111,28 @@ func (r *UserRepository) FindUserById(d *model.User) (*model.User, error) {
 }
 
 func (r *UserRepository) FindUserByEmail(d *model.User) (*model.User, error) {
-
-	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users WHERE id = $1"
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, created_at, verified_at, updated_at, deleted_at FROM users WHERE email = $1"
 	row := r.DB.QueryRow(query, d.Email)
 
-	err := row.Scan(&d.ID, &d.UserName, &d.Email)
+	err := row.Scan(
+		&d.ID,
+		&d.UUID,
+		&d.FirstName,
+		&d.MiddleName,
+		&d.LastName,
+		&d.UserName,
+		&d.Email,
+		&d.Password,
+		&d.Verified,
+		&d.CreatedAt,
+		&d.VerifiedAt,
+		&d.UpdatedAt,
+		&d.DeletedAt,
+	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, err // User not found, return nil without an error
+			return nil, nil // User not found, return nil without an error
 		}
 		return nil, err
 	}
