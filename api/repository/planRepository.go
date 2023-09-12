@@ -128,9 +128,37 @@ func (r *PlanRepository) GetSinglePlan(id int) (*model.PlanResponse, error) {
 }
 
 func (r *PlanRepository) EditPlan(data *model.PlanModel) error {
+
+	query := `UPDATE plans SET planname=$1, duration=$2, price=$3, details=$4, updated_at=$5 WHERE id=$6`
+
+	stmt, err := r.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(data.PlanName, data.Duration, data.Price, data.Details, time.Now(), data.Id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (r *PlanRepository) DeletePlan(id int) error {
+
+	query := "DELETE FROM plans WHERE id = $1"
+
+	stmt, err := r.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
