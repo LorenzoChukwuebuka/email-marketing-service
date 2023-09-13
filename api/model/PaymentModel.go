@@ -10,6 +10,7 @@ type PaymentModel struct {
 	UserId     int          `json:"user_id"`
 	AmountPaid float32      `json:"amount_paid"`
 	PlanId     int          `json:"plan_id"`
+	Email      string       `json:"email"`
 	Duration   string       `json:"duration"`
 	ExpiryDate time.Time    `json:"expiry_date"`
 	Reference  string       `json:"reference"`
