@@ -1,18 +1,25 @@
 package main
 
 import (
+	"context"
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/utils"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
-var response = &utils.ApiResponse{}
+var (
+	response = &utils.ApiResponse{}
+)
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,12 +53,10 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
 	// Initialize the database connection
 	dbConn, err := database.InitDB()
 	if err != nil {
-		fmt.Println("Failed to connect to the database")
-		return
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 	defer dbConn.Close()
 
@@ -66,12 +71,33 @@ func main() {
 	routes.RegisterAdminRoutes(adminRouter, dbConn)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
-	http.Handle("/", r)
 
-	// Define the port
-	port := 9000
+	server := &http.Server{
+		Addr:    ":9000",
+		Handler: r,
+	}
 
-	// Start the server
-	fmt.Printf("Server started on port %d\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
+	go func() {
+		fmt.Println("Server started on port 9000")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe: %v", err)
+		}
+	}()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	sig := <-sigCh
+	fmt.Printf("Received signal: %v\n", sig)
+
+	// Create a context with a timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Shutdown the server gracefully
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown error: %v", err)
+	}
+
+	fmt.Println("Server shut down gracefully")
 }
