@@ -1,6 +1,9 @@
 package repository
 
-import "database/sql"
+import (
+	"database/sql"
+	"email-marketing-service/api/model"
+)
 
 type SubscriptionRepository struct {
 	DB *sql.DB
@@ -10,13 +13,37 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 	return &SubscriptionRepository{DB: db}
 }
 
-func (r *SubscriptionRepository) CreateSubscription() error {
-	return nil
+func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) error {
+	query := "INSERT INTO subscriptions (user_id, plan_id, payment_id, start_date, end_date, expired, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+
+	stmt, err := r.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	var insertedID int
+
+	err = stmt.QueryRow(
+		d.UserId,
+		d.PlanId,
+		d.PaymentId,
+		d.StartDate,
+		d.EndDate,
+		d.Expired,
+		d.CreatedAt,
+	).Scan(&insertedID)
+
+	if err != nil {
+		return err
+	}
+
+	d.Id = insertedID
+	return err
 }
 
 func (r *SubscriptionRepository) GetAllSubscription() {}
 
+func (r *SubscriptionRepository) GetExpiredSubscriptions() {}
 
-func (r *SubscriptionRepository) GetExpiredSubscriptions(){}
-
-func (r *SubscriptionRepository) GetSingleSubscription(id int){}
+func (r *SubscriptionRepository) GetSingleSubscription(id int) {}
