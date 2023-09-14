@@ -4,10 +4,9 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-	"fmt"
-	"net/http"
-
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type PaymentController struct {
@@ -21,6 +20,7 @@ func NewPaymentController(paymentService *services.PaymentService) *PaymentContr
 }
 
 func (c *PaymentController) InitializePayment(w http.ResponseWriter, r *http.Request) {
+
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
@@ -29,23 +29,37 @@ func (c *PaymentController) InitializePayment(w http.ResponseWriter, r *http.Req
 
 	var reqdata *model.PaymentModel
 
-	userId := claims["userId"].(int)
+	userId := claims["userId"].(float64)
 	email := claims["email"].(string)
 
 	utils.DecodeRequestBody(r, &reqdata)
 
 	reqdata.Email = email
-	reqdata.UserId = userId
+	reqdata.UserId = int(userId)
 
-	_, err := c.PaymentService.InitializePayment(reqdata)
+	initialize, err := c.PaymentService.InitializePayment(reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
+		return
 	}
 
-	fmt.Println(userId)
+	response.SuccessResponse(w, 200, initialize)
 }
 
-func (c *PaymentController) ConfirmPayment(w http.ResponseWriter, r *http.Request) {}
+func (c *PaymentController) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	reference := vars["reference"]
+
+	confirmPay, err := c.PaymentService.ConfirmPayment(reference)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, confirmPay)
+}
 
 func (c *PaymentController) GetAllPaymentsForAUser(w http.ResponseWriter, r *http.Request) {}
 

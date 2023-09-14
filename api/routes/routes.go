@@ -42,6 +42,6 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET")
 
 	//payment api
-	router.HandleFunc("/initialize-payment", paymentController.InitializePayment).Methods("POST")
+	router.HandleFunc("/initialize-payment", middleware.JWTMiddleware(paymentController.InitializePayment)).Methods("POST")
 	router.HandleFunc("/confirm-payment/{reference}", paymentController.ConfirmPayment).Methods("GET")
 }
