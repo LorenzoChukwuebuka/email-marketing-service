@@ -198,9 +198,28 @@ func calculateExpiryDate(duration string) time.Time {
 }
 
 func (s *PaymentService) GetAllPaymentsForAUser(userId int) ([]model.PaymentResponse, error) {
-	return nil, nil
+	paymentRepo, err := s.PaymentRepo.GetAllPayments(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(paymentRepo) == 0 {
+		return nil, fmt.Errorf("no records found for this user")
+	}
+
+	return paymentRepo, nil
 }
 
 func (s *PaymentService) GetSinglePaymentForAUser(userId int, paymentId int) (*model.PaymentResponse, error) {
-	return nil, nil
+	paymentRepo, err := s.PaymentRepo.GetSinglePayment(paymentId, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if paymentRepo == nil {
+		return nil, fmt.Errorf("no records found for this user")
+	}
+	return paymentRepo, nil
 }
