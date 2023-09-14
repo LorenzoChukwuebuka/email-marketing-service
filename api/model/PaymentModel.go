@@ -8,8 +8,8 @@ import (
 type PaymentModel struct {
 	Id         int          `json:"id"`
 	UserId     int          `json:"user_id"`
-	AmountPaid float32      `json:"amount_paid"`
-	PlanId     int          `json:"plan_id"`
+	AmountPaid float32      `json:"amount_paid" validated:"required"`
+	PlanId     int          `json:"plan_id" validated:"required"`
 	Email      string       `json:"email"`
 	Duration   string       `json:"duration"`
 	ExpiryDate time.Time    `json:"expiry_date"`

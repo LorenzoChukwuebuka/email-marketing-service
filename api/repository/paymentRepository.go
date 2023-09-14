@@ -13,13 +13,13 @@ func NewPaymentRepository(db *sql.DB) *PaymentRepository {
 	return &PaymentRepository{DB: db}
 }
 
-func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) error {
+func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.PaymentModel, error) {
 	query := "INSERT INTO payments (  user_id, amount_paid, plan_id, duration,  expiry_date, reference, status, created_at) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING id"
 
 	stmt, err := r.DB.Prepare(query)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer stmt.Close()
@@ -36,11 +36,12 @@ func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) error {
 		d.CreatedAt,
 	).Scan(&insertedID)
 
+	d.Id = insertedID
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return d, nil
 }
 
 func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, error) {
