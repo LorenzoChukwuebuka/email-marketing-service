@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"email-marketing-service/api/model"
+	"time"
 )
 
 type PaymentRepository struct {
@@ -44,7 +45,7 @@ func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.Payment
 	return d, nil
 }
 
-func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, error) {
+func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentResponse, error) {
 	query := `
 		SELECT
 			p.id,
@@ -87,7 +88,9 @@ func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, er
 		JOIN
 			plans pl ON p.plan_id = pl.id
 		WHERE
-			p.id = $1;
+			p.id = $1
+		AND WHERE 
+		   u.id = $2	;
 	`
 
 	// Prepare the SQL statement
@@ -102,6 +105,17 @@ func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, er
 
 	// Scan the result into a PaymentResponse struct
 	var payment model.PaymentResponse
+
+	var updatedAt sql.NullTime
+	var deletedAt sql.NullTime
+
+	var userverified sql.NullTime
+	var userdeleted sql.NullTime
+	var userupdated sql.NullTime
+
+	var planupated sql.NullTime
+	var plandeleted sql.NullTime
+
 	err = row.Scan(
 		&payment.Id,
 		&payment.UserId,
@@ -112,8 +126,8 @@ func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, er
 		&payment.Reference,
 		&payment.Status,
 		&payment.CreatedAt,
-		&payment.UpdatedAt,
-		&payment.DeletedAt,
+		&updatedAt,
+		&deletedAt,
 		&payment.User.ID,
 		&payment.User.UUID,
 		&payment.User.FirstName,
@@ -124,9 +138,9 @@ func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, er
 		&payment.User.Password,
 		&payment.User.Verified,
 		&payment.User.CreatedAt,
-		&payment.User.VerifiedAt,
-		&payment.User.UpdatedAt,
-		&payment.User.DeletedAt,
+		&userverified,
+		&userupdated,
+		&userdeleted,
 		&payment.Plan.Id,
 		&payment.Plan.PlanName,
 		&payment.Plan.Duration,
@@ -134,17 +148,45 @@ func (r *PaymentRepository) GetSinglePayment(id int) (*model.PaymentResponse, er
 		&payment.Plan.Details,
 		&payment.Plan.Status,
 		&payment.Plan.CreatedAt,
-		&payment.Plan.UpdatedAt,
-		&payment.Plan.DeletedAt,
+		&planupated,
+		&plandeleted,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// Set UpdatedAt based on the presence of updatedAt or deletedAt
+	if deletedAt.Valid {
+		payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
+	}
+	if updatedAt.Valid {
+		payment.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
+	}
+
+	if userverified.Valid {
+		payment.User.VerifiedAt = userverified.Time.Format(time.RFC3339Nano)
+	}
+
+	if userupdated.Valid {
+		payment.User.UpdatedAt = userupdated.Time.Format(time.RFC3339Nano)
+	}
+
+	if userdeleted.Valid {
+		payment.User.DeletedAt = userdeleted.Time.Format(time.RFC3339Nano)
+	}
+
+	if plandeleted.Valid {
+		payment.Plan.DeletedAt = plandeleted.Time.Format(time.RFC3339Nano)
+	}
+
+	if planupated.Valid {
+		payment.Plan.UpdatedAt = plandeleted.Time.Format(time.RFC3339Nano)
+	}
+
 	return &payment, nil
 }
 
-func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
+func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse, error) {
 	query := `SELECT
 			p.id,
 			p.user_id,
@@ -159,9 +201,9 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 			p.deleted_at,
 			u.id AS "user.id",
 			u.uuid AS "user.uuid",
-			u.first_name AS "user.firstname",
-			u.middle_name AS "user.middlename",
-			u.last_name AS "user.lastname",
+			u.firstname AS "user.firstname",
+			u.middlename AS "user.middlename",
+			u.lastname AS "user.lastname",
 			u.username AS "user.username",
 			u.email AS "user.email",
 			u.password AS "user.password",
@@ -184,7 +226,9 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 		JOIN
 			users u ON p.user_id = u.id
 		JOIN
-			plans pl ON p.plan_id = pl.id;
+			plans pl ON p.plan_id = pl.id
+
+			where u.id = $1
 		`
 
 	// Prepare the SQL statement
@@ -195,7 +239,7 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 	defer stmt.Close()
 
 	// Execute the prepared statement
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +249,16 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 	var payments []model.PaymentResponse
 	for rows.Next() {
 		var payment model.PaymentResponse
+		var updatedAt sql.NullTime
+		var deletedAt sql.NullTime
+
+		var userverified sql.NullTime
+		var userdeleted sql.NullTime
+		var userupdated sql.NullTime
+
+		var planupated sql.NullTime
+		var plandeleted sql.NullTime
+
 		err := rows.Scan(
 			&payment.Id,
 			&payment.UserId,
@@ -215,8 +269,8 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 			&payment.Reference,
 			&payment.Status,
 			&payment.CreatedAt,
-			&payment.UpdatedAt,
-			&payment.DeletedAt,
+			&updatedAt,
+			&deletedAt,
 			&payment.User.ID,
 			&payment.User.UUID,
 			&payment.User.FirstName,
@@ -227,9 +281,9 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 			&payment.User.Password,
 			&payment.User.Verified,
 			&payment.User.CreatedAt,
-			&payment.User.VerifiedAt,
-			&payment.User.UpdatedAt,
-			&payment.User.DeletedAt,
+			&userverified,
+			&userupdated,
+			&userdeleted,
 			&payment.Plan.Id,
 			&payment.Plan.PlanName,
 			&payment.Plan.Duration,
@@ -237,12 +291,41 @@ func (r *PaymentRepository) GetAllPayments() ([]model.PaymentResponse, error) {
 			&payment.Plan.Details,
 			&payment.Plan.Status,
 			&payment.Plan.CreatedAt,
-			&payment.Plan.UpdatedAt,
-			&payment.Plan.DeletedAt,
+			&planupated,
+			&plandeleted,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set UpdatedAt based on the presence of updatedAt or deletedAt
+		if deletedAt.Valid {
+			payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
+		}
+		if updatedAt.Valid {
+			payment.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
+		}
+
+		if userverified.Valid {
+			payment.User.VerifiedAt = userverified.Time.Format(time.RFC3339Nano)
+		}
+
+		if userupdated.Valid {
+			payment.User.UpdatedAt = userupdated.Time.Format(time.RFC3339Nano)
+		}
+
+		if userdeleted.Valid {
+			payment.User.DeletedAt = userdeleted.Time.Format(time.RFC3339Nano)
+		}
+
+		if plandeleted.Valid {
+			payment.Plan.DeletedAt = plandeleted.Time.Format(time.RFC3339Nano)
+		}
+
+		if planupated.Valid {
+			payment.Plan.UpdatedAt = plandeleted.Time.Format(time.RFC3339Nano)
+		}
+
 		payments = append(payments, payment)
 	}
 

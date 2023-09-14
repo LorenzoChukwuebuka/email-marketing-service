@@ -24,12 +24,10 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	planController := controllers.NewPlanController(planService)
 
 	//subscription
-
 	subscriptionRepo := repository.NewSubscriptionRepository(db)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
 
 	//payment
-
 	paymentRepo := repository.NewPaymentRepository(db)
 	paymentService := services.NewPaymentService(paymentRepo, subscriptionService)
 	paymentController := controllers.NewPaymentController(paymentService)
@@ -48,5 +46,6 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//payment api
 	router.HandleFunc("/initialize-payment", middleware.JWTMiddleware(paymentController.InitializePayment)).Methods("POST")
-	router.HandleFunc("/confirm-payment/{reference}", paymentController.ConfirmPayment).Methods("GET")
+	router.HandleFunc("/confirm-payment/{reference}", middleware.JWTMiddleware(paymentController.ConfirmPayment)).Methods("GET")
+	router.HandleFunc("/get-all-payment-for-user", middleware.JWTMiddleware(paymentController.GetAllPaymentsForAUser)).Methods("GET")
 }
