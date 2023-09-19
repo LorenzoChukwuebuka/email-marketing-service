@@ -7,6 +7,7 @@ import (
 
 type PlanModel struct {
 	Id        int          `json:"id"`
+	UUID       string    `json:"uuid"`
 	PlanName  string       `json:"planname" validate:"required"`
 	Duration  string       `json:"duration" validate:"required"`
 	Price     float32      `json:"price" validate:"required"`
@@ -19,6 +20,7 @@ type PlanModel struct {
 
 type PlanResponse struct {
 	Id        int       `json:"id"`
+	UUID       string    `json:"uuid"`
 	PlanName  string    `json:"planname" validate:"required"`
 	Duration  string    `json:"duration" validate:"required"`
 	Price     float32   `json:"price" validate:"required"`

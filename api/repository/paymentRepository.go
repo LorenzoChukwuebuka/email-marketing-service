@@ -15,7 +15,7 @@ func NewPaymentRepository(db *sql.DB) *PaymentRepository {
 }
 
 func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.PaymentModel, error) {
-	query := "INSERT INTO payments (  user_id, amount_paid, plan_id, duration,  expiry_date, reference, status, created_at) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING id"
+	query := "INSERT INTO payments (uuid,  user_id, amount_paid, plan_id, duration,  expiry_date, reference, status, created_at) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8,$9 ) RETURNING id"
 
 	stmt, err := r.DB.Prepare(query)
 
@@ -27,6 +27,7 @@ func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.Payment
 	var insertedID int
 
 	err = stmt.QueryRow(
+		d.UUID,
 		d.UserId,
 		d.AmountPaid,
 		d.PlanId,
@@ -45,10 +46,11 @@ func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.Payment
 	return d, nil
 }
 
-func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentResponse, error) {
+func (r *PaymentRepository) GetSinglePayment(id string, userId string) (*model.PaymentResponse, error) {
 	query := `
 		SELECT
 			p.id,
+			p.uuid,
 			p.user_id,
 			p.amount_paid,
 			p.plan_id,
@@ -73,6 +75,7 @@ func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentR
 			u.updated_at AS "user.updated_at",
 			u.deleted_at AS "user.deleted_at",
 			pl.id AS "plan.id",
+			pl.uuid AS "plan.uuid",
 			pl.planname AS "plan.planname",
 			pl.duration AS "plan.duration",
 			pl.price AS "plan.price",
@@ -84,13 +87,13 @@ func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentR
 		FROM
 			payments p
 		JOIN
-			users u ON p.user_id = u.id
+			users u ON p.user_id = u.uuid
 		JOIN
-			plans pl ON p.plan_id = pl.id
+			plans pl ON p.plan_id = pl.uuid
 		WHERE
-			p.id = $1
+			p.uuid = $1
 		AND WHERE 
-		   u.id = $2	;
+		   u.uuid = $2	;
 	`
 
 	// Prepare the SQL statement
@@ -118,6 +121,7 @@ func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentR
 
 	err = row.Scan(
 		&payment.Id,
+		&payment.UUID,
 		&payment.UserId,
 		&payment.AmountPaid,
 		&payment.PlanId,
@@ -142,6 +146,7 @@ func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentR
 		&userupdated,
 		&userdeleted,
 		&payment.Plan.Id,
+		&payment.Plan.UUID,
 		&payment.Plan.PlanName,
 		&payment.Plan.Duration,
 		&payment.Plan.Price,
@@ -189,6 +194,7 @@ func (r *PaymentRepository) GetSinglePayment(id int,userId int) (*model.PaymentR
 func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse, error) {
 	query := `SELECT
 			p.id,
+			p.uuid,
 			p.user_id,
 			p.amount_paid,
 			p.plan_id,
@@ -213,6 +219,7 @@ func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse,
 			u.updated_at AS "user.updated_at",
 			u.deleted_at AS "user.deleted_at",
 			pl.id AS "plan.id",
+			pl.uuid AS "plan.uuid",
 			pl.planname AS "plan.planname",
 			pl.duration AS "plan.duration",
 			pl.price AS "plan.price",
@@ -261,6 +268,7 @@ func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse,
 
 		err := rows.Scan(
 			&payment.Id,
+			&payment.UUID,
 			&payment.UserId,
 			&payment.AmountPaid,
 			&payment.PlanId,
@@ -285,6 +293,7 @@ func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse,
 			&userupdated,
 			&userdeleted,
 			&payment.Plan.Id,
+			&payment.Plan.UUID,
 			&payment.Plan.PlanName,
 			&payment.Plan.Duration,
 			&payment.Plan.Price,

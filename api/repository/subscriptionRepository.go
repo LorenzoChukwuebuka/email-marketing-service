@@ -14,33 +14,35 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 }
 
 func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) error {
-	query := "INSERT INTO subscriptions (user_id, plan_id, payment_id, start_date, end_date, expired, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+    query := "INSERT INTO subscriptions (uuid,user_id, plan_id, payment_id, start_date, end_date, expired, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7,$8) RETURNING id"
 
-	stmt, err := r.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+    stmt, err := r.DB.Prepare(query)
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
 
-	var insertedID int
+    var insertedID int
 
-	err = stmt.QueryRow(
-		d.UserId,
-		d.PlanId,
-		d.PaymentId,
-		d.StartDate,
-		d.EndDate,
-		d.Expired,
-		d.CreatedAt,
-	).Scan(&insertedID)
+    err = stmt.QueryRow(
+        d.UUID,
+        d.UserId,
+        d.PlanId,
+        d.PaymentId,
+        d.StartDate,
+        d.EndDate,
+        d.Expired,
+        d.CreatedAt,
+    ).Scan(&insertedID)
 
-	if err != nil {
-		return err
-	}
+    if err != nil {
+        return err
+    }
 
-	d.Id = insertedID
-	return err
+    d.Id = insertedID
+    return nil  // Return nil here on success
 }
+
 
 func (r *SubscriptionRepository) GetAllSubscription() {}
 

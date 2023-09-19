@@ -1,8 +1,5 @@
- -- +goose Up
+-- +goose Up
 -- +goose StatementBegin
-
--- Add a comment describing the purpose of this migration
--- This is optional but can be helpful for future reference
 
 CREATE TABLE IF NOT EXISTS public.otp (
     id SERIAL PRIMARY KEY,
@@ -14,5 +11,11 @@ CREATE TABLE IF NOT EXISTS public.otp (
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 );
+SELECT 'up SQL query';
+-- +goose StatementEnd
 
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE otp;
+SELECT 'down SQL query';
 -- +goose StatementEnd

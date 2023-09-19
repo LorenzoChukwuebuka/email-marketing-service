@@ -5,6 +5,8 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type PlanService struct {
@@ -19,6 +21,8 @@ func (s *PlanService) CreatePlan(d *model.PlanModel) (*model.PlanModel, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
+
+	d.UUID = uuid.New().String()
 
 	planExists, err := s.PlanRepo.PlanExistsByName(d.PlanName)
 
@@ -52,7 +56,7 @@ func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
 	return plans, nil
 }
 
-func (s *PlanService) GetASinglePlan(id int) (*model.PlanResponse, error) {
+func (s *PlanService) GetASinglePlan(id string) (*model.PlanResponse, error) {
 	plan, err := s.PlanRepo.GetSinglePlan(id)
 	if err != nil {
 		return nil, err
@@ -70,7 +74,7 @@ func (s *PlanService) UpdatePlan(d *model.PlanModel) error {
 	return nil
 }
 
-func (s *PlanService) DeletePlan(id int) error {
+func (s *PlanService) DeletePlan(id string) error {
 	if err := s.PlanRepo.DeletePlan(id); err != nil {
 		return err
 	}

@@ -1,0 +1,4 @@
+include .env
+
+migrate:
+    goose postgres "postgres://$(DB_USER):$(DB_PASSWORD)@localhost:5432/$(DB_NAME)" up

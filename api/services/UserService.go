@@ -135,7 +135,7 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 	}
 
 	// Generate JWT token
-	token, err := utils.JWTEncode(userDetails.ID, userDetails.UserName, userDetails.Email)
+	token, err := utils.JWTEncode(userDetails.ID, userDetails.UUID, userDetails.UserName, userDetails.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error generating JWT token: %w", err)
 	}
@@ -246,7 +246,6 @@ func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error 
 	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
-
 
 	data := &model.User{
 		ID: userId,

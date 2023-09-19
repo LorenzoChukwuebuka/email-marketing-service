@@ -6,12 +6,14 @@ import (
 	"email-marketing-service/api/utils"
 	"encoding/json"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 )
 
 type PaymentService struct {
@@ -79,6 +81,8 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 
 	url := fmt.Sprintf(api_base+"transaction/verify/%s", reference)
 
+	//ctx := context.TODO()
+
 	client := resty.New()
 
 	resp, err := client.R().
@@ -140,6 +144,7 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 
 	payment := &model.PaymentModel{
 		AmountPaid: float32(amount),
+		UUID:       uuid.New().String(),
 		PlanId:     planID,
 		UserId:     userID,
 		Duration:   duration,
@@ -156,6 +161,7 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 	}
 
 	subscription := &model.SubscriptionModel{
+		UUID:      uuid.New().String(),
 		UserId:    userID,
 		PlanId:    planID,
 		PaymentId: paymentRepo.Id,
@@ -211,7 +217,7 @@ func (s *PaymentService) GetAllPaymentsForAUser(userId int) ([]model.PaymentResp
 	return paymentRepo, nil
 }
 
-func (s *PaymentService) GetSinglePaymentForAUser(userId int, paymentId int) (*model.PaymentResponse, error) {
+func (s *PaymentService) GetSinglePaymentForAUser(userId string, paymentId string) (*model.PaymentResponse, error) {
 	paymentRepo, err := s.PaymentRepo.GetSinglePayment(paymentId, userId)
 
 	if err != nil {

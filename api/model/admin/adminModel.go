@@ -7,6 +7,7 @@ import (
 
 type AdminModel struct {
 	ID         int          `json:"id"`
+	UUID        string       `json:"uuid"`
 	FirstName  *string      `json:"firstname"`
 	MiddleName *string      `json:"middlename"`
 	LastName   *string      `json:"lastname"`
@@ -24,6 +25,7 @@ type AdminLogin struct {
 
 type AdminResponse struct {
 	ID         int     `json:"id"`
+	UUID        string       `json:"uuid"`
 	FirstName  *string `json:"firstname"`
 	MiddleName *string `json:"middlename"`
 	LastName   *string `json:"lastname"`

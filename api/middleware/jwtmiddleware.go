@@ -17,6 +17,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
+			 
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -32,6 +33,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return secretKey, nil
 		})
 		if err != nil || !token.Valid {
+	 
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -49,6 +51,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claimType, ok := jwtclaims["type"].(string)
 		if !ok || claimType != "admin" {
+		 
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

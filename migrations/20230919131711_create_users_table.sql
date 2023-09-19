@@ -1,25 +1,29 @@
 -- +goose Up
 -- +goose StatementBegin
+ CREATE TABLE IF NOT EXISTS public.users
+(
+    id SERIAL PRIMARY KEY,
+    uuid VARCHAR,
+    firstname VARCHAR,
+    middlename VARCHAR,
+    lastname VARCHAR,
+    email VARCHAR,
+    password VARCHAR,
+    verified BOOLEAN DEFAULT false,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    username VARCHAR
+);
+
 SELECT 'up SQL query';
 -- +goose StatementEnd
-CREATE TABLE IF NOT EXISTS public.users
-(
-    id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
-    uuid character varying COLLATE pg_catalog."default",
-    firstname character varying COLLATE pg_catalog."default",
-    middlename character varying COLLATE pg_catalog."default",
-    lastname character varying COLLATE pg_catalog."default",
-    email character varying COLLATE pg_catalog."default",
-    password character varying COLLATE pg_catalog."default",
-    verified boolean DEFAULT false,
-    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    verified_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    username character varying COLLATE pg_catalog."default",
-    CONSTRAINT users_pkey PRIMARY KEY (id)
-)
+
+
 -- +goose Down
 -- +goose StatementBegin
+
+DROP TABLE users;
 SELECT 'down SQL query';
 -- +goose StatementEnd

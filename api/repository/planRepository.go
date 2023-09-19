@@ -17,7 +17,7 @@ func NewPlanRepository(db *sql.DB) *PlanRepository {
 }
 
 func (r *PlanRepository) CreatePlan(d *model.PlanModel) (*model.PlanModel, error) {
-	query := "INSERT INTO plans(planname, duration, price, details, status, created_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id"
+	query := "INSERT INTO plans(uuid,planname, duration, price, details, status, created_at) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING id"
 
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
@@ -26,7 +26,7 @@ func (r *PlanRepository) CreatePlan(d *model.PlanModel) (*model.PlanModel, error
 	defer stmt.Close()
 
 	var insertedID int
-	err = stmt.QueryRow(d.PlanName, d.Duration, d.Price, d.Details, "active", time.Now()).Scan(&insertedID)
+	err = stmt.QueryRow(d.UUID,d.PlanName, d.Duration, d.Price, d.Details, "active", time.Now()).Scan(&insertedID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +64,7 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 
 		err := rows.Scan(
 			&plan.Id,
+			&plan.UUID,
 			&plan.PlanName,
 			&plan.Duration,
 			&plan.Price,
@@ -95,8 +96,8 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 	return plans, nil
 }
 
-func (r *PlanRepository) GetSinglePlan(id int) (*model.PlanResponse, error) {
-	query := "Select * FROM plans WHERE id = $1"
+func (r *PlanRepository) GetSinglePlan(id string) (*model.PlanResponse, error) {
+	query := "Select * FROM plans WHERE uuid = $1"
 
 	row := r.DB.QueryRow(query, id)
 
@@ -104,6 +105,7 @@ func (r *PlanRepository) GetSinglePlan(id int) (*model.PlanResponse, error) {
 	var updatedAt, deletedAt sql.NullTime
 	err := row.Scan(
 		&plan.Id,
+		&plan.UUID,
 		&plan.PlanName,
 		&plan.Duration,
 		&plan.Price,
@@ -129,7 +131,7 @@ func (r *PlanRepository) GetSinglePlan(id int) (*model.PlanResponse, error) {
 
 func (r *PlanRepository) EditPlan(data *model.PlanModel) error {
 
-	query := `UPDATE plans SET planname=$1, duration=$2, price=$3, details=$4, updated_at=$5 WHERE id=$6`
+	query := `UPDATE plans SET planname=$1, duration=$2, price=$3, details=$4, updated_at=$5 WHERE uuid=$6`
 
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
@@ -137,7 +139,7 @@ func (r *PlanRepository) EditPlan(data *model.PlanModel) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(data.PlanName, data.Duration, data.Price, data.Details, time.Now(), data.Id)
+	_, err = stmt.Exec(data.PlanName, data.Duration, data.Price, data.Details, time.Now(), data.UUID)
 	if err != nil {
 		return err
 	}
@@ -145,9 +147,9 @@ func (r *PlanRepository) EditPlan(data *model.PlanModel) error {
 	return nil
 }
 
-func (r *PlanRepository) DeletePlan(id int) error {
+func (r *PlanRepository) DeletePlan(id string) error {
 
-	query := "DELETE FROM plans WHERE id = $1"
+	query := "DELETE FROM plans WHERE uuid = $1"
 
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
