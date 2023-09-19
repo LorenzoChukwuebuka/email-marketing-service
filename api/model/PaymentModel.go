@@ -7,6 +7,7 @@ import (
 
 type PaymentModel struct {
 	Id         int          `json:"id"`
+	UUID       string        `json:"uuid"`
 	UserId     int          `json:"user_id"`
 	AmountPaid float32      `json:"amount_paid" validated:"required"`
 	PlanId     int          `json:"plan_id" validated:"required"`
@@ -22,6 +23,7 @@ type PaymentModel struct {
 
 type PaymentResponse struct {
 	Id         int       `json:"id"`
+	UUID       string    `json:"uuid"`
 	UserId     int       `json:"user_id"`
 	AmountPaid float32   `json:"amount_paid"`
 	PlanId     int       `json:"plan_id"`

@@ -1,21 +1,25 @@
 -- +goose Up
 -- +goose StatementBegin
+
+ CREATE TABLE IF NOT EXISTS public.plans (
+    id SERIAL PRIMARY KEY,
+    uuid VARCHAR(255) NOT NUll,
+    planname VARCHAR(255) NOT NULL,
+    duration VARCHAR(50) NOT NULL,
+    price REAL NOT NULL,
+    details TEXT NOT NULL,
+    status VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
 SELECT 'up SQL query';
 -- +goose StatementEnd
-CREATE TABLE IF NOT EXISTS public.plans
-(
-    id integer NOT NULL DEFAULT nextval('plans_id_seq'::regclass),
-    planname character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    duration character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    price real NOT NULL,
-    details text COLLATE pg_catalog."default" NOT NULL,
-    status character varying(50) COLLATE pg_catalog."default",
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT plans_pkey PRIMARY KEY (id)
-)
+
+
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE plans;
 SELECT 'down SQL query';
 -- +goose StatementEnd

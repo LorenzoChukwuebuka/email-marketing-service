@@ -34,7 +34,6 @@ func (c *PlanController) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(w, 200, result)
 }
 
-
 func (c *PlanController) GetAllPlans(w http.ResponseWriter, r *http.Request) {
 	result, err := c.PlanService.GetAllPlans()
 
@@ -45,14 +44,10 @@ func (c *PlanController) GetAllPlans(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(w, 200, result)
 }
 
-
 func (c *PlanController) GetSinglePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-
-	plan_id, _ := strconv.Atoi(id)
-
-	result, err := c.PlanService.GetASinglePlan(plan_id)
+	result, err := c.PlanService.GetASinglePlan(id)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -60,7 +55,6 @@ func (c *PlanController) GetSinglePlan(w http.ResponseWriter, r *http.Request) {
 	}
 	response.SuccessResponse(w, 200, result)
 }
-
 
 func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -85,15 +79,12 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
 func (c *PlanController) DeletePlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id := vars["id"]
 
-	plan_id, _ := strconv.Atoi(id)
-
-	if err := c.PlanService.DeletePlan(plan_id); err != nil {
+	if err := c.PlanService.DeletePlan(id); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}

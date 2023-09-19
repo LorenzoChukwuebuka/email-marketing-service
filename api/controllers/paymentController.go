@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
+	 
 )
 
 type PaymentController struct {
@@ -93,11 +93,11 @@ func (c *PaymentController) GetSinglePaymentForAUser(w http.ResponseWriter, r *h
 
 	id := vars["id"]
 
-	payment_id, _ := strconv.Atoi(id)
+	payment_id := id
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
-	payment, err := c.PaymentService.GetSinglePaymentForAUser(int(userId), payment_id)
+	payment, err := c.PaymentService.GetSinglePaymentForAUser(userId, payment_id)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

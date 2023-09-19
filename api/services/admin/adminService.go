@@ -5,6 +5,8 @@ import (
 	adminrepository "email-marketing-service/api/repository/admin"
 	"email-marketing-service/api/utils"
 	"fmt"
+
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,6 +27,8 @@ func (s *AdminService) CreateAdmin(d *adminmodel.AdminModel) (*adminmodel.AdminM
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 
 	d.Password = password
+
+	d.UUID = uuid.New().String()
 
 	adminUser, err := s.AdminRepo.CreateAdmin(d)
 
@@ -53,7 +57,7 @@ func (s *AdminService) AdminLogin(d *adminmodel.AdminLogin) (map[string]interfac
 		return nil, fmt.Errorf("passwords do not match:%w", err)
 	}
 
-	token, err := utils.JWTEncode(adminDetails.ID, adminDetails.Type, adminDetails.Email)
+	token, err := utils.AdminJWTEncode(adminDetails.ID, adminDetails.UUID, adminDetails.Type, adminDetails.Email)
 
 	if err != nil {
 		return nil, err
