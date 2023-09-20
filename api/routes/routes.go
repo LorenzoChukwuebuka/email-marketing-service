@@ -48,4 +48,5 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	router.HandleFunc("/initialize-payment", middleware.JWTMiddleware(paymentController.InitializePayment)).Methods("POST")
 	router.HandleFunc("/confirm-payment/{reference}", middleware.JWTMiddleware(paymentController.ConfirmPayment)).Methods("GET")
 	router.HandleFunc("/get-all-payment-for-user", middleware.JWTMiddleware(paymentController.GetAllPaymentsForAUser)).Methods("GET")
+	router.HandleFunc("/get-single-payment-for-a-user/{paymentId}",middleware.JWTMiddleware(paymentController.GetSinglePaymentForAUser)).Methods("GET")
 }

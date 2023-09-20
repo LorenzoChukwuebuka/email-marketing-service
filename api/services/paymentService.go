@@ -128,7 +128,7 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 		return "", fmt.Errorf("error converting userID to int: %s", err)
 	}
 
-	// Parse duration and calculate expiry date
+ 
 
 	tx, err := s.PaymentRepo.DB.Begin()
 	if err != nil {
@@ -217,7 +217,7 @@ func (s *PaymentService) GetAllPaymentsForAUser(userId int) ([]model.PaymentResp
 	return paymentRepo, nil
 }
 
-func (s *PaymentService) GetSinglePaymentForAUser(userId string, paymentId string) (*model.PaymentResponse, error) {
+func (s *PaymentService) GetSinglePaymentForAUser(userId int, paymentId string) (*model.PaymentResponse, error) {
 	paymentRepo, err := s.PaymentRepo.GetSinglePayment(paymentId, userId)
 
 	if err != nil {
