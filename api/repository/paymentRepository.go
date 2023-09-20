@@ -46,7 +46,7 @@ func (r *PaymentRepository) CreatePayment(d *model.PaymentModel) (*model.Payment
 	return d, nil
 }
 
-func (r *PaymentRepository) GetSinglePayment(id string, userId string) (*model.PaymentResponse, error) {
+func (r *PaymentRepository) GetSinglePayment(planId string, userId int) (*model.PaymentResponse, error) {
 	query := `
 		SELECT
 			p.id,
@@ -63,9 +63,9 @@ func (r *PaymentRepository) GetSinglePayment(id string, userId string) (*model.P
 			p.deleted_at,
 			u.id AS "user.id",
 			u.uuid AS "user.uuid",
-			u.first_name AS "user.firstname",
-			u.middle_name AS "user.middlename",
-			u.last_name AS "user.lastname",
+			u.firstname AS "user.firstname",
+			u.middlename AS "user.middlename",
+			u.lastname AS "user.lastname",
 			u.username AS "user.username",
 			u.email AS "user.email",
 			u.password AS "user.password",
@@ -87,13 +87,13 @@ func (r *PaymentRepository) GetSinglePayment(id string, userId string) (*model.P
 		FROM
 			payments p
 		JOIN
-			users u ON p.user_id = u.uuid
+			users u ON p.user_id = u.id
 		JOIN
-			plans pl ON p.plan_id = pl.uuid
+			plans pl ON p.plan_id = pl.id
 		WHERE
-			p.uuid = $1
-		AND WHERE 
-		   u.uuid = $2	;
+			p.uuid = $2
+		AND 
+		   u.id = $1	;
 	`
 
 	// Prepare the SQL statement
@@ -104,7 +104,8 @@ func (r *PaymentRepository) GetSinglePayment(id string, userId string) (*model.P
 	defer stmt.Close()
 
 	// Execute the prepared statement
-	row := stmt.QueryRow(id)
+
+	row := stmt.QueryRow(userId, planId)
 
 	// Scan the result into a PaymentResponse struct
 	var payment model.PaymentResponse
