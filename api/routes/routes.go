@@ -33,20 +33,20 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	paymentController := controllers.NewPaymentController(paymentService)
 
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
-	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST")
-	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST")
-	router.HandleFunc("/user-login", userController.Login).Methods("POST")
-	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST")
-	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST")
-	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT")
+	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
+	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST", "OPTIONS")
+	router.HandleFunc("/user-login", userController.Login).Methods("POST", "OPTIONS")
+	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST", "OPTIONS")
+	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST", "OPTIONS")
+	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT", "OPTIONS")
 
 	//public api
-	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET")
-	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET")
+	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET", "OPTIONS")
 
 	//payment api
-	router.HandleFunc("/initialize-payment", middleware.JWTMiddleware(paymentController.InitializePayment)).Methods("POST")
-	router.HandleFunc("/confirm-payment/{reference}", middleware.JWTMiddleware(paymentController.ConfirmPayment)).Methods("GET")
-	router.HandleFunc("/get-all-payment-for-user", middleware.JWTMiddleware(paymentController.GetAllPaymentsForAUser)).Methods("GET")
-	router.HandleFunc("/get-single-payment-for-a-user/{paymentId}",middleware.JWTMiddleware(paymentController.GetSinglePaymentForAUser)).Methods("GET")
+	router.HandleFunc("/initialize-payment", middleware.JWTMiddleware(paymentController.InitializePayment)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/confirm-payment/{reference}", middleware.JWTMiddleware(paymentController.ConfirmPayment)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-all-payment-for-user", middleware.JWTMiddleware(paymentController.GetAllPaymentsForAUser)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-single-payment-for-a-user/{paymentId}", middleware.JWTMiddleware(paymentController.GetSinglePaymentForAUser)).Methods("GET", "OPTIONS")
 }

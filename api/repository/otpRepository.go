@@ -36,7 +36,7 @@ func (r *OTPRepository) FindOTP(d *model.OTP) (*model.OTP, error) {
 	err := row.Scan(&otp.Id, &otp.UserId, &otp.Token, &otp.CreatedAt, &otp.UUID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("otp does not exist: %w", err) // OTP not found, return nil without an error
+			return nil, fmt.Errorf("otp does not exist") // OTP not found, return nil without an error
 		}
 		return nil, err
 	}

@@ -41,7 +41,7 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
-
+	
 	utils.DecodeRequestBody(r, &reqdata)
 	userCreateService, err := c.userService.CreateUser(reqdata)
 
