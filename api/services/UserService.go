@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-
 	"time"
 )
 
@@ -26,28 +25,28 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 }
 
 // CreateUser creates a new user, sends an OTP email, and stores OTP data.
-func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
+func (s *UserService) CreateUser(d *model.User) (string, error) {
 
 	if err := utils.ValidateData(d); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 
-	d.Password = password
+	d.Password = string(password)
 	d.UUID = uuid.New().String()
 
 	// Check if user already exists.
 	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if userExists {
-		return nil, fmt.Errorf("user already exists")
+		return "", fmt.Errorf("user already exists")
 	}
 
 	if _, err := s.userRepository.CreateUser(d); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	otp := utils.GenerateOTP(8)
@@ -59,15 +58,15 @@ func (s *UserService) CreateUser(d *model.User) (*model.User, error) {
 		UUID:   uuid.New().String(),
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Send mail.
 	if err := custom.SignUpMail(d.Email, d.UserName, otp); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return d, nil
+	return "Account created successfully. Kindly verify your account", nil
 }
 
 // VerifyUser verifies a user account using OTP.
@@ -225,7 +224,7 @@ func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 
 	user := &model.User{
 		ID:       otpData.UserId,
-		Password: password,
+		Password: string(password),
 	}
 
 	if err = s.userRepository.ResetPassword(user); err != nil {
@@ -265,7 +264,7 @@ func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error 
 	//hash password if it passes test
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.NewPassword), 14)
 
-	data.Password = password
+	data.Password = string(password)
 
 	if err := s.userRepository.ChangeUserPassword(data); err != nil {
 		return err
