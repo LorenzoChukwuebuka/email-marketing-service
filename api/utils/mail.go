@@ -2,17 +2,16 @@ package utils
 
 import (
 	"gopkg.in/gomail.v2"
-	"os"
 )
 
 func SendMail(subject string, email string, message string) error {
 
-	LoadEnv()
+	config := LoadEnv()
 	// Mailtrap SMTP server settings
 	smtpHost := "sandbox.smtp.mailtrap.io"
 	smtpPort := 2525
-	smtpUsername := os.Getenv("MAIL_USERNAME")
-	smtpPassword := os.Getenv("MAIL_PASSWORD")
+	smtpUsername := config.MailUsername
+	smtpPassword := config.MailPassword
 
 	// Create a new email message
 	msg := gomail.NewMessage()

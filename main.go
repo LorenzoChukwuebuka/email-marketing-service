@@ -6,15 +6,14 @@ import (
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 )
 
 var (
@@ -102,3 +101,51 @@ func main() {
 
 	fmt.Println("Server shut down gracefully")
 }
+
+/**
+
+These lines where commented out for a reason
+
+**/
+
+// package main
+
+// import (
+// 	paymentmethods "email-marketing-service/api/services/paymentMethods"
+// 	"fmt"
+// )
+
+// type Customer struct {
+// 	selectedPayment paymentmethods.Payment
+// }
+
+// func (c *Customer) ChoosePayment(paymentType string) {
+//     switch paymentType {
+//     case "creditCard":
+//         c.selectedPayment = &paymentmethods.CreditCard{}
+//     case "flutterwave":
+//         c.selectedPayment = &paymentmethods.Flutterwave{}
+//     // Add cases for Bitcoin and ApplePay as needed
+//     default:
+//         fmt.Println("Invalid payment type")
+//     }
+// }
+
+// func main(){
+// 	customer := Customer{}
+
+// 	customer.ChoosePayment("creditCard")
+
+// 	// Customer makes a payment
+//     customer.selectedPayment.Pay(100.00)
+
+//     // Customer charges additional amount
+//     customer.selectedPayment.Charge(50.00)
+
+//     // Customer refunds a portion
+//     customer.selectedPayment.Refund(30.00)
+
+//     // Get payment status
+//     status := customer.selectedPayment.Status()
+//     fmt.Println("Payment Status:", status)
+// }
