@@ -70,7 +70,7 @@ func (r *UserRepository) Login(d *model.User) (*model.UserResponse, error) {
 	err := row.Scan(&user.ID, &user.UUID, &user.FirstName, &user.MiddleName, &user.LastName, &user.UserName, &user.Email, &user.Password, &user.Verified, &verifiedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no user found: %w", err) // User not found, return nil without an error
+			return nil, fmt.Errorf("no user found") // User not found, return nil without an error
 		}
 		return nil, err
 	}

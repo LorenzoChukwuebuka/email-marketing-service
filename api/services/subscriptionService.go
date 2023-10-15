@@ -20,3 +20,13 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 	}
 	return d, nil
 }
+
+
+
+
+/*
+These are mostly jobs
+ 
+*/
+
+func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() {}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"os"
+	 
 )
 
 var db *sql.DB
@@ -17,13 +17,13 @@ func GetDb() *sql.DB {
 
 func InitDB() (*sql.DB, error) {
 
-	utils.LoadEnv()
+config :=	utils.LoadEnv()
 
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	host := config.DBHost
+	port := config.DBPort
+	user := config.DB_User
+	password := config.DBPassword
+	dbname := config.DBName
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", connStr)
@@ -44,3 +44,6 @@ func InitDB() (*sql.DB, error) {
 	fmt.Println("Connected to the database")
 	return db, nil
 }
+
+
+

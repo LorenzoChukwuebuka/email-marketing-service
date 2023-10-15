@@ -7,11 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 )
@@ -27,14 +25,14 @@ func NewPaymentService(paymentRepo *repository.PaymentRepository, subscriptionSv
 		SubscriptionSvc: subscriptionSvc,
 	}
 }
+	var (
+		config =	utils.LoadEnv()
+		key      = config.PaystackKey
+		api_base = config.PaystackBaseURL
+	)
 
 func (s *PaymentService) InitializePayment(d *model.PaymentModel) (map[string]interface{}, error) {
-	utils.LoadEnv()
 
-	var (
-		key      = os.Getenv("PAYSTACK_KEY")
-		api_base = os.Getenv("PAYSTACK_BASE_URL")
-	)
 
 	url := api_base + "transaction/initialize"
 
@@ -76,8 +74,7 @@ func (s *PaymentService) InitializePayment(d *model.PaymentModel) (map[string]in
 func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 	utils.LoadEnv()
 
-	key := os.Getenv("PAYSTACK_KEY")
-	api_base := os.Getenv("PAYSTACK_BASE_URL")
+	 
 
 	url := fmt.Sprintf(api_base+"transaction/verify/%s", reference)
 
@@ -181,6 +178,8 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 		return "", fmt.Errorf("error committing transaction: %s", err)
 	}
 
+	//send the user a mail of successful payment 
+
 	return "payment verified successfully", nil
 }
 
@@ -229,3 +228,5 @@ func (s *PaymentService) GetSinglePaymentForAUser(userId int, paymentId string) 
 	}
 	return paymentRepo, nil
 }
+
+ 

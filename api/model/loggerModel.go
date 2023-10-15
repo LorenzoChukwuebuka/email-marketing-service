@@ -1,5 +1,10 @@
 package model
 
+import "time"
+
 type LoggerModel struct {
-	Id int
+	Id        int
+	UUID string
+	Action    string
+	CreatedAt time.Time
 }

@@ -10,6 +10,12 @@ type PaymentRepository struct {
 	DB *sql.DB
 }
 
+var SetTime = func(field sql.NullTime, target *string) {
+	if field.Valid {
+		*target = field.Time.Format(time.RFC3339Nano)
+	}
+}
+
 func NewPaymentRepository(db *sql.DB) *PaymentRepository {
 	return &PaymentRepository{DB: db}
 }
@@ -161,13 +167,18 @@ func (r *PaymentRepository) GetSinglePayment(planId string, userId int) (*model.
 		return nil, err
 	}
 
-	// Set UpdatedAt based on the presence of updatedAt or deletedAt
-	if deletedAt.Valid {
-		payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
-	}
-	if updatedAt.Valid {
-		payment.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
-	}
+	// setTime(deletedAt, &payment.UpdatedAt)
+
+	SetTime(updatedAt, &payment.UpdatedAt)
+	SetTime(deletedAt, &payment.DeletedAt)
+
+	// // Set UpdatedAt based on the presence of updatedAt or deletedAt
+	// if deletedAt.Valid {
+	// 	payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
+	// }
+	// if updatedAt.Valid {
+	// 	payment.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
+	// }
 
 	if userverified.Valid {
 		payment.User.VerifiedAt = userverified.Time.Format(time.RFC3339Nano)
@@ -308,7 +319,6 @@ func (r *PaymentRepository) GetAllPayments(userId int) ([]model.PaymentResponse,
 			return nil, err
 		}
 
-		// Set UpdatedAt based on the presence of updatedAt or deletedAt
 		if deletedAt.Valid {
 			payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
 		}
