@@ -11,7 +11,6 @@ type CreditCardPaymentProcessor struct {
 
 
 func (c *CreditCardPaymentProcessor) Initialize(d *model.PaymentModel){
-
 }
 
 func (c *CreditCardPaymentProcessor) Pay(amount float64) {

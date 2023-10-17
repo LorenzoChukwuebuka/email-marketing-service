@@ -10,7 +10,6 @@ type FlutterwavePaymentProcessor struct {
 }
 
 func (c *FlutterwavePaymentProcessor) Initialize(d *model.PaymentModel) {
-
 }
 
 func (c *FlutterwavePaymentProcessor) Pay(amount float64) {

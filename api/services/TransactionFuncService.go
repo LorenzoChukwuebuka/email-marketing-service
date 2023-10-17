@@ -9,7 +9,6 @@ type Transaction struct {
 }
 
 
-
 func (c *Transaction) ChoosePaymentMethod(paymentType paymentmethods.PaymentMethodType) {
     switch paymentType {
     case paymentmethods.CreditCard:
