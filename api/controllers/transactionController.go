@@ -4,23 +4,27 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
+
 	"github.com/golang-jwt/jwt"
+
 	// "github.com/gorilla/mux"
 	"net/http"
 )
 
 type TransactionController struct {
+	TransactionService *services.TransactionService
 }
 
-func NewTransactinController() *TransactionController {
-	return &TransactionController{}
+func NewTransactinController(transactionService *services.TransactionService) *TransactionController {
+	return &TransactionController{
+		TransactionService: transactionService,
+	}
 }
 
 func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
-		response.ErrorResponse(w, "invalid claims")
-
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
 
@@ -34,22 +38,7 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 	reqdata.Duration = email
 	reqdata.UserId = int(userId)
 
-	if err := utils.ValidateData(reqdata); err != nil {
-		response.ErrorResponse(w, err.Error())
-		return
-	}
-
-	//send to the payment process depending on what they choose
-
-	newtransaction := services.Transaction{}
-
-	err := newtransaction.ChoosePaymentMethod(reqdata.PaymentMethod)
-	if err != nil {
-		response.ErrorResponse(w, err.Error())
-		return
-	}
-
-	result, err := newtransaction.OpenProcessPayment(reqdata)
+	result, err := c.TransactionService.InitiateNewTransaction(reqdata)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

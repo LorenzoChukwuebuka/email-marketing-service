@@ -64,12 +64,11 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	utils.LoadEnv()
+
 	response := &utils.ApiResponse{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
-			fmt.Println(tokenString)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

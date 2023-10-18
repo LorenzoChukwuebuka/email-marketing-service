@@ -31,7 +31,7 @@ func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPayment
 		},
 	}
 
-	fmt.Print(data)
+	fmt.Println(data)
 	client := resty.New()
 
 	resp, err := client.R().
@@ -47,14 +47,13 @@ func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPayment
 	if resp.StatusCode() != 200 {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
 	}
-
+	fmt.Println(resp.Body())
 	var response map[string]interface{}
 	if err := json.Unmarshal(resp.Body(), &response); err != nil {
 		return nil, err
 	}
 
 	return response, nil
-
 }
 
 func (c *PaystackPaymentProcessor) Pay(amount float64) {
