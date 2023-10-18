@@ -5,9 +5,18 @@ import (
 	"time"
 )
 
+type InitPaymentModelData struct {
+	UserId        int     `json:"user_id" validate:"required"`
+	Email         string  `json:"email"`
+	AmountToPay   float64 `json:"amount_to_pay" validate:"required"`
+	PaymentMethod string  `json:"payment_method" validate:"required"`
+	Duration      string  `json:"duration" validate:"required"`
+	PlanId        int     `json:"plan_id" validate:"required"`
+}
+
 type PaymentModel struct {
 	Id         int          `json:"id"`
-	UUID       string        `json:"uuid"`
+	UUID       string       `json:"uuid"`
 	UserId     int          `json:"user_id"`
 	AmountPaid float32      `json:"amount_paid" validated:"required"`
 	PlanId     int          `json:"plan_id" validated:"required"`

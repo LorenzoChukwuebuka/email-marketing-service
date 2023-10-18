@@ -6,18 +6,19 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"net/http"
-	"os"
 )
 
-var key = os.Getenv("JWT_KEY")
+var (
+	config = utils.Config{}
+	key    = config.JWTKey
+)
 
 func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	utils.LoadEnv()
+
 	response := &utils.ApiResponse{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
-			 
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -33,7 +34,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return secretKey, nil
 		})
 		if err != nil || !token.Valid {
-	 
+
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -51,7 +52,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claimType, ok := jwtclaims["type"].(string)
 		if !ok || claimType != "admin" {
-		 
+
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -62,14 +63,13 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-
-
 func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	utils.LoadEnv()
 	response := &utils.ApiResponse{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
+			fmt.Println(tokenString)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

@@ -1,24 +1,29 @@
 package services
 
-import "fmt"
+import (
+	"fmt"
 
-import paymentmethods "email-marketing-service/api/services/paymentMethodFactory"
+	"email-marketing-service/api/model"
+	paymentmethods "email-marketing-service/api/services/paymentMethodFactory"
+)
 
 type Transaction struct {
 	selectedPaymentMethod paymentmethods.PaymentInterface
 }
 
+func (c *Transaction) ChoosePaymentMethod(paymentType string) error {
+	switch paymentType {
+	case "FlutterWave":
+		c.selectedPaymentMethod = &paymentmethods.FlutterwavePaymentProcessor{}
+	case "Paystack":
+		c.selectedPaymentMethod = &paymentmethods.PaystackPaymentProcessor{}
+	default:
+		return fmt.Errorf("invalid payment type: %s", paymentType)
+	}
 
-func (c *Transaction) ChoosePaymentMethod(paymentType paymentmethods.PaymentMethodType) {
-    switch paymentType {
-    case paymentmethods.CreditCard:
-        c.selectedPaymentMethod = &paymentmethods.CreditCardPaymentProcessor{}
-    case paymentmethods.FlutterWave:
-        c.selectedPaymentMethod = &paymentmethods.FlutterwavePaymentProcessor{}
-    case paymentmethods.Paystack:
-        c.selectedPaymentMethod = &paymentmethods.PaystackPaymentProcessor{}
-    default:
-        fmt.Println("Invalid payment type")
-    }
+	return nil
 }
 
+func (c *Transaction) OpenProcessPayment(d *model.InitPaymentModelData) (map[string]interface{}, error) {
+	return c.selectedPaymentMethod.InitializePaymentProcess(d)
+}
