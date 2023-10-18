@@ -9,7 +9,8 @@ type FlutterwavePaymentProcessor struct {
 	paid bool
 }
 
-func (c *FlutterwavePaymentProcessor) Initialize(d *model.PaymentModel) {
+func (c *FlutterwavePaymentProcessor) InitializePaymentProcess(d *model.InitPaymentModelData)(map[string]interface{},error) {
+	return nil,nil
 }
 
 func (c *FlutterwavePaymentProcessor) Pay(amount float64) {
