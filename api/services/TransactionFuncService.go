@@ -26,4 +26,5 @@ func (c *Transaction) ChoosePaymentMethod(paymentType string) error {
 
 func (c *Transaction) OpenProcessPayment(d *model.InitPaymentModelData) (map[string]interface{}, error) {
 	return c.selectedPaymentMethod.InitializePaymentProcess(d)
+
 }
