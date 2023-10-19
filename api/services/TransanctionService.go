@@ -31,9 +31,9 @@ func (s *TransactionService) InitiateNewTransaction(d *model.InitPaymentModelDat
 	result, err := newTransaction.OpenProcessPayment(d)
 
 	if err != nil {
-		return nil, fmt.Errorf("error opening open process in service layer: %s", err)
+		return nil, fmt.Errorf("error initiating payment: %s", err)
 	}
-	
+
 	fmt.Print(result)
 
 	return nil, nil
