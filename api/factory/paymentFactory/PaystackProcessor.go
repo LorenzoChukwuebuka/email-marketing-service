@@ -18,7 +18,7 @@ var (
 	api_base = config.PaystackBaseURL
 )
 
-func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPaymentModelData) (map[string]interface{}, error) {
+func (c *PaystackPaymentProcessor) OpenDeposit(d *model.InitPaymentModelData) (map[string]interface{}, error) {
 	url := api_base + "transaction/initialize"
 
 	data := map[string]interface{}{
@@ -31,7 +31,7 @@ func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPayment
 		},
 	}
 
-	 fmt.Println(data)
+	fmt.Println(data)
 	client := resty.New()
 
 	resp, err := client.R().
@@ -56,18 +56,20 @@ func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPayment
 	return response, nil
 }
 
-func (c *PaystackPaymentProcessor) Pay(amount float64) {
+func (c *PaystackPaymentProcessor) ProcessDeposit(amount float64) {
 	fmt.Printf("Paid $%.2f using PaystackPaymentProcessor Card\n", amount)
 	c.paid = true
 }
 
-func (c *PaystackPaymentProcessor) Charge(amount float64) {
-	fmt.Printf("Charged $%.2f to Credit Card\n", amount)
+func (c *PaystackPaymentProcessor) OpenRefund() {
+	fmt.Printf("Charged $ to Credit Card\n")
 }
 
-func (c *PaystackPaymentProcessor) Refund(amount float64) {
-	fmt.Printf("Refunded $%.2f to Credit Card\n", amount)
+func (c *PaystackPaymentProcessor) ProcessRefund() {
+	fmt.Printf("Refunded to Credit Card")
 }
+
+func (c *PaystackPaymentProcessor) ChargeCard(amount float64) {}
 
 func (c *PaystackPaymentProcessor) Status() string {
 	if c.paid {

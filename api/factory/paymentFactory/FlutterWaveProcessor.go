@@ -9,22 +9,24 @@ type FlutterwavePaymentProcessor struct {
 	paid bool
 }
 
-func (c *FlutterwavePaymentProcessor) InitializePaymentProcess(d *model.InitPaymentModelData)(map[string]interface{},error) {
+func (c *FlutterwavePaymentProcessor) OpenDeposit(d *model.InitPaymentModelData)(map[string]interface{},error) {
 	return nil,nil
 }
 
-func (c *FlutterwavePaymentProcessor) Pay(amount float64) {
-	fmt.Printf("Paid $%.2f using Credit FlutterwavePaymentProcessor\n", amount)
+func (c *FlutterwavePaymentProcessor) ProcessDeposit(amount float64) {
+	fmt.Printf("Paid $%.2f using FlutterwavePaymentProcessor Card\n", amount)
 	c.paid = true
 }
 
-func (c *FlutterwavePaymentProcessor) Charge(amount float64) {
-	fmt.Printf("Charged $%.2f to Credit Card\n", amount)
+func (c *FlutterwavePaymentProcessor) OpenRefund() {
+	fmt.Printf("Charged $ to Credit Card\n")
 }
 
-func (c *FlutterwavePaymentProcessor) Refund(amount float64) {
-	fmt.Printf("Refunded $%.2f to Credit Card\n", amount)
+func (c *FlutterwavePaymentProcessor) ProcessRefund() {
+	fmt.Printf("Refunded to Credit Card")
 }
+
+func (c *FlutterwavePaymentProcessor) ChargeCard(amount float64) {}
 
 func (c *FlutterwavePaymentProcessor) Status() string {
 	if c.paid {

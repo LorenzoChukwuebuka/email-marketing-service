@@ -40,7 +40,7 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	result, err := paymentService.InitializePaymentProcess(reqdata)
+	result, err := paymentService.OpenDeposit(reqdata)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
