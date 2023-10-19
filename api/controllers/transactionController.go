@@ -1,24 +1,19 @@
 package controllers
 
 import (
+	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
 	"email-marketing-service/api/model"
-	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-
 	"github.com/golang-jwt/jwt"
-
 	// "github.com/gorilla/mux"
 	"net/http"
 )
 
 type TransactionController struct {
-	TransactionService *services.TransactionService
 }
 
-func NewTransactinController(transactionService *services.TransactionService) *TransactionController {
-	return &TransactionController{
-		TransactionService: transactionService,
-	}
+func NewTransactinController() *TransactionController {
+	return &TransactionController{}
 }
 
 func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r *http.Request) {
@@ -35,10 +30,17 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 	userId := claims["userId"].(float64)
 	email := claims["email"].(string)
 
-	reqdata.Duration = email
+	reqdata.Email = email
 	reqdata.UserId = int(userId)
 
-	result, err := c.TransactionService.InitiateNewTransaction(reqdata)
+	paymentService, err := paymentmethodFactory.PaymentFactory(reqdata.PaymentMethod)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	result, err := paymentService.InitializePaymentProcess(reqdata)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

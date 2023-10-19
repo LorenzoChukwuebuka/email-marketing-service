@@ -23,8 +23,8 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	planService := services.NewPlanService(planRepo)
 	planController := controllers.NewPlanController(planService)
 
-	transactionService := services.NewTransactionService()
-	transactionController := controllers.NewTransactinController(transactionService)
+	
+	transactionController := controllers.NewTransactinController()
 
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
