@@ -1,16 +1,14 @@
 package services
 
 import (
-	"fmt"
+	paymentmethods "email-marketing-service/api/factory/paymentMethodFactory"
 	"email-marketing-service/api/model"
-	paymentmethods "email-marketing-service/api/services/paymentMethodFactory"
+	"fmt"
 )
 
 type Transaction struct {
 	selectedPaymentMethod paymentmethods.PaymentInterface
 }
-
-
 
 func (c *Transaction) ChoosePaymentMethod(paymentType string) error {
 	switch paymentType {

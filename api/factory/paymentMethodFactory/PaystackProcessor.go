@@ -31,7 +31,7 @@ func (c *PaystackPaymentProcessor) InitializePaymentProcess(d *model.InitPayment
 		},
 	}
 
-	fmt.Println(data)
+	 fmt.Println(data)
 	client := resty.New()
 
 	resp, err := client.R().
