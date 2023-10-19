@@ -102,50 +102,28 @@ func main() {
 	fmt.Println("Server shut down gracefully")
 }
 
-/**
-
-These lines where commented out for a reason
-
-**/
-
 // package main
 
 // import (
-// 	paymentmethods "email-marketing-service/api/services/paymentMethods"
-// 	"fmt"
+// 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
+	 
 // )
 
-// type Customer struct {
-// 	selectedPayment paymentmethods.Payment
-// }
 
-// func (c *Customer) ChoosePayment(paymentType string) {
-//     switch paymentType {
-//     case "creditCard":
-//         c.selectedPayment = &paymentmethods.CreditCard{}
-//     case "flutterwave":
-//         c.selectedPayment = &paymentmethods.Flutterwave{}
-//     // Add cases for Bitcoin and ApplePay as needed
-//     default:
-//         fmt.Println("Invalid payment type")
-//     }
-// }
+//  func usefactory() error {
+// 	paymentService, err := paymentmethodFactory.Factory("Paystack")
 
-// func main(){
-// 	customer := Customer{}
+// 	if err != nil {
+// 		return err
+// 	}
 
-// 	customer.ChoosePayment("creditCard")
+// 	paymentService.Pay(20.00)
+// 	return nil
+//  }
 
-// 	// Customer makes a payment
-//     customer.selectedPayment.Pay(100.00)
 
-//     // Customer charges additional amount
-//     customer.selectedPayment.Charge(50.00)
+//  func main(){
+//        usefactory()
 
-//     // Customer refunds a portion
-//     customer.selectedPayment.Refund(30.00)
-
-//     // Get payment status
-//     status := customer.selectedPayment.Status()
-//     fmt.Println("Payment Status:", status)
-// }
+	   
+//  }
