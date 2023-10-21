@@ -18,7 +18,7 @@ var (
 	api_base = config.PaystackBaseURL
 )
 
-func (c *PaystackPaymentProcessor) OpenDeposit(d *model.InitPaymentModelData) (map[string]interface{}, error) {
+func (c *PaystackPaymentProcessor) OpenDeposit(d *model.BasePaymentModelData) (map[string]interface{}, error) {
 	url := api_base + "transaction/initialize"
 
 	data := map[string]interface{}{
@@ -31,7 +31,6 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *model.InitPaymentModelData) (m
 		},
 	}
 
-	fmt.Println(data)
 	client := resty.New()
 
 	resp, err := client.R().
@@ -47,7 +46,7 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *model.InitPaymentModelData) (m
 	if resp.StatusCode() != 200 {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
 	}
-	fmt.Println(resp.Body())
+	 
 	var response map[string]interface{}
 	if err := json.Unmarshal(resp.Body(), &response); err != nil {
 		return nil, err

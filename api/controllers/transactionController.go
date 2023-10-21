@@ -3,17 +3,23 @@ package controllers
 import (
 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
 	"email-marketing-service/api/model"
+	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-	"github.com/golang-jwt/jwt"
-	// "github.com/gorilla/mux"
+	"fmt"
 	"net/http"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
 
 type TransactionController struct {
+	BillingSVC *services.BillingService
 }
 
-func NewTransactinController() *TransactionController {
-	return &TransactionController{}
+func NewTransactinController(billingService *services.BillingService) *TransactionController {
+	return &TransactionController{
+		BillingSVC: billingService,
+	}
 }
 
 func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +29,7 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	var reqdata *model.InitPaymentModelData
+	var reqdata *model.BasePaymentModelData
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -52,6 +58,29 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 }
 
 func (c *TransactionController) ChargeTransaction(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	reference := vars["reference"]
+	paymentmethod := vars["paymentmethod"]
+
+	fmt.Println(reference + " " + paymentmethod)
+
+
+	result,err := c.BillingSVC.ConfirmPayment(paymentmethod,reference)
+
+	
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
 
 }
 

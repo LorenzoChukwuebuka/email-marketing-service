@@ -41,7 +41,7 @@ func enableCORS(handler http.Handler) http.Handler {
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 
-	fmt.Fprintf(w, "404 Not Found: %s", r.URL.Path)
+	//fmt.Fprintf(w, "404 Not Found: %s", r.URL.Path)
 
 	res := map[string]string{
 		"response": "404 Not Found",
@@ -102,28 +102,4 @@ func main() {
 	fmt.Println("Server shut down gracefully")
 }
 
-// package main
-
-// import (
-// 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
-	 
-// )
-
-
-//  func usefactory() error {
-// 	paymentService, err := paymentmethodFactory.Factory("Paystack")
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	paymentService.Pay(20.00)
-// 	return nil
-//  }
-
-
-//  func main(){
-//        usefactory()
-
-	   
-//  }
+ 
