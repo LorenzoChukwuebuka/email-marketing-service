@@ -23,8 +23,9 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	planService := services.NewPlanService(planRepo)
 	planController := controllers.NewPlanController(planService)
 
-	
-	transactionController := controllers.NewTransactinController()
+	//transaction service 
+	transanctionService := services.NewBillingService()
+	transactionController := controllers.NewTransactinController(transanctionService)
 
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
@@ -35,8 +36,8 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT", "OPTIONS")
 
 	//transaction routes
-
 	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
 
 	//public api
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
