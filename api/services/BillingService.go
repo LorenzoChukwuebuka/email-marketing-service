@@ -3,20 +3,29 @@ package services
 import (
 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
 	"email-marketing-service/api/model"
+	"email-marketing-service/api/repository"
+	"email-marketing-service/api/utils"
 	"fmt"
-	"time"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-type BillingService struct{}
+type BillingService struct {
+	BillingRepo     *repository.BillingRepository
+	SubscriptionSVC *SubscriptionService
+}
 
-func NewBillingService() *BillingService {
-	return &BillingService{}
+func NewBillingService(billingRepository *repository.BillingRepository, subscriptionSVC *SubscriptionService) *BillingService {
+	return &BillingService{
+		BillingRepo:     billingRepository,
+		SubscriptionSVC: subscriptionSVC,
+	}
 }
 
 func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) (map[string]interface{}, error) {
-
 	paymenservice, err := paymentmethodFactory.PaymentFactory(paymentmethod)
 
 	if err != nil {
@@ -34,13 +43,67 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
-	fmt.Println(data)
+	tx, err := s.BillingRepo.DB.Begin()
 
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer the rollback in case of an error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	billingServiceData := &model.BillingModel{
+		UUID:          uuid.New().String(),
+		UserId:        data.UserID,
+		AmountPaid:    float32(data.Amount),
+		PlanId:        data.PlanID,
+		Email:         data.Email,
+		Duration:      data.Duration,
+		ExpiryDate:    calculateExpiryDate(data.Duration),
+		Reference:     reference,
+		TransactionId: utils.GenerateOTP(10),
+		PaymentMethod: paymentmethod,
+		Status:        data.Status,
+		CreatedAt:     time.Now(),
+	}
+
+	billingRepo, err := s.BillingRepo.CreateBilling(billingServiceData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	subscription := &model.SubscriptionModel{
+		UUID:      uuid.New().String(),
+		UserId:    data.UserID,
+		PlanId:    data.PlanID,
+		PaymentId: billingRepo.Id,
+		StartDate: time.Now(),
+		EndDate:   calculateExpiryDate(data.Duration),
+		Expired:   false,
+		CreatedAt: time.Now(),
+	}
+
+	_, err = s.SubscriptionSVC.CreateSubscription(subscription)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Print(billingRepo)
 	return nil, nil
 }
 
-
-func ckalculateExpiryDate(duration string) time.Time {
+func calculateExpiryDate(duration string) time.Time {
 	parts := strings.Split(duration, " ")
 	num, _ := strconv.Atoi(parts[0])
 	unit := parts[1]

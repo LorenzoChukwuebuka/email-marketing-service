@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS public.billing (
     duration VARCHAR(255) NOT NULL,
     expiry_date TIMESTAMP NOT NULL,
     reference VARCHAR(255) NOT NULL,
+    paymentMethod VARCHAR(255) NOT NULL,
+    transaction_id VARCHAR(255) NOT NULL,
     status VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
@@ -20,6 +22,6 @@ SELECT 'up SQL query';
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE payments;
+DROP TABLE billing;
 SELECT 'down SQL query';
 -- +goose StatementEnd
