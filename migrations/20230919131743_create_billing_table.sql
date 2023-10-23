@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE IF NOT EXISTS public.payments (
+CREATE TABLE IF NOT EXISTS public.billing (
     id SERIAL PRIMARY KEY,
     uuid VARCHAR(255) NOT NULL,
     user_id INTEGER NOT NULL,

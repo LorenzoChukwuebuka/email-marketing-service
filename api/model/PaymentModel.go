@@ -14,9 +14,18 @@ type BasePaymentModelData struct {
 	PlanId        int     `json:"plan_id" validate:"required"`
 }
 
+type BaseProcessPaymentModel struct {
+	PaymentMethod string `json:"payment_method" validate:"required"`
+	Reference     string `json:"reference" validate:"required"`
+}
 
-type BasePaymentModelResponse struct {
-	
+type BasePaymentResponse struct {
+	Amount   float64
+	PlanID   int
+	UserID   int
+	Duration string
+	Email    string
+	Status string
 }
 
 type PaymentModel struct {

@@ -2,3 +2,6 @@ include .env
 
 migrate:
     goose postgres "postgres://$(DB_USER):$(DB_PASSWORD)@localhost:5432/$(DB_NAME)" up
+
+status:
+       goose postgres "postgres://postgres:Lorenzo@localhost:5432/email_marketing_service" status
