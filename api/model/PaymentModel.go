@@ -28,7 +28,7 @@ type BasePaymentResponse struct {
 	Status string
 }
 
-type PaymentModel struct {
+type BillingModel struct {
 	Id         int          `json:"id"`
 	UUID       string       `json:"uuid"`
 	UserId     int          `json:"user_id"`
@@ -38,6 +38,8 @@ type PaymentModel struct {
 	Duration   string       `json:"duration"`
 	ExpiryDate time.Time    `json:"expiry_date"`
 	Reference  string       `json:"reference"`
+	TransactionId string  `json:"transaction_id"`
+	PaymentMethod string `json:"payment_method"`
 	Status     string       `json:"status"`
 	CreatedAt  time.Time    `json:"created_at"`
 	UpdatedAt  sql.NullTime `json:"updated_at"`

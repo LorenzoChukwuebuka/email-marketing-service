@@ -146,7 +146,7 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 		UserId:     userID,
 		Duration:   duration,
 		Reference:  reference,
-		ExpiryDate: calculateExpiryDate(duration),
+		// ExpiryDate: calculateExpiryDate(duration),
 		Email:      email,
 		CreatedAt:  time.Now(),
 		Status:     "active",
@@ -183,7 +183,7 @@ func (s *PaymentService) ConfirmPayment(reference string) (string, error) {
 	return "payment verified successfully", nil
 }
 
-func calculateExpiryDate(duration string) time.Time {
+func caltyculateExpiryDate(duration string) time.Time {
 	parts := strings.Split(duration, " ")
 	num, _ := strconv.Atoi(parts[0])
 	unit := parts[1]
