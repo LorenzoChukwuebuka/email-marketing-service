@@ -5,7 +5,6 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
@@ -68,9 +67,6 @@ func (c *TransactionController) ChargeTransaction(w http.ResponseWriter, r *http
 
 	reference := vars["reference"]
 	paymentmethod := vars["paymentmethod"]
-
-	fmt.Println(reference + " " + paymentmethod)
-
 
 	result,err := c.BillingSVC.ConfirmPayment(paymentmethod,reference)
 

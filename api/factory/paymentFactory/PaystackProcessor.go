@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"net/http"
+	"strconv"
 )
 
 type PaystackPaymentProcessor struct {
@@ -46,7 +48,7 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *model.BasePaymentModelData) (m
 	if resp.StatusCode() != 200 {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
 	}
-	 
+
 	var response map[string]interface{}
 	if err := json.Unmarshal(resp.Body(), &response); err != nil {
 		return nil, err
@@ -55,9 +57,70 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *model.BasePaymentModelData) (m
 	return response, nil
 }
 
-func (c *PaystackPaymentProcessor) ProcessDeposit(amount float64) {
-	fmt.Printf("Paid $%.2f using PaystackPaymentProcessor Card\n", amount)
-	c.paid = true
+func (c *PaystackPaymentProcessor) ProcessDeposit(d *model.BaseProcessPaymentModel) (*model.BasePaymentResponse, error) {
+
+	url := fmt.Sprintf(api_base+"transaction/verify/%s", d.Reference)
+
+	//ctx := context.TODO()
+
+	client := resty.New()
+
+	resp, err := client.R().
+		SetHeader("Authorization", "Bearer "+key).
+		SetHeader("Accept", "application/json").
+		Get(url)
+
+	if err != nil {
+		return nil, fmt.Errorf("error sending request: %s", err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(resp.Body(), &result); err != nil {
+		return nil, fmt.Errorf("error decoding response body: %s", err)
+	}
+
+	if status, ok := result["status"].(bool); ok && !status {
+		return nil, fmt.Errorf("transaction failed")
+	}
+
+	data, ok := result["data"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response format")
+	}
+
+	amount := data["amount"].(float64) / 100
+	planIDStr, _ := data["metadata"].(map[string]interface{})["plan_id"].(string)
+	userIDStr, _ := data["metadata"].(map[string]interface{})["user_id"].(string)
+	duration, _ := data["metadata"].(map[string]interface{})["duration"].(string)
+	email, _ := data["customer"].(map[string]interface{})["email"].(string)
+	status, _ := data["status"].(string)
+
+	planID, err := strconv.Atoi(planIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("error converting planID to int: %s", err)
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("error converting userID to int: %s", err)
+	}
+
+	paymentData := &model.BasePaymentResponse{
+		Amount:   amount,
+		PlanID:   planID,
+		UserID:   userID,
+		Duration: duration,
+		Email:    email,
+		Status:   status,
+	}
+
+	 
+
+	return paymentData, nil
 }
 
 func (c *PaystackPaymentProcessor) OpenRefund() {
