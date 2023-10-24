@@ -14,7 +14,7 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 }
 
 func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) error {
-    query := "INSERT INTO subscriptions (uuid,user_id, plan_id, payment_id, start_date, end_date, expired, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7,$8) RETURNING id"
+    query := "INSERT INTO subscriptions (uuid,user_id, plan_id, payment_id, start_date, end_date, expired, created_at,transaction_id) VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9) RETURNING id"
 
     stmt, err := r.DB.Prepare(query)
     if err != nil {
@@ -33,6 +33,7 @@ func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) 
         d.EndDate,
         d.Expired,
         d.CreatedAt,
+        d.TransactionId,
     ).Scan(&insertedID)
 
     if err != nil {

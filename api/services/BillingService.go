@@ -56,6 +56,9 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		}
 	}()
 
+
+	transactionId :=  utils.GenerateOTP(10)
+
 	billingServiceData := &model.BillingModel{
 		UUID:          uuid.New().String(),
 		UserId:        data.UserID,
@@ -65,7 +68,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		Duration:      data.Duration,
 		ExpiryDate:    calculateExpiryDate(data.Duration),
 		Reference:     reference,
-		TransactionId: utils.GenerateOTP(10),
+		TransactionId: transactionId,
 		PaymentMethod: paymentmethod,
 		Status:        data.Status,
 		CreatedAt:     time.Now(),
@@ -85,6 +88,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		StartDate: time.Now(),
 		EndDate:   calculateExpiryDate(data.Duration),
 		Expired:   false,
+		TransactionId: transactionId,
 		CreatedAt: time.Now(),
 	}
 

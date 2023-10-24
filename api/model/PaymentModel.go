@@ -46,7 +46,7 @@ type BillingModel struct {
 	DeletedAt  sql.NullTime `json:"deleted_at"`
 }
 
-type PaymentResponse struct {
+type BillingResponse struct {
 	Id         int       `json:"id"`
 	UUID       string    `json:"uuid"`
 	UserId     int       `json:"user_id"`
@@ -55,6 +55,8 @@ type PaymentResponse struct {
 	Duration   string    `json:"duration"`
 	ExpiryDate time.Time `json:"expiry_date"`
 	Reference  string    `json:"reference"`
+	TransactionId string  `json:"transaction_id"`
+	PaymentMethod string `json:"payment_method"`
 	Status     string    `json:"status"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  string    `json:"updated_at"`

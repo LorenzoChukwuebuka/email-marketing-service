@@ -13,6 +13,7 @@ type SubscriptionModel struct {
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Expired   bool      `json:"expired"`
+	TransactionId string `json:"transaction_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -22,7 +23,7 @@ type SubscriptionResponseModel struct {
 	UUID      string `json:"uuid"`
 	User      UserResponse
 	Plan      PlanResponse
-	PaymentId PaymentResponse
+	PaymentId BillingResponse
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Expired   bool      `json:"expired"`
