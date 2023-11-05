@@ -56,8 +56,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		}
 	}()
 
-
-	transactionId :=  utils.GenerateOTP(10)
+	transactionId := utils.GenerateOTP(10)
 
 	billingServiceData := &model.BillingModel{
 		UUID:          uuid.New().String(),
@@ -81,15 +80,15 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	}
 
 	subscription := &model.SubscriptionModel{
-		UUID:      uuid.New().String(),
-		UserId:    data.UserID,
-		PlanId:    data.PlanID,
-		PaymentId: billingRepo.Id,
-		StartDate: time.Now(),
-		EndDate:   calculateExpiryDate(data.Duration),
-		Expired:   false,
+		UUID:          uuid.New().String(),
+		UserId:        data.UserID,
+		PlanId:        data.PlanID,
+		PaymentId:     billingRepo.Id,
+		StartDate:     time.Now(),
+		EndDate:       calculateExpiryDate(data.Duration),
+		Expired:       false,
 		TransactionId: transactionId,
-		CreatedAt: time.Now(),
+		CreatedAt:     time.Now(),
 	}
 
 	_, err = s.SubscriptionSVC.CreateSubscription(subscription)
@@ -124,4 +123,18 @@ func calculateExpiryDate(duration string) time.Time {
 	default:
 		return time.Now()
 	}
+}
+
+func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.BillingResponse, error) {
+
+	billing, err := s.BillingRepo.GetSingleBillingRecord(biilingId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	if billing == nil {
+		return nil, fmt.Errorf("no record found: %w", err)
+	}
+
+	return billing, nil
 }

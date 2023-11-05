@@ -68,9 +68,8 @@ func (c *TransactionController) ChargeTransaction(w http.ResponseWriter, r *http
 	reference := vars["reference"]
 	paymentmethod := vars["paymentmethod"]
 
-	result,err := c.BillingSVC.ConfirmPayment(paymentmethod,reference)
+	result, err := c.BillingSVC.ConfirmPayment(paymentmethod, reference)
 
-	
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -78,6 +77,29 @@ func (c *TransactionController) ChargeTransaction(w http.ResponseWriter, r *http
 
 	response.SuccessResponse(w, 200, result)
 
+}
+
+func (c *TransactionController) GetSingleBillingRecord(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	billingId := vars["billingId"]
+
+	userId := claims["userId"].(float64)
+
+	result, err := c.BillingSVC.GetSingleBillingRecord(billingId, int(userId))
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
 }
 
 func (c *TransactionController) RefundTransaction(w http.ResponseWriter, r *http.Request) {
