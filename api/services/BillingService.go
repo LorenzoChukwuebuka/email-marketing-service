@@ -138,3 +138,18 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 
 	return billing, nil
 }
+
+func (s *BillingService) GetAllBillingForAUser(userId int) ([]model.BillingResponse, error) {
+	billing, err := s.BillingRepo.GetAllPayments(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if billing == nil {
+		return nil, fmt.Errorf("no record found: %w", err)
+	}
+
+	return billing, nil
+
+}

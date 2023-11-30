@@ -56,7 +56,7 @@ func (r *BillingRepository) CreateBilling(d *model.BillingModel) (*model.Billing
 
 func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.BillingResponse, error) {
 	query := `
-		SELECT
+			SELECT
 			p.id,
 			p.uuid,
 			p.user_id AS "user.id",
@@ -100,9 +100,9 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 		JOIN
 			plans pl ON p.plan_id = pl.id
 		WHERE
-			p.uuid = $1
+			u.id = $1
 		AND 
-		   u.id = $2;
+			p.uuid = $2
 	`
 
 	// Prepare the SQL statement
@@ -113,20 +113,12 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 	defer stmt.Close()
 
 	// Execute the prepared statement
-	row := stmt.QueryRow(billingID, userID)
+	row := stmt.QueryRow(userID, billingID)
 
 	// Scan the result into a PaymentResponse struct
 	var payment model.BillingResponse
 
-	var updatedAt sql.NullTime
-	var deletedAt sql.NullTime
-
-	var userVerifiedAt sql.NullTime
-	var userUpdatedAt sql.NullTime
-	var userDeletedAt sql.NullTime
-
-	var planUpdatedAt sql.NullTime
-	var planDeletedAt sql.NullTime
+	var updatedAt, deletedAt, userVerifiedAt, userUpdatedAt, userDeletedAt, planUpdatedAt, planDeletedAt sql.NullTime
 
 	err = row.Scan(
 		&payment.Id,
@@ -185,51 +177,50 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse, error) {
 	query := `
 	SELECT
-		p.id,
-		p.uuid,
-		p.user_id AS "user.id",
-		p.amount_paid,
-		p.plan_id AS "plan.id",
-		p.duration,
-		p.expiry_date,
-		p.reference,
-		p.transaction_id,
-		p.paymentMethod AS "payment_method",
-		p.status,
-		p.created_at,
-		p.updated_at,
-		p.deleted_at,
-		u.uuid AS "user.uuid",
-		u.firstname AS "user.firstname",
-		u.middlename AS "user.middlename",
-		u.lastname AS "user.lastname",
-		u.username AS "user.username",
-		u.email AS "user.email",
-		u.password AS "user.password",
-		u.verified AS "user.verified",
-		u.created_at AS "user.created_at",
-		u.verified_at AS "user.verified_at",
-		u.updated_at AS "user.updated_at",
-		u.deleted_at AS "user.deleted_at",
-		pl.uuid AS "plan.uuid",
-		pl.planname AS "plan.planname",
-		pl.duration AS "plan.duration",
-		pl.price AS "plan.price",
-		pl.number_of_emails_per_day,
-		pl.details AS "plan.details",
-		pl.status AS "plan.status",
-		pl.created_at AS "plan.created_at",
-		pl.updated_at AS "plan.updated_at",
-		pl.deleted_at AS "plan.deleted_at"
-	FROM
-		billing p
-	JOIN
-		users u ON p.user_id = u.id
-	JOIN
-		plans pl ON p.plan_id = pl.id
-	WHERE
-		u.id = $1
-	
+			p.id,
+			p.uuid,
+			p.user_id AS "user.id",
+			p.amount_paid,
+			p.plan_id AS "plan.id",
+			p.duration,
+			p.expiry_date,
+			p.reference,
+			p.transaction_id,
+			p.paymentMethod AS "payment_method",
+			p.status,
+			p.created_at,
+			p.updated_at,
+			p.deleted_at,
+			u.uuid AS "user.uuid",
+			u.firstname AS "user.firstname",
+			u.middlename AS "user.middlename",
+			u.lastname AS "user.lastname",
+			u.username AS "user.username",
+			u.email AS "user.email",
+			u.password AS "user.password",
+			u.verified AS "user.verified",
+			u.created_at AS "user.created_at",
+			u.verified_at AS "user.verified_at",
+			u.updated_at AS "user.updated_at",
+			u.deleted_at AS "user.deleted_at",
+			pl.uuid AS "plan.uuid",
+			pl.planname AS "plan.planname",
+			pl.duration AS "plan.duration",
+			pl.price AS "plan.price",
+			pl.number_of_emails_per_day,
+			pl.details AS "plan.details",
+			pl.status AS "plan.status",
+			pl.created_at AS "plan.created_at",
+			pl.updated_at AS "plan.updated_at",
+			pl.deleted_at AS "plan.deleted_at"
+		FROM
+			billing p
+		JOIN
+			users u ON p.user_id = u.id
+		JOIN
+			plans pl ON p.plan_id = pl.id
+		WHERE
+			u.id = $1
 `
 
 	// Prepare the SQL statement
@@ -250,15 +241,7 @@ func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse,
 	var payments []model.BillingResponse
 	for rows.Next() {
 		var payment model.BillingResponse
-		var updatedAt sql.NullTime
-		var deletedAt sql.NullTime
-
-		var userverified sql.NullTime
-		var userdeleted sql.NullTime
-		var userupdated sql.NullTime
-
-		var planupated sql.NullTime
-		var plandeleted sql.NullTime
+		var updatedAt, deletedAt, userVerifiedAt, userUpdatedAt, userDeletedAt, planUpdatedAt, planDeletedAt sql.NullTime
 
 		err := rows.Scan(
 			&payment.Id,
@@ -269,11 +252,12 @@ func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse,
 			&payment.Duration,
 			&payment.ExpiryDate,
 			&payment.Reference,
+			&payment.TransactionId,
+			&payment.PaymentMethod,
 			&payment.Status,
 			&payment.CreatedAt,
 			&updatedAt,
 			&deletedAt,
-			&payment.User.ID,
 			&payment.User.UUID,
 			&payment.User.FirstName,
 			&payment.User.MiddleName,
@@ -283,59 +267,32 @@ func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse,
 			&payment.User.Password,
 			&payment.User.Verified,
 			&payment.User.CreatedAt,
-			&userverified,
-			&userupdated,
-			&userdeleted,
-			&payment.Plan.Id,
+			&userVerifiedAt,
+			&userUpdatedAt,
+			&userDeletedAt,
 			&payment.Plan.UUID,
 			&payment.Plan.PlanName,
 			&payment.Plan.Duration,
 			&payment.Plan.Price,
+			&payment.Plan.NumberOfMailsPerDay,
 			&payment.Plan.Details,
 			&payment.Plan.Status,
 			&payment.Plan.CreatedAt,
-			&planupated,
-			&plandeleted,
+			&planUpdatedAt,
+			&planDeletedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		// if deletedAt.Valid {
-		// 	payment.UpdatedAt = deletedAt.Time.Format(time.RFC3339Nano)
-		// }
-		// if updatedAt.Valid {
-		// 	payment.UpdatedAt = updatedAt.Time.Format(time.RFC3339Nano)
-		// }
-
-		// if userverified.Valid {
-		// 	payment.User.VerifiedAt = userverified.Time.Format(time.RFC3339Nano)
-		// }
-
-		// if userupdated.Valid {
-		// 	payment.User.UpdatedAt = userupdated.Time.Format(time.RFC3339Nano)
-		// }
-
-		// if userdeleted.Valid {
-		// 	payment.User.DeletedAt = userdeleted.Time.Format(time.RFC3339Nano)
-		// }
-
-		// if plandeleted.Valid {
-		// 	payment.Plan.DeletedAt = plandeleted.Time.Format(time.RFC3339Nano)
-		// }
-
-		// if planupated.Valid {
-		// 	payment.Plan.UpdatedAt = plandeleted.Time.Format(time.RFC3339Nano)
-		// }
-
 		// Convert the sql.NullTime and sql.NullString to string
 		SetTime(updatedAt, &payment.UpdatedAt)
 		SetTime(deletedAt, &payment.DeletedAt)
-		SetTime(userverified, &payment.User.VerifiedAt)
-		SetTime(userupdated, &payment.User.UpdatedAt)
-		SetTime(userdeleted, &payment.User.DeletedAt)
-		SetTime(plandeleted, &payment.Plan.DeletedAt)
-		SetTime(planupated, &payment.Plan.UpdatedAt)
+		SetTime(userVerifiedAt, &payment.User.VerifiedAt)
+		SetTime(userUpdatedAt, &payment.User.UpdatedAt)
+		SetTime(userDeletedAt, &payment.User.DeletedAt)
+		SetTime(planDeletedAt, &payment.Plan.DeletedAt)
+		SetTime(planUpdatedAt, &payment.Plan.UpdatedAt)
 
 		payments = append(payments, payment)
 	}

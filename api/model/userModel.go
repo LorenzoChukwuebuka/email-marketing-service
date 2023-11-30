@@ -13,7 +13,7 @@ type User struct {
 	LastName   string       `json:"lastname" validate:"required"`
 	UserName   string       `json:"username" validate:"required"`
 	Email      string       `json:"email" validate:"required,email"`
-	Password   string      `json:"password" validate:"required"`
+	Password   string       `json:"password" validate:"required"`
 	Verified   bool         `json:"verified"`
 	CreatedAt  time.Time    `json:"created_at"`
 	VerifiedAt sql.NullTime `json:"verified_at"`
@@ -40,7 +40,6 @@ type ChangePassword struct {
 	OldPassword []byte `json:"old_password" validated:"required"`
 	NewPassword []byte `json:"new_password" validated:"required"`
 }
-
 
 type UserResponse struct {
 	ID         int       `json:"id"`

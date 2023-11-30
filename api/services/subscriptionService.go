@@ -21,12 +21,13 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 	return d, nil
 }
 
-
-
+func (s *SubscriptionService) GetCurrentRunningSubscription(subscriptionId string) {
+   
+}
 
 /*
 These are mostly jobs
- 
+
 */
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() {}
