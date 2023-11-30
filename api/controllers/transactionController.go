@@ -5,10 +5,9 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-	"net/http"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type TransactionController struct {
@@ -93,6 +92,26 @@ func (c *TransactionController) GetSingleBillingRecord(w http.ResponseWriter, r 
 	userId := claims["userId"].(float64)
 
 	result, err := c.BillingSVC.GetSingleBillingRecord(billingId, int(userId))
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}
+
+func (c *TransactionController) GetAllUserBilling(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(float64)
+
+	result, err := c.BillingSVC.GetAllBillingForAUser(int(userId))
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

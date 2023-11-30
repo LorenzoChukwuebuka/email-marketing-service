@@ -101,5 +101,3 @@ func main() {
 
 	fmt.Println("Server shut down gracefully")
 }
-
- 

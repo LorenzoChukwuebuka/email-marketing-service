@@ -33,7 +33,6 @@ func SignUpMail(email string, username string, otp string) error {
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-
 	err := utils.SendMail("Email Verification", email, formattedMail)
 
 	if err != nil {
