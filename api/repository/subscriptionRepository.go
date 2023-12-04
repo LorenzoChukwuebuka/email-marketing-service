@@ -44,12 +44,92 @@ func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) 
 	return nil // Return nil here on success
 }
 
-func (r *SubscriptionRepository) CheckExpiredSubscriptions(subscriptionId string) {
-	// query := `
-    //   SELECT *
-    //   FROM public.subscriptions
-    //   WHERE CURRENT_DATE <= end_date;
-    //`
+func (r *SubscriptionRepository) GetAllSubscriptions(subscriptionId string) ([]model.SubscriptionModel, error) {
+	query := `
+      SELECT *
+      FROM subscriptions;
+    `
+
+	rows, err := r.DB.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var subscriptions []model.SubscriptionModel
+
+	for rows.Next() {
+		var subscription model.SubscriptionModel
+
+		err := rows.Scan(
+			&subscription.Id,
+			&subscription.UUID,
+			&subscription.UserId,
+			&subscription.PlanId,
+			&subscription.PaymentId,
+			&subscription.StartDate,
+			&subscription.EndDate,
+			&subscription.Expired,
+			&subscription.TransactionId,
+			&subscription.CreatedAt,
+			&subscription.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		subscriptions = append(subscriptions, subscription)
+	}
+
+	return subscriptions, err
+}
+
+func (r *SubscriptionRepository) GetAllCurrentRunningSubscription() ([]model.SubscriptionModel, error) {
+	query := `
+      SELECT *
+      FROM subscriptions
+	  WHERE 
+	  expired = FALSE
+    `
+
+	rows, err := r.DB.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var subscriptions []model.SubscriptionModel
+
+	for rows.Next() {
+		var subscription model.SubscriptionModel
+
+		err := rows.Scan(
+			&subscription.Id,
+			&subscription.UUID,
+			&subscription.UserId,
+			&subscription.PlanId,
+			&subscription.PaymentId,
+			&subscription.StartDate,
+			&subscription.EndDate,
+			&subscription.Expired,
+			&subscription.TransactionId,
+			&subscription.CreatedAt,
+			&subscription.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		subscriptions = append(subscriptions, subscription)
+	}
+
+	return subscriptions, err
 }
 
 func (r *SubscriptionRepository) GetCurrentSubscription(id int) {}

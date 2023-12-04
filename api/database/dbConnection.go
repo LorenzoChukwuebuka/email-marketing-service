@@ -6,7 +6,6 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	 
 )
 
 var db *sql.DB
@@ -17,7 +16,7 @@ func GetDb() *sql.DB {
 
 func InitDB() (*sql.DB, error) {
 
-config :=	utils.LoadEnv()
+	config := utils.LoadEnv()
 
 	host := config.DBHost
 	port := config.DBPort
@@ -44,6 +43,3 @@ config :=	utils.LoadEnv()
 	fmt.Println("Connected to the database")
 	return db, nil
 }
-
-
-
