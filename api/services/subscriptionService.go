@@ -3,6 +3,7 @@ package services
 import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
+	"fmt"
 	"time"
 )
 
@@ -33,19 +34,43 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 	return d, nil
 }
 
-func (s *SubscriptionService) GetAllCurrentRunningSubscription(subscriptionId string) ([]model.SubscriptionModel, error) {
-	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions(subscriptionId)
+/*
+These are mostly jobs
+*/
+
+func (s *SubscriptionService) GetAllSubscription() ([]model.SubscriptionResponseModel, error) {
+	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
 
 	if err != nil {
 		return nil, err
 	}
 
+	currentTime := time.Now()
+
+	var expiredUserIDs []int
+
+	for _, subscription := range subscriptions {
+		if subscription.EndDate.Before(currentTime) {
+			fmt.Printf("Subscription ID %d has expired.\n", subscription.Id)
+			expiredUserIDs = append(expiredUserIDs, subscription.UserId)
+		} else {
+			fmt.Printf("Subscription ID %d has not expired.\n", subscription.Id)
+
+		}
+
+	}
+
+	if len(expiredUserIDs) != 0 {
+
+		for _, userIds := range expiredUserIDs {
+			fmt.Println(userIds)
+		}
+
+	}
+
+	fmt.Println(expiredUserIDs)
+
 	return subscriptions, err
 }
-
-/*
-These are mostly jobs
-
-*/
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() {}

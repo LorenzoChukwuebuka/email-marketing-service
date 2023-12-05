@@ -14,7 +14,7 @@ type TransactionController struct {
 	BillingSVC *services.BillingService
 }
 
-func NewTransactinController(billingService *services.BillingService) *TransactionController {
+func NewTransactionController(billingService *services.BillingService) *TransactionController {
 	return &TransactionController{
 		BillingSVC: billingService,
 	}
