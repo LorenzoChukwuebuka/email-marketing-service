@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"email-marketing-service/api/services"
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -23,6 +25,30 @@ func (c *SubscriptionController) GetAllSubscriptions(w http.ResponseWriter, r *h
 		return
 	}
 	response.SuccessResponse(w, 200, result)
+}
+
+func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	subscriptionId := vars["subscriptionId"]
+
+	userId := claims["userId"].(float64)
+
+	err := c.SubscriptionSVC.CancelSubscriptionService(int(userId), subscriptionId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "subscription cancelled")
+	
 }
 
 func (c *SubscriptionController) GetAllCurrentRunningSubscription(w http.ResponseWriter, r *http.Request) {

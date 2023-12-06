@@ -36,7 +36,8 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 }
 
 /*
-These are mostly jobs
+1. These are mostly jobs
+2. The controllers are a way of testing to ensure that are working properly
 */
 
 func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionResponseModel, error) {
@@ -71,23 +72,29 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionR
 	return subscriptions, err
 }
 
-func (s *SubscriptionService) CancelSubscriptionService(userId int) error {
+func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) error {
 	/**
-	1. The user cancles the subscription
+	1. The user cancels the subscription
 	2. A calculation is done which calculates how much is left of their subscription
 	3. A refund is made after 24 hours automatically
 
 	**/
-	return nil
-}
 
-func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
-	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
+	err := s.SubscriptionRepo.CancelSubscriptionService(subscriptionId, userId)
 
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
+	subscriptions, err := s.SubscriptionRepo.GetAllCurrentRunningSubscription()
+
+	if err != nil {
+		return err
+	}
 	currentTime := time.Now()
 
 	var expiredUserIDs []int
