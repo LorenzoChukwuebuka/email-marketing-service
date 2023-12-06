@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-func SignUpMail(email string, username string, otp string) error {
+type Mail struct {
+}
+
+func (m *Mail) SignUpMail(email string, username string, otp string) error {
 	mailTemplate := `
 	<html>
 	<body style="font-family: Arial, sans-serif;">
@@ -43,7 +46,7 @@ func SignUpMail(email string, username string, otp string) error {
 
 }
 
-func ResetPasswordMail(email string, username string, otp string) error {
+func (m *Mail) ResetPasswordMail(email string, username string, otp string) error {
 
 	mailTemplate :=
 		`<html>
@@ -71,6 +74,68 @@ func ResetPasswordMail(email string, username string, otp string) error {
 	}
 
 	err := utils.SendMail("Password Reset", email, formattedMail)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Mail) SubscriptionExpiryMail(username string, email string, planName string) error {
+	mailTemplate :=
+		`<html>
+		<body style="font-family: Arial, sans-serif;">
+			<h2>Hi .Username ,</h2>
+			<p>Please note that your .PlanName has expired</p>
+			
+			<p>Regards,<br>  .Appname </p>
+		</body>
+		</html>
+       `
+	replacements := map[string]string{
+		".Username": username,
+		".PlanName": planName,
+		".AppName":  "Appname",
+	}
+
+	formattedMail := mailTemplate
+
+	for placeholder, value := range replacements {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+
+	err := utils.SendMail("Subscription Expiry Notification", email, formattedMail)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Mail) SubscriptionExpiryReminder(username string, email string, planName string) error {
+	mailTemplate := `
+	<html>
+		<body style="font-family: Arial, sans-serif;">
+			<h2>Hi .Username ,</h2>
+			<p>Please note that your .PlanName will expire in 5 days</p>
+			<p>Regards,<br>  .Appname </p>
+		</body>
+		</html>
+	`
+
+	replacements := map[string]string{
+		".Username": username,
+		".PlanName": planName,
+		".AppName":  "Appname",
+	}
+
+	formattedMail := mailTemplate
+
+	for placeholder, value := range replacements {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+
+	err := utils.SendMail("Service expiry reminder", email, formattedMail)
 
 	if err != nil {
 		return err

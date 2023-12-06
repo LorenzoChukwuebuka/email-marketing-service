@@ -16,7 +16,7 @@ func NewSubscriptionController(subscriptionService *services.SubscriptionService
 }
 
 func (c *SubscriptionController) GetAllSubscriptions(w http.ResponseWriter, r *http.Request) {
-	result, err := c.SubscriptionSVC.GetAllSubscription()
+	result, err := c.SubscriptionSVC.UpdateExpiredSubscription()
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

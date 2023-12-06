@@ -26,7 +26,7 @@ type SubscriptionResponseModel struct {
 	UUID      string    `json:"uuid"`
 	UserId    int       `json:"user_id"`
 	PlanId    int       `json:"plan_id"`
-	PaymentId int       `json:"payment_id"`
+	PaymentId *int       `json:"payment_id"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Expired   bool      `json:"expired"`
@@ -35,4 +35,7 @@ type SubscriptionResponseModel struct {
 	UpdatedAt string `json:"updated_at"`
 	Cancelled bool `json:"cancelled"`
 	DateCancelled string `json:"date_cancelled"`
+	Plan PlanResponse
+	User UserResponse
+	Billing BillingResponse
 }

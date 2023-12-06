@@ -17,6 +17,10 @@ type UserService struct {
 	otpService     *OTPService
 }
 
+var (
+	mail = &custom.Mail{}
+)
+
 func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *UserService {
 	return &UserService{
 		userRepository: userRepo,
@@ -62,7 +66,7 @@ func (s *UserService) CreateUser(d *model.User) (string, error) {
 	}
 
 	// Send mail.
-	if err := custom.SignUpMail(d.Email, d.UserName, otp); err != nil {
+	if err := mail.SignUpMail(d.Email, d.UserName, otp); err != nil {
 		return "", err
 	}
 
@@ -195,7 +199,7 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 		return err
 	}
 
-	if err = custom.ResetPasswordMail(d.Email, userDetails.UserName, otp); err != nil {
+	if err = mail.ResetPasswordMail(d.Email, userDetails.UserName, otp); err != nil {
 		return err
 	}
 

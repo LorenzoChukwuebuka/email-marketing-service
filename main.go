@@ -6,14 +6,14 @@ import (
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -59,6 +59,27 @@ func main() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 	defer dbConn.Close()
+
+	// subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
+	// subscriptionService :=  services.NewSubscriptionService(subscriptionRepo)
+
+	//cron jobs
+
+	// // Create a new cron scheduler
+	// c := cron.New()
+
+	// c.AddFunc("0 0 * * *", func() {
+	// 	 subscriptionService.UpdateExpiredSubscription()
+	// })
+
+	// // Start the cron scheduler
+	// c.Start()
+
+	// // Run for a certain duration (e.g., 5 minutes)
+	// time.Sleep(5 * time.Minute)
+
+	// // Stop the cron scheduler
+	// c.Stop()
 
 	r := mux.NewRouter()
 
