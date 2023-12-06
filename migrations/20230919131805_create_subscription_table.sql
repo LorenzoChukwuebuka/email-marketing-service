@@ -6,9 +6,9 @@
     uuid VARCHAR(255) NOT NUll,
     user_id INTEGER NOT NULL,
     plan_id INTEGER NOT NULL,
-    payment_id INTEGER NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
+    payment_id INTEGER  NULL,
+    start_date TIMESTAMP ,
+    end_date TIMESTAMP ,
     expired BOOLEAN NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP
