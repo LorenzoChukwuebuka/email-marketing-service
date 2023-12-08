@@ -70,3 +70,17 @@ func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKeyModel) error {
 
 	return nil
 }
+
+func (r *APIKeyRepository) CheckIfAPIKEYExists(apiKey string) (bool, error) {
+
+	query := "SELECT EXISTS(SELECT 1 FROM api_keys WHERE api_key = $1)"
+
+	var exists bool
+	err := r.DB.QueryRow(query, apiKey).Scan(&exists)
+
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+
+	return exists, nil
+}

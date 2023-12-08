@@ -64,3 +64,7 @@ func (s *APIKeyService) GetAPIKey(userId int) (*model.APIKeyResponseModel, error
 	}
 	return userApiKey, nil
 }
+
+func (s *APIKeyService) FindAPIKeyWithKey(apiKey string) bool {
+	return false
+}
