@@ -53,5 +53,6 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	// Testing API
 	router.HandleFunc("/get-all-subscriptions", subscriptionController.GetAllSubscriptions).Methods("GET", "OPTIONS")
+	router.HandleFunc("/cancel-subscription/{subscriptionId}", middleware.JWTMiddleware(subscriptionController.CancelSubscription)).Methods("PUT", "OPTIONS")
 
 }

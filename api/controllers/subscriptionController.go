@@ -48,7 +48,7 @@ func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *ht
 	}
 
 	response.SuccessResponse(w, 200, "subscription cancelled")
-	
+
 }
 
 func (c *SubscriptionController) GetAllCurrentRunningSubscription(w http.ResponseWriter, r *http.Request) {
