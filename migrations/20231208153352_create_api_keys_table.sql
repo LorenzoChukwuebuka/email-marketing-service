@@ -5,7 +5,7 @@
     id SERIAL PRIMARY KEY,
     uuid VARCHAR(255) NUll,
     user_id INT NOT Null,
-    api_key INT NOT NULL,
+    api_key VARCHAR NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE,
     deleted_at TIMESTAMP WITH TIME ZONE
 );
