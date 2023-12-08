@@ -2,8 +2,9 @@ package controllers
 
 import (
 	"email-marketing-service/api/services"
-	"github.com/golang-jwt/jwt"
 	"net/http"
+	"github.com/golang-jwt/jwt"
+
 )
 
 type ApiKeyController struct {
