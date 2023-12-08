@@ -1,24 +1,53 @@
 package services
 
 import (
+	"email-marketing-service/api/model"
+	"email-marketing-service/api/repository"
 	"fmt"
-
 	"github.com/google/uuid"
+	"time"
 )
 
-type ApiKeyService struct {
+type APIKeyService struct {
+	APIKeyRepo *repository.APIKeyRepository
 }
 
-func NewAPIKeyService() *ApiKeyService {
-	return &ApiKeyService{}
+func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
+	return &APIKeyService{
+		APIKeyRepo: apiRepo,
+	}
 }
 
-func (s *ApiKeyService) GenerateAPIKey(userId int) (string, error) {
+func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, error) {
+	uuidObj := uuid.New().String()
+	// Concatenate strings
+	apiKey := "skey-" + uuidObj
 
-	uuidObj := uuid.New()
+	apiKeyModel := &model.APIKeyModel{
+		UUID:      uuid.New().String(),
+		UserId:    userId,
+		APIKey:    apiKey,
+		CreatedAt: time.Now(),
+	}
 
-	fmt.Println(uuidObj)
+	apiRepo, err := s.APIKeyRepo.CreateAPIKey(apiKeyModel)
 
-	return "", nil
+	if err != nil {
+		return nil, fmt.Errorf("error generating API key: %v", err)
+	}
 
+	successMap := map[string]interface{}{
+		"apiKey": apiRepo.APIKey,
+	}
+
+	return successMap, nil
+}
+
+func (s *APIKeyService) UpdateAPIKey(userId int) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (s *APIKeyService) GetAPIKey(userId int) (*model.APIKeyResponseModel, error) {
+
+	return nil, nil
 }

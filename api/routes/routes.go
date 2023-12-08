@@ -31,12 +31,11 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	transactionController := controllers.NewTransactionController(transanctionService)
 
 	//api key
-
-	apiKeyService := services.NewAPIKeyService()
+	apiKeyRepo := repository.NewAPIkeyRepository(db)
+	apiKeyService := services.NewAPIKeyService(apiKeyRepo)
 	apiKeyController := controllers.NewAPIKeyController(apiKeyService)
 
 	//subscription service for testing only
-
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")

@@ -5,7 +5,6 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-
 	"github.com/google/uuid"
 )
 
