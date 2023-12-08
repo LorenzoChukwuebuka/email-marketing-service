@@ -40,14 +40,14 @@ func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *ht
 
 	userId := claims["userId"].(float64)
 
-	err := c.SubscriptionSVC.CancelSubscriptionService(int(userId), subscriptionId)
+	userSub,err := c.SubscriptionSVC.CancelSubscriptionService(int(userId), subscriptionId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	response.SuccessResponse(w, 200, "subscription cancelled")
+	response.SuccessResponse(w, 200, userSub)
 
 }
 
