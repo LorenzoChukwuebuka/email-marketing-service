@@ -30,6 +30,11 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	transanctionService := services.NewBillingService(billingRepository, subscriptionService)
 	transactionController := controllers.NewTransactionController(transanctionService)
 
+	//api key
+
+	apiKeyService := services.NewAPIKeyService()
+	apiKeyController := controllers.NewAPIKeyController(apiKeyService)
+
 	//subscription service for testing only
 
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
@@ -51,8 +56,13 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET", "OPTIONS")
 
+	//subscription route
+	router.HandleFunc("/cancel-subscription/{subscriptionId}", middleware.JWTMiddleware(subscriptionController.CancelSubscription)).Methods("PUT", "OPTIONS")
+
+	//api key route
+	router.HandleFunc("/generate-apikey", middleware.JWTMiddleware(apiKeyController.GenerateAPIKEY)).Methods("POST", "OPTIONS")
+
 	// Testing API
 	router.HandleFunc("/get-all-subscriptions", subscriptionController.GetAllSubscriptions).Methods("GET", "OPTIONS")
-	router.HandleFunc("/cancel-subscription/{subscriptionId}", middleware.JWTMiddleware(subscriptionController.CancelSubscription)).Methods("PUT", "OPTIONS")
 
 }
