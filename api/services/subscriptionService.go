@@ -73,8 +73,18 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionR
 }
 
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
+	//0.5 check if the user already cancelled
+	userCancelledSub, err := s.SubscriptionRepo.FindSubscriptionById(subscriptionId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	if userCancelledSub.Cancelled {
+		return nil, fmt.Errorf("subscription already cancelled")
+	}
+
 	// 1. The user cancels the subscription
-	err := s.SubscriptionRepo.CancelSubscriptionService(subscriptionId, userId)
+	err = s.SubscriptionRepo.CancelSubscriptionService(subscriptionId, userId)
 	if err != nil {
 		return nil, err
 	}
