@@ -72,67 +72,73 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionR
 	return subscriptions, err
 }
 
-func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) error {
-	/*
-		*
-		1. The user cancels the subscription
-		2. A calculation is done which calculates how much duration is left of their subscription
-		3. A refund is made after 24 hours automatically
-		4. I am thinking that they will have to provide their card details or saved cards....
-
-		*
-	*/
+func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
+	// 1. The user cancels the subscription
 	err := s.SubscriptionRepo.CancelSubscriptionService(subscriptionId, userId)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	//get the current running subscription of the user
-
+	// 2. Get the current running subscription of the user
 	userSub, err := s.SubscriptionRepo.FindSubscriptionById(subscriptionId, userId)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// 3. Calculate how much duration is left of their subscription
 	layout := "2006-01-02T15:04:05.999999-07:00"
-
 	timeStr1 := userSub.DateCancelled
-	timeStr2 := userSub.EndDate.Format(layout) //formatted to the layout
-
-	fmt.Println(timeStr1, timeStr2)
+	timeStr2 := userSub.EndDate.Format(layout)
 
 	t1, err := time.Parse(layout, timeStr1)
 	if err != nil {
-		fmt.Println("Error parsing timeStr1:", err)
-		return nil
+		return nil, fmt.Errorf("error parsing timeStr1: %w", err)
 	}
 
 	t2, err := time.Parse(layout, timeStr2)
 	if err != nil {
-		fmt.Println("Error parsing timeStr2:", err)
-		return nil
+		return nil, fmt.Errorf("error parsing timeStr2: %w", err)
 	}
 
-	// Calculate the duration between the two times
+	// 4. Calculate the duration between the two times
 	duration := t2.Sub(t1)
-
-	// Print the remaining days
 	remainingDays := int(duration.Hours() / 24)
-	fmt.Printf("Remaining days: %d\n", remainingDays)
 
-	return nil
+	//5. Handles the calculation for the amount to refund
+	amountToRefund, err := calculateAmountToRefund(remainingDays, userSub.StartDate, userSub.EndDate, userSub.Billing.AmountPaid)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil, err
+	}
+	fmt.Println(amountToRefund)
+
+	//initiate the refund policy from here but for now I will just have to output it to the user
+
+	successMap := map[string]interface{}{
+		"status":         "refunded successfully",
+		"amountToRefund": amountToRefund,
+	}
+
+	return successMap, nil
 }
 
-/*
-*
-1.
-*
-*/
-func calculateAmountToRefund() int {
+func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate time.Time, amountPaid float32) (float32, error) {
 
-	return 0
+	//1. total number of days
+	totalDuration := endDate.Sub(startDate).Hours() / 24
+	if totalDuration <= 0 {
+		return 0, fmt.Errorf("invalid duration between start and end date")
+	}
+
+	//2. Amount per day
+
+	amountPerDay := amountPaid / float32(totalDuration)
+
+	//3. Amount to refund
+
+	amountToRefund := amountPerDay * float32(remainingDays)
+
+	return float32(amountToRefund), nil
 }
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
