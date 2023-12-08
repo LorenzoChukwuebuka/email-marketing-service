@@ -20,7 +20,6 @@ func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
 
 func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, error) {
 	uuidObj := uuid.New().String()
-	// Concatenate strings
 	apiKey := "skey-" + uuidObj
 
 	apiKeyModel := &model.APIKeyModel{
@@ -30,24 +29,38 @@ func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, erro
 		CreatedAt: time.Now(),
 	}
 
-	apiRepo, err := s.APIKeyRepo.CreateAPIKey(apiKeyModel)
-
+	existingAPIKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
 	if err != nil {
-		return nil, fmt.Errorf("error generating API key: %v", err)
+		return nil, fmt.Errorf("error checking existing API key: %v", err)
+	}
+
+	if existingAPIKey != nil {
+		// If an existing API key is found, update it
+
+		err := s.APIKeyRepo.UpdateAPIKey(apiKeyModel)
+		if err != nil {
+			return nil, fmt.Errorf("error updating API key: %v", err)
+		}
+	} else {
+		// If no existing API key, create a new one
+		_, err := s.APIKeyRepo.CreateAPIKey(apiKeyModel)
+		if err != nil {
+			return nil, fmt.Errorf("error generating API key: %v", err)
+		}
 	}
 
 	successMap := map[string]interface{}{
-		"apiKey": apiRepo.APIKey,
+		"apiKey": apiKeyModel.APIKey,
 	}
 
 	return successMap, nil
 }
 
-func (s *APIKeyService) UpdateAPIKey(userId int) (map[string]interface{}, error) {
-	return nil, nil
-}
-
 func (s *APIKeyService) GetAPIKey(userId int) (*model.APIKeyResponseModel, error) {
+	userApiKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
 
-	return nil, nil
+	if err != nil {
+		return nil, err
+	}
+	return userApiKey, nil
 }

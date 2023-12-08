@@ -34,3 +34,39 @@ func (r *APIKeyRepository) CreateAPIKey(d *model.APIKeyModel) (*model.APIKeyMode
 	return d, nil
 
 }
+
+func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId int) (*model.APIKeyResponseModel, error) {
+	query := `SELECT id, uuid, user_id, api_key, created_at FROM api_keys WHERE user_id=$1;`
+
+	row := r.DB.QueryRow(query, userId)
+
+	var apiKeyModel model.APIKeyResponseModel
+	err := row.Scan(&apiKeyModel.Id, &apiKeyModel.UUID, &apiKeyModel.UserId, &apiKeyModel.APIKey, &apiKeyModel.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // User not found, return nil without an error
+		}
+		return nil, err
+	}
+
+	return &apiKeyModel, nil
+}
+
+func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKeyModel) error {
+	query := `UPDATE api_keys SET api_key = $1 WHERE user_id = $2;`
+
+	stmt, err := r.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	//d.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
+
+	_, err = stmt.Exec(d.APIKey, d.UserId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
