@@ -73,20 +73,66 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionR
 }
 
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) error {
-	/**
-	1. The user cancels the subscription
-	2. A calculation is done which calculates how much is left of their subscription
-	3. A refund is made after 24 hours automatically
+	/*
+		*
+		1. The user cancels the subscription
+		2. A calculation is done which calculates how much duration is left of their subscription
+		3. A refund is made after 24 hours automatically
+		4. I am thinking that they will have to provide their card details or saved cards....
 
-	**/
-
+		*
+	*/
 	err := s.SubscriptionRepo.CancelSubscriptionService(subscriptionId, userId)
 
 	if err != nil {
 		return err
 	}
 
+	//get the current running subscription of the user
+
+	userSub, err := s.SubscriptionRepo.FindSubscriptionById(subscriptionId, userId)
+
+	if err != nil {
+		return err
+	}
+
+	layout := "2006-01-02T15:04:05.999999-07:00"
+
+	timeStr1 := userSub.DateCancelled
+	timeStr2 := userSub.EndDate.Format(layout) //formatted to the layout
+
+	fmt.Println(timeStr1, timeStr2)
+
+	t1, err := time.Parse(layout, timeStr1)
+	if err != nil {
+		fmt.Println("Error parsing timeStr1:", err)
+		return nil
+	}
+
+	t2, err := time.Parse(layout, timeStr2)
+	if err != nil {
+		fmt.Println("Error parsing timeStr2:", err)
+		return nil
+	}
+
+	// Calculate the duration between the two times
+	duration := t2.Sub(t1)
+
+	// Print the remaining days
+	remainingDays := int(duration.Hours() / 24)
+	fmt.Printf("Remaining days: %d\n", remainingDays)
+
 	return nil
+}
+
+/*
+*
+1.
+*
+*/
+func calculateAmountToRefund() int {
+
+	return 0
 }
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
