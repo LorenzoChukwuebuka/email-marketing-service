@@ -4,7 +4,7 @@ import (
 	"email-marketing-service/api/services"
 	"net/http"
 	"github.com/golang-jwt/jwt"
-
+	"github.com/gorilla/mux"
 )
 
 type ApiKeyController struct {
@@ -55,6 +55,18 @@ func (c *ApiKeyController) GetAPIKey(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(w, 200, result)
 }
 
-func (c *ApiKeyController) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
+func (c *ApiKeyController) DeleteAPIKey(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	apikeyId := vars["apiKeyId"]
+
+	err := c.APIkeySVC.DeleteAPIKey(apikeyId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "api key deleted successfully")
 
 }

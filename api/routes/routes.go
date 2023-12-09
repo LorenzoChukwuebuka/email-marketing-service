@@ -36,7 +36,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	apiKeyController := controllers.NewAPIKeyController(apiKeyService)
 
 	//smtp
-	smtpController := controllers.NewSMTPMailController()
+	smtpController := controllers.NewSMTPMailController(apiKeyService)
 
 	//subscription service for testing only
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)

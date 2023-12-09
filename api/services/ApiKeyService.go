@@ -65,6 +65,9 @@ func (s *APIKeyService) GetAPIKey(userId int) (*model.APIKeyResponseModel, error
 	return userApiKey, nil
 }
 
-func (s *APIKeyService) FindAPIKeyWithKey(apiKey string) bool {
-	return false
+func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {
+	if err := s.APIKeyRepo.DeleteAPIKey(apiKeyId); err != nil {
+		return err
+	}
+	return nil
 }
