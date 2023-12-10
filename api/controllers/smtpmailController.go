@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
+	"email-marketing-service/api/utils"
 	"net/http"
 )
 
@@ -16,6 +18,11 @@ func NewSMTPMailController(apiservice *services.APIKeyService) *SMTPMailControll
 }
 
 func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request) {
+
+	var reqdata *model.EmailRequest
+
+	utils.DecodeRequestBody(r, &reqdata)
+
 	// Get the value of the "api-key" header
 	apiKey := r.Header.Get("api-key")
 	if apiKey == "" {
@@ -43,13 +50,13 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 	if !apiKeyExist {
 		errorRes := map[string]interface{}{
-			"status":         http.StatusUnauthorized,
+			"status":  http.StatusUnauthorized,
 			"message": "Invalid API key provided",
 		}
 		response.ErrorResponse(w, errorRes)
 		return
 	}
 
-	response.SuccessResponse(w, 200, apiKey)
+	response.SuccessResponse(w, 200, reqdata)
 
 }
