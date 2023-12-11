@@ -4,10 +4,9 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type SMTPMailService struct {
@@ -33,10 +32,59 @@ func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (ma
 		return nil, fmt.Errorf("error fetching userId")
 	}
 
-	fmt.Println(userId)
+	//2. Get the daily mail calculator
+
+	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(userId)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching sent mails")
+	}
+
+	//3. check remaining mails if it is equals to 0
+
+	if mailCalcRepo.RemainingMails == 0 {
+		return nil, fmt.Errorf("you have exceeded your daily plan: %w", err)
+	}
+
+	mailResult := make(chan interface{})
+	go s.handleSendMail(mailResult)
+
+	//4. Handle the result from handleSendMail if needed
+	result := <-mailResult
+	fmt.Printf("Mail result: %+v\n", result)
+
+	//5. update counter
+
+	updateCalcData := &model.DailyMailCalcModel{
+		UUID:           mailCalcRepo.UUID,
+		RemainingMails: mailCalcRepo.RemainingMails - 1,
+		MailsSent:      mailCalcRepo.MailsSent + 1,
+	}
+
+	err = s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
+
+func (s *SMTPMailService) handleSendMail(resultChan chan interface{}) {
+	// Perform the mail sending logic here
+
+	// For example, simulate sending mail for demonstration purposes
+	time.Sleep(2 * time.Second)
+
+	// Send the result to the channel
+	resultChan <- "Mail sent successfully"
+}
+
+func (s *SMTPMailService) saveContact() {
+
+}
+
+//##################################################### JOBS #################################################################
 
 func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 	//1.... Select all active subscriptions....
@@ -45,6 +93,8 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(activeSubs)
 
 	for _, activeSub := range activeSubs {
 
@@ -61,6 +111,7 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 			MailsForADay:   num,
 			MailsSent:      0,
 			CreatedAt:      time.Now(),
+			RemainingMails: num,
 		}
 
 		err = s.DailyCalcRepo.CreateRecordDailyMailCalculation(dailyCalcData)
@@ -68,6 +119,7 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return nil

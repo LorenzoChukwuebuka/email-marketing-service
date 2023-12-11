@@ -69,3 +69,16 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, result)
 
 }
+
+//################################################### TEST #################################################################
+
+func (c *SMTPMailController) CreateRecordDailyMailCalculation(w http.ResponseWriter, r *http.Request){
+	err := c.SMTPSVC.CreateRecordForDailyMailCalculation()
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "check the printLn ")
+}

@@ -17,7 +17,7 @@ func NewPlanRepository(db *sql.DB) *PlanRepository {
 }
 
 func (r *PlanRepository) CreatePlan(d *model.PlanModel) (*model.PlanModel, error) {
-	query := "INSERT INTO plans(uuid,planname, duration, price, details, status, created_at) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING id"
+	query := "INSERT INTO plans(uuid,planname, duration, price, details, status, created_at,number_of_mails_per_day) VALUES($1, $2, $3, $4, $5, $6,$7,$8) RETURNING id"
 
 	stmt, err := r.DB.Prepare(query)
 	if err != nil {
@@ -26,7 +26,7 @@ func (r *PlanRepository) CreatePlan(d *model.PlanModel) (*model.PlanModel, error
 	defer stmt.Close()
 
 	var insertedID int
-	err = stmt.QueryRow(d.UUID,d.PlanName, d.Duration, d.Price, d.Details, "active", time.Now()).Scan(&insertedID)
+	err = stmt.QueryRow(d.UUID, d.PlanName, d.Duration, d.Price, d.Details, "active", time.Now(), d.NumberOfMailsPerDay).Scan(&insertedID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +73,7 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 			&plan.CreatedAt,
 			&updatedAt,
 			&deletedAt,
+			&plan.NumberOfMailsPerDay,
 		)
 
 		if err != nil {
@@ -114,6 +115,7 @@ func (r *PlanRepository) GetSinglePlan(id string) (*model.PlanResponse, error) {
 		&plan.CreatedAt,
 		&updatedAt,
 		&deletedAt,
+		&plan.NumberOfMailsPerDay,
 	)
 
 	if deletedAt.Valid {
