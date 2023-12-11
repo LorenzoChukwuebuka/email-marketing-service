@@ -59,3 +59,4 @@ func (c *SubscriptionController) UpdateAllExpiredSubscriptions(w http.ResponseWr
 	}
 	response.SuccessResponse(w, 200, result)
 }
+

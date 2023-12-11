@@ -8,15 +8,15 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/robfig/cron/v3"
 )
 
 var (
