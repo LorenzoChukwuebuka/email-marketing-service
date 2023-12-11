@@ -87,7 +87,7 @@ func (r *APIKeyRepository) CheckIfAPIKEYExists(apiKey string) (bool, error) {
 
 func (r *APIKeyRepository) DeleteAPIKey(apiKeyId string) error {
 	// Construct the delete query with a placeholder for the API key ID
-	query := "DELETE FROM api_keys WHERE api_key_id = $1"
+	query := "DELETE FROM api_keys WHERE uuid = $1"
 
 	// Execute the prepared statement
 	_, err := r.DB.Exec(query, apiKeyId)
