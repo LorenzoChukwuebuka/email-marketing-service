@@ -10,7 +10,6 @@ import (
 )
 
 var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
-
 	//intialize the user  dependencies
 	otpRepo := repository.NewOTPRepository(db)
 	OTPService := services.NewOTPService(otpRepo)
@@ -36,7 +35,9 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	apiKeyController := controllers.NewAPIKeyController(apiKeyService)
 
 	//smtp
-	smtpController := controllers.NewSMTPMailController(apiKeyService)
+	dailyCalcRepository := repository.NewDailyMailCalcRepository(db)
+	smtpService := services.NewSMTPMailService(apiKeyService, subscriptionRepo, dailyCalcRepository)
+	smtpController := controllers.NewSMTPMailController(apiKeyService, smtpService)
 
 	//subscription service for testing only
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
@@ -63,11 +64,12 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//api key route
 	router.HandleFunc("/generate-apikey", middleware.JWTMiddleware(apiKeyController.GenerateAPIKEY)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/delete-apiKey/{apiKeyId}", middleware.JWTMiddleware(apiKeyController.DeleteAPIKey)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/get-apikey", middleware.JWTMiddleware(apiKeyController.GetAPIKey)).Methods("GET", "OPTIONS")
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
 
-	
 	// Testing API
 	router.HandleFunc("/get-all-subscriptions", subscriptionController.GetAllSubscriptions).Methods("GET", "OPTIONS")
 

@@ -8,12 +8,14 @@ import (
 )
 
 type SMTPMailController struct {
-	APISVC *services.APIKeyService
+	APISVC  *services.APIKeyService
+	SMTPSVC *services.SMTPMailService
 }
 
-func NewSMTPMailController(apiservice *services.APIKeyService) *SMTPMailController {
+func NewSMTPMailController(apiservice *services.APIKeyService, smtpMailSvc *services.SMTPMailService) *SMTPMailController {
 	return &SMTPMailController{
-		APISVC: apiservice,
+		APISVC:  apiservice,
+		SMTPSVC: smtpMailSvc,
 	}
 }
 
@@ -57,6 +59,13 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response.SuccessResponse(w, 200, reqdata)
+	result, err := c.SMTPSVC.SendSMTPMail(reqdata, apiKey)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
 
 }

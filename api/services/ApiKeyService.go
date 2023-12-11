@@ -71,3 +71,13 @@ func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {
 	}
 	return nil
 }
+
+func (s *APIKeyService) FindUserWithAPIKey(apiKey string) (int, error) {
+	userId, err := s.APIKeyRepo.FindUserWithAPIKey(apiKey)
+
+	if err != nil {
+		return 0, nil
+	}
+
+	return userId, nil
+}

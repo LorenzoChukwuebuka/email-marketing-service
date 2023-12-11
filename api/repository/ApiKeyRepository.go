@@ -98,3 +98,16 @@ func (r *APIKeyRepository) DeleteAPIKey(apiKeyId string) error {
 
 	return nil
 }
+
+
+func (r *APIKeyRepository) FindUserWithAPIKey(apiKey string) (int, error) {
+  
+    query := "SELECT user_id FROM api_keys WHERE api_key = $1"
+    var userID int
+    err := r.DB.QueryRow(query, apiKey).Scan(&userID)
+    if err != nil {
+        return 0, err
+    }
+
+    return userID, nil
+}
