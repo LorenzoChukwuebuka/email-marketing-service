@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"email-marketing-service/api/database"
+	"email-marketing-service/api/repository"
 	"email-marketing-service/api/routes"
+	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
 	"log"
@@ -14,6 +16,7 @@ import (
 	"time"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
 )
 
 var (
@@ -60,26 +63,16 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	// subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
-	// subscriptionService :=  services.NewSubscriptionService(subscriptionRepo)
+	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
 
 	//cron jobs
 
-	// // Create a new cron scheduler
-	// c := cron.New()
-
-	// c.AddFunc("0 0 * * *", func() {
-	// 	 subscriptionService.UpdateExpiredSubscription()
-	// })
-
-	// // Start the cron scheduler
-	// c.Start()
-
-	// // Run for a certain duration (e.g., 5 minutes)
-	// time.Sleep(5 * time.Minute)
-
-	// // Stop the cron scheduler
-	// c.Stop()
+	// Create a new cron scheduler
+	c := cron.New()
+	c.AddFunc("0 0 * * *", func() {
+		subscriptionService.UpdateExpiredSubscription()
+	})
 
 	r := mux.NewRouter()
 
@@ -97,6 +90,15 @@ func main() {
 		Addr:    ":9000",
 		Handler: r,
 	}
+
+	// Start the cron scheduler in a goroutine
+	go func() {
+		// Start the cron scheduler
+		c.Start()
+		defer c.Stop()
+		// Let it run indefinitely
+		select {}
+	}()
 
 	go func() {
 		fmt.Println("Server started on port 9000")
