@@ -64,13 +64,13 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//api key route
 	router.HandleFunc("/generate-apikey", middleware.JWTMiddleware(apiKeyController.GenerateAPIKEY)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/delete-apiKey/{apiKeyId}", middleware.JWTMiddleware(apiKeyController.DeleteAPIKey)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/delete-apikey/{apiKeyId}", middleware.JWTMiddleware(apiKeyController.DeleteAPIKey)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/get-apikey", middleware.JWTMiddleware(apiKeyController.GetAPIKey)).Methods("GET", "OPTIONS")
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
 
 	// Testing API
-	router.HandleFunc("/get-all-subscriptions", subscriptionController.GetAllSubscriptions).Methods("GET", "OPTIONS")
+	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
 
 }

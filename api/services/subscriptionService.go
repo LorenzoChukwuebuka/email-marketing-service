@@ -35,42 +35,7 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 	return d, nil
 }
 
-/*
-1. These are mostly jobs
-2. The controllers are a way of testing to ensure that are working properly
-*/
 
-func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionResponseModel, error) {
-	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
-
-	if err != nil {
-		return nil, err
-	}
-
-	currentTime := time.Now()
-
-	for _, subscription := range subscriptions {
-		if subscription.EndDate.Before(currentTime) && !subscription.Expired {
-			fmt.Printf("Subscription ID %d has expired.\n", subscription.Id)
-
-			// Update the subscription as expired
-			err := s.SubscriptionRepo.UpdateExpiredSubscription(subscription.Id)
-			if err != nil {
-				return nil, err
-			}
-
-			// Send mail to the user notifying them of the expiration of the service
-			err = mail.SubscriptionExpiryMail(subscription.User.UserName, subscription.User.Email, subscription.Plan.PlanName)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			fmt.Printf("Subscription ID %d has not expired.\n", subscription.Id)
-		}
-	}
-
-	return subscriptions, err
-}
 
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
 	//0.5 check if the user already cancelled
@@ -150,6 +115,41 @@ func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate tim
 
 	return float32(amountToRefund), nil
 }
+
+
+ /** ############################################################### JOBS ####################################################################### **/
+func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionResponseModel, error) {
+	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	currentTime := time.Now()
+
+	for _, subscription := range subscriptions {
+		if subscription.EndDate.Before(currentTime) && !subscription.Expired {
+			fmt.Printf("Subscription ID %d has expired.\n", subscription.Id)
+
+			// Update the subscription as expired
+			err := s.SubscriptionRepo.UpdateExpiredSubscription(subscription.Id)
+			if err != nil {
+				return nil, err
+			}
+
+			// Send mail to the user notifying them of the expiration of the service
+			err = mail.SubscriptionExpiryMail(subscription.User.UserName, subscription.User.Email, subscription.Plan.PlanName)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			fmt.Printf("Subscription ID %d has not expired.\n", subscription.Id)
+		}
+	}
+
+	return subscriptions, err
+}
+
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
 	subscriptions, err := s.SubscriptionRepo.GetAllCurrentRunningSubscription()

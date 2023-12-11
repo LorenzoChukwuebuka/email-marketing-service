@@ -17,15 +17,7 @@ func NewSubscriptionController(subscriptionService *services.SubscriptionService
 	}
 }
 
-func (c *SubscriptionController) GetAllSubscriptions(w http.ResponseWriter, r *http.Request) {
-	result, err := c.SubscriptionSVC.UpdateExpiredSubscription()
 
-	if err != nil {
-		response.ErrorResponse(w, err.Error())
-		return
-	}
-	response.SuccessResponse(w, 200, result)
-}
 
 func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
@@ -53,4 +45,17 @@ func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *ht
 
 func (c *SubscriptionController) GetAllCurrentRunningSubscription(w http.ResponseWriter, r *http.Request) {
 
+}
+
+
+//test apis 
+
+func (c *SubscriptionController) UpdateAllExpiredSubscriptions(w http.ResponseWriter, r *http.Request) {
+	result, err := c.SubscriptionSVC.UpdateExpiredSubscription()
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+	response.SuccessResponse(w, 200, result)
 }
