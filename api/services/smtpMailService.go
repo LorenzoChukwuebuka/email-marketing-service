@@ -80,9 +80,6 @@ func (s *SMTPMailService) handleSendMail(resultChan chan interface{}) {
 	resultChan <- "Mail sent successfully"
 }
 
-func (s *SMTPMailService) saveContact() {
-
-}
 
 //##################################################### JOBS #################################################################
 
