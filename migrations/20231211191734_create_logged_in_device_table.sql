@@ -1,19 +1,18 @@
 -- +goose Up
 -- +goose StatementBegin
 
- CREATE TABLE IF NOT EXISTS public.contact (
+    CREATE TABLE IF NOT EXISTS user_sessions (
     id SERIAL PRIMARY KEY,
-    uuid VARCHAR(255) NUll,
-    user_id INT NOT Null,
-    contact VARCHAR(255) NOT NULL,
-    subscribed VARCHAR(255),
-    blocked BOOLEAN DEFAULT FALSE,
-    firstname VARCHAR(255) NULL,
-    lastname VARCHAR(255) NULL, 
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE NULL,
-    deleted_at TIMESTAMP WITH TIME ZONE
+    uuid VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL,
+    device VARCHAR(255),
+    ip_address VARCHAR(255),
+    location VARCHAR(255),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );
+
 SELECT 'up SQL query';
 -- +goose StatementEnd
 
