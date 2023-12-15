@@ -43,7 +43,7 @@ func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (ma
 	//3. check remaining mails if it is equals to 0
 
 	if mailCalcRepo.RemainingMails == 0 {
-		return nil, fmt.Errorf("you have exceeded your daily plan: %w", err)
+		return nil, fmt.Errorf("you have exceeded your daily plan")
 	}
 
 	mailResult := make(chan interface{})
@@ -79,7 +79,6 @@ func (s *SMTPMailService) handleSendMail(resultChan chan interface{}) {
 	// Send the result to the channel
 	resultChan <- "Mail sent successfully"
 }
-
 
 //##################################################### JOBS #################################################################
 

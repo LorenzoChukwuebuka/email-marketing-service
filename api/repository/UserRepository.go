@@ -60,7 +60,7 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) error {
 func (r *UserRepository) Login(d *model.User) (*model.UserResponse, error) {
 
 	// query := "SELECT * FROM users WHERE email = $1 AND verified = true"
-	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, verified_at FROM users WHERE email = $1 AND verified = true"
+	query := "SELECT id, uuid, firstname, middlename, lastname, username, email, password, verified, verified_at FROM users WHERE (email = $1) OR (username = $1) AND verified = true"
 	row := r.DB.QueryRow(query, d.Email)
 
 	var user model.UserResponse

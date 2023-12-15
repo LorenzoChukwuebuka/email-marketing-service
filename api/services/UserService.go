@@ -7,9 +7,10 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"strconv"
+	"time"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 type UserService struct {
@@ -29,10 +30,10 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 }
 
 // CreateUser creates a new user, sends an OTP email, and stores OTP data.
-func (s *UserService) CreateUser(d *model.User) (string, error) {
+func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) {
 
 	if err := utils.ValidateData(d); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
@@ -43,14 +44,14 @@ func (s *UserService) CreateUser(d *model.User) (string, error) {
 	// Check if user already exists.
 	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if userExists {
-		return "", fmt.Errorf("user already exists")
+		return nil, fmt.Errorf("user already exists")
 	}
 
 	if _, err := s.userRepository.CreateUser(d); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	otp := utils.GenerateOTP(8)
@@ -62,15 +63,20 @@ func (s *UserService) CreateUser(d *model.User) (string, error) {
 		UUID:   uuid.New().String(),
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Send mail.
 	if err := mail.SignUpMail(d.Email, d.UserName, otp); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return "Account created successfully. Kindly verify your account", nil
+	successMap := map[string]interface{}{
+		"message": "Account created successfully. Kindly verify your account",
+		"userId":  d.ID,
+	}
+
+	return successMap, nil
 }
 
 // VerifyUser verifies a user account using OTP.
@@ -280,6 +286,46 @@ func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error 
 func (s *UserService) EditUser(id int, d *model.User) error {
 	if err := s.userRepository.UpdateUserRecords(d); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) ResendOTP(d *model.ResendOTP) error {
+	if err := utils.ValidateData(d); err != nil {
+		return err
+	}
+
+	otp := utils.GenerateOTP(8)
+
+	num, err := strconv.Atoi(d.UserId)
+
+	if err != nil {
+		return err
+	}
+
+	// Store OTP with user details in the database.
+	otpData := &model.OTP{
+		UserId: num,
+		Token:  otp,
+		UUID:   uuid.New().String(),
+	}
+	if err := s.otpService.CreateOTP(otpData); err != nil {
+		return err
+	}
+
+	// Send mail.
+
+	if d.OTPType == "emailVerify" {
+
+		if err := mail.SignUpMail(d.Email, d.Username, otp); err != nil {
+			return err
+		}
+	} else if d.OTPType == "passwordReset" {
+		if err := mail.ResetPasswordMail(d.Email, d.Username, otp); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
