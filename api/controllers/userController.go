@@ -41,7 +41,7 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.User
-	
+
 	utils.DecodeRequestBody(r, &reqdata)
 	userCreateService, err := c.userService.CreateUser(reqdata)
 
@@ -81,6 +81,19 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SuccessResponse(w, 200, result)
+}
+
+func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
+	var reqdata *model.ResendOTP
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	if err := c.userService.ResendOTP(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "otp resent successfully")
 }
 
 func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +158,7 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	if err := c.userService.EditUser(int(userId),reqdata); err != nil {
+	if err := c.userService.EditUser(int(userId), reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}

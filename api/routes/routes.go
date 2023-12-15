@@ -49,7 +49,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	router.HandleFunc("/user-forget-password", userController.ForgetPassword).Methods("POST", "OPTIONS")
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST", "OPTIONS")
 	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT", "OPTIONS")
-
+	router.HandleFunc("/resend-otp", userController.ResendOTP).Methods("POST", "OPTIONS")
 	//transaction routes
 	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")

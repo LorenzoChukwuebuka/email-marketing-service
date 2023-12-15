@@ -2,26 +2,42 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
 )
 
 var (
 	response = &utils.ApiResponse{}
 )
+
+func cronJobs(dbConn *sql.DB) *cron.Cron {
+	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
+
+	//cron jobs
+
+	// Create a new cron scheduler
+	c := cron.New()
+	c.AddFunc("0 0 * * *", func() {
+		subscriptionService.UpdateExpiredSubscription()
+	})
+
+	return c
+}
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -63,16 +79,8 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
-
-	//cron jobs
-
-	// Create a new cron scheduler
-	c := cron.New()
-	c.AddFunc("0 0 * * *", func() {
-		subscriptionService.UpdateExpiredSubscription()
-	})
+	//instantiate the cron scheduler
+	c := cronJobs(dbConn)
 
 	r := mux.NewRouter()
 

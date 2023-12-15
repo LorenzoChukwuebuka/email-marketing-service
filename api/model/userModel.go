@@ -22,8 +22,9 @@ type User struct {
 }
 
 type LoginModel struct {
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
+
 }
 
 type ForgetPassword struct {

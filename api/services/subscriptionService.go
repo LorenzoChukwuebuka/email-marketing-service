@@ -35,8 +35,6 @@ func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*m
 	return d, nil
 }
 
-
-
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
 	//0.5 check if the user already cancelled
 	userCancelledSub, err := s.SubscriptionRepo.FindSubscriptionById(subscriptionId, userId)
@@ -116,8 +114,7 @@ func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate tim
 	return float32(amountToRefund), nil
 }
 
-
- /** ############################################################### JOBS ####################################################################### **/
+/** ############################################################### JOBS ####################################################################### **/
 func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionResponseModel, error) {
 	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
 
@@ -149,7 +146,6 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionR
 
 	return subscriptions, err
 }
-
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {
 	subscriptions, err := s.SubscriptionRepo.GetAllCurrentRunningSubscription()
