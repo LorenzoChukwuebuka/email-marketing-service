@@ -21,11 +21,15 @@ func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Re
 	var reqdata *model.UserSessionModelStruct
 
 	utils.DecodeRequestBody(r, &reqdata)
+ 
+	result,err := c.UserSessionSVC.CreateSession(reqdata)
 
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return 
+	}
 
-	
-
-	response.SuccessResponse(w, 200, "hello")
+	response.SuccessResponse(w, 200, result)
 }
 
 func (c *UserSessionController) GetAllSessions(w http.ResponseWriter, r *http.Request) {
