@@ -39,6 +39,11 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 	smtpService := services.NewSMTPMailService(apiKeyService, subscriptionRepo, dailyCalcRepository)
 	smtpController := controllers.NewSMTPMailController(apiKeyService, smtpService)
 
+	//session
+	sessionRepo := repository.NewUserSessionRepository(db)
+	sessionService := services.NewUserSessionService(sessionRepo)
+	sessionController := controllers.NewUserSessionController(sessionService)
+
 	//subscription service for testing only
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 
@@ -69,6 +74,10 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
+
+	//session
+	router.HandleFunc("/create-session", sessionController.CreateSessions).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-sessions", middleware.JWTMiddleware(sessionController.GetAllSessions)).Methods("GET", "OPTIONS")
 
 	// Testing API
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")

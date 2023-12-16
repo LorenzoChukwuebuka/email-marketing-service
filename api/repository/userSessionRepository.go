@@ -10,7 +10,7 @@ type UserSessionRepository struct {
 	DB *sql.DB
 }
 
-func NewSecurityRepository(db *sql.DB) *UserSessionRepository {
+func NewUserSessionRepository(db *sql.DB) *UserSessionRepository {
 	return &UserSessionRepository{
 		DB: db,
 	}
@@ -19,7 +19,7 @@ func NewSecurityRepository(db *sql.DB) *UserSessionRepository {
 func (r *UserSessionRepository) CreateSession(session *model.UserSessionModelStruct) error {
 	query := `
 		INSERT INTO user_sessions (uuid, user_id, device, ip_address, browser, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
 	`
 
@@ -43,7 +43,6 @@ func (r *UserSessionRepository) CreateSession(session *model.UserSessionModelStr
 		return fmt.Errorf("error creating session: %v", err)
 	}
 
-	fmt.Printf("Created session with ID: %d\n", sessionID)
 	return nil
 }
 
