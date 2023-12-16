@@ -16,3 +16,16 @@ type UserSessionModelStruct struct {
 	UpdatedAt sql.NullTime `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
+
+
+type UserSessionResponseModel struct {
+	Id        int          `json:"id"`
+	UUID      string       `json:"uuid"`
+	UserId    int          `json:"user_id"`
+	Device    *string      `json:"device"`
+	IPAddress *string      `json:"ip_address"`
+	Browser   *string      `json:"browser"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	DeletedAt string `json:"deleted_at"`
+}
