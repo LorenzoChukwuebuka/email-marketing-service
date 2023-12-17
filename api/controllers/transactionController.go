@@ -5,9 +5,11 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
+	"net/http"
+	"strconv"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type TransactionController struct {
@@ -111,7 +113,15 @@ func (c *TransactionController) GetAllUserBilling(w http.ResponseWriter, r *http
 
 	userId := claims["userId"].(float64)
 
-	result, err := c.BillingSVC.GetAllBillingForAUser(int(userId))
+	pageParam := r.URL.Query().Get("page")
+
+	page, err := strconv.Atoi(pageParam)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+	}
+
+	result, err := c.BillingSVC.GetAllBillingForAUser(int(userId), page)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
