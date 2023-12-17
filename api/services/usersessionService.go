@@ -3,6 +3,7 @@ package services
 import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
+	"fmt"
 	"github.com/google/uuid"
 	"time"
 )
@@ -35,7 +36,7 @@ func (s *UserSessionService) CreateSession(d *model.UserSessionModelStruct) (map
 		// Return a success response
 		response = map[string]interface{}{
 			"message": "Session already exists for the user",
-			"email":nil,
+			"email":   nil,
 		}
 		return response, nil
 	} else {
@@ -67,4 +68,29 @@ func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserS
 	return ((sessionA.Device == nil && sessionB.Device == nil) || (sessionA.Device != nil && sessionB.Device != nil && *sessionA.Device == *sessionB.Device)) &&
 		((sessionA.IPAddress == nil && sessionB.IPAddress == nil) || (sessionA.IPAddress != nil && sessionB.IPAddress != nil && *sessionA.IPAddress == *sessionB.IPAddress)) &&
 		((sessionA.Browser == nil && sessionB.Browser == nil) || (sessionA.Browser != nil && sessionB.Browser != nil && *sessionA.Browser == *sessionB.Browser))
+}
+
+func (s *UserSessionService) GetAllSessions(userId int) ([]model.UserSessionResponseModel, error) {
+	sessionRepo, err := s.userSessionRepo.GetSessionsByUserID(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(sessionRepo) == 0 {
+		return nil, fmt.Errorf("no records found")
+	}
+
+	return sessionRepo, nil
+}
+
+func (s *UserSessionService) DeleteSession(sessionId string) error {
+
+	err := s.userSessionRepo.DeleteSession(sessionId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

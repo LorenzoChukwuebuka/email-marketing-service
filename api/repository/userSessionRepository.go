@@ -94,3 +94,14 @@ func (r *UserSessionRepository) GetSessionsByUserID(userID int) ([]model.UserSes
 
 	return sessions, nil
 }
+
+func (r *UserSessionRepository) DeleteSession(sessionId string) error {
+
+	query := "DELETE FROM user_sessions WHERE uuid = $1"
+	_, err := r.DB.Exec(query, sessionId)
+	if err != nil {
+		return err
+	}
+	return nil
+	 
+}

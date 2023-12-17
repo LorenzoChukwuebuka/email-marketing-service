@@ -139,8 +139,8 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 	return billing, nil
 }
 
-func (s *BillingService) GetAllBillingForAUser(userId int) ([]model.BillingResponse, error) {
-	billing, err := s.BillingRepo.GetAllPayments(userId)
+func (s *BillingService) GetAllBillingForAUser(userId int,page int) ([]model.BillingResponse, error) {
+	billing, err := s.BillingRepo.GetAllPayments(userId,page)
 
 	if err != nil {
 		return nil, err

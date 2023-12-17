@@ -174,7 +174,14 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 	return &payment, nil
 }
 
-func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse, error) {
+func (r *BillingRepository) GetAllPayments(userId int, page int) ([]model.BillingResponse, error) {
+
+	// Assuming a fixed page size of 20
+	pageSize := 20
+
+	// Calculate the offset based on the page number and fixed page size
+	offset := (page - 1) * pageSize
+
 	query := `
 	SELECT
 			p.id,
@@ -221,6 +228,9 @@ func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse,
 			plans pl ON p.plan_id = pl.id
 		WHERE
 			u.id = $1
+		ORDER BY 
+		    p.created_at DESC  -- You can adjust the ORDER BY clause as needed
+		LIMIT $2 OFFSET $3
 `
 
 	// Prepare the SQL statement
@@ -231,7 +241,7 @@ func (r *BillingRepository) GetAllPayments(userId int) ([]model.BillingResponse,
 	defer stmt.Close()
 
 	// Execute the prepared statement
-	rows, err := stmt.Query(userId)
+	rows, err := stmt.Query(userId, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
