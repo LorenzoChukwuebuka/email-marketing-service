@@ -46,7 +46,7 @@ func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (ma
 		return nil, fmt.Errorf("you have exceeded your daily plan")
 	}
 
-	mailResult := make(chan interface{})
+	mailResult := make(chan interface{}, 1)
 	go s.handleSendMail(mailResult)
 
 	//4. Handle the result from handleSendMail if needed
