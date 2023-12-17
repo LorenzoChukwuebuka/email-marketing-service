@@ -3,18 +3,29 @@ package services
 import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
+	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/google/uuid"
+	"log"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type UserSessionService struct {
 	userSessionRepo *repository.UserSessionRepository
+	userRepo        *repository.UserRepository
 }
 
-func NewUserSessionService(usersessionRepo *repository.UserSessionRepository) *UserSessionService {
+type Result struct {
+	Success bool
+	Message string
+	Error   error
+}
+
+func NewUserSessionService(usersessionRepo *repository.UserSessionRepository, userRepository *repository.UserRepository) *UserSessionService {
 	return &UserSessionService{
 		userSessionRepo: usersessionRepo,
+		userRepo:        userRepository,
 	}
 }
 
@@ -44,6 +55,24 @@ func (s *UserSessionService) CreateSession(d *model.UserSessionModelStruct) (map
 			return nil, err
 		}
 
+		//this will be in a separate go routine abeg I no get strength
+
+		resultChan := make(chan Result, 1)
+
+		defer close(resultChan)
+
+		go s.sendDeviceVerificationMail(d, resultChan)
+
+		select {
+		case result := <-resultChan:
+
+			if result.Success {
+				log.Println("Mail Result:", result.Message)
+			} else {
+				log.Println("Mail Error:", result.Error)
+			}
+		}
+
 		response = map[string]interface{}{
 			"message": "Session created successfully",
 			"email":   "email sent successfully",
@@ -68,6 +97,35 @@ func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserS
 	return ((sessionA.Device == nil && sessionB.Device == nil) || (sessionA.Device != nil && sessionB.Device != nil && *sessionA.Device == *sessionB.Device)) &&
 		((sessionA.IPAddress == nil && sessionB.IPAddress == nil) || (sessionA.IPAddress != nil && sessionB.IPAddress != nil && *sessionA.IPAddress == *sessionB.IPAddress)) &&
 		((sessionA.Browser == nil && sessionB.Browser == nil) || (sessionA.Browser != nil && sessionB.Browser != nil && *sessionA.Browser == *sessionB.Browser))
+}
+
+func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSessionModelStruct, resultChan chan Result) {
+
+	userStruct := &model.User{
+		ID: d.UserId,
+	}
+
+	userRepo, err := s.userRepo.FindUserById(userStruct)
+
+	if err != nil {
+		resultChan <- Result{Error: fmt.Errorf("failed to find user by ID: %w", err)}
+		return
+	}
+
+	userEmail := userRepo.Email
+	userName := userRepo.UserName
+
+	code := utils.GenerateOTP(8)
+
+	err = mail.DeviceVerificationMail(userName, userEmail, d, code)
+
+	if err != nil {
+		resultChan <- Result{Error: fmt.Errorf("email sending failed: %w", err)}
+		return
+	}
+
+	resultChan <- Result{Success: true}
+
 }
 
 func (s *UserSessionService) GetAllSessions(userId int) ([]model.UserSessionResponseModel, error) {

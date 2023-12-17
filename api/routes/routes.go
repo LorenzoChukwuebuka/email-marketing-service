@@ -41,7 +41,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
 
 	//session
 	sessionRepo := repository.NewUserSessionRepository(db)
-	sessionService := services.NewUserSessionService(sessionRepo)
+	sessionService := services.NewUserSessionService(sessionRepo,UserRepo)
 	sessionController := controllers.NewUserSessionController(sessionService)
 
 	//subscription service for testing only

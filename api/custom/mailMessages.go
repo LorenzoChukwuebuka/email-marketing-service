@@ -1,6 +1,7 @@
 package custom
 
 import (
+	"email-marketing-service/api/model"
 	"email-marketing-service/api/utils"
 	"strings"
 )
@@ -81,6 +82,49 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	return nil
 }
 
+func (m *Mail) DeviceVerificationMail(username string, email string, d *model.UserSessionModelStruct, code string) error {
+	mailTemplate := `
+	<html>
+	<body style="font-family: Arial, sans-serif;">
+		<h2>Hi .Username ,</h2>
+		<p>Device: .Device </p>
+		<p>Browser: .Browser </p>
+		<p>IP Address: .IP </p>
+		<p>Use the code below to verify your device:</p>
+		<h3>Code: .Token </h3>
+		<p>Please note that this code can only be used once and is valid for a limited time.</p>
+		
+		<br>
+		<p>Regards,<br> .AppName </p>
+	</body>
+</html>
+`
+	//replace placeholders
+
+	replacements := map[string]string{
+		".Username":   username,
+		".Token":      code,
+		".Device":     *d.Device,
+		".Browser":    *d.Browser,
+		".IP Address": *d.IPAddress,
+		".AppName":    "Appname",
+	}
+
+	formattedMail := mailTemplate
+
+	for placeholder, value := range replacements {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+
+	err := utils.SendMail("Email Verification", email, formattedMail)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Mail) SubscriptionExpiryMail(username string, email string, planName string) error {
 	mailTemplate :=
 		`<html>
@@ -142,6 +186,3 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 	}
 	return nil
 }
-
-
-
