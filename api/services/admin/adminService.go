@@ -5,7 +5,6 @@ import (
 	adminrepository "email-marketing-service/api/repository/admin"
 	"email-marketing-service/api/utils"
 	"fmt"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

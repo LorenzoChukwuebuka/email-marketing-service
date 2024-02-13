@@ -1,55 +1,57 @@
 package repository
 
 import (
-	"database/sql"
 	"email-marketing-service/api/model"
 	"fmt"
+	"gorm.io/gorm"
 )
 
 type OTPRepository struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
-func NewOTPRepository(db *sql.DB) *OTPRepository {
+func NewOTPRepository(db *gorm.DB) *OTPRepository {
 	return &OTPRepository{DB: db}
 }
 
 func (r *OTPRepository) CreateOTP(d *model.OTP) error {
-
-	query := "Insert into otp (user_id,token,uuid)Values($1,$2,$3)"
-	_, err := r.DB.Exec(query, d.UserId, d.Token, d.UUID)
-
-	if err != nil {
-		return err
+	if err := r.DB.Create(&d).Error; err != nil {
+		return fmt.Errorf("failed to insert otp: %w", err)
 	}
-
 	return nil
-
 }
 
 func (r *OTPRepository) FindOTP(d *model.OTP) (*model.OTP, error) {
 
-	query := "SELECT id,user_id, token, created_at,uuid FROM otp WHERE token = $1"
-	row := r.DB.QueryRow(query, d.Token)
+	result := r.DB.Where("token = ?", d.Token).First(&d)
 
-	var otp model.OTP
-	err := row.Scan(&otp.Id, &otp.UserId, &otp.Token, &otp.CreatedAt, &otp.UUID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("otp does not exist") // OTP not found, return nil without an error
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("token not found:%w", result.Error)
 		}
-		return nil, err
+		return nil, result.Error
 	}
 
-	return &otp, nil
+	return d, nil
 }
 
 func (r *OTPRepository) DeleteOTP(id int) error {
+	var otp *model.OTP
 
-	query := "DELETE FROM otp WHERE id = $1"
-	_, err := r.DB.Exec(query, id)
-	if err != nil {
-		return err
+	// Fetch the OTP record from the database
+	if err := r.DB.First(&otp, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			fmt.Println("OTP not found")
+		} else {
+			fmt.Printf("Error querying database: %v\n", err)
+		}
+		return nil
+	}
+
+	// Delete the OTP record
+	if err := r.DB.Delete(&otp).Error; err != nil {
+		fmt.Printf("Error deleting OTP: %v\n", err)
+		return nil
 	}
 	return nil
 }

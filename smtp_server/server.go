@@ -1,6 +1,6 @@
 package smtpserver
 
 
-func main(){
-	
+type SMTPServer struct {
 }
+

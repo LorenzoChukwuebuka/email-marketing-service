@@ -3,8 +3,8 @@ package model
 import "time"
 
 type OTP struct {
-	Id        int       `json:"id"`
-	UUID      string    `json:"uuid"`
+	Id        int       `gorm:"primaryKey"`
+	UUID      string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
 	UserId    int       `json:"user_id"`
 	Token     string    `json:"token" validated:"required"`
 	CreatedAt time.Time `json:"created_at"`

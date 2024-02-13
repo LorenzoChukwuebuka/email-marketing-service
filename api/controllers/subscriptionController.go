@@ -18,7 +18,6 @@ func NewSubscriptionController(subscriptionService *services.SubscriptionService
 }
 
 
-
 func (c *SubscriptionController) CancelSubscription(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {

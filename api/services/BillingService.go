@@ -6,11 +6,10 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type BillingService struct {
@@ -43,18 +42,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
-	tx, err := s.BillingRepo.DB.Begin()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Defer the rollback in case of an error
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
+	
 
 	transactionId := utils.GenerateOTP(10)
 
@@ -97,10 +85,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
+	
 
 	fmt.Print(billingRepo)
 	return nil, nil
@@ -139,8 +124,8 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 	return billing, nil
 }
 
-func (s *BillingService) GetAllBillingForAUser(userId int,page int) ([]model.BillingResponse, error) {
-	billing, err := s.BillingRepo.GetAllPayments(userId,page)
+func (s *BillingService) GetAllBillingForAUser(userId int, page int) ([]model.BillingResponse, error) {
+	billing, err := s.BillingRepo.GetAllPayments(userId, page)
 
 	if err != nil {
 		return nil, err
