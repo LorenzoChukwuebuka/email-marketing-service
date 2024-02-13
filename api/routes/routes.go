@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"database/sql"
+	 "gorm.io/gorm"
 	"email-marketing-service/api/controllers"
 	"email-marketing-service/api/middleware"
 	"email-marketing-service/api/repository"
@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var RegisterUserRoutes = func(router *mux.Router, db *sql.DB) {
+var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	//intialize the user  dependencies
 	otpRepo := repository.NewOTPRepository(db)
 	OTPService := services.NewOTPService(otpRepo)

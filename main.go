@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"email-marketing-service/api/database"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/routes"
@@ -15,16 +14,18 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 )
 
 var (
-	response = &utils.ApiResponse{}
+	response   = &utils.ApiResponse{}
 )
 
-func cronJobs(dbConn *sql.DB) *cron.Cron {
+func cronJobs(dbConn *gorm.DB) *cron.Cron {
 	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
 
@@ -77,7 +78,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	defer dbConn.Close()
+	
 
 	//instantiate the cron scheduler
 	c := cronJobs(dbConn)

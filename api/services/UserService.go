@@ -1,16 +1,15 @@
 package services
 
 import (
-	"database/sql"
 	"email-marketing-service/api/custom"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"strconv"
-	"time"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"strconv"
+	"time"
 )
 
 type UserService struct {
@@ -37,7 +36,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 	}
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
-
 	d.Password = string(password)
 	d.UUID = uuid.New().String()
 
@@ -60,7 +58,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 	otpData := &model.OTP{
 		UserId: d.ID,
 		Token:  otp,
-		UUID:   uuid.New().String(),
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
 		return nil, err
@@ -73,7 +70,7 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 
 	successMap := map[string]interface{}{
 		"message": "Account created successfully. Kindly verify your account",
-		"userId":  d.ID,
+		"userId":  d.UUID,
 	}
 
 	return successMap, nil
@@ -98,17 +95,13 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 
 	userModel.Verified = true
 	userModel.ID = otpData.UserId
-	userModel.VerifiedAt = sql.NullTime{
-		Time:  time.Now(),
-		Valid: true,
-	}
+	userModel.VerifiedAt = time.Now()
 
 	if err = s.userRepository.VerifyUserAccount(&userModel); err != nil {
 		return err
 	}
 
 	//delete otp from the database
-
 	if err = otpService.DeleteOTP(otpData.Id); err != nil {
 		return err
 	}
@@ -138,12 +131,12 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 	}
 
 	// Compare password
-	err = bcrypt.CompareHashAndPassword(userDetails.Password, []byte(d.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(userDetails.Password), []byte(d.Password))
 	if err != nil {
 		return nil, fmt.Errorf("passwords do not match")
 	}
 
-	// Generate JWT token
+	//Generate JWT token
 	token, err := utils.JWTEncode(userDetails.ID, userDetails.UUID, userDetails.UserName, userDetails.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error generating JWT token: %w", err)
@@ -196,7 +189,6 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 	otpData := &model.OTP{
 		UserId: userDetails.ID,
 		Token:  otp,
-		UUID:   uuid.New().String(),
 	}
 
 	otpService := s.otpService
@@ -213,7 +205,6 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 }
 
 func (s *UserService) ResetPassword(d *model.ResetPassword) error {
-
 	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
@@ -267,7 +258,7 @@ func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error 
 	}
 
 	//compare password
-	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), d.OldPassword); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(d.OldPassword)); err != nil {
 		return fmt.Errorf("password does not match the records")
 	}
 

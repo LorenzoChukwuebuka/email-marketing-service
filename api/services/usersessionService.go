@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -63,14 +62,12 @@ func (s *UserSessionService) CreateSession(d *model.UserSessionModelStruct) (map
 
 		go s.sendDeviceVerificationMail(d, resultChan)
 
-		select {
-		case result := <-resultChan:
+		result := <-resultChan
 
-			if result.Success {
-				log.Println("Mail Result:", result.Message)
-			} else {
-				log.Println("Mail Error:", result.Error)
-			}
+		if result.Success {
+			log.Println("Mail Result:", result.Message)
+		} else {
+			log.Println("Mail Error:", result.Error)
 		}
 
 		response = map[string]interface{}{
@@ -100,23 +97,18 @@ func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserS
 }
 
 func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSessionModelStruct, resultChan chan Result) {
-
 	userStruct := &model.User{
 		ID: d.UserId,
 	}
-
 	userRepo, err := s.userRepo.FindUserById(userStruct)
 
 	if err != nil {
 		resultChan <- Result{Error: fmt.Errorf("failed to find user by ID: %w", err)}
 		return
 	}
-
 	userEmail := userRepo.Email
 	userName := userRepo.UserName
-
 	code := utils.GenerateOTP(8)
-
 	err = mail.DeviceVerificationMail(userName, userEmail, d, code)
 
 	if err != nil {
@@ -125,7 +117,6 @@ func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSessionMode
 	}
 
 	resultChan <- Result{Success: true}
-
 }
 
 func (s *UserSessionService) GetAllSessions(userId int) ([]model.UserSessionResponseModel, error) {
