@@ -16,7 +16,7 @@ func NewUserSessionRepository(db *gorm.DB) *UserSessionRepository {
 	}
 }
 
-func (r *UserSessionRepository) CreateSession(session *model.UserSessionModelStruct) error {
+func (r *UserSessionRepository) CreateSession(session *model.UserSession) error {
 	 
 	return nil
 }

@@ -1,31 +1,29 @@
 package model
 
 import (
-	"database/sql"
 	"time"
 )
 
-type UserSessionModelStruct struct {
-	Id        int          `json:"id"`
-	UUID      string       `json:"uuid"`
-	UserId    int          `json:"user_id"`
-	Device    *string      `json:"device"`
-	IPAddress *string      `json:"ip_address"`
-	Browser   *string      `json:"browser"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+type UserSession struct {
+	Id        int       `gorm:"primaryKey"`
+	UUID      string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
+	UserId    int    `json:"user_id"`
+	Device    *string   `json:"device"`
+	IPAddress *string   `json:"ip_address"`
+	Browser   *string   `json:"browser"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
 
-
 type UserSessionResponseModel struct {
-	Id        int          `json:"id"`
-	UUID      string       `json:"uuid"`
-	UserId    int          `json:"user_id"`
-	Device    *string      `json:"device"`
-	IPAddress *string      `json:"ip_address"`
-	Browser   *string      `json:"browser"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	DeletedAt string `json:"deleted_at"`
+	Id        int       `json:"-"`
+	UUID      string    `json:"uuid"`
+	UserId    int       `json:"user_id"`
+	Device    *string   `json:"device"`
+	IPAddress *string   `json:"ip_address"`
+	Browser   *string   `json:"browser"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt string    `json:"updated_at"`
+	DeletedAt string    `json:"deleted_at"`
 }

@@ -28,7 +28,6 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 	}
 }
 
-// CreateUser creates a new user, sends an OTP email, and stores OTP data.
 func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) {
 
 	if err := utils.ValidateData(d); err != nil {
@@ -39,7 +38,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 	d.Password = string(password)
 	d.UUID = uuid.New().String()
 
-	// Check if user already exists.
 	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
 	if err != nil {
 		return nil, err
@@ -54,7 +52,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 
 	otp := utils.GenerateOTP(8)
 
-	// Store OTP with user details in the database.
 	otpData := &model.OTP{
 		UserId: d.ID,
 		Token:  otp,
@@ -63,7 +60,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 		return nil, err
 	}
 
-	// Send mail.
 	if err := mail.SignUpMail(d.Email, d.UserName, otp); err != nil {
 		return nil, err
 	}
@@ -76,7 +72,6 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 	return successMap, nil
 }
 
-// VerifyUser verifies a user account using OTP.
 func (s *UserService) VerifyUser(d *model.OTP) error {
 
 	if err := utils.ValidateData(d); err != nil {
@@ -299,7 +294,6 @@ func (s *UserService) ResendOTP(d *model.ResendOTP) error {
 	otpData := &model.OTP{
 		UserId: num,
 		Token:  otp,
-		UUID:   uuid.New().String(),
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
 		return err

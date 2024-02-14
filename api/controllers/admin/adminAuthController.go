@@ -22,7 +22,7 @@ var (
 )
 
 func (c *AdminController) CreateAdmin(w http.ResponseWriter, r *http.Request) {
-	var reqdata *adminmodel.AdminModel
+	var reqdata *adminmodel.Admin
 
 	utils.DecodeRequestBody(r, &reqdata)
 

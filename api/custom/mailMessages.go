@@ -82,7 +82,7 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	return nil
 }
 
-func (m *Mail) DeviceVerificationMail(username string, email string, d *model.UserSessionModelStruct, code string) error {
+func (m *Mail) DeviceVerificationMail(username string, email string, d *model.UserSession, code string) error {
 	mailTemplate := `
 	<html>
 	<body style="font-family: Arial, sans-serif;">

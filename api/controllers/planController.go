@@ -20,7 +20,7 @@ func NewPlanController(planService *services.PlanService) *PlanController {
 }
 
 func (c *PlanController) CreatePlan(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.PlanModel
+	var reqdata *model.Plan
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -63,7 +63,7 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	plan_id, _ := strconv.Atoi(id)
 
-	var reqdata *model.PlanModel
+	var reqdata *model.Plan
 
 	utils.DecodeRequestBody(r, &reqdata)
 

@@ -5,9 +5,9 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"time"
-	"github.com/google/uuid"
 )
 
 type UserSessionService struct {
@@ -28,7 +28,7 @@ func NewUserSessionService(usersessionRepo *repository.UserSessionRepository, us
 	}
 }
 
-func (s *UserSessionService) CreateSession(d *model.UserSessionModelStruct) (map[string]interface{}, error) {
+func (s *UserSessionService) CreateSession(d *model.UserSession) (map[string]interface{}, error) {
 
 	d.UUID = uuid.New().String()
 	d.CreatedAt = time.Now()
@@ -81,7 +81,7 @@ func (s *UserSessionService) CreateSession(d *model.UserSessionModelStruct) (map
 }
 
 // isSessionExists checks if the new session matches any existing session
-func isSessionExists(sessionRepo []model.UserSessionResponseModel, newSession model.UserSessionModelStruct) bool {
+func isSessionExists(sessionRepo []model.UserSessionResponseModel, newSession model.UserSession) bool {
 	for _, session := range sessionRepo {
 		if sessionsMatch(session, newSession) {
 			return true
@@ -90,13 +90,13 @@ func isSessionExists(sessionRepo []model.UserSessionResponseModel, newSession mo
 	return false
 }
 
-func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserSessionModelStruct) bool {
+func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserSession) bool {
 	return ((sessionA.Device == nil && sessionB.Device == nil) || (sessionA.Device != nil && sessionB.Device != nil && *sessionA.Device == *sessionB.Device)) &&
 		((sessionA.IPAddress == nil && sessionB.IPAddress == nil) || (sessionA.IPAddress != nil && sessionB.IPAddress != nil && *sessionA.IPAddress == *sessionB.IPAddress)) &&
 		((sessionA.Browser == nil && sessionB.Browser == nil) || (sessionA.Browser != nil && sessionB.Browser != nil && *sessionA.Browser == *sessionB.Browser))
 }
 
-func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSessionModelStruct, resultChan chan Result) {
+func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSession, resultChan chan Result) {
 	userStruct := &model.User{
 		ID: d.UserId,
 	}

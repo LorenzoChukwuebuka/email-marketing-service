@@ -1,51 +1,21 @@
 package routes
 
 import (
-	 "gorm.io/gorm"
-	"email-marketing-service/api/controllers"
 	"email-marketing-service/api/middleware"
-	"email-marketing-service/api/repository"
-	"email-marketing-service/api/services"
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
-	//intialize the user  dependencies
-	otpRepo := repository.NewOTPRepository(db)
-	OTPService := services.NewOTPService(otpRepo)
-	UserRepo := repository.NewUserRepository(db)
-	UserServices := services.NewUserService(UserRepo, OTPService)
-	userController := controllers.NewUserController(UserServices)
-
-	//plan
-	planRepo := repository.NewPlanRepository(db)
-	planService := services.NewPlanService(planRepo)
-	planController := controllers.NewPlanController(planService)
-
-	//transaction service
-	subscriptionRepo := repository.NewSubscriptionRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
-	billingRepository := repository.NewBillingRepository(db)
-	transanctionService := services.NewBillingService(billingRepository, subscriptionService)
-	transactionController := controllers.NewTransactionController(transanctionService)
-
-	//api key
-	apiKeyRepo := repository.NewAPIkeyRepository(db)
-	apiKeyService := services.NewAPIKeyService(apiKeyRepo)
-	apiKeyController := controllers.NewAPIKeyController(apiKeyService)
-
-	//smtp
-	dailyCalcRepository := repository.NewDailyMailCalcRepository(db)
-	smtpService := services.NewSMTPMailService(apiKeyService, subscriptionRepo, dailyCalcRepository)
-	smtpController := controllers.NewSMTPMailController(apiKeyService, smtpService)
-
-	//session
-	sessionRepo := repository.NewUserSessionRepository(db)
-	sessionService := services.NewUserSessionService(sessionRepo,UserRepo)
-	sessionController := controllers.NewUserSessionController(sessionService)
+	userController, _ := InitializeUserController(db)
+	planController, _ := InitializePlanController(db)
+	sessionController, _ := InitializeUserssionController(db)
+	apiKeyController, _ := InitializeAPIKeyController(db)
+	smtpController, _ := InitializeSMTPController(db)
+	transactionController, _ := InitializeTransactionController(db)
 
 	//subscription service for testing only
-	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
+	subscriptionController, _ := InitializeSubscriptionController(db)
 
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
@@ -78,7 +48,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	//session
 	router.HandleFunc("/create-session", sessionController.CreateSessions).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-sessions", middleware.JWTMiddleware(sessionController.GetAllSessions)).Methods("GET", "OPTIONS")
-	router.HandleFunc("/delete-session",middleware.JWTMiddleware(sessionController.DeleteSession)).Methods("DELETE","OPTIONS")
+	router.HandleFunc("/delete-session", middleware.JWTMiddleware(sessionController.DeleteSession)).Methods("DELETE", "OPTIONS")
 
 	// Testing API
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")

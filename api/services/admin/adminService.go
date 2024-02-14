@@ -17,7 +17,7 @@ func NewAdminService(adminRepo *adminrepository.AdminRepository) *AdminService {
 	return &AdminService{AdminRepo: adminRepo}
 }
 
-func (s *AdminService) CreateAdmin(d *adminmodel.AdminModel) (*adminmodel.AdminModel, error) {
+func (s *AdminService) CreateAdmin(d *adminmodel.Admin) (*adminmodel.Admin, error) {
 
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err

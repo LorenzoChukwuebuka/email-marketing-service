@@ -19,10 +19,31 @@ func NewUserSessionController(usersessionSvc *services.UserSessionService) *User
 	}
 }
 
+func (c *UserSessionController) getIPAddress(r *http.Request) string {
+	// Check X-Forwarded-For header first
+	ip := r.Header.Get("X-Forwarded-For")
+
+	// If X-Forwarded-For is empty, check X-Real-IP
+	if ip == "" {
+		ip = r.Header.Get("X-Real-IP")
+	}
+
+	// If both headers are empty, use RemoteAddr
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	return ip
+}
+
 func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.UserSessionModelStruct
+	var reqdata *model.UserSession
+
+	ipAddress := c.getIPAddress(r)
 
 	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.IPAddress = &ipAddress
 
 	result, err := c.UserSessionSVC.CreateSession(reqdata)
 
