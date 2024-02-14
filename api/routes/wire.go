@@ -66,8 +66,6 @@ func InitializeTransactionController(db *gorm.DB)(*controllers.TransactionContro
 	return nil, nil
 }
 
-
-
 func InitializeSMTPController(db *gorm.DB)(*controllers.SMTPMailController,error){
 	wire.Build(
 		controllers.NewSMTPMailController,
@@ -81,13 +79,11 @@ func InitializeSMTPController(db *gorm.DB)(*controllers.SMTPMailController,error
 	return nil, nil
 }
 
-
 func InitializeSubscriptionController(db *gorm.DB)(*controllers.SubscriptionController,error){
 	wire.Build(
 	controllers.NewSubscriptionController,
 	services.NewSubscriptionService,
 	repository.NewSubscriptionRepository,
 	)
-
 	return nil, nil
 }
