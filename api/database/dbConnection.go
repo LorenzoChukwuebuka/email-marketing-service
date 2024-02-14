@@ -40,7 +40,7 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&model.User{}, &model.OTP{})
+	db.AutoMigrate(&model.User{}, &model.OTP{}, &model.UserSession{},&model.Plan{})
 
 	fmt.Println("Connected to the database")
 	return db, nil

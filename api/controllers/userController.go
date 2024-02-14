@@ -32,10 +32,8 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 
 	username := claims["username"].(string)
 	email := claims["email"].(string)
-
 	response := fmt.Sprintf("Welcome, %s (%s)!", username, email)
 	w.Write([]byte(response))
-
 	fmt.Fprint(w, "Hello world")
 }
 
@@ -51,7 +49,6 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SuccessResponse(w, 200, userCreateService)
-
 }
 
 func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
@@ -140,9 +137,7 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, "password changed successfully")
-
 }
 
 func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
@@ -164,5 +159,4 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SuccessResponse(w, 200, "User edited successfully")
-
 }

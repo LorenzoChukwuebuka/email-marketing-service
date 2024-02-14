@@ -41,7 +41,7 @@ type ChangePassword struct {
 }
 
 type UserResponse struct {
-	ID int 
+	ID         int       `json:"-"`
 	UUID       string    `json:"uuid"`
 	FirstName  string    `json:"firstname"`
 	MiddleName *string   `json:"middlename"`

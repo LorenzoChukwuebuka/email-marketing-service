@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var EmptyPlanResponse = model.PlanResponse{} // Zero-initialized instance
+
 type PlanService struct {
 	PlanRepo *repository.PlanRepository
 }
@@ -16,7 +18,7 @@ func NewPlanService(planRepo *repository.PlanRepository) *PlanService {
 	return &PlanService{PlanRepo: planRepo}
 }
 
-func (s *PlanService) CreatePlan(d *model.PlanModel) (*model.PlanModel, error) {
+func (s *PlanService) CreatePlan(d *model.Plan) (*model.Plan, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
@@ -55,18 +57,18 @@ func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
 	return plans, nil
 }
 
-func (s *PlanService) GetASinglePlan(id string) (*model.PlanResponse, error) {
+func (s *PlanService) GetASinglePlan(id string) (model.PlanResponse, error) {
 	plan, err := s.PlanRepo.GetSinglePlan(id)
 	if err != nil {
-		return nil, err
+		return EmptyPlanResponse, err
 	}
-	if plan == nil {
-		return nil, fmt.Errorf("no record found: %w", err)
+	if plan == EmptyPlanResponse {
+		return EmptyPlanResponse, fmt.Errorf("no record found")
 	}
 	return plan, nil
 }
 
-func (s *PlanService) UpdatePlan(d *model.PlanModel) error {
+func (s *PlanService) UpdatePlan(d *model.Plan) error {
 	if err := s.PlanRepo.EditPlan(d); err != nil {
 		return err
 	}

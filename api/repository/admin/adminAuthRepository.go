@@ -16,7 +16,7 @@ func NewAdminRepository(db *gorm.DB) *AdminRepository {
 	return &AdminRepository{DB: db}
 }
 
-func (r *AdminRepository) CreateAdmin(d *adminmodel.AdminModel) (*adminmodel.AdminModel, error) {
+func (r *AdminRepository) CreateAdmin(d *adminmodel.Admin) (*adminmodel.Admin, error) {
 	
 
 	return d, nil
