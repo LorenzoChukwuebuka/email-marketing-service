@@ -1,41 +1,40 @@
 package model
 
 import (
-	"database/sql"
 	"time"
 )
 
 type SubscriptionModel struct {
-	Id        int       `json:"id"`
-	UUID      string    `json:"uuid"`
-	UserId    int       `json:"user_id"`
-	PlanId    int       `json:"plan_id"`
-	PaymentId int       `json:"payment_id"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Expired   bool      `json:"expired"`
-	TransactionId string `json:"transaction_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	Cancelled bool `json:"cancelled"`
-	DateCancelled sql.NullTime `json:"date_cancelled"`
+	Id            int       `gorm:"primaryKey"`
+	UUID          string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
+	UserId        int       `json:"user_id"`
+	PlanId        int       `json:"plan_id"`
+	PaymentId     int       `json:"payment_id"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
+	Expired       bool      `json:"expired"`
+	TransactionId string    `json:"transaction_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	Cancelled     bool      `json:"cancelled"`
+	DateCancelled time.Time `json:"date_cancelled" gorm:"type:TIMESTAMP;null;default:null"`
 }
 
 type SubscriptionResponseModel struct {
-	Id        int       `json:"id"`
-	UUID      string    `json:"uuid"`
-	UserId    int       `json:"user_id"`
-	PlanId    int       `json:"plan_id"`
-	PaymentId *int       `json:"payment_id"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Expired   bool      `json:"expired"`
-	TransactionId string `json:"transaction_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	Cancelled bool `json:"cancelled"`
-	DateCancelled string `json:"date_cancelled"`
-	Plan PlanResponse
-	User UserResponse
-	Billing BillingResponse
+	Id            int       `json:"-"`
+	UUID          string    `json:"uuid"`
+	UserId        int       `json:"user_id"`
+	PlanId        int       `json:"plan_id"`
+	PaymentId     *int      `json:"payment_id"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
+	Expired       bool      `json:"expired"`
+	TransactionId string    `json:"transaction_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     string    `json:"updated_at"`
+	Cancelled     bool      `json:"cancelled"`
+	DateCancelled string    `json:"date_cancelled"`
+	Plan          PlanResponse
+	User          UserResponse
+	Billing       BillingResponse
 }
