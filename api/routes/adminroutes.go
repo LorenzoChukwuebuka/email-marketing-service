@@ -1,27 +1,15 @@
 package routes
 
 import (
-	"email-marketing-service/api/controllers"
-	adminController "email-marketing-service/api/controllers/admin"
 	"email-marketing-service/api/middleware"
-	"email-marketing-service/api/repository"
-	adminrepository "email-marketing-service/api/repository/admin"
-	"email-marketing-service/api/services"
-	adminservice "email-marketing-service/api/services/admin"
-
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
 var RegisterAdminRoutes = func(router *mux.Router, db *gorm.DB) {
 
-	adminRepo := adminrepository.NewAdminRepository(db)
-	adminService := adminservice.NewAdminService(adminRepo)
-	adminController := adminController.NewAdminController(adminService)
-
-	planRepo := repository.NewPlanRepository(db)
-	planService := services.NewPlanService(planRepo)
-	planController := controllers.NewPlanController(planService)
+	adminController, _ := InitializeAdminController(db)
+	planController, _ := InitializePlanController(db)
 
 	//admin routes
 	router.HandleFunc("/create-admin", adminController.CreateAdmin).Methods("POST")

@@ -8,8 +8,11 @@ package routes
 
 import (
 	"email-marketing-service/api/controllers"
+	"email-marketing-service/api/controllers/admin"
 	"email-marketing-service/api/repository"
+	"email-marketing-service/api/repository/admin"
 	"email-marketing-service/api/services"
+	"email-marketing-service/api/services/admin"
 	"gorm.io/gorm"
 )
 
@@ -70,4 +73,18 @@ func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionCon
 	subscriptionService := services.NewSubscriptionService(subscriptionRepository)
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 	return subscriptionController, nil
+}
+
+func InitialiazePlanController(db *gorm.DB) (*controllers.PlanController, error) {
+	planRepository := repository.NewPlanRepository(db)
+	planService := services.NewPlanService(planRepository)
+	planController := controllers.NewPlanController(planService)
+	return planController, nil
+}
+
+func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, error) {
+	adminRepository := adminrepository.NewAdminRepository(db)
+	adminService := adminservice.NewAdminService(adminRepository)
+	adminControllerAdminController := adminController.NewAdminController(adminService)
+	return adminControllerAdminController, nil
 }

@@ -9,6 +9,9 @@ import (
 	"email-marketing-service/api/services"
 	"github.com/google/wire"
 	"gorm.io/gorm"
+	adminservice "email-marketing-service/api/services/admin"
+	adminrepository "email-marketing-service/api/repository/admin"
+	adminController "email-marketing-service/api/controllers/admin"
 )
 
 func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) {
@@ -86,4 +89,25 @@ func InitializeSubscriptionController(db *gorm.DB)(*controllers.SubscriptionCont
 	repository.NewSubscriptionRepository,
 	)
 	return nil, nil
+}
+
+
+func InitialiazePlanController (db *gorm.DB)(*controllers.PlanController,error){
+	wire.Build(
+		controllers.NewPlanController,
+		services.NewPlanService,
+		repository.NewPlanRepository,
+	)
+
+	return nil,nil
+}
+
+
+func InitializeAdminController(db *gorm.DB)(*adminController.AdminController,error){
+   wire.Build(
+	 adminController.NewAdminController,
+	 adminservice.NewAdminService,
+	 adminrepository.NewAdminRepository,
+   )
+   return nil,nil
 }
