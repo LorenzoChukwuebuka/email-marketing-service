@@ -21,7 +21,7 @@ var SetTime = func(field sql.NullTime, target *string) {
 	}
 }
 
-func (r *BillingRepository) CreateBilling(d *model.BillingModel) (*model.BillingModel, error) {
+func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, error) {
 
 	return d, nil
 }

@@ -13,7 +13,7 @@ func NewDailyMailCalcRepository(db *gorm.DB) *DailyMailCalcRepository {
 	return &DailyMailCalcRepository{DB: db}
 }
 
-func (r *DailyMailCalcRepository) CreateRecordDailyMailCalculation(d *model.DailyMailCalcModel) error {
+func (r *DailyMailCalcRepository) CreateRecordDailyMailCalculation(d *model.DailyMailCalc) error {
 
 	return nil
 }
@@ -23,7 +23,7 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(userId int) (*model
 	return nil, nil
 }
 
-func (r *DailyMailCalcRepository) UpdateDailyMailCalcRepository(d *model.DailyMailCalcModel) error {
+func (r *DailyMailCalcRepository) UpdateDailyMailCalcRepository(d *model.DailyMailCalc) error {
 
 	return nil
 }

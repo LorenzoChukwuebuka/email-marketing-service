@@ -46,7 +46,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 
 	transactionId := utils.GenerateOTP(10)
 
-	billingServiceData := &model.BillingModel{
+	billingServiceData := &model.Billing{
 		UUID:          uuid.New().String(),
 		UserId:        data.UserID,
 		AmountPaid:    float32(data.Amount),
@@ -67,7 +67,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
-	subscription := &model.SubscriptionModel{
+	subscription := &model.Subscription{
 		UUID:          uuid.New().String(),
 		UserId:        data.UserID,
 		PlanId:        data.PlanID,

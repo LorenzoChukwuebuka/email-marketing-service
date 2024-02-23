@@ -15,7 +15,7 @@ func NewAPIkeyRepository(db *gorm.DB) *APIKeyRepository {
 	}
 }
 
-func (r *APIKeyRepository) CreateAPIKey(d *model.APIKeyModel) (*model.APIKeyModel, error) {
+func (r *APIKeyRepository) CreateAPIKey(d *model.APIKey) (*model.APIKey, error) {
  return nil,nil
 
 }
@@ -24,7 +24,7 @@ func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId int) (*model.APIKeyRespo
 	 return nil,nil
 }
 
-func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKeyModel) error {
+func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKey) error {
 	 
 	return nil
 }

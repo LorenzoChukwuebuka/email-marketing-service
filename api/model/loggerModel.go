@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type LoggerModel struct {
+type Logger struct {
 	Id        int
 	UUID string
 	Action    string

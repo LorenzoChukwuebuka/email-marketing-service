@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/robfig/cron/v3"
