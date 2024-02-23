@@ -55,7 +55,7 @@ func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (ma
 
 	//5. update counter
 
-	updateCalcData := &model.DailyMailCalcModel{
+	updateCalcData := &model.DailyMailCalc{
 		UUID:           mailCalcRepo.UUID,
 		RemainingMails: mailCalcRepo.RemainingMails - 1,
 		MailsSent:      mailCalcRepo.MailsSent + 1,
@@ -101,7 +101,7 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 			return err
 		}
 
-		dailyCalcData := &model.DailyMailCalcModel{
+		dailyCalcData := &model.DailyMailCalc{
 			UUID:           uuid.New().String(),
 			SubscriptionID: activeSub.Id,
 			MailsForADay:   num,

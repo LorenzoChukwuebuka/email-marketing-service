@@ -28,8 +28,8 @@ type BasePaymentResponse struct {
 	Status   string
 }
 
-type BillingModel struct {
-	Id            int          `json:"id"`
+type Billing struct {
+	Id            int          `json:"-"`
 	UUID          string       `json:"uuid"`
 	UserId        int          `json:"user_id"`
 	AmountPaid    float32      `json:"amount_paid" validated:"required"`

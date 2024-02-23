@@ -22,7 +22,7 @@ func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, erro
 	uuidObj := uuid.New().String()
 	apiKey := "skey-" + uuidObj
 
-	apiKeyModel := &model.APIKeyModel{
+	apiKeyModel := &model.APIKey{
 		UUID:      uuid.New().String(),
 		UserId:    userId,
 		APIKey:    apiKey,

@@ -26,7 +26,7 @@ func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository)
 	return &SubscriptionService{SubscriptionRepo: subscriptionRepo}
 }
 
-func (s *SubscriptionService) CreateSubscription(d *model.SubscriptionModel) (*model.SubscriptionModel, error) {
+func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.Subscription, error) {
 	//check if the user is running on a free plan and expire it automatically
 
 	if err := s.SubscriptionRepo.CreateSubscription(d); err != nil {

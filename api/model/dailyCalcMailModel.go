@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type DailyMailCalcModel struct {
+type DailyMailCalc struct {
 	ID             int       `json:"id"`
 	UUID           string    `json:"uuid"`
 	SubscriptionID int       `json:"subscription_id"`
@@ -18,7 +18,7 @@ type DailyMailCalcModel struct {
 
 
 type DailyMailCalcResponseModel struct {
-	ID             int       `json:"id"`
+	ID             int       `json:"-"`
 	UUID           string    `json:"uuid"`
 	SubscriptionID int       `json:"subscription_id"`
 	MailsForADay   int       `json:"mails_for_a_day"`

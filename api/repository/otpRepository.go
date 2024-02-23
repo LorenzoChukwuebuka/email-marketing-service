@@ -38,7 +38,6 @@ func (r *OTPRepository) FindOTP(d *model.OTP) (*model.OTP, error) {
 func (r *OTPRepository) DeleteOTP(id int) error {
 	var otp *model.OTP
 
-	// Fetch the OTP record from the database
 	if err := r.DB.First(&otp, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			fmt.Println("OTP not found")

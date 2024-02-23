@@ -2,46 +2,69 @@ package database
 
 import (
 	"email-marketing-service/api/model"
+	adminmodel "email-marketing-service/api/model/admin"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"log"
+	"sync"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
-var db *gorm.DB
+var (
+	db   *gorm.DB
+	once sync.Once
+)
 
-func GetDb() *gorm.DB {
+// GetDB returns the database instance.
+func GetDB() *gorm.DB {
 	return db
 }
 
+// InitDB initializes the database connection.
 func InitDB() (*gorm.DB, error) {
+	once.Do(func() {
+		initializeDatabase()
+	})
 
+	return db, nil
+}
+
+func initializeDatabase() {
 	config := utils.LoadEnv()
 
-	host := config.DBHost
-	port := config.DBPort
-	user := config.DB_User
-	password := config.DBPassword
-	dbname := config.DBName
+	host, port, user, password, dbname := config.DBHost, config.DBPort, config.DB_User, config.DBPassword, config.DBName
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 	var err error
 
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
 	}
 
 	// Enable the uuid-ossp extension
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";").Error; err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	db.AutoMigrate(&model.User{}, &model.OTP{}, &model.UserSession{},&model.Plan{})
-
+	autoMigrateModels()
 	fmt.Println("Connected to the database")
-	return db, nil
+}
+
+func autoMigrateModels() {
+	db.AutoMigrate(
+		&model.User{},
+		&model.OTP{},
+		&model.UserSession{},
+		&model.Plan{},
+		&model.APIKey{},
+		&model.DailyMailCalc{},
+		&model.Subscription{},
+		&model.Billing{},
+		&model.Logger{},
+		&adminmodel.Admin{},
+	)
 }

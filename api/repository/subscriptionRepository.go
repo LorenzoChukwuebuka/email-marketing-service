@@ -14,7 +14,7 @@ func NewSubscriptionRepository(db *gorm.DB) *SubscriptionRepository {
 	return &SubscriptionRepository{DB: db}
 }
 
-func (r *SubscriptionRepository) CreateSubscription(d *model.SubscriptionModel) error {
+func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) error {
 	 return nil
 }
 

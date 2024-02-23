@@ -13,7 +13,7 @@ type UserSession struct {
 	Browser   *string   `json:"browser"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
-	DeletedAt time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	DeletedAt time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
 
 type UserSessionResponseModel struct {
