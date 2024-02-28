@@ -42,7 +42,6 @@ func (c *ApiKeyController) GetAPIKey(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
-
 	userId := claims["userId"].(float64)
 
 	result, err := c.APIkeySVC.GetAPIKey(int(userId))

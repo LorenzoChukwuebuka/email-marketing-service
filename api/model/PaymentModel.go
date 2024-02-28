@@ -3,6 +3,8 @@ package model
 import (
 	"database/sql"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type BasePaymentModelData struct {
@@ -29,6 +31,7 @@ type BasePaymentResponse struct {
 }
 
 type Billing struct {
+	gorm.Model
 	Id            int          `json:"-"`
 	UUID          string       `json:"uuid"`
 	UserId        int          `json:"user_id"`

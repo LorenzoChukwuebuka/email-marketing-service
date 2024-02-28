@@ -2,9 +2,12 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
+    gorm.Model
 	ID         int       `gorm:"primaryKey"`
 	UUID       string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
 	FirstName  string    `json:"firstname" validate:"required"`
