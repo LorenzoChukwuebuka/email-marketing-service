@@ -12,6 +12,8 @@ type APIKeyService struct {
 	APIKeyRepo *repository.APIKeyRepository
 }
 
+var EmptyAPIKeyResponse = model.APIKeyResponseModel{}
+
 func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
 	return &APIKeyService{
 		APIKeyRepo: apiRepo,
@@ -34,7 +36,7 @@ func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, erro
 		return nil, fmt.Errorf("error checking existing API key: %v", err)
 	}
 
-	if existingAPIKey != nil {
+	if existingAPIKey != EmptyAPIKeyResponse {
 		// If an existing API key is found, update it
 
 		err := s.APIKeyRepo.UpdateAPIKey(apiKeyModel)
@@ -56,16 +58,16 @@ func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, erro
 	return successMap, nil
 }
 
-func (s *APIKeyService) GetAPIKey(userId int) (*model.APIKeyResponseModel, error) {
+func (s *APIKeyService) GetAPIKey(userId int) (model.APIKeyResponseModel, error) {
 	userApiKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
 
 	if err != nil {
-		return nil, err
+		return EmptyAPIKeyResponse, err
 	}
 
-	 if userApiKey == nil {
-		return nil,fmt.Errorf("no api key generated yet")
-	 }
+	if userApiKey == EmptyAPIKeyResponse {
+		return EmptyAPIKeyResponse, fmt.Errorf("no api key generated yet")
+	}
 	return userApiKey, nil
 }
 
