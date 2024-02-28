@@ -20,19 +20,13 @@ func NewUserSessionController(usersessionSvc *services.UserSessionService) *User
 }
 
 func (c *UserSessionController) getIPAddress(r *http.Request) string {
-	// Check X-Forwarded-For header first
 	ip := r.Header.Get("X-Forwarded-For")
-
-	// If X-Forwarded-For is empty, check X-Real-IP
 	if ip == "" {
 		ip = r.Header.Get("X-Real-IP")
 	}
-
-	// If both headers are empty, use RemoteAddr
 	if ip == "" {
 		ip = r.RemoteAddr
 	}
-
 	return ip
 }
 
@@ -72,7 +66,6 @@ func (c *UserSessionController) GetAllSessions(w http.ResponseWriter, r *http.Re
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *UserSessionController) DeleteSession(w http.ResponseWriter, r *http.Request) {

@@ -3,8 +3,9 @@ package repository
 import (
 	"database/sql"
 	"email-marketing-service/api/model"
-	"time"
+	"fmt"
 	"gorm.io/gorm"
+	"time"
 )
 
 type BillingRepository struct {
@@ -23,6 +24,9 @@ var SetTime = func(field sql.NullTime, target *string) {
 
 func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, error) {
 
+	if err := r.DB.Create(&d).Error; err != nil {
+		return nil, fmt.Errorf("failed to insert plan: %w", err)
+	}
 	return d, nil
 }
 

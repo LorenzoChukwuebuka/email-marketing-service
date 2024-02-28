@@ -3,9 +3,12 @@ package model
 import (
 	"database/sql"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type DailyMailCalc struct {
+	gorm.Model
 	ID             int       `json:"id"`
 	UUID           string    `json:"uuid"`
 	SubscriptionID int       `json:"subscription_id"`

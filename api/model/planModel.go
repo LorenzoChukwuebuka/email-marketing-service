@@ -2,9 +2,12 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Plan struct {
+	gorm.Model
 	Id                  int       `json:"-" gorm:"primaryKey"`
 	UUID                string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
 	PlanName            string    `json:"planname" validate:"required"`

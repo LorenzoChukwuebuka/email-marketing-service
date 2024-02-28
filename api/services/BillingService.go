@@ -42,8 +42,6 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
-	
-
 	transactionId := utils.GenerateOTP(10)
 
 	billingServiceData := &model.Billing{
@@ -84,8 +82,6 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	if err != nil {
 		return nil, err
 	}
-
-	
 
 	fmt.Print(billingRepo)
 	return nil, nil
