@@ -67,11 +67,38 @@ func (r *PlanRepository) GetSinglePlan(uuid string) (model.PlanResponse, error) 
 }
 
 func (r *PlanRepository) EditPlan(data *model.Plan) error {
+	existingPlan := model.Plan{}
+	if err := r.DB.Model(&model.Plan{}).Where("uuid = ?", data.UUID).First(&existingPlan).Error; err != nil {
+		return fmt.Errorf("failed to find plan for editing: %w", err)
+	}
+
+	// Update the existing plan with the new data
+	existingPlan.PlanName = data.PlanName
+	existingPlan.Duration = data.Duration
+	existingPlan.Price = data.Price
+	existingPlan.NumberOfMailsPerDay = data.NumberOfMailsPerDay
+	existingPlan.Details = data.Details
+	existingPlan.Status = data.Status
+
+	// Save the changes to the database
+	if err := r.DB.Save(&existingPlan).Error; err != nil {
+		return fmt.Errorf("failed to update plan: %w", err)
+	}
 
 	return nil
 }
 
 func (r *PlanRepository) DeletePlan(id string) error {
+
+	var existingPlan model.Plan
+	if err := r.DB.Where("uuid = ?", id).First(&existingPlan).Error; err != nil {
+		return fmt.Errorf("failed to find plan for deletion: %w", err)
+	}
+
+	// Soft delete by marking the plan as deleted
+	if err := r.DB.Delete(&existingPlan).Error; err != nil {
+		return fmt.Errorf("failed to delete plan: %w", err)
+	}
 
 	return nil
 }

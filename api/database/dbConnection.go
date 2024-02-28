@@ -17,12 +17,12 @@ var (
 	once sync.Once
 )
 
-// GetDB returns the database instance.
+
 func GetDB() *gorm.DB {
 	return db
 }
 
-// InitDB initializes the database connection.
+
 func InitDB() (*gorm.DB, error) {
 	once.Do(func() {
 		initializeDatabase()
