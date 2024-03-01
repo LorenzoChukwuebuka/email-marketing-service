@@ -19,7 +19,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Token not found", http.StatusUnauthorized)
 			return
 		}
 
@@ -35,7 +35,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		})
 		if err != nil || !token.Valid {
 
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
 			return
 		}
 		jwtclaims, ok := token.Claims.(jwt.MapClaims)
@@ -53,7 +53,7 @@ func AdminJWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		claimType, ok := jwtclaims["type"].(string)
 		if !ok || claimType != "admin" {
 
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: You are not an admin", http.StatusUnauthorized)
 			return
 		}
 

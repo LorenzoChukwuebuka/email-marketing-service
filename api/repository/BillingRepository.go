@@ -4,8 +4,6 @@ import (
 	"email-marketing-service/api/model"
 	"errors"
 	"fmt"
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -17,52 +15,6 @@ func NewBillingRepository(db *gorm.DB) *BillingRepository {
 	return &BillingRepository{DB: db}
 }
 
-func (r *BillingRepository) createBillingResponse(billing model.Billing) model.BillingResponse {
-	response := model.BillingResponse{
-		UUID:          billing.UUID,
-		UserId:        billing.UserId,
-		AmountPaid:    billing.AmountPaid,
-		PlanId:        billing.PlanId,
-		Duration:      billing.Duration,
-		ExpiryDate:    billing.ExpiryDate,
-		Reference:     billing.Reference,
-		TransactionId: billing.TransactionId,
-		PaymentMethod: billing.PaymentMethod,
-		Status:        billing.Status,
-		CreatedAt:     billing.CreatedAt,
-		UpdatedAt:     billing.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:     billing.DeletedAt.Format(time.RFC3339),
-		User:          model.UserResponse{},
-		Plan:          model.PlanResponse{},
-	}
-
-	if billing.Plan.ID != 0 {
-		response.Plan = model.PlanResponse{
-			UUID:                billing.Plan.UUID,
-			PlanName:            billing.Plan.PlanName,
-			Duration:            billing.Plan.Duration,
-			Price:               billing.Plan.Price,
-			NumberOfMailsPerDay: billing.Plan.NumberOfMailsPerDay,
-			Details:             billing.Plan.Details,
-			Status:              billing.Plan.Status,
-			CreatedAt:           billing.Plan.CreatedAt,
-			UpdatedAt:           billing.Plan.UpdatedAt.Format(time.RFC3339),
-			DeletedAt:           billing.Plan.DeletedAt.Format(time.RFC3339),
-		}
-	}
-
-	if billing.User.ID != 0 {
-		response.User = model.UserResponse{
-			UUID:       billing.User.UUID,
-			FirstName:  billing.User.FirstName,
-			MiddleName: billing.User.MiddleName,
-			LastName:   billing.User.LastName,
-		}
-	}
-
-	return response
-}
-
 func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, error) {
 
 	if err := r.DB.Create(&d).Error; err != nil {
@@ -71,33 +23,33 @@ func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, err
 	return d, nil
 }
 
-func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.BillingResponse, error) {
+func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.Billing, error) {
 
-	var billingResponse model.Billing
+	var billing model.Billing
 
 	// Query the database and preload associated data
 	if err := r.DB.
 		Preload("User").
 		Preload("Plan").
 		Where("uuid = ? AND user_id = ?", billingID, userID).
-		First(&billingResponse).Error; err != nil {
+		First(&billing).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("billing record not found")
 		}
 		return nil, fmt.Errorf("failed to get billing record: %w", err)
 	}
 
-	response := r.createBillingResponse(billingResponse)
+	fmt.Println(billing)
 
-	return &response, nil
+	return &billing, nil
 }
 
-func (r *BillingRepository) GetAllPayments(userID int, page int) ([]model.BillingResponse, error) {
+func (r *BillingRepository) GetAllPayments(userID int, page int) ([]model.Billing, error) {
 	pageSize := 20
 
 	offset := (page - 1) * pageSize
 
-	var billingRecords []model.BillingResponse
+	var billingRecords []model.Billing
 	if err := r.DB.
 		Preload("User").
 		Preload("Plan").

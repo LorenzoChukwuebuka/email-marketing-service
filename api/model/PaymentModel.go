@@ -44,7 +44,7 @@ type Billing struct {
 	UpdatedAt     *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
 	DeletedAt     *time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 	User          User       `json:"user,omitempty" gorm:"foreignKey:UserId;references:ID"`
-	Plan          Plan       `json:"plan,omitempty" gorm:"foreignKey:PlanId;references:Id"`
+	Plan          Plan       `json:"plan,omitempty" gorm:"foreignKey:PlanId;references:ID"`
 }
 
 type BillingResponse struct {
