@@ -37,6 +37,17 @@ func (r *SubscriptionRepository) GetAllSubscriptions() ([]model.SubscriptionResp
 
 func (r *SubscriptionRepository) GetAllCurrentRunningSubscription() ([]model.SubscriptionResponseModel, error) {
 
+	var subscription model.Subscription
+
+	if err := r.DB.Find(&subscription).Error; err != nil {
+
+		if err == gorm.ErrRecordNotFound {
+			return []model.SubscriptionResponseModel{}, nil
+		}
+
+		return nil, fmt.Errorf("failed to get subscription records: %w", err)
+	}
+
 	return nil, nil
 }
 

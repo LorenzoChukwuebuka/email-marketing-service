@@ -67,7 +67,7 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	reqdata.Id = plan_id
+	reqdata.ID = plan_id
 
 	err := c.PlanService.UpdatePlan(reqdata)
 	if err != nil {

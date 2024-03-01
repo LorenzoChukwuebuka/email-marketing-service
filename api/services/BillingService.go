@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var emptyBilling = model.BillingResponse{}
+
 type BillingService struct {
 	BillingRepo     *repository.BillingRepository
 	SubscriptionSVC *SubscriptionService
@@ -106,7 +108,7 @@ func calculateExpiryDate(duration string) time.Time {
 	}
 }
 
-func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.BillingResponse, error) {
+func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.Billing, error) {
 
 	billing, err := s.BillingRepo.GetSingleBillingRecord(biilingId, userId)
 	if err != nil {
@@ -120,7 +122,7 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 	return billing, nil
 }
 
-func (s *BillingService) GetAllBillingForAUser(userId int, page int) ([]model.BillingResponse, error) {
+func (s *BillingService) GetAllBillingForAUser(userId int, page int) ([]model.Billing, error) {
 	billing, err := s.BillingRepo.GetAllPayments(userId, page)
 
 	if err != nil {
