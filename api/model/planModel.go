@@ -22,6 +22,7 @@ type Plan struct {
 }
 
 type PlanResponse struct {
+	Id                  int       `json:"-"`
 	UUID                string    `json:"uuid"`
 	PlanName            string    `json:"planname" validate:"required"`
 	Duration            string    `json:"duration" validate:"required"`

@@ -14,6 +14,18 @@ func NewAdminRepository(db *gorm.DB) *AdminRepository {
 	return &AdminRepository{DB: db}
 }
 
+func (r *AdminRepository) createAdminResponse(admin adminmodel.Admin) *adminmodel.AdminResponse {
+	return &adminmodel.AdminResponse{
+		ID:        admin.ID,
+		UUID:      admin.UUID,
+		FirstName: admin.FirstName,
+		LastName:  admin.LastName,
+		Password:  admin.Password,
+		Email:     admin.Email,
+		Type:      admin.Type,
+	}
+}
+
 func (r *AdminRepository) CreateAdmin(d *adminmodel.Admin) (*adminmodel.Admin, error) {
 
 	if err := r.DB.Create(&d).Error; err != nil {
@@ -24,8 +36,17 @@ func (r *AdminRepository) CreateAdmin(d *adminmodel.Admin) (*adminmodel.Admin, e
 }
 
 func (r *AdminRepository) Login(d *adminmodel.AdminLogin) (*adminmodel.AdminResponse, error) {
+	var admin adminmodel.Admin
 
-	return nil, nil
+	if err := r.DB.Where("email = ?", d.Email).First(&admin).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("error querying database: %w", err)
+	}
+
+	response := r.createAdminResponse(admin)
+	return response, nil
 
 }
 
