@@ -49,8 +49,6 @@ func (s *AdminService) AdminLogin(d *adminmodel.AdminLogin) (map[string]interfac
 		return nil, fmt.Errorf("invalid email:%w", err)
 	}
 
-	fmt.Println(d.Password, adminDetails.Password)
-
 	//compare password
 	if err = bcrypt.CompareHashAndPassword(adminDetails.Password, []byte(d.Password)); err != nil {
 		return nil, fmt.Errorf("passwords do not match:%w", err)
