@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
- 
-
 type BillingService struct {
 	BillingRepo     *repository.BillingRepository
 	SubscriptionSVC *SubscriptionService
