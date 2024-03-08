@@ -78,7 +78,6 @@ func main() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 	
-
 	//instantiate the cron scheduler
 	c := cronJobs(dbConn)
 

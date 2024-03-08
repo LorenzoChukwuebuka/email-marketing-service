@@ -115,7 +115,7 @@ func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate tim
 }
 
 /** ############################################################### JOBS ####################################################################### **/
-func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.SubscriptionResponseModel, error) {
+func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription, error) {
 	subscriptions, err := s.SubscriptionRepo.GetAllSubscriptions()
 
 	if err != nil {

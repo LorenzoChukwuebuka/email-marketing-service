@@ -67,5 +67,4 @@ func (r *UserSessionRepository) DeleteSession(sessionId string) error {
 	}
 	return nil
 
-
 }
