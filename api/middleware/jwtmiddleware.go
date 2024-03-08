@@ -69,7 +69,7 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractTokenFromHeader(r)
 		if tokenString == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Token not found", http.StatusUnauthorized)
 			return
 		}
 
@@ -84,7 +84,7 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return secretKey, nil
 		})
 		if err != nil || !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: Token not verified", http.StatusUnauthorized)
 			return
 		}
 		jwtclaims, ok := token.Claims.(jwt.MapClaims)
