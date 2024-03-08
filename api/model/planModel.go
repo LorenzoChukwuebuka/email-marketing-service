@@ -14,8 +14,8 @@ type Plan struct {
 	Details             string    `json:"details" validate:"required"`
 	Status              *string   `json:"status" gorm:"size:255"`
 	CreatedAt           time.Time `json:"created_at" gorm:"type:TIMESTAMP"`
-	UpdatedAt           time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
-	DeletedAt           time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
+	UpdatedAt           *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	DeletedAt           *time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
 
 type PlanResponse struct {

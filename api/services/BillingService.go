@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var emptyBilling = model.BillingResponse{}
+ 
 
 type BillingService struct {
 	BillingRepo     *repository.BillingRepository
