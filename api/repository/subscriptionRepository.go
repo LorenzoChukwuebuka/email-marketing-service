@@ -95,3 +95,21 @@ func (r *SubscriptionRepository) FindSubscriptionById(id string, userId int) (*m
 	}
 	return nil, nil
 }
+
+//for the future....
+
+// func (r *SubscriptionRepository) GetAllSubscriptions() ([]model.Subscription, error) {
+// 	var subscriptions []model.Subscription
+
+// 	if err := r.DB.Preload("Plan").
+// 		Preload("User").
+// 		Preload("Billing", func(db *gorm.DB) *gorm.DB {
+// 			return db.Preload("Plan").
+// 				Preload("User")
+// 		}).
+// 		Find(&subscriptions).Error; err != nil {
+// 		return nil, fmt.Errorf("failed to fetch subscriptions: %w", err)
+// 	}
+
+// 	return subscriptions, nil
+// }

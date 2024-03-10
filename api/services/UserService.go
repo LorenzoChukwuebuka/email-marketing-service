@@ -101,7 +101,13 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		return err
 	}
 
-	//maybe send onboarding mail to them I don't know
+	// Todo
+
+	// 1. get all the plans and check if there is a basic or free plan
+
+	//2. automatically create a basic/free subscription plan for them
+
+	//3. Test and make sure that they can send mails... with their key of course
 
 	return nil
 }

@@ -18,6 +18,7 @@ type Config struct {
 	PaystackKey     string `env:"PAYSTACK_KEY"`
 	PaystackBaseURL string `env:"PAYSTACK_BASE_URL"`
 	DB_URL          string `env:"DB_URL"`
+	APPName         string `env:"APP_NAME"`
 }
 
 var LoadEnv = func() *Config {
@@ -38,6 +39,7 @@ var LoadEnv = func() *Config {
 		PaystackKey:     os.Getenv("PAYSTACK_KEY"),
 		PaystackBaseURL: os.Getenv("PAYSTACK_BASE_URL"),
 		DB_URL:          os.Getenv("DB_URL"),
+		APPName:         os.Getenv("APP_NAME"),
 	}
 
 	return config

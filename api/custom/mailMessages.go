@@ -9,6 +9,10 @@ import (
 type Mail struct {
 }
 
+var (
+	config = utils.LoadEnv()
+)
+
 func (m *Mail) SignUpMail(email string, username string, otp string) error {
 	mailTemplate := `
 	<html>
@@ -28,7 +32,7 @@ func (m *Mail) SignUpMail(email string, username string, otp string) error {
 	replacements := map[string]string{
 		".Username": username,
 		".Token":    otp,
-		".AppName":  "Appname",
+		".AppName":  config.APPName,
 	}
 
 	formattedMail := mailTemplate
@@ -65,7 +69,7 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	replacements := map[string]string{
 		".Username": username,
 		".Token":    otp,
-		".AppName":  "Appname",
+		".AppName":  config.APPName,
 	}
 
 	formattedMail := mailTemplate
@@ -107,7 +111,7 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 		".Device":     *d.Device,
 		".Browser":    *d.Browser,
 		".IP Address": *d.IPAddress,
-		".AppName":    "Appname",
+		".AppName":    config.APPName,
 	}
 
 	formattedMail := mailTemplate
@@ -139,7 +143,7 @@ func (m *Mail) SubscriptionExpiryMail(username string, email string, planName st
 	replacements := map[string]string{
 		".Username": username,
 		".PlanName": planName,
-		".AppName":  "Appname",
+		".AppName":  config.APPName,
 	}
 
 	formattedMail := mailTemplate
@@ -170,7 +174,7 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 	replacements := map[string]string{
 		".Username": username,
 		".PlanName": planName,
-		".AppName":  "Appname",
+		".AppName":  config.APPName,
 	}
 
 	formattedMail := mailTemplate
