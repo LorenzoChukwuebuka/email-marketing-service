@@ -3,6 +3,7 @@ package repository
 import (
 	"email-marketing-service/api/model"
 	"gorm.io/gorm"
+	"time"
 )
 
 type DailyMailCalcRepository struct {
@@ -14,13 +15,21 @@ func NewDailyMailCalcRepository(db *gorm.DB) *DailyMailCalcRepository {
 }
 
 func (r *DailyMailCalcRepository) CreateRecordDailyMailCalculation(d *model.DailyMailCalc) error {
-
+	if err := r.DB.Create(d).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
 func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(userId int) (*model.DailyMailCalcResponseModel, error) {
+	var record model.DailyMailCalcResponseModel
 
-	return nil, nil
+	today := time.Now().Format("2006-01-02")
+	if err := r.DB.Where("user_id = ? AND  created_at >= ? AND created_at <  ?", userId, today, today+" 23:59:59").First(&record).Error; err != nil {
+		return nil, err
+	}
+	return &record, nil
+
 }
 
 func (r *DailyMailCalcRepository) UpdateDailyMailCalcRepository(d *model.DailyMailCalc) error {

@@ -106,7 +106,7 @@ func calculateExpiryDate(duration string) time.Time {
 	}
 }
 
-func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.Billing, error) {
+func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.BillingResponse, error) {
 
 	billing, err := s.BillingRepo.GetSingleBillingRecord(biilingId, userId)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"time"
 )
 
 type BillingRepository struct {
@@ -23,7 +24,53 @@ func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, err
 	return d, nil
 }
 
-func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.Billing, error) {
+func (r *BillingRepository) createBillingResponse(billing *model.Billing) *model.BillingResponse {
+	response := model.BillingResponse{
+		UUID:          billing.UUID,
+		UserId:        billing.UserId,
+		AmountPaid:    billing.AmountPaid,
+		PlanId:        billing.PlanId,
+		Duration:      billing.Duration,
+		ExpiryDate:    billing.ExpiryDate,
+		Reference:     billing.Reference,
+		TransactionId: billing.TransactionId,
+		PaymentMethod: billing.PaymentMethod,
+		Status:        billing.Status,
+		CreatedAt:     billing.CreatedAt,
+		UpdatedAt:     billing.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:     billing.DeletedAt.Format(time.RFC3339),
+		// User:          model.UserResponse{},
+		// Plan:          model.PlanResponse{},
+	}
+
+	if billing.Plan != nil {
+		response.Plan = &model.PlanResponse{
+			UUID:                billing.Plan.UUID,
+			PlanName:            billing.Plan.PlanName,
+			Duration:            billing.Plan.Duration,
+			Price:               billing.Plan.Price,
+			NumberOfMailsPerDay: billing.Plan.NumberOfMailsPerDay,
+			Details:             billing.Plan.Details,
+			Status:              billing.Plan.Status,
+			CreatedAt:           billing.Plan.CreatedAt,
+			UpdatedAt:           billing.Plan.UpdatedAt.Format(time.RFC3339),
+			DeletedAt:           billing.Plan.DeletedAt.Format(time.RFC3339),
+		}
+	}
+
+	if billing.User != nil {
+		response.User = &model.UserResponse{
+			UUID:       billing.User.UUID,
+			FirstName:  billing.User.FirstName,
+			MiddleName: billing.User.MiddleName,
+			LastName:   billing.User.LastName,
+		}
+	}
+
+	return &response
+}
+
+func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.BillingResponse, error) {
 
 	var billing model.Billing
 
@@ -41,7 +88,9 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 
 	fmt.Println(billing)
 
-	return &billing, nil
+	response := r.createBillingResponse(&billing)
+
+	return response, nil
 }
 
 func (r *BillingRepository) GetAllPayments(userID int, page int) ([]model.Billing, error) {
