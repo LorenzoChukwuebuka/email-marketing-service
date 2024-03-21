@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,11 +16,9 @@ var (
 	once sync.Once
 )
 
-
 func GetDB() *gorm.DB {
 	return db
 }
-
 
 func InitDB() (*gorm.DB, error) {
 	once.Do(func() {
@@ -66,5 +63,9 @@ func autoMigrateModels() {
 		&model.Billing{},
 		&model.Logger{},
 		&adminmodel.Admin{},
+		&model.Ticket{},
+		&model.TicketMessage{},
+		&model.KnowledgeBaseArticle{},
+		&model.KnowledgeBaseCategory{},
 	)
 }

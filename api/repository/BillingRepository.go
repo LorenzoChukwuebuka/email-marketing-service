@@ -24,8 +24,8 @@ func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, err
 	return d, nil
 }
 
-func (r *BillingRepository) createBillingResponse(billing *model.Billing) *model.BillingResponse {
-	response := model.BillingResponse{
+func (r *BillingRepository) createBillingResponse(billing model.Billing) model.BillingResponse {
+	response := &model.BillingResponse{
 		UUID:          billing.UUID,
 		UserId:        billing.UserId,
 		AmountPaid:    billing.AmountPaid,
@@ -37,10 +37,18 @@ func (r *BillingRepository) createBillingResponse(billing *model.Billing) *model
 		PaymentMethod: billing.PaymentMethod,
 		Status:        billing.Status,
 		CreatedAt:     billing.CreatedAt,
-		UpdatedAt:     billing.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:     billing.DeletedAt.Format(time.RFC3339),
-		// User:          model.UserResponse{},
-		// Plan:          model.PlanResponse{},
+	}
+
+	if billing.UpdatedAt != nil {
+		response.UpdatedAt = billing.UpdatedAt.Format(time.RFC3339)
+	} else {
+		response.UpdatedAt = ""
+	}
+
+	if billing.DeletedAt != nil {
+		response.DeletedAt = billing.DeletedAt.Format(time.RFC3339)
+	} else {
+		response.UpdatedAt = ""
 	}
 
 	if billing.Plan != nil {
@@ -53,9 +61,20 @@ func (r *BillingRepository) createBillingResponse(billing *model.Billing) *model
 			Details:             billing.Plan.Details,
 			Status:              billing.Plan.Status,
 			CreatedAt:           billing.Plan.CreatedAt,
-			UpdatedAt:           billing.Plan.UpdatedAt.Format(time.RFC3339),
-			DeletedAt:           billing.Plan.DeletedAt.Format(time.RFC3339),
 		}
+
+		if billing.Plan.UpdatedAt != nil {
+			response.Plan.UpdatedAt = billing.Plan.UpdatedAt.Format(time.RFC3339)
+		} else {
+			response.Plan.UpdatedAt = ""
+		}
+
+		if billing.DeletedAt != nil {
+			response.DeletedAt = billing.DeletedAt.Format(time.RFC3339)
+		} else {
+			response.UpdatedAt = ""
+		}
+
 	}
 
 	if billing.User != nil {
@@ -67,7 +86,7 @@ func (r *BillingRepository) createBillingResponse(billing *model.Billing) *model
 		}
 	}
 
-	return &response
+	return *response
 }
 
 func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int) (*model.BillingResponse, error) {
@@ -86,11 +105,9 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 		return nil, fmt.Errorf("failed to get billing record: %w", err)
 	}
 
-	fmt.Println(billing)
+	response := r.createBillingResponse(billing)
 
-	response := r.createBillingResponse(&billing)
-
-	return response, nil
+	return &response, nil
 }
 
 func (r *BillingRepository) GetAllPayments(userID int, page int) ([]model.Billing, error) {

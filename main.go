@@ -8,27 +8,26 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
+	"runtime"
 )
 
 var (
-	response   = &utils.ApiResponse{}
+	response = &utils.ApiResponse{}
 )
 
 func cronJobs(dbConn *gorm.DB) *cron.Cron {
 	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
-
-	//cron jobs
 
 	// Create a new cron scheduler
 	c := cron.New()
@@ -66,9 +65,33 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 		"response": "404 Not Found",
 		"path":     r.URL.Path,
 	}
-
 	response.ErrorResponse(w, res)
+}
 
+func recoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				// Log the panic
+				fmt.Println("Recovered from panic:", r)
+				// Print the stack trace
+				stack := make([]byte, 1024*8)
+				stack = stack[:runtime.Stack(stack, false)]
+				fmt.Printf("Panic Stack Trace:\n%s\n", stack)
+				// Respond with an internal server error
+
+                 errorStack := map[string]interface{}{
+					"Message":"Internal Server Error",
+					 
+				 }
+
+				response.ErrorResponse(w,errorStack)
+				//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
 }
 
 func main() {
@@ -77,7 +100,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	
+
 	//instantiate the cron scheduler
 	c := cronJobs(dbConn)
 
@@ -90,6 +113,8 @@ func main() {
 	adminRouter.Use(enableCORS)
 	routes.RegisterUserRoutes(apiV1Router, dbConn)
 	routes.RegisterAdminRoutes(adminRouter, dbConn)
+
+	r.Use(recoveryMiddleware)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
