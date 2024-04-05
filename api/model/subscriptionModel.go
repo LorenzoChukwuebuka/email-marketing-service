@@ -15,29 +15,29 @@ type Subscription struct {
 	Expired       bool       `json:"expired"`
 	TransactionId string     `json:"transaction_id"`
 	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	UpdatedAt     *time.Time  `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
 	Cancelled     bool       `json:"cancelled"`
 	DateCancelled *time.Time `json:"date_cancelled" gorm:"type:TIMESTAMP;null;default:null"`
-	Plan          *Plan      `json:"plan,omitempty"`
-	User          *User      `json:"user,omitempty" gorm:"foreignKey:UserId;references:ID"`
+	Plan          *Plan      `json:"plan"`
+	User          *User      `json:"user" gorm:"foreignKey:UserId;references:ID"`
 	Billing       *Billing   `json:"billing,omitempty" gorm:"foreignKey:PaymentId;references:Id"`
 }
 
 type SubscriptionResponseModel struct {
-	Id            int       `json:"-"`
-	UUID          string    `json:"uuid"`
-	UserId        int       `json:"user_id"`
-	PlanId        int       `json:"plan_id"`
-	PaymentId     *int      `json:"payment_id"`
-	StartDate     time.Time `json:"start_date"`
-	EndDate       time.Time `json:"end_date"`
-	Expired       bool      `json:"expired"`
-	TransactionId string    `json:"transaction_id"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     string    `json:"updated_at"`
-	Cancelled     bool      `json:"cancelled"`
-	DateCancelled string    `json:"date_cancelled"`
-	Plan          *PlanResponse
-	User          *UserResponse
-	Billing       *BillingResponse
+	Id            int              `json:"-"`
+	UUID          string           `json:"uuid"`
+	UserId        int              `json:"user_id"`
+	PlanId        int              `json:"plan_id"`
+	PaymentId     int             `json:"payment_id"`
+	StartDate     time.Time        `json:"start_date"`
+	EndDate       time.Time        `json:"end_date"`
+	Expired       bool             `json:"expired"`
+	TransactionId string           `json:"transaction_id"`
+	CreatedAt     time.Time        `json:"created_at"`
+	UpdatedAt     string           `json:"updated_at"`
+	Cancelled     bool             `json:"cancelled"`
+	DateCancelled string           `json:"date_cancelled"`
+	Plan          *PlanResponse    `json:"plan"`
+	User          *UserResponse    `json:"user"`
+	Billing       *BillingResponse `json:"billing"`
 }
