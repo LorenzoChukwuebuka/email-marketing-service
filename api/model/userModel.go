@@ -7,10 +7,7 @@ import (
 type User struct {
 	ID         int       `json:"-" gorm:"primaryKey"`
 	UUID       string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
-	FirstName  string    `json:"firstname" validate:"required"`
-	MiddleName *string   `json:"middlename"`
-	LastName   string    `json:"lastname" validate:"required"`
-	UserName   string    `json:"username" validate:"required"`
+	FullName  string    `json:"fullname" validate:"required"`
 	Email      string    `json:"email" validate:"required,email"`
 	Password   string    `json:"password" validate:"required"`
 	Verified   bool      `json:"verified"`
@@ -40,18 +37,18 @@ type ChangePassword struct {
 	NewPassword string `json:"new_password" validated:"required"`
 }
 
+
+
 type UserResponse struct {
-	ID         int       `json:"-"`
-	UUID       string    `json:"uuid"`
-	FirstName  string    `json:"firstname"`
-	MiddleName *string   `json:"middlename"`
-	LastName   string    `json:"lastname"`
-	UserName   string    `json:"username"`
-	Email      string    `json:"email"`
-	Password   string    `json:"password"`
-	Verified   bool      `json:"verified"`
-	CreatedAt  time.Time `json:"created_at"`
-	VerifiedAt string    `json:"verified_at"`
-	UpdatedAt  string    `json:"updated_at"`
-	DeletedAt  string    `json:"deleted_at"`
+    ID         int        `json:"-"`
+    UUID       string     `json:"uuid,omitempty"`
+    FullName  string     `json:"fullname,omitempty"`
+    Email      string     `json:"email,omitempty"`
+    Password   string     `json:"password,omitempty"`
+    Verified   bool       `json:"verified,omitempty"`
+    CreatedAt  time.Time  `json:"created_at,omitempty"`
+    VerifiedAt string     `json:"verified_at,omitempty"`
+    UpdatedAt  string     `json:"updated_at,omitempty"`
+    DeletedAt  string     `json:"deleted_at,omitempty"`
 }
+

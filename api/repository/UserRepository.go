@@ -19,10 +19,7 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 	return model.UserResponse{
 		ID:         user.ID,
 		UUID:       user.UUID,
-		FirstName:  user.FirstName,
-		MiddleName: user.MiddleName,
-		LastName:   user.LastName,
-		UserName:   user.UserName,
+		FullName:  user.FullName,
 		Email:      user.Email,
 		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:   user.Verified,

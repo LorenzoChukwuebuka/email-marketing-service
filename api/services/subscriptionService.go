@@ -135,7 +135,7 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 			}
 
 			// Send mail to the user notifying them of the expiration of the service
-			err = mail.SubscriptionExpiryMail(subscription.User.UserName, subscription.User.Email, subscription.Plan.PlanName)
+			err = mail.SubscriptionExpiryMail(subscription.User.FullName, subscription.User.Email, subscription.Plan.PlanName)
 			if err != nil {
 				return nil, err
 			}

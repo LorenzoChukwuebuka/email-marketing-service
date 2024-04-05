@@ -107,7 +107,7 @@ func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSession, re
 		return
 	}
 	userEmail := userRepo.Email
-	userName := userRepo.UserName
+	userName := userRepo.FullName
 	code := utils.GenerateOTP(8)
 	err = mail.DeviceVerificationMail(userName, userEmail, d, code)
 

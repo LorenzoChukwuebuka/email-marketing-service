@@ -4,6 +4,7 @@ import (
 	"email-marketing-service/api/model"
 	"fmt"
 	"gorm.io/gorm"
+	"time"
 )
 
 type SubscriptionRepository struct {
@@ -12,6 +13,57 @@ type SubscriptionRepository struct {
 
 func NewSubscriptionRepository(db *gorm.DB) *SubscriptionRepository {
 	return &SubscriptionRepository{DB: db}
+}
+
+func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription) *model.SubscriptionResponseModel {
+
+	response := &model.SubscriptionResponseModel{
+		UUID:      s.UUID,
+		UserId:    s.UserId,
+		PlanId:    s.PlanId,
+		PaymentId: s.PaymentId,
+		StartDate: s.StartDate,
+		EndDate:   s.EndDate,
+		Expired:   s.Expired,
+		CreatedAt: s.CreatedAt,
+	}
+
+	if s.UpdatedAt != nil {
+		response.UpdatedAt = s.UpdatedAt.Format(time.RFC3339)
+	} else {
+		response.UpdatedAt = ""
+	}
+
+	if s.Plan != nil {
+		response.Plan = &model.PlanResponse{
+			UUID:                s.Plan.UUID,
+			PlanName:            s.Plan.PlanName,
+			Duration:            s.Plan.Duration,
+			Price:               s.Plan.Price,
+			NumberOfMailsPerDay: s.Plan.NumberOfMailsPerDay,
+			Details:             s.Plan.Details,
+			Status:              s.Plan.Status,
+			CreatedAt:           s.Plan.CreatedAt,
+		}
+
+		if s.Plan.UpdatedAt != nil {
+			response.Plan.UpdatedAt = s.Plan.UpdatedAt.Format(time.RFC3339)
+		} else {
+			response.Plan.UpdatedAt = ""
+		}
+
+	}
+
+	if s.User != nil {
+		response.User = &model.UserResponse{
+			UUID:       s.User.UUID,
+			FullName:  s.User.FullName,
+			 
+		}
+	}
+
+	return response
+
 }
 
 func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) error {
@@ -93,7 +145,7 @@ func (r *SubscriptionRepository) FindSubscriptionById(id string, userId int) (*m
 		}
 		return nil, fmt.Errorf("failed to find subscription: %w", err)
 	}
-	return nil, nil
+	return r.createSubscriptionResponse(subscription), nil
 }
 
 //for the future....

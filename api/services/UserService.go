@@ -60,7 +60,7 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 		return nil, err
 	}
 
-	if err := mail.SignUpMail(d.Email, d.UserName, otp); err != nil {
+	if err := mail.SignUpMail(d.Email, d.FullName, otp); err != nil {
 		return nil, err
 	}
 
@@ -138,7 +138,7 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 	}
 
 	//Generate JWT token
-	token, err := utils.JWTEncode(userDetails.ID, userDetails.UUID, userDetails.UserName, userDetails.Email)
+	token, err := utils.JWTEncode(userDetails.ID, userDetails.UUID, userDetails.FullName, userDetails.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error generating JWT token: %w", err)
 	}
@@ -198,7 +198,7 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 		return err
 	}
 
-	if err = mail.ResetPasswordMail(d.Email, userDetails.UserName, otp); err != nil {
+	if err = mail.ResetPasswordMail(d.Email, userDetails.FullName, otp); err != nil {
 		return err
 	}
 

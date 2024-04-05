@@ -80,9 +80,8 @@ func (r *BillingRepository) createBillingResponse(billing model.Billing) model.B
 	if billing.User != nil {
 		response.User = &model.UserResponse{
 			UUID:       billing.User.UUID,
-			FirstName:  billing.User.FirstName,
-			MiddleName: billing.User.MiddleName,
-			LastName:   billing.User.LastName,
+			FullName:  billing.User.FullName,
+			 
 		}
 	}
 
