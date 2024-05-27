@@ -56,9 +56,8 @@ func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription
 
 	if s.User != nil {
 		response.User = &model.UserResponse{
-			UUID:       s.User.UUID,
-			FullName:  s.User.FullName,
-			 
+			UUID:     s.User.UUID,
+			FullName: s.User.FullName,
 		}
 	}
 

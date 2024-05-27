@@ -2,14 +2,16 @@ package services
 
 import (
 	"email-marketing-service/api/custom"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -28,7 +30,7 @@ func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *Us
 	}
 }
 
-func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) {
+func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
@@ -36,9 +38,18 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 	d.Password = string(password)
-	d.UUID = uuid.New().String()
 
-	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(d)
+	usermodel := &model.User{
+		FullName: d.FullName,
+		Company:  d.Company,
+		Email:    d.Email,
+		Password: d.Password,
+		Verified: false,
+	}
+
+	usermodel.UUID = uuid.New().String()
+
+	userExists, err := s.userRepository.CheckIfEmailAlreadyExists(usermodel)
 	if err != nil {
 		return nil, err
 	}
@@ -46,14 +57,14 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 		return nil, fmt.Errorf("user already exists")
 	}
 
-	if _, err := s.userRepository.CreateUser(d); err != nil {
+	if _, err := s.userRepository.CreateUser(usermodel); err != nil {
 		return nil, err
 	}
 
 	otp := utils.GenerateOTP(8)
 
 	otpData := &model.OTP{
-		UserId: d.ID,
+		UserId: usermodel.ID,
 		Token:  otp,
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
@@ -66,10 +77,11 @@ func (s *UserService) CreateUser(d *model.User) (map[string]interface{}, error) 
 
 	successMap := map[string]interface{}{
 		"message": "Account created successfully. Kindly verify your account",
-		"userId":  d.UUID,
+		"userId":  usermodel.UUID,
 	}
 
 	return successMap, nil
+
 }
 
 func (s *UserService) VerifyUser(d *model.OTP) error {
@@ -112,7 +124,7 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 	return nil
 }
 
-func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error) {
+func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
@@ -153,7 +165,7 @@ func (s *UserService) Login(d *model.LoginModel) (map[string]interface{}, error)
 	return successMap, nil
 }
 
-func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
+func (s *UserService) ForgetPassword(d *dto.ForgetPassword) error {
 	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
@@ -205,7 +217,7 @@ func (s *UserService) ForgetPassword(d *model.ForgetPassword) error {
 	return nil
 }
 
-func (s *UserService) ResetPassword(d *model.ResetPassword) error {
+func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
@@ -242,7 +254,7 @@ func (s *UserService) ResetPassword(d *model.ResetPassword) error {
 	return nil
 }
 
-func (s *UserService) ChangePassword(userId int, d *model.ChangePassword) error {
+func (s *UserService) ChangePassword(userId int, d *dto.ChangePassword) error {
 
 	if err := utils.ValidateData(d); err != nil {
 		return err
@@ -283,7 +295,7 @@ func (s *UserService) EditUser(id int, d *model.User) error {
 	return nil
 }
 
-func (s *UserService) ResendOTP(d *model.ResendOTP) error {
+func (s *UserService) ResendOTP(d *dto.ResendOTP) error {
 	if err := utils.ValidateData(d); err != nil {
 		return err
 	}
