@@ -1,7 +1,11 @@
-include .env
+WIRE_PATH := ./api/routes
+MAIN_PATH := ./api
 
-migrate:
-    goose postgres "postgres://$(DB_USER):$(DB_PASSWORD)@localhost:5432/$(DB_NAME)" up
+.PHONY: wire build
 
-status:
-       goose postgres "postgres://postgres:Lorenzo@localhost:5432/email_marketing_service" status
+wire:
+		cd $(WIRE_PATH) && wire
+run:
+		go run main.go
+build:
+		go build main.go

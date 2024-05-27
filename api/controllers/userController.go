@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
@@ -38,7 +39,7 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.User
+	var reqdata *dto.User
 
 	utils.DecodeRequestBody(r, &reqdata)
 	userCreateService, err := c.userService.CreateUser(reqdata)
@@ -66,7 +67,7 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.LoginModel
+	var reqdata *dto.Login
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -81,7 +82,7 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.ResendOTP
+	var reqdata *dto.ResendOTP
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -94,7 +95,7 @@ func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.ForgetPassword
+	var reqdata *dto.ForgetPassword
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -107,7 +108,7 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.ResetPassword
+	var reqdata *dto.ResetPassword
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -128,7 +129,7 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 
 	userId := claims["userId"].(float64)
 
-	var reqdata *model.ChangePassword
+	var reqdata *dto.ChangePassword
 
 	utils.DecodeRequestBody(r, &reqdata)
 
