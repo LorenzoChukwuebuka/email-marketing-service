@@ -22,13 +22,17 @@ func (r *DailyMailCalcRepository) CreateRecordDailyMailCalculation(d *model.Dail
 }
 
 func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(userId int) (*model.DailyMailCalcResponseModel, error) {
-	var record model.DailyMailCalcResponseModel
+	var record model.DailyMailCalc
 
 	today := time.Now().Format("2006-01-02")
 	if err := r.DB.Where("user_id = ? AND  created_at >= ? AND created_at <  ?", userId, today, today+" 23:59:59").First(&record).Error; err != nil {
 		return nil, err
 	}
-	return &record, nil
+
+	println(&record)
+
+	return nil,nil
+	//return &record, nil
 
 }
 

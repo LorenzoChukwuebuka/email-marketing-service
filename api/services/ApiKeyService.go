@@ -20,7 +20,7 @@ func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
 	}
 }
 
-func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, error) {
+func (s *APIKeyService) GenerateAPIKey(userId string) (map[string]interface{}, error) {
 	uuidObj := uuid.New().String()
 	apiKey := "skey-" + uuidObj
 
@@ -58,7 +58,7 @@ func (s *APIKeyService) GenerateAPIKey(userId int) (map[string]interface{}, erro
 	return successMap, nil
 }
 
-func (s *APIKeyService) GetAPIKey(userId int) (model.APIKeyResponseModel, error) {
+func (s *APIKeyService) GetAPIKey(userId string) (model.APIKeyResponseModel, error) {
 	userApiKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
 
 	if err != nil {
@@ -78,11 +78,11 @@ func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {
 	return nil
 }
 
-func (s *APIKeyService) FindUserWithAPIKey(apiKey string) (int, error) {
+func (s *APIKeyService) FindUserWithAPIKey(apiKey string) (string, error) {
 	userId, err := s.APIKeyRepo.FindUserWithAPIKey(apiKey)
 
 	if err != nil {
-		return 0, nil
+		return "", nil
 	}
 
 	return userId, nil

@@ -35,10 +35,10 @@ func (r *AdminRepository) CreateAdmin(d *adminmodel.Admin) (*adminmodel.Admin, e
 	return d, nil
 }
 
-func (r *AdminRepository) Login(d *adminmodel.AdminLogin) (*adminmodel.AdminResponse, error) {
+func (r *AdminRepository) Login(email string) (*adminmodel.AdminResponse, error) {
 	var admin adminmodel.Admin
 
-	if err := r.DB.Where("email = ?", d.Email).First(&admin).Error; err != nil {
+	if err := r.DB.Where("email = ?", email).First(&admin).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("user not found")
 		}

@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"email-marketing-service/api/model"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
-	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type PlanController struct {
@@ -20,7 +20,7 @@ func NewPlanController(planService *services.PlanService) *PlanController {
 }
 
 func (c *PlanController) CreatePlan(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.Plan
+	var reqdata *dto.Plan
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -61,13 +61,11 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	id := vars["id"]
 
-	plan_id, _ := strconv.Atoi(id)
-
-	var reqdata *model.Plan
+	var reqdata *dto.EditPlan
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	reqdata.ID = plan_id
+	reqdata.UUID = id
 
 	err := c.PlanService.UpdatePlan(reqdata)
 	if err != nil {

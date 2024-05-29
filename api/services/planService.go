@@ -1,10 +1,12 @@
 package services
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -18,12 +20,23 @@ func NewPlanService(planRepo *repository.PlanRepository) *PlanService {
 	return &PlanService{PlanRepo: planRepo}
 }
 
-func (s *PlanService) CreatePlan(d *model.Plan) (*model.Plan, error) {
+func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
 
-	d.UUID = uuid.New().String()
+	planModel := &model.Plan{
+		UUID: uuid.New().String(), 
+		PlanName: d.PlanName,
+		Duration: d.Duration,
+		Details: d.Details,
+		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
+		Price: d.Price,
+		Status: d.Status,
+
+	}
+
+	 
 
 	planExists, err := s.PlanRepo.PlanExistsByName(d.PlanName)
 
@@ -35,13 +48,13 @@ func (s *PlanService) CreatePlan(d *model.Plan) (*model.Plan, error) {
 		return nil, fmt.Errorf("plan already exists")
 	}
 
-	_, err = s.PlanRepo.CreatePlan(d)
+	_, err = s.PlanRepo.CreatePlan(planModel)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return d, nil
+	return planModel, nil
 }
 
 func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
@@ -68,8 +81,20 @@ func (s *PlanService) GetASinglePlan(id string) (model.PlanResponse, error) {
 	return plan, nil
 }
 
-func (s *PlanService) UpdatePlan(d *model.Plan) error {
-	if err := s.PlanRepo.EditPlan(d); err != nil {
+func (s *PlanService) UpdatePlan(d *dto.EditPlan) error {
+
+	planModel := &model.Plan{
+		UUID: d.UUID, 
+		PlanName: d.PlanName,
+		Duration: d.Duration,
+		Details: d.Details,
+		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
+		Price: d.Price,
+		Status: d.Status,
+
+	}
+
+	if err := s.PlanRepo.EditPlan(planModel); err != nil {
 		return err
 	}
 	return nil

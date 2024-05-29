@@ -1,7 +1,7 @@
 package adminController
 
 import (
-	adminmodel "email-marketing-service/api/model/admin"
+	"email-marketing-service/api/dto"
 	adminservice "email-marketing-service/api/services/admin"
 	"email-marketing-service/api/utils"
 	"net/http"
@@ -22,7 +22,7 @@ var (
 )
 
 func (c *AdminController) CreateAdmin(w http.ResponseWriter, r *http.Request) {
-	var reqdata *adminmodel.Admin
+	var reqdata *dto.Admin
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -37,7 +37,7 @@ func (c *AdminController) CreateAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AdminController) Login(w http.ResponseWriter, r *http.Request) {
-	var reqdata *adminmodel.AdminLogin
+	var reqdata *dto.AdminLogin
 
 	utils.DecodeRequestBody(r, &reqdata)
 

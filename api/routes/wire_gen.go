@@ -53,7 +53,8 @@ func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionContr
 	billingRepository := repository.NewBillingRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepository)
-	billingService := services.NewBillingService(billingRepository, subscriptionService)
+	userRepository := repository.NewUserRepository(db)
+	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository)
 	transactionController := controllers.NewTransactionController(billingService)
 	return transactionController, nil
 }
@@ -63,7 +64,8 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 	apiKeyService := services.NewAPIKeyService(apiKeyRepository)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
-	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, dailyMailCalcRepository)
+	userRepository := repository.NewUserRepository(db)
+	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, dailyMailCalcRepository, userRepository)
 	smtpMailController := controllers.NewSMTPMailController(apiKeyService, smtpMailService)
 	return smtpMailController, nil
 }

@@ -24,9 +24,9 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
-	result, err := c.APIkeySVC.GenerateAPIKey(int(userId))
+	result, err := c.APIkeySVC.GenerateAPIKey(userId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -42,9 +42,9 @@ func (c *ApiKeyController) GetAPIKey(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
-	result, err := c.APIkeySVC.GetAPIKey(int(userId))
+	result, err := c.APIkeySVC.GetAPIKey(userId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

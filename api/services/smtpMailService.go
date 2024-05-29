@@ -1,6 +1,7 @@
 package services
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"fmt"
@@ -13,34 +14,46 @@ type SMTPMailService struct {
 	APIKeySVC        *APIKeyService
 	SubscriptionRepo *repository.SubscriptionRepository
 	DailyCalcRepo    *repository.DailyMailCalcRepository
+	UserRepo         *repository.UserRepository
 }
 
-func NewSMTPMailService(apikeyservice *APIKeyService, subscriptionRepository *repository.SubscriptionRepository, dailyCalc *repository.DailyMailCalcRepository) *SMTPMailService {
+func NewSMTPMailService(apikeyservice *APIKeyService,
+	subscriptionRepository *repository.SubscriptionRepository,
+	dailyCalc *repository.DailyMailCalcRepository,
+	userRepo *repository.UserRepository) *SMTPMailService {
 	return &SMTPMailService{
 		APIKeySVC:        apikeyservice,
 		SubscriptionRepo: subscriptionRepository,
 		DailyCalcRepo:    dailyCalc,
+		UserRepo:         userRepo,
 	}
 }
 
-func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (map[string]interface{}, error) {
+func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[string]interface{}, error) {
 
-	//1. Get user's Id
-	userId, err := s.APIKeySVC.FindUserWithAPIKey(apiKey)
+	userUUID, err := s.APIKeySVC.FindUserWithAPIKey(apiKey)
 
 	if err != nil {
 		return nil, fmt.Errorf("error fetching userId")
 	}
 
-	//2. Get the daily mail calculator
+	userModel := &model.User{UUID: userUUID}
 
-	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(userId)
+	userId, err := s.UserRepo.FindUserById(userModel)
 
 	if err != nil {
-		return nil, fmt.Errorf("error fetching sent mails")
+		return nil, fmt.Errorf("error fetching userId")
 	}
 
-	//3. check remaining mails if it is equals to 0
+	// Get the daily mail calculator
+
+	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(userId.ID)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching record")
+	}
+
+	//. check remaining mails if it is equals to 0
 
 	if mailCalcRepo.RemainingMails == 0 {
 		return nil, fmt.Errorf("you have exceeded your daily plan")
@@ -49,11 +62,11 @@ func (s *SMTPMailService) SendSMTPMail(d *model.EmailRequest, apiKey string) (ma
 	mailResult := make(chan interface{}, 1)
 	go s.handleSendMail(mailResult)
 
-	//4. Handle the result from handleSendMail if needed
+	//. Handle the result from handleSendMail if needed
 	result := <-mailResult
 	fmt.Printf("Mail result: %+v\n", result)
 
-	//5. update counter
+	//. update counter
 
 	updateCalcData := &model.DailyMailCalc{
 		UUID:           mailCalcRepo.UUID,

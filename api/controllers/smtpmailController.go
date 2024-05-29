@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"email-marketing-service/api/model"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"net/http"
@@ -21,7 +21,7 @@ func NewSMTPMailController(apiservice *services.APIKeyService, smtpMailSvc *serv
 
 func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request) {
 
-	var reqdata *model.EmailRequest
+	var reqdata *dto.EmailRequest
 
 	utils.DecodeRequestBody(r, &reqdata)
 
@@ -39,6 +39,9 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 	apiKeyExist, err := c.APISVC.APIKeyRepo.CheckIfAPIKEYExists(apiKey)
 
+
+	
+
 	if err != nil {
 		errorres := map[string]interface{}{
 			"status":  http.StatusBadRequest,
@@ -49,6 +52,8 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 		return
 	}
+
+	println(apiKeyExist)
 
 	if !apiKeyExist {
 		errorRes := map[string]interface{}{

@@ -1,12 +1,13 @@
 package controllers
 
 import (
-	"email-marketing-service/api/model"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
+	"net/http"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type UserSessionController struct {
@@ -31,7 +32,7 @@ func (c *UserSessionController) getIPAddress(r *http.Request) string {
 }
 
 func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Request) {
-	var reqdata *model.UserSession
+	var reqdata *dto.UserSession
 
 	ipAddress := c.getIPAddress(r)
 
@@ -56,9 +57,9 @@ func (c *UserSessionController) GetAllSessions(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
-	result, err := c.UserSessionSVC.GetAllSessions(int(userId))
+	result, err := c.UserSessionSVC.GetAllSessions(userId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

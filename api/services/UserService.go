@@ -7,9 +7,7 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"strconv"
 	"time"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -64,7 +62,7 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	otp := utils.GenerateOTP(8)
 
 	otpData := &model.OTP{
-		UserId: usermodel.ID,
+		UserId: usermodel.UUID,
 		Token:  otp,
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
@@ -101,7 +99,7 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 	var userModel model.User
 
 	userModel.Verified = true
-	userModel.ID = otpData.UserId
+	userModel.UUID = otpData.UserId
 	userModel.VerifiedAt = time.Now()
 
 	if err = s.userRepository.VerifyUserAccount(&userModel); err != nil {
@@ -150,7 +148,7 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 	}
 
 	//Generate JWT token
-	token, err := utils.JWTEncode(userDetails.ID, userDetails.UUID, userDetails.FullName, userDetails.Email)
+	token, err := utils.JWTEncode(userDetails.UUID, userDetails.UUID, userDetails.FullName, userDetails.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error generating JWT token: %w", err)
 	}
@@ -200,7 +198,7 @@ func (s *UserService) ForgetPassword(d *dto.ForgetPassword) error {
 	otp := utils.GenerateOTP(8)
 
 	otpData := &model.OTP{
-		UserId: userDetails.ID,
+		UserId: userDetails.UUID,
 		Token:  otp,
 	}
 
@@ -237,7 +235,7 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 
 	user := &model.User{
-		ID:       otpData.UserId,
+		UUID:     otpData.UserId,
 		Password: string(password),
 	}
 
@@ -302,15 +300,9 @@ func (s *UserService) ResendOTP(d *dto.ResendOTP) error {
 
 	otp := utils.GenerateOTP(8)
 
-	num, err := strconv.Atoi(d.UserId)
-
-	if err != nil {
-		return err
-	}
-
 	// Store OTP with user details in the database.
 	otpData := &model.OTP{
-		UserId: num,
+		UserId: d.UserId,
 		Token:  otp,
 	}
 	if err := s.otpService.CreateOTP(otpData); err != nil {
