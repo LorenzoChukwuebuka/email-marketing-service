@@ -1,26 +1,30 @@
 package services
 
 import (
+	"email-marketing-service/api/dto"
 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/google/uuid"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type BillingService struct {
 	BillingRepo     *repository.BillingRepository
 	SubscriptionSVC *SubscriptionService
+	UserRepo        *repository.UserRepository
 }
 
-func NewBillingService(billingRepository *repository.BillingRepository, subscriptionSVC *SubscriptionService) *BillingService {
+func NewBillingService(billingRepository *repository.BillingRepository, subscriptionSVC *SubscriptionService, userRepo *repository.UserRepository) *BillingService {
 	return &BillingService{
 		BillingRepo:     billingRepository,
 		SubscriptionSVC: subscriptionSVC,
+		UserRepo:        userRepo,
 	}
 }
 
@@ -31,7 +35,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, fmt.Errorf("error instantiating factory: %s", err)
 	}
 
-	params := &model.BaseProcessPaymentModel{
+	params := &dto.BaseProcessPaymentModel{
 		PaymentMethod: paymentmethod,
 		Reference:     reference,
 	}
@@ -42,11 +46,21 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		return nil, err
 	}
 
+	//get the userId
+
+	userUUID  := &model.User{UUID: data.UserID}
+
+	userId, err := s.UserRepo.FindUserById(userUUID)
+
+	if err != nil {
+		return nil, err
+	}
+
 	transactionId := utils.GenerateOTP(10)
 
 	billingServiceData := &model.Billing{
 		UUID:          uuid.New().String(),
-		UserId:        data.UserID,
+		UserId:        userId.ID,
 		AmountPaid:    float32(data.Amount),
 		PlanId:        data.PlanID,
 		Email:         data.Email,
@@ -67,7 +81,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 
 	subscription := &model.Subscription{
 		UUID:          uuid.New().String(),
-		UserId:        data.UserID,
+		UserId:        userId.ID,
 		PlanId:        data.PlanID,
 		PaymentId:     billingRepo.Id,
 		StartDate:     time.Now(),
@@ -122,15 +136,11 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 
 func (s *BillingService) GetAllBillingForAUser(userId int, page int) ([]model.Billing, error) {
 	billing, err := s.BillingRepo.GetAllPayments(userId, page)
-
 	if err != nil {
 		return nil, err
 	}
-
 	if billing == nil {
 		return nil, fmt.Errorf("no record found: %w", err)
 	}
-
 	return billing, nil
-
 }

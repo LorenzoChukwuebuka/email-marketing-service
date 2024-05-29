@@ -7,18 +7,16 @@ import (
 type User struct {
 	ID         int       `json:"-" gorm:"primaryKey"`
 	UUID       string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	FullName   string    `json:"fullname" validate:"required"`
-	Company    string    `json:"company" validate:"required"`
-	Email      string    `json:"email" validate:"required,email" gorm:"index"`
-	Password   string    `json:"password" validate:"required" gorm:"index"`
+	FullName   string    `json:"fullname" `
+	Company    string    `json:"company" `
+	Email      string    `json:"email"  gorm:"index"`
+	Password   string    `json:"password"  gorm:"index"`
 	Verified   bool      `json:"verified"`
-	CreatedAt  time.Time `json:"created_at"`
+	CreatedAt  time.Time `json:"created_at" gorm:"type:TIMESTAMP;default:CURRENT_TIMESTAMP"`
 	VerifiedAt time.Time `json:"verified_at" gorm:"type:TIMESTAMP;null;default:null"`
 	UpdatedAt  time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
 	DeletedAt  time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
-
-
 
 type UserResponse struct {
 	ID         int       `json:"-"`

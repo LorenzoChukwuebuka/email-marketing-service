@@ -1,13 +1,15 @@
 package services
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type UserSessionService struct {
@@ -28,10 +30,9 @@ func NewUserSessionService(usersessionRepo *repository.UserSessionRepository, us
 	}
 }
 
-func (s *UserSessionService) CreateSession(d *model.UserSession) (map[string]interface{}, error) {
+func (s *UserSessionService) CreateSession(d *dto.UserSession) (map[string]interface{}, error) {
 
-	d.UUID = uuid.New().String()
-	d.CreatedAt = time.Now()
+	session := &model.UserSession{UUID: uuid.New().String(), UserId: d.UserId, Device: d.Device, IPAddress: d.IPAddress, Browser: d.Browser, CreatedAt: time.Now()}
 
 	var response map[string]interface{}
 
@@ -42,7 +43,7 @@ func (s *UserSessionService) CreateSession(d *model.UserSession) (map[string]int
 	}
 
 	// If there are existing sessions, check if the new session matches any existing session
-	if sessionExists := isSessionExists(sessionRepo, *d); sessionExists {
+	if sessionExists := isSessionExists(sessionRepo, *session); sessionExists {
 		// Return a success response
 		response = map[string]interface{}{
 			"message": "Session already exists for the user",
@@ -50,7 +51,7 @@ func (s *UserSessionService) CreateSession(d *model.UserSession) (map[string]int
 		}
 		return response, nil
 	} else {
-		if err := s.userSessionRepo.CreateSession(d); err != nil {
+		if err := s.userSessionRepo.CreateSession(session); err != nil {
 			return nil, err
 		}
 
@@ -60,7 +61,7 @@ func (s *UserSessionService) CreateSession(d *model.UserSession) (map[string]int
 
 		defer close(resultChan)
 
-		go s.sendDeviceVerificationMail(d, resultChan)
+		go s.sendDeviceVerificationMail(session, resultChan)
 
 		result := <-resultChan
 
@@ -98,7 +99,7 @@ func sessionsMatch(sessionA model.UserSessionResponseModel, sessionB model.UserS
 
 func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSession, resultChan chan Result) {
 	userStruct := &model.User{
-		ID: d.UserId,
+		UUID: d.UserId,
 	}
 	userRepo, err := s.userRepo.FindUserById(userStruct)
 
@@ -119,7 +120,7 @@ func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSession, re
 	resultChan <- Result{Success: true}
 }
 
-func (s *UserSessionService) GetAllSessions(userId int) ([]model.UserSessionResponseModel, error) {
+func (s *UserSessionService) GetAllSessions(userId string) ([]model.UserSessionResponseModel, error) {
 	sessionRepo, err := s.userSessionRepo.GetSessionsByUserID(userId)
 
 	if err != nil {

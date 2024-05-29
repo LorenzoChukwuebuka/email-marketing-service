@@ -17,6 +17,13 @@ func NewUserSessionRepository(db *gorm.DB) *UserSessionRepository {
 	}
 }
 
+func FormatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339)
+}
+
 func (r *UserSessionRepository) createUserSessionResponseModel(session *model.UserSession) *model.UserSessionResponseModel {
 	return &model.UserSessionResponseModel{
 		Id:        session.Id,
@@ -26,18 +33,12 @@ func (r *UserSessionRepository) createUserSessionResponseModel(session *model.Us
 		IPAddress: session.IPAddress,
 		Browser:   session.Browser,
 		CreatedAt: session.CreatedAt,
-		UpdatedAt: formatTime(session.UpdatedAt),
-		DeletedAt: formatTime(session.DeletedAt),
+		UpdatedAt: FormatTime(session.UpdatedAt),
+		DeletedAt: FormatTime(session.DeletedAt),
 	}
 }
 
 // Add a utility function to format time to string
-func formatTime(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return t.Format(time.RFC3339)
-}
 
 func (r *UserSessionRepository) CreateSession(session *model.UserSession) error {
 	if err := r.DB.Create(&session).Error; err != nil {
@@ -46,10 +47,10 @@ func (r *UserSessionRepository) CreateSession(session *model.UserSession) error 
 	return nil
 }
 
-func (r *UserSessionRepository) GetSessionsByUserID(userID int) ([]model.UserSessionResponseModel, error) {
+func (r *UserSessionRepository) GetSessionsByUserID(userID string) ([]model.UserSessionResponseModel, error) {
 	var sessions []model.UserSession
 
-	if err := r.DB.Where("user_id = ?", userID).Find(&sessions).Error; err != nil {
+	if err := r.DB.Where("uuid = ?", userID).Find(&sessions).Error; err != nil {
 		return nil, fmt.Errorf("failed to get user sessions: %w", err)
 	}
 

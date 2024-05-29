@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"email-marketing-service/api/dto"
 	paymentmethodFactory "email-marketing-service/api/factory/paymentFactory"
-	"email-marketing-service/api/model"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"net/http"
 	"strconv"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )
@@ -28,15 +29,15 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 		return
 	}
 
-	var reqdata *model.BasePaymentModelData
+	var reqdata *dto.BasePaymentModelData
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 	email := claims["email"].(string)
 
 	reqdata.Email = email
-	reqdata.UserId = int(userId)
+	reqdata.UserId = userId
 
 	paymentService, err := paymentmethodFactory.PaymentFactory(reqdata.PaymentMethod)
 

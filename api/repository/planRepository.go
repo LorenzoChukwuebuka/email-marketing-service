@@ -19,7 +19,7 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 
 func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse {
 
-	return model.PlanResponse{
+	response := model.PlanResponse{
 		UUID:                plan.UUID,
 		PlanName:            plan.PlanName,
 		Duration:            plan.Duration,
@@ -28,9 +28,21 @@ func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse 
 		Details:             plan.Details,
 		Status:              plan.Status,
 		CreatedAt:           plan.CreatedAt,
-		UpdatedAt:           plan.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:           plan.DeletedAt.Format(time.RFC3339),
 	}
+
+	if plan.UpdatedAt != nil {
+		response.UpdatedAt = plan.UpdatedAt.Format(time.RFC3339)
+	} else {
+		response.UpdatedAt = ""
+	}
+
+	if plan.DeletedAt != nil {
+		response.DeletedAt = plan.DeletedAt.Format(time.RFC3339)
+	} else {
+		response.DeletedAt = ""
+	}
+
+	return response
 }
 
 func (r *PlanRepository) CreatePlan(d *model.Plan) (*model.Plan, error) {

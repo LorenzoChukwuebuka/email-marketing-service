@@ -89,7 +89,7 @@ func (r *UserRepository) Login(d *model.User) (model.UserResponse, error) {
 
 func (r *UserRepository) FindUserById(d *model.User) (model.UserResponse, error) {
 	var user model.User
-	if err := r.DB.Where("id = ?", d.ID).First(&user).Error; err != nil {
+	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return model.UserResponse{}, nil
 		}
@@ -151,7 +151,7 @@ func (r *UserRepository) FindAllUsers() ([]model.UserResponse, error) {
 
 func (r *UserRepository) ChangeUserPassword(d *model.User) error {
 	var user model.User
-	if err := r.DB.Where("id = ?", d.ID).First(&user).Error; err != nil {
+	if err := r.DB.Where("id = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil
 		}

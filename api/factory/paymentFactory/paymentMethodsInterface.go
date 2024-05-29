@@ -1,10 +1,13 @@
 package paymentmethodFactory
 
-import "email-marketing-service/api/model"
+import (
+	"email-marketing-service/api/dto"
+	 
+)
 
 type PaymentInterface interface {
-	OpenDeposit(d *model.BasePaymentModelData) (map[string]interface{}, error)
-	ProcessDeposit( d *model.BaseProcessPaymentModel) (*model.BasePaymentResponse,error)
+	OpenDeposit(d *dto.BasePaymentModelData) (map[string]interface{}, error)
+	ProcessDeposit( d *dto.BaseProcessPaymentModel) (*dto.BasePaymentResponse,error)
 	OpenRefund()
 	ProcessRefund()
 	ChargeCard(amount float64)

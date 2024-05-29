@@ -27,3 +27,10 @@ type ChangePassword struct {
 	OldPassword string `json:"old_password" validated:"required"`
 	NewPassword string `json:"new_password" validated:"required"`
 }
+
+type UserSession struct {
+	UserId    string    `json:"user_id"`
+	Device    *string `json:"device"`
+	IPAddress *string `json:"ip_address"`
+	Browser   *string `json:"browser"`
+}

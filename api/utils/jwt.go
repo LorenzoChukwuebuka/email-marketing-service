@@ -12,7 +12,7 @@ var (
 	key    = config.JWTKey
 )
 
-func JWTEncode(userId int, user_uuid string, username string, email string) (string, error) {
+func JWTEncode(userId string, user_uuid string, username string, email string) (string, error) {
 
 	// Create a new token object with claims
 	claims := jwt.MapClaims{

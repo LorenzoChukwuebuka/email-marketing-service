@@ -1,13 +1,13 @@
 package paymentmethodFactory
 
 import (
-	"email-marketing-service/api/model"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/utils"
 	"encoding/json"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"net/http"
 	"strconv"
+	"github.com/go-resty/resty/v2"
 )
 
 type PaystackPaymentProcessor struct {
@@ -20,7 +20,7 @@ var (
 	api_base = config.PaystackBaseURL
 )
 
-func (c *PaystackPaymentProcessor) OpenDeposit(d *model.BasePaymentModelData) (map[string]interface{}, error) {
+func (c *PaystackPaymentProcessor) OpenDeposit(d *dto.BasePaymentModelData) (map[string]interface{}, error) {
 	url := api_base + "transaction/initialize"
 
 	data := map[string]interface{}{
@@ -57,7 +57,7 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *model.BasePaymentModelData) (m
 	return response, nil
 }
 
-func (c *PaystackPaymentProcessor) ProcessDeposit(d *model.BaseProcessPaymentModel) (*model.BasePaymentResponse, error) {
+func (c *PaystackPaymentProcessor) ProcessDeposit(d *dto.BaseProcessPaymentModel) (*dto.BasePaymentResponse, error) {
 
 	url := fmt.Sprintf(api_base+"transaction/verify/%s", d.Reference)
 
@@ -94,7 +94,7 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *model.BaseProcessPaymentMod
 
 	amount := data["amount"].(float64) / 100
 	planIDStr, _ := data["metadata"].(map[string]interface{})["plan_id"].(string)
-	userIDStr, _ := data["metadata"].(map[string]interface{})["user_id"].(string)
+	userID, _ := data["metadata"].(map[string]interface{})["user_id"].(string)
 	duration, _ := data["metadata"].(map[string]interface{})["duration"].(string)
 	email, _ := data["customer"].(map[string]interface{})["email"].(string)
 	status, _ := data["status"].(string)
@@ -104,12 +104,8 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *model.BaseProcessPaymentMod
 		return nil, fmt.Errorf("error converting planID to int: %s", err)
 	}
 
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		return nil, fmt.Errorf("error converting userID to int: %s", err)
-	}
 
-	paymentData := &model.BasePaymentResponse{
+	paymentData := &dto.BasePaymentResponse{
 		Amount:   amount,
 		PlanID:   planID,
 		UserID:   userID,

@@ -5,7 +5,7 @@ import (
 )
 
 type Admin struct {
-	ID         int       `gorm:"primaryKey"`
+	ID         int       `json:"-" gorm:"primaryKey"`
 	UUID       string    `json:"uuid"`
 	FirstName  *string   `json:"firstname"`
 	MiddleName *string   `json:"middlename"`
@@ -18,10 +18,7 @@ type Admin struct {
 	DeletedAt  time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
 
-type AdminLogin struct {
-	Email    string `json:"email" validate:"required"`
-	Password []byte `json:"password" validate:"required"`
-}
+ 
 
 type AdminResponse struct {
 	ID         int     `json:"-"`

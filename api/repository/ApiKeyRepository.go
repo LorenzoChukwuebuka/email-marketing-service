@@ -36,7 +36,7 @@ func (r *APIKeyRepository) CreateAPIKey(d *model.APIKey) (*model.APIKey, error) 
 
 }
 
-func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId int) (model.APIKeyResponseModel, error) {
+func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId string) (model.APIKeyResponseModel, error) {
 
 	var apiKey model.APIKey
 
@@ -65,8 +65,17 @@ func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKey) error {
 }
 
 func (r *APIKeyRepository) CheckIfAPIKEYExists(apiKey string) (bool, error) {
+	var existingAPIKey model.APIKey
+	result := r.DB.Where("api_key = ?", apiKey).First(&existingAPIKey)
 
-	return false, nil
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+		return false, result.Error
+	}
+
+	return true, nil
 }
 
 func (r *APIKeyRepository) DeleteAPIKey(apiKeyId string) error {
@@ -77,10 +86,10 @@ func (r *APIKeyRepository) DeleteAPIKey(apiKeyId string) error {
 	return nil
 }
 
-func (r *APIKeyRepository) FindUserWithAPIKey(apiKey string) (int, error) {
-	var userID int
+func (r *APIKeyRepository) FindUserWithAPIKey(apiKey string) (string, error) {
+	var userID string
 	if err := r.DB.Model(&model.APIKey{}).Where("api_key = ?", apiKey).Pluck("user_id", &userID).Error; err != nil {
-		return 0, fmt.Errorf("failed to find user with API key: %w", err)
+		return "", fmt.Errorf("failed to find user with API key: %w", err)
 	}
 	return userID, nil
 }
