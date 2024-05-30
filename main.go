@@ -16,13 +16,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
-	"runtime"
 )
 
 var (
 	response = &utils.ApiResponse{}
+	//logger   = &utils.Logger{}
 )
 
 func cronJobs(dbConn *gorm.DB) *cron.Cron {
@@ -80,12 +81,12 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 				fmt.Printf("Panic Stack Trace:\n%s\n", stack)
 				// Respond with an internal server error
 
-                 errorStack := map[string]interface{}{
-					"Message":"Internal Server Error",
-					 
-				 }
+				errorStack := map[string]interface{}{
+					"Message": "Internal Server Error",
+				} 
 
-				response.ErrorResponse(w,errorStack)
+				response.ErrorResponse(w, errorStack)
+
 				//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()
@@ -95,6 +96,14 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
+
+	logger, err := utils.NewLogger("app.log")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logger.Close()
+
 	// Initialize the database connection
 	dbConn, err := database.InitDB()
 	if err != nil {
