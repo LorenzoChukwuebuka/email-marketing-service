@@ -5,9 +5,10 @@ import (
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"fmt"
-	"github.com/google/uuid"
 	"strconv"
 	"time"
+	"email-marketing-service/api/utils"
+	"github.com/google/uuid"
 )
 
 type SMTPMailService struct {
@@ -75,7 +76,6 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 			return nil, fmt.Errorf("you have exceeded your daily plan")
 		}
 
-		
 		func() {
 			defer func() {
 				if err := recover(); err != nil {
@@ -109,11 +109,33 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 	return nil, nil
 }
 
-func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) {
+func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
+	// Iterate over the recipients
 	for _, recipient := range emailRequest.To {
-		time.Sleep(2 * time.Second)
-		fmt.Printf("Mail sent to %s\n", recipient.Email)
+		// Determine the mail content (HTML or Text)
+		var mailContent string
+		if emailRequest.HtmlContent != nil {
+			mailContent = *emailRequest.HtmlContent
+		} else if emailRequest.Text != nil {
+			mailContent = *emailRequest.Text
+		} else {
+			continue
+		}
+
+		email := recipient.Email
+
+		subject := emailRequest.Subject
+
+		// Send the email
+		err := utils.SendMail(subject, email, mailContent)
+		if err != nil {
+			fmt.Printf("Error sending mail to %s: %v\n", recipient.Email, err)
+		} else {
+			fmt.Printf("Mail sent to %s\n", recipient.Email)
+		}
 	}
+
+	return nil
 }
 
 //##################################################### JOBS #################################################################
