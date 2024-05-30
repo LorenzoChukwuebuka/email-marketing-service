@@ -24,5 +24,5 @@ type DailyMailCalcResponseModel struct {
 	MailsSent      int       `json:"mails_sent"`
 	RemainingMails int       `json:"remaining_mails"`
 	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
+	UpdatedAt     *string `json:"updated_at"`
 }

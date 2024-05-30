@@ -15,7 +15,6 @@ type SMTPMailService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	DailyCalcRepo    *repository.DailyMailCalcRepository
 	UserRepo         *repository.UserRepository
-
 }
 
 func NewSMTPMailService(apikeyservice *APIKeyService,
@@ -30,68 +29,91 @@ func NewSMTPMailService(apikeyservice *APIKeyService,
 	}
 }
 
+const batchSize = 20 // Adjust this value as per your requirements
+
 func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[string]interface{}, error) {
-
 	userUUID, err := s.APIKeySVC.FindUserWithAPIKey(apiKey)
-
 	if err != nil {
 		return nil, fmt.Errorf("error fetching userId")
 	}
-
 	userModel := &model.User{UUID: userUUID}
-
 	userId, err := s.UserRepo.FindUserById(userModel)
-
 	if err != nil {
 		return nil, fmt.Errorf("error fetching userId")
 	}
-	
+
+	// Get the current user's running subscription
+	subscription, err := s.SubscriptionRepo.GetUserCurrentRunningSubscription(userId.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching subscription record")
+	}
+
 	// Get the daily mail calculator
-
-	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(userId.ID)
-
+	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(subscription.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching record")
 	}
 
-	//. check remaining mails if it is equals to 0
+	// Calculate the number of batches
+	numBatches := len(d.To) / batchSize
 
-	if mailCalcRepo.RemainingMails == 0 {
-		return nil, fmt.Errorf("you have exceeded your daily plan")
+	if len(d.To)%batchSize != 0 {
+		numBatches++
 	}
 
-	mailResult := make(chan interface{}, 1)
-	go s.handleSendMail(mailResult)
+	// Process emails in batches
+	for i := 0; i < numBatches; i++ {
+		start := i * batchSize
+		end := start + batchSize
+		if end > len(d.To) {
+			end = len(d.To)
+		}
+		batch := d.To[start:end]
 
-	//. Handle the result from handleSendMail if needed
-	result := <-mailResult
-	fmt.Printf("Mail result: %+v\n", result)
+		// Check remaining mails
+		if mailCalcRepo.RemainingMails == 0 {
+			return nil, fmt.Errorf("you have exceeded your daily plan")
+		}
 
-	//. update counter
+		
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					fmt.Printf("Error sending batch: %v\n", err)
+				}
+			}()
+			go s.handleSendMail(&dto.EmailRequest{
+				Sender:      d.Sender,
+				To:          batch,
+				Subject:     d.Subject,
+				HtmlContent: d.HtmlContent,
+				Text:        d.Text,
+			})
+		}()
 
-	updateCalcData := &model.DailyMailCalc{
-		UUID:           mailCalcRepo.UUID,
-		RemainingMails: mailCalcRepo.RemainingMails - 1,
-		MailsSent:      mailCalcRepo.MailsSent + 1,
-	}
+		updateCalcData := &model.DailyMailCalc{
+			UUID:           mailCalcRepo.UUID,
+			RemainingMails: mailCalcRepo.RemainingMails - len(batch),
+			MailsSent:      mailCalcRepo.MailsSent + len(batch),
+		}
 
-	err = s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData)
-
-	if err != nil {
-		return nil, err
+		// Update the counter
+		mailCalcRepo.RemainingMails -= len(batch)
+		mailCalcRepo.MailsSent += len(batch)
+		err = s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
 }
 
-func (s *SMTPMailService) handleSendMail(resultChan chan interface{}) {
-	// Perform the mail sending logic here
-
-	// For example, simulate sending mail for demonstration purposes
-	time.Sleep(2 * time.Second)
-
-	// Send the result to the channel
-	resultChan <- "Mail sent successfully"
+func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) {
+	for _, recipient := range emailRequest.To {
+		time.Sleep(2 * time.Second)
+		fmt.Printf("Mail sent to %s\n", recipient.Email)
+	}
 }
 
 //##################################################### JOBS #################################################################
@@ -108,8 +130,6 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 		fmt.Println("No active subscriptions found.")
 		return nil
 	}
-
-	//fmt.Println("Active subscriptions:", activeSubs)
 
 	for _, activeSub := range activeSubs {
 		num, err := strconv.Atoi(activeSub.Plan.NumberOfMailsPerDay)

@@ -72,6 +72,16 @@ func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) error
 	return nil
 }
 
+func (r *SubscriptionRepository) GetUserCurrentRunningSubscription(userId int) (*model.Subscription, error) {
+	var subscription model.Subscription
+
+	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ? and expired = ?", userId, false).First(&subscription).Error; err != nil {
+		return nil, fmt.Errorf("error fetching records")
+	}
+
+	return &subscription, nil
+}
+
 func (r *SubscriptionRepository) GetAllSubscriptions() ([]model.Subscription, error) {
 
 	var subscriptions []model.Subscription
