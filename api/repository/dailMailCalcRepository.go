@@ -2,6 +2,7 @@ package repository
 
 import (
 	"email-marketing-service/api/model"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -15,8 +16,8 @@ func NewDailyMailCalcRepository(db *gorm.DB) *DailyMailCalcRepository {
 }
 
 func (r *DailyMailCalcRepository) CreateRecordDailyMailCalculation(d *model.DailyMailCalc) error {
-	if err := r.DB.Create(d).Error; err != nil {
-		return err
+	if err := r.DB.Create(&d).Error; err != nil {
+		return fmt.Errorf("failed to insert plan: %w", err)
 	}
 	return nil
 }
@@ -31,7 +32,7 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(userId int) (*model
 
 	println(&record)
 
-	return nil,nil
+	return nil, nil
 	//return &record, nil
 
 }

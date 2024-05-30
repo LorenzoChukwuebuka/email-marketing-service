@@ -7,24 +7,31 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"strings"
 	"time"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	userRepository *repository.UserRepository
-	otpService     *OTPService
+	userRepository   *repository.UserRepository
+	otpService       *OTPService
+	PlanRepo         *repository.PlanRepository
+	SubscriptionRepo *repository.SubscriptionRepository
+	BillingRepo      *repository.BillingRepository
 }
 
 var (
 	mail = &custom.Mail{}
 )
 
-func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService) *UserService {
+func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService, planRepo *repository.PlanRepository, subscriptionRepo *repository.SubscriptionRepository, billingRepo *repository.BillingRepository) *UserService {
 	return &UserService{
-		userRepository: userRepo,
-		otpService:     otpSvc,
+		userRepository:   userRepo,
+		otpService:       otpSvc,
+		PlanRepo:         planRepo,
+		SubscriptionRepo: subscriptionRepo,
+		BillingRepo:      billingRepo,
 	}
 }
 
@@ -102,22 +109,84 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 	userModel.UUID = otpData.UserId
 	userModel.VerifiedAt = time.Now()
 
-	if err = s.userRepository.VerifyUserAccount(&userModel); err != nil {
-		return err
+	userId, err := s.userRepository.VerifyUserAccount(&userModel)
+
+	if err != nil {
+		return fmt.Errorf("unable to verify user :%w", err)
 	}
 
 	//delete otp from the database
 	if err = otpService.DeleteOTP(otpData.Id); err != nil {
+		return fmt.Errorf("unable to delete otp:%w", err)
+	}
+
+	err = s.createUserBasicPlan(userId)
+	if err != nil {
 		return err
 	}
 
-	// Todo
+	return nil
+}
 
-	// 1. get all the plans and check if there is a basic or free plan
+func (s *UserService) createUserBasicPlan(userId int) error {
+	plans, err := s.PlanRepo.GetAllPlans()
 
-	//2. automatically create a basic/free subscription plan for them
+	if err != nil {
+		return fmt.Errorf("failed to fetch plans: %w", err)
+	}
 
-	//3. Test and make sure that they can send mails... with their key of course
+	var basicPlan *model.PlanResponse
+	for _, plan := range plans {
+		if strings.ToLower(plan.PlanName) == "basic" || strings.ToLower(plan.PlanName) == "free" {
+			basicPlan = &plan
+			break
+		}
+	}
+
+	if basicPlan == nil {
+		return fmt.Errorf("no basic or free plan found")
+	}
+
+	transactionId := uuid.New().String()
+
+	billing := &model.Billing{
+		UUID:          uuid.New().String(),
+		UserId:        userId,
+		AmountPaid:    basicPlan.Price,
+		PlanId:        basicPlan.ID,
+		PaymentMethod: "",
+		Duration:      "",
+		Email:         "",
+		ExpiryDate:    time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
+		Reference:     "",
+		TransactionId: transactionId,
+		CreatedAt:     time.Now(),
+	}
+
+	bill, err := s.BillingRepo.CreateBilling(billing)
+
+	if err != nil {
+		return fmt.Errorf("failed to create billing for user %d: %w", userId, err)
+	}
+
+	subscription := &model.Subscription{
+		UserId:        userId,
+		PlanId:        basicPlan.ID,
+		Expired:       false,
+		StartDate:     time.Now(),
+		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC), // 1 month subscription
+		TransactionId: transactionId,
+		Cancelled:     false,
+		CreatedAt:     time.Now(),
+		PaymentId:     bill.Id,
+	}
+
+	err = s.SubscriptionRepo.CreateSubscription(subscription)
+	if err != nil {
+		return fmt.Errorf("failed to create subscription for user %d: %w", userId, err)
+	}
+
+	//send onboarding mail
 
 	return nil
 }

@@ -5,13 +5,13 @@ package routes
 
 import (
 	"email-marketing-service/api/controllers"
+	adminController "email-marketing-service/api/controllers/admin"
 	"email-marketing-service/api/repository"
+	adminrepository "email-marketing-service/api/repository/admin"
 	"email-marketing-service/api/services"
+	adminservice "email-marketing-service/api/services/admin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
-	adminservice "email-marketing-service/api/services/admin"
-	adminrepository "email-marketing-service/api/repository/admin"
-	adminController "email-marketing-service/api/controllers/admin"
 )
 
 func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) {
@@ -21,6 +21,9 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		services.NewOTPService,
 		repository.NewOTPRepository,
 		repository.NewUserRepository,
+		repository.NewPlanRepository,
+		repository.NewSubscriptionRepository,
+		repository.NewBillingRepository,
 	)
 
 	return nil, nil
@@ -35,8 +38,7 @@ func InitializePlanController(db *gorm.DB) (*controllers.PlanController, error) 
 	return nil, nil
 }
 
-
-func InitializeAPIKeyController(db *gorm.DB)(*controllers.ApiKeyController,error){
+func InitializeAPIKeyController(db *gorm.DB) (*controllers.ApiKeyController, error) {
 	wire.Build(
 		controllers.NewAPIKeyController,
 		services.NewAPIKeyService,
@@ -45,8 +47,7 @@ func InitializeAPIKeyController(db *gorm.DB)(*controllers.ApiKeyController,error
 	return nil, nil
 }
 
-
-func InitializeUserssionController(db *gorm.DB)(*controllers.UserSessionController,error){
+func InitializeUserssionController(db *gorm.DB) (*controllers.UserSessionController, error) {
 	wire.Build(
 		controllers.NewUserSessionController,
 		services.NewUserSessionService,
@@ -56,21 +57,19 @@ func InitializeUserssionController(db *gorm.DB)(*controllers.UserSessionControll
 	return nil, nil
 }
 
-
-func InitializeTransactionController(db *gorm.DB)(*controllers.TransactionController,error){
+func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionController, error) {
 	wire.Build(
 		controllers.NewTransactionController,
 		services.NewBillingService,
 		repository.NewBillingRepository,
-		services.NewSubscriptionService, 
+		services.NewSubscriptionService,
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
-
 	)
 	return nil, nil
 }
 
-func InitializeSMTPController(db *gorm.DB)(*controllers.SMTPMailController,error){
+func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, error) {
 	wire.Build(
 		controllers.NewSMTPMailController,
 		services.NewAPIKeyService,
@@ -84,32 +83,30 @@ func InitializeSMTPController(db *gorm.DB)(*controllers.SMTPMailController,error
 	return nil, nil
 }
 
-func InitializeSubscriptionController(db *gorm.DB)(*controllers.SubscriptionController,error){
+func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionController, error) {
 	wire.Build(
-	controllers.NewSubscriptionController,
-	services.NewSubscriptionService,
-	repository.NewSubscriptionRepository,
+		controllers.NewSubscriptionController,
+		services.NewSubscriptionService,
+		repository.NewSubscriptionRepository,
 	)
 	return nil, nil
 }
 
-
-func InitialiazePlanController (db *gorm.DB)(*controllers.PlanController,error){
+func InitialiazePlanController(db *gorm.DB) (*controllers.PlanController, error) {
 	wire.Build(
 		controllers.NewPlanController,
 		services.NewPlanService,
 		repository.NewPlanRepository,
 	)
 
-	return nil,nil
+	return nil, nil
 }
 
-
-func InitializeAdminController(db *gorm.DB)(*adminController.AdminController,error){
-   wire.Build(
-	 adminController.NewAdminController,
-	 adminservice.NewAdminService,
-	 adminrepository.NewAdminRepository,
-   )
-   return nil,nil
+func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, error) {
+	wire.Build(
+		adminController.NewAdminController,
+		adminservice.NewAdminService,
+		adminrepository.NewAdminRepository,
+	)
+	return nil, nil
 }

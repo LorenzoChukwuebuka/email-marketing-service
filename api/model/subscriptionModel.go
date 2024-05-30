@@ -19,8 +19,8 @@ type Subscription struct {
 	Cancelled     bool       `json:"cancelled"`
 	DateCancelled *time.Time `json:"date_cancelled" gorm:"type:TIMESTAMP;null;default:null"`
 	Plan          *Plan      `json:"plan"`
-	User          *User      `json:"user" gorm:"foreignKey:UserId;references:ID"`
-	Billing       *Billing   `json:"billing,omitempty" gorm:"foreignKey:PaymentId;references:Id"`
+	User          *User      `json:"user" gorm:"foreignKey:UserId"`
+	Billing       *Billing   `json:"billing,omitempty" gorm:"foreignKey:PaymentId"`
 }
 
 type SubscriptionResponseModel struct {

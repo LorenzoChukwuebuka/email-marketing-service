@@ -88,9 +88,13 @@ func (r *SubscriptionRepository) GetAllSubscriptions() ([]model.Subscription, er
 
 func (r *SubscriptionRepository) GetAllCurrentRunningSubscription() ([]model.Subscription, error) {
 
-	var subscription []model.Subscription
+	var subscriptions []model.Subscription
 
-	if err := r.DB.Where("expired = ?", false).Find(&subscription).Error; err != nil {
+	if err := r.DB.Where("expired = ?", false).
+		Preload("Plan").
+		Preload("User").
+		Preload("Billing").
+		Find(&subscriptions).Error; err != nil {
 
 		if err == gorm.ErrRecordNotFound {
 			return []model.Subscription{}, nil
@@ -99,7 +103,7 @@ func (r *SubscriptionRepository) GetAllCurrentRunningSubscription() ([]model.Sub
 		return nil, fmt.Errorf("failed to get subscription records: %w", err)
 	}
 
-	return subscription, nil
+	return subscriptions, nil
 }
 
 func (r *SubscriptionRepository) UpdateExpiredSubscription(id int) error {

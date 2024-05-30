@@ -15,6 +15,7 @@ type SMTPMailService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	DailyCalcRepo    *repository.DailyMailCalcRepository
 	UserRepo         *repository.UserRepository
+
 }
 
 func NewSMTPMailService(apikeyservice *APIKeyService,
@@ -44,7 +45,7 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 	if err != nil {
 		return nil, fmt.Errorf("error fetching userId")
 	}
-
+	
 	// Get the daily mail calculator
 
 	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(userId.ID)
@@ -96,23 +97,28 @@ func (s *SMTPMailService) handleSendMail(resultChan chan interface{}) {
 //##################################################### JOBS #################################################################
 
 func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
-	//1.... Select all active subscriptions....
-
+	// Select all active subscriptions
 	activeSubs, err := s.SubscriptionRepo.GetAllCurrentRunningSubscription()
 	if err != nil {
+		fmt.Println("Error fetching subscriptions:", err)
 		return err
 	}
 
-	fmt.Println(activeSubs)
+	if len(activeSubs) == 0 {
+		fmt.Println("No active subscriptions found.")
+		return nil
+	}
+
+	//fmt.Println("Active subscriptions:", activeSubs)
 
 	for _, activeSub := range activeSubs {
-
 		num, err := strconv.Atoi(activeSub.Plan.NumberOfMailsPerDay)
-
 		if err != nil {
-			fmt.Println("Error:", err)
+			fmt.Println("Error converting NumberOfMailsPerDay to integer:", err)
 			return err
 		}
+
+		println(num)
 
 		dailyCalcData := &model.DailyMailCalc{
 			UUID:           uuid.New().String(),
@@ -124,13 +130,11 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 		}
 
 		err = s.DailyCalcRepo.CreateRecordDailyMailCalculation(dailyCalcData)
-
 		if err != nil {
+			fmt.Println("Error creating daily mail calculation record:", err)
 			return err
 		}
-
 	}
 
 	return nil
-
 }

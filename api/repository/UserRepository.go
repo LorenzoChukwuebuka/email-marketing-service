@@ -19,21 +19,21 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 	return model.UserResponse{
 		ID:         user.ID,
 		UUID:       user.UUID,
-		FullName:  user.FullName,
+		FullName:   user.FullName,
 		Email:      user.Email,
 		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:   user.Verified,
 		CreatedAt:  user.CreatedAt,
 		VerifiedAt: user.VerifiedAt.Format(time.RFC3339),
 		UpdatedAt:  user.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:  user.DeletedAt.Format(time.RFC3339)}
+		DeletedAt:  user.DeletedAt.Format(time.RFC3339),
+	}
 }
 
 func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
 	if err := r.DB.Create(&d).Error; err != nil {
 		return nil, fmt.Errorf("failed to insert user: %w", err)
 	}
-
 	return d, nil
 }
 
@@ -48,15 +48,15 @@ func (r *UserRepository) CheckIfEmailAlreadyExists(d *model.User) (bool, error) 
 	return true, nil
 }
 
-func (r *UserRepository) VerifyUserAccount(d *model.User) error {
+func (r *UserRepository) VerifyUserAccount(d *model.User) (int, error) {
 	var user model.User
 
 	// Fetch the User record from the database
-	if err := r.DB.First(&user, d.ID).Error; err != nil {
+	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return err
+			return 0, err
 		}
-		return nil
+		return 0, nil
 	}
 
 	user.Verified = d.Verified
@@ -65,10 +65,10 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) error {
 
 	if err := r.DB.Save(&user).Error; err != nil {
 		fmt.Printf("Error updating user: %v\n", err)
-		return err
+		return 0, err
 	}
 
-	return nil
+	return user.ID, nil
 }
 
 func (r *UserRepository) Login(d *model.User) (model.UserResponse, error) {
@@ -100,7 +100,6 @@ func (r *UserRepository) FindUserById(d *model.User) (model.UserResponse, error)
 	userResponse := r.createUserResponse(user)
 
 	return userResponse, nil
-
 }
 
 func (r *UserRepository) FindUserByEmail(d *model.User) (model.UserResponse, error) {
@@ -141,8 +140,6 @@ func (r *UserRepository) ResetPassword(d *model.User) error {
 
 	return nil
 }
-
-
 
 func (r *UserRepository) FindAllUsers() ([]model.UserResponse, error) {
 

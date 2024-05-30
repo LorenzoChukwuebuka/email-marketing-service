@@ -24,12 +24,9 @@ func (s *AdminService) CreateAdmin(d *dto.Admin) (*adminmodel.Admin, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
- 
-
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
 
-     
 	adminModel := &adminmodel.Admin{
 		UUID:  uuid.New().String(),
 		FirstName: d.FirstName,
@@ -40,9 +37,7 @@ func (s *AdminService) CreateAdmin(d *dto.Admin) (*adminmodel.Admin, error) {
 		Password: password,
 	}
 
-	 
-	 
-
+	
 	adminUser, err := s.AdminRepo.CreateAdmin(adminModel)
 
 	if err != nil {
@@ -56,8 +51,6 @@ func (s *AdminService) AdminLogin(d *dto.AdminLogin) (map[string]interface{}, er
 	if err := utils.ValidateData(d); err != nil {
 		return nil, err
 	}
-
-	
 
 	adminDetails, err := s.AdminRepo.Login(d.Email)
 
