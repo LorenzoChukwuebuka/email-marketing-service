@@ -22,7 +22,10 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	userRepository := repository.NewUserRepository(db)
 	otpRepository := repository.NewOTPRepository(db)
 	otpService := services.NewOTPService(otpRepository)
-	userService := services.NewUserService(userRepository, otpService)
+	planRepository := repository.NewPlanRepository(db)
+	subscriptionRepository := repository.NewSubscriptionRepository(db)
+	billingRepository := repository.NewBillingRepository(db)
+	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository)
 	userController := controllers.NewUserController(userService)
 	return userController, nil
 }

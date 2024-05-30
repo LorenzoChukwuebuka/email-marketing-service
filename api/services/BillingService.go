@@ -47,7 +47,6 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	}
 
 	//get the userId
-
 	userUUID  := &model.User{UUID: data.UserID}
 
 	userId, err := s.UserRepo.FindUserById(userUUID)
