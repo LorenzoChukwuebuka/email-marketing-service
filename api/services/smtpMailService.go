@@ -4,10 +4,10 @@ import (
 	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
+	"email-marketing-service/api/utils"
 	"fmt"
 	"strconv"
 	"time"
-	"email-marketing-service/api/utils"
 	"github.com/google/uuid"
 )
 
@@ -111,6 +111,7 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 
 func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
 	// Iterate over the recipients
+
 	for _, recipient := range emailRequest.To {
 		// Determine the mail content (HTML or Text)
 		var mailContent string
@@ -137,6 +138,9 @@ func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
 
 	return nil
 }
+
+
+
 
 //##################################################### JOBS #################################################################
 

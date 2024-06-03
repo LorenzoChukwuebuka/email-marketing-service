@@ -39,9 +39,6 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 	apiKeyExist, err := c.APISVC.APIKeyRepo.CheckIfAPIKEYExists(apiKey)
 
-
-	
-
 	if err != nil {
 		errorres := map[string]interface{}{
 			"status":  http.StatusBadRequest,
@@ -49,11 +46,8 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 		}
 
 		response.ErrorResponse(w, errorres)
-
 		return
 	}
-
-	println(apiKeyExist)
 
 	if !apiKeyExist {
 		errorRes := map[string]interface{}{
@@ -77,7 +71,7 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 //################################################### TEST #################################################################
 
-func (c *SMTPMailController) CreateRecordDailyMailCalculation(w http.ResponseWriter, r *http.Request){
+func (c *SMTPMailController) CreateRecordDailyMailCalculation(w http.ResponseWriter, r *http.Request) {
 	err := c.SMTPSVC.CreateRecordForDailyMailCalculation()
 
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"net/http"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )
@@ -20,25 +19,12 @@ func NewUserSessionController(usersessionSvc *services.UserSessionService) *User
 	}
 }
 
-func (c *UserSessionController) getIPAddress(r *http.Request) string {
-	ip := r.Header.Get("X-Forwarded-For")
-	if ip == "" {
-		ip = r.Header.Get("X-Real-IP")
-	}
-	if ip == "" {
-		ip = r.RemoteAddr
-	}
-	return ip
-}
+ 
 
 func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.UserSession
 
-	ipAddress := c.getIPAddress(r)
-
 	utils.DecodeRequestBody(r, &reqdata)
-
-	reqdata.IPAddress = &ipAddress
 
 	result, err := c.UserSessionSVC.CreateSession(reqdata)
 
