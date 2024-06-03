@@ -1,5 +1,7 @@
 package dto
 
+import "email-marketing-service/api/model"
+
 type EmailRequest struct {
 	Sender      Sender      `json:"sender"`
 	To          []Recipient `json:"to"`
@@ -15,4 +17,11 @@ type Sender struct {
 
 type Recipient struct {
 	Email string `json:"email"`
+}
+
+type SentEmails struct {
+	Sender         uint
+	Recipient      uint
+	MessageContent string
+	Status         model.EmailStatus
 }

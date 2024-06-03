@@ -23,7 +23,7 @@ const (
 
 // Ticket represents a support ticket
 type Ticket struct {
-	ID          uint            `gorm:"primary_key" json:"id"`
+	ID          uint            `gorm:"primaryKey" json:"-"`
 	Subject     string          `json:"subject"`
 	Description string          `json:"description"`
 	Status      Status          ` json:"status"`
