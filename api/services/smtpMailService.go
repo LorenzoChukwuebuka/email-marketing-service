@@ -2,12 +2,14 @@ package services
 
 import (
 	"email-marketing-service/api/dto"
+	smtpfactory "email-marketing-service/api/factory/smtpFactory"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
-	"email-marketing-service/api/utils"
+	//	"email-marketing-service/api/utils"
 	"fmt"
 	"strconv"
 	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -111,36 +113,20 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 
 func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
 	// Iterate over the recipients
+	mailS, err := smtpfactory.MailFactory("mailtrap")
 
-	for _, recipient := range emailRequest.To {
-		// Determine the mail content (HTML or Text)
-		var mailContent string
-		if emailRequest.HtmlContent != nil {
-			mailContent = *emailRequest.HtmlContent
-		} else if emailRequest.Text != nil {
-			mailContent = *emailRequest.Text
-		} else {
-			continue
-		}
+	if err != nil {
+		return err
+	}
 
-		email := recipient.Email
+	err = mailS.HandleSendMail(emailRequest)
 
-		subject := emailRequest.Subject
-
-		// Send the email
-		err := utils.SendMail(subject, email, mailContent)
-		if err != nil {
-			fmt.Printf("Error sending mail to %s: %v\n", recipient.Email, err)
-		} else {
-			fmt.Printf("Mail sent to %s\n", recipient.Email)
-		}
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
-
-
-
 
 //##################################################### JOBS #################################################################
 
