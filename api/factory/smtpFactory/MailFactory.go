@@ -5,7 +5,7 @@ import "fmt"
 func MailFactory(mailhost string) (SmtpMethodInterface, error) {
 	var sI SmtpMethodInterface
 	switch mailhost {
-	case "mailTrap":
+	case "mailtrap":
 		sI = &MailTrapProcessor{}
 		return sI, nil
 	case "Paystack":
