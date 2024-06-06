@@ -40,6 +40,6 @@ type BillingResponse struct {
 	CreatedAt     time.Time     `json:"created_at"`
 	UpdatedAt     string        `json:"updated_at"`
 	DeletedAt     string        `json:"deleted_at"`
-	User          *UserResponse `json:"user"`
-	Plan          *PlanResponse `json:"plan"`
+	User          *UserResponse `json:"user,omitempty"`
+	Plan          *PlanResponse `json:"plan,omitempty"`
 }

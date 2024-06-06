@@ -83,7 +83,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 
 				errorStack := map[string]interface{}{
 					"Message": "Internal Server Error",
-				} 
+				}
 
 				response.ErrorResponse(w, errorStack)
 

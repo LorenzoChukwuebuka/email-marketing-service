@@ -4,18 +4,16 @@ import (
 	"time"
 )
 
-type status string 
-
+type status string
 
 const (
-
-	Active status = "active"
+	Active   status = "active"
 	Inactive status = "inactive"
 )
 
 type Plan struct {
-	ID                  int        `json:"-" gorm:"primaryKey"`
-	UUID                string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
+	ID                  int        `json:"-" gorm:"primaryKey;index"`
+	UUID                string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
 	PlanName            string     `json:"planname" gorm:"size:255"`
 	Duration            string     `json:"duration" gorm:"size:255"`
 	Price               float32    `json:"price" `

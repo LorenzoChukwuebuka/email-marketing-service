@@ -5,12 +5,10 @@ import (
 	smtpfactory "email-marketing-service/api/factory/smtpFactory"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
-	//	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type SMTPMailService struct {
@@ -57,10 +55,20 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 		return nil, fmt.Errorf("error fetching record")
 	}
 
-	// Calculate the number of batches
-	numBatches := len(d.To) / batchSize
+	// Check type of d.To and convert it to a slice of Recipient if necessary
+	var recipients []dto.Recipient
+	switch to := d.To.(type) {
+	case dto.Recipient:
+		recipients = []dto.Recipient{to}
+	case []dto.Recipient:
+		recipients = to
+	default:
+		return nil, fmt.Errorf("invalid recipient type")
+	}
 
-	if len(d.To)%batchSize != 0 {
+	// Calculate the number of batches
+	numBatches := len(recipients) / batchSize
+	if len(recipients)%batchSize != 0 {
 		numBatches++
 	}
 
@@ -68,10 +76,10 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 	for i := 0; i < numBatches; i++ {
 		start := i * batchSize
 		end := start + batchSize
-		if end > len(d.To) {
-			end = len(d.To)
+		if end > len(recipients) {
+			end = len(recipients)
 		}
-		batch := d.To[start:end]
+		batch := recipients[start:end]
 
 		// Check remaining mails
 		if mailCalcRepo.RemainingMails == 0 {
@@ -114,13 +122,11 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
 	// Iterate over the recipients
 	mailS, err := smtpfactory.MailFactory("mailtrap")
-
 	if err != nil {
 		return err
 	}
 
 	err = mailS.HandleSendMail(emailRequest)
-
 	if err != nil {
 		return err
 	}

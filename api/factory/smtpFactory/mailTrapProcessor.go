@@ -9,35 +9,50 @@ import (
 type MailTrapProcessor struct {
 }
 
-func (s *MailTrapProcessor) SendMail(userId int) error {
-	return nil
-}
-
 func (s *MailTrapProcessor) HandleSendMail(emailRequest *dto.EmailRequest) error {
-	for _, recipient := range emailRequest.To {
-		// Determine the mail content (HTML or Text)
-		var mailContent string
-		if emailRequest.HtmlContent != nil {
-			mailContent = *emailRequest.HtmlContent
-		} else if emailRequest.Text != nil {
-			mailContent = *emailRequest.Text
-		} else {
-			continue
+
+// // Assuming the email transaction is initiated here
+// transactionID := initiateTransaction(emailRequest)
+// defer func() {
+// 	// Update the status to "sent" after the email has been sent
+// 	updateTransactionStatus(transactionID, "sent")
+// }()
+
+
+	switch to := emailRequest.To.(type) {
+	case dto.Recipient:
+		s.sendMailToRecipient(to, emailRequest)
+	case []dto.Recipient:
+		for _, recipient := range to {
+			s.sendMailToRecipient(recipient, emailRequest)
 		}
-
-		email := recipient.Email
-
-		subject := emailRequest.Subject
-
-		// Send the email
-		err := utils.SendMail(subject, email, mailContent)
-		if err != nil {
-			fmt.Printf("Error sending mail to %s: %v\n", recipient.Email, err)
-		} else {
-			fmt.Printf("Mail sent to %s\n", recipient.Email)
-		}
-
+	default:
+		return fmt.Errorf("invalid recipient type")
 	}
 
 	return nil
+}
+
+func (s *MailTrapProcessor) sendMailToRecipient(recipient dto.Recipient, emailRequest *dto.EmailRequest) {
+	// Determine the mail content (HTML or Text)
+	var mailContent string
+	if emailRequest.HtmlContent != nil {
+		mailContent = *emailRequest.HtmlContent
+	} else if emailRequest.Text != nil {
+		mailContent = *emailRequest.Text
+	} else {
+		fmt.Println("No content to send")
+		return
+	}
+
+	email := recipient.Email
+	subject := emailRequest.Subject
+
+	// Send the email
+	err := utils.SendMail(subject, email, mailContent)
+	if err != nil {
+		fmt.Printf("Error sending mail to %s: %v\n", email, err)
+	} else {
+		fmt.Printf("Mail sent to %s\n", email)
+	}
 }
