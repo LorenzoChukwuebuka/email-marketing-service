@@ -66,6 +66,7 @@ func autoMigrateModels() {
 		&model.Ticket{},
 		&model.TicketMessage{},
 		&model.TicketFiles{},
+		&model.SentEmails{},
 		// &model.KnowledgeBaseArticle{},
 		// &model.KnowledgeBaseCategory{},
 	)

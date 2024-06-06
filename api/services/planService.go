@@ -26,17 +26,14 @@ func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 	}
 
 	planModel := &model.Plan{
-		UUID: uuid.New().String(), 
-		PlanName: d.PlanName,
-		Duration: d.Duration,
-		Details: d.Details,
+		UUID:                uuid.New().String(),
+		PlanName:            d.PlanName,
+		Duration:            d.Duration,
+		Details:             d.Details,
 		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
-		Price: d.Price,
-		Status: d.Status,
-
+		Price:               d.Price,
+		Status:              d.Status,
 	}
-
-	 
 
 	planExists, err := s.PlanRepo.PlanExistsByName(d.PlanName)
 
@@ -84,14 +81,13 @@ func (s *PlanService) GetASinglePlan(id string) (model.PlanResponse, error) {
 func (s *PlanService) UpdatePlan(d *dto.EditPlan) error {
 
 	planModel := &model.Plan{
-		UUID: d.UUID, 
-		PlanName: d.PlanName,
-		Duration: d.Duration,
-		Details: d.Details,
+		UUID:                d.UUID,
+		PlanName:            d.PlanName,
+		Duration:            d.Duration,
+		Details:             d.Details,
 		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
-		Price: d.Price,
-		Status: d.Status,
-
+		Price:               d.Price,
+		Status:              d.Status,
 	}
 
 	if err := s.PlanRepo.EditPlan(planModel); err != nil {
