@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"email-marketing-service/api/database"
+	"email-marketing-service/api/observers"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +16,10 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 )
 
 var (
@@ -109,6 +110,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
+
+	smtpWebHookRepo := repository.NewSMTPWebHookRepository(dbConn)
+
+	eventBus := utils.GetEventBus()
+
+	dbObserver := observers.NewCreateEmailStatusObserver(smtpWebHookRepo)
+	eventBus.Register("send_success", dbObserver)
+	eventBus.Register("send_failed", dbObserver)
 
 	//instantiate the cron scheduler
 	c := cronJobs(dbConn)

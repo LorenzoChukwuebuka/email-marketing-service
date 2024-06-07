@@ -8,6 +8,8 @@ import (
 
 var RegisterAdminRoutes = func(router *mux.Router, db *gorm.DB) {
 
+
+	
 	adminController, _ := InitializeAdminController(db)
 	planController, _ := InitializePlanController(db)
 
