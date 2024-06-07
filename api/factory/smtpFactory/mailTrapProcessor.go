@@ -2,6 +2,7 @@ package smtpfactory
 
 import (
 	"email-marketing-service/api/dto"
+	"email-marketing-service/api/observers"
 	"email-marketing-service/api/utils"
 	"fmt"
 )
@@ -11,13 +12,8 @@ type MailTrapProcessor struct {
 
 func (s *MailTrapProcessor) HandleSendMail(emailRequest *dto.EmailRequest) error {
 
-// // Assuming the email transaction is initiated here
-// transactionID := initiateTransaction(emailRequest)
-// defer func() {
-// 	// Update the status to "sent" after the email has been sent
-// 	updateTransactionStatus(transactionID, "sent")
-// }()
-
+	eventBus := utils.GetEventBus()
+	eventBus.Notify(observers.Event{Type: "send_success", Message: "email sent successfully", EmailRequest: emailRequest})
 
 	switch to := emailRequest.To.(type) {
 	case dto.Recipient:

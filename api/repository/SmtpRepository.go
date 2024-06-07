@@ -10,7 +10,7 @@ type SMTPWebHookRepository struct {
 	DB gorm.DB
 }
 
-func (r *SMTPWebHookRepository) NewSMTPWebHookRepository(db *gorm.DB) *SMTPWebHookRepository {
+func  NewSMTPWebHookRepository(db *gorm.DB) *SMTPWebHookRepository {
 	return &SMTPWebHookRepository{
 		DB: *db,
 	}
@@ -21,4 +21,9 @@ func (r *SMTPWebHookRepository) CreateReport(d *model.SentEmails) error {
 		return fmt.Errorf("failed to insert sent mail: %w", err)
 	}
 	return nil
+}
+
+
+func (r *SMTPWebHookRepository) UpdateReport(d *model.SentEmails) error {
+	return nil 
 }
