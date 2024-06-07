@@ -111,7 +111,7 @@ func main() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	smtpWebHookRepo := repository.NewSMTPWebHookRepository(dbConn)
+	smtpWebHookRepo := repository.NewMailStatusRepository(dbConn)
 
 	eventBus := utils.GetEventBus()
 

@@ -2,7 +2,7 @@ package smtpfactory
 
 import (
 	"email-marketing-service/api/dto"
-	"email-marketing-service/api/observers"
+	//"email-marketing-service/api/observers"
 	"email-marketing-service/api/utils"
 	"fmt"
 )
@@ -11,10 +11,6 @@ type MailTrapProcessor struct {
 }
 
 func (s *MailTrapProcessor) HandleSendMail(emailRequest *dto.EmailRequest) error {
-
-	eventBus := utils.GetEventBus()
-	eventBus.Notify(observers.Event{Type: "send_success", Message: "email sent successfully", EmailRequest: emailRequest})
-
 	switch to := emailRequest.To.(type) {
 	case dto.Recipient:
 		s.sendMailToRecipient(to, emailRequest)
@@ -41,14 +37,16 @@ func (s *MailTrapProcessor) sendMailToRecipient(recipient dto.Recipient, emailRe
 		return
 	}
 
+	//eventBus := utils.GetEventBus()
+
 	email := recipient.Email
 	subject := emailRequest.Subject
 
-	// Send the email
 	err := utils.SendMail(subject, email, mailContent)
 	if err != nil {
 		fmt.Printf("Error sending mail to %s: %v\n", email, err)
 	} else {
+		//	eventBus.Notify(observers.Event{Type: "send_success", Message: "email sent successfully", Payload: emailRequest})
 		fmt.Printf("Mail sent to %s\n", email)
 	}
 }

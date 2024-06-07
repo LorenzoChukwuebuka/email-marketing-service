@@ -78,6 +78,7 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 		services.NewSMTPMailService,
 		repository.NewDailyMailCalcRepository,
 		repository.NewUserRepository,
+		repository.NewMailStatusRepository,
 	)
 
 	return nil, nil
