@@ -58,7 +58,7 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	result, err := c.SMTPSVC.SendSMTPMail(reqdata, apiKey)
+	result, err := c.SMTPSVC.PrepareMail(reqdata, apiKey)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

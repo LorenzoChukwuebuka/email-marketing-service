@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"strconv"
+	//"sync"
+	//"strings"
 	"time"
 )
 
@@ -16,23 +18,26 @@ type SMTPMailService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	DailyCalcRepo    *repository.DailyMailCalcRepository
 	UserRepo         *repository.UserRepository
+	MailStatusRepo   *repository.MailStatusRepository
+	//mu               sync.Mutex
 }
 
 func NewSMTPMailService(apikeyservice *APIKeyService,
 	subscriptionRepository *repository.SubscriptionRepository,
 	dailyCalc *repository.DailyMailCalcRepository,
-	userRepo *repository.UserRepository) *SMTPMailService {
+	userRepo *repository.UserRepository, mailStatusRepo *repository.MailStatusRepository) *SMTPMailService {
 	return &SMTPMailService{
 		APIKeySVC:        apikeyservice,
 		SubscriptionRepo: subscriptionRepository,
 		DailyCalcRepo:    dailyCalc,
 		UserRepo:         userRepo,
+		MailStatusRepo:   mailStatusRepo,
 	}
 }
 
-const batchSize = 20 // Adjust this value as per your requirements
+const batchSize = 20
 
-func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[string]interface{}, error) {
+func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[string]interface{}, error) {
 	userUUID, err := s.APIKeySVC.FindUserWithAPIKey(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching userId")
@@ -98,7 +103,7 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 				Subject:     d.Subject,
 				HtmlContent: d.HtmlContent,
 				Text:        d.Text,
-			})
+			}, userId.ID)
 		}()
 
 		updateCalcData := &model.DailyMailCalc{
@@ -107,9 +112,6 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 			MailsSent:      mailCalcRepo.MailsSent + len(batch),
 		}
 
-		// Update the counter
-		mailCalcRepo.RemainingMails -= len(batch)
-		mailCalcRepo.MailsSent += len(batch)
 		err = s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData)
 		if err != nil {
 			return nil, err
@@ -119,19 +121,136 @@ func (s *SMTPMailService) SendSMTPMail(d *dto.EmailRequest, apiKey string) (map[
 	return nil, nil
 }
 
-func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest) error {
-	// Iterate over the recipients
+func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId int) error {
+	var recipients []dto.Recipient
+	switch to := emailRequest.To.(type) {
+	case dto.Recipient:
+		recipients = []dto.Recipient{to}
+	case []dto.Recipient:
+		recipients = to
+	default:
+		return fmt.Errorf("invalid recipient type")
+	}
+
+	for _, recipient := range recipients {
+		UUID := uuid.New().String()
+
+		emailData := &model.SentEmails{
+			UUID:           UUID,
+			Sender:         uint(userId),
+			Recipient:      recipient.Email,
+			MessageContent: getMessageContent(emailRequest),
+			Status:         model.Sending,
+		}
+
+		err := s.MailStatusRepo.CreateStatus(emailData)
+		if err != nil {
+			return err
+		}
+	}
+
 	mailS, err := smtpfactory.MailFactory("mailtrap")
 	if err != nil {
+		// Update the status to "failed" for the existing records
+		for _, recipient := range recipients {
+			emailData, err := s.MailStatusRepo.GetSentEmailByRecipient(recipient.Email)
+			if err != nil {
+				return err
+			}
+			emailData.Status = model.Failed
+			s.MailStatusRepo.UpdateReport(emailData)
+		}
 		return err
 	}
 
 	err = mailS.HandleSendMail(emailRequest)
 	if err != nil {
+		// Update the status to "failed" for the existing records
+		for _, recipient := range recipients {
+			emailData, err := s.MailStatusRepo.GetSentEmailByRecipient(recipient.Email)
+			if err != nil {
+				return err
+			}
+			emailData.Status = model.Failed
+			s.MailStatusRepo.UpdateReport(emailData)
+		}
 		return err
 	}
 
+	// Update the status to "success" for the existing records
+	for _, recipient := range recipients {
+		emailData, err := s.MailStatusRepo.GetSentEmailByRecipient(recipient.Email)
+		if err != nil {
+			return err
+		}
+		emailData.Status = model.Success
+		s.MailStatusRepo.UpdateReport(emailData)
+	}
+
 	return nil
+}
+
+// func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId int) error {
+
+// 	UUID := uuid.New().String()
+
+// 	recipientEmails := make([]string, 0)
+// 	switch to := emailRequest.To.(type) {
+// 	case dto.Recipient:
+// 		recipientEmails = append(recipientEmails, to.Email)
+// 	case []dto.Recipient:
+// 		for _, recipient := range to {
+// 			recipientEmails = append(recipientEmails, recipient.Email)
+// 		}
+// 	default:
+// 		return fmt.Errorf("invalid recipient type")
+// 	}
+// 	recipientEmailsStr := strings.Join(recipientEmails, ", ")
+
+// 	emailData := &model.SentEmails{
+// 		UUID:           UUID,
+// 		Sender:         uint(userId),
+// 		Recipient:      recipientEmailsStr,
+// 		MessageContent: getMessageContent(emailRequest), // Assuming you want to store the HTML content
+// 		Status:         model.Sending,
+// 	}
+
+// 	err := s.MailStatusRepo.CreateStatus(emailData)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	mailS, err := smtpfactory.MailFactory("mailtrap")
+// 	if err != nil {
+// 		emailData.Status = model.Failed
+// 		s.MailStatusRepo.UpdateReport(emailData)
+// 		return err
+// 	}
+
+// 	err = mailS.HandleSendMail(emailRequest)
+// 	if err != nil {
+
+// 		emailData.Status = model.Failed
+// 		s.MailStatusRepo.UpdateReport(emailData)
+
+// 		return err
+// 	}
+
+// 	emailData.Status = model.Success
+// 	s.MailStatusRepo.UpdateReport(emailData)
+
+// 	return nil
+// }
+
+func getMessageContent(emailRequest *dto.EmailRequest) string {
+	if emailRequest.HtmlContent != nil {
+		return *emailRequest.HtmlContent
+	}
+	if emailRequest.Text != nil {
+		return *emailRequest.Text
+	}
+	return ""
 }
 
 //##################################################### JOBS #################################################################
