@@ -1,7 +1,9 @@
-WIRE_PATH := ./api/routes
-MAIN_PATH := ./api
-
+WIRE_PATH := ./backend/api/routes
+MAIN_PATH := ./backend/api
+ROOT_DIR := ./backend/
+FE_DIR := ./frontend/
 .PHONY: wire build
+
 
 wire:
 		cd $(WIRE_PATH) && wire
@@ -9,3 +11,15 @@ run:
 		go run main.go
 build:
 		go build main.go
+air:
+		cd $(ROOT_DIR) && air
+npmi:
+		cd ${FE_DIR} && npm i ${ARGS}
+rundev:
+		cd ${FE_DIR} && npm run dev
+buildfe:
+		cd && npm run build
+git:
+		git add .
+		git commit -m "done"
+		git push
