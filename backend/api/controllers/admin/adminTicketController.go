@@ -1,7 +1,8 @@
-package adminController 
+package adminController
 
-type AdminTicketController struct {
-
+type AdminSupportTicketController struct {
 }
 
-
+func NewAdminSupportTicketController() *AdminSupportTicketController {
+	return &AdminSupportTicketController{}
+}

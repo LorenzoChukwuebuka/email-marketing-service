@@ -94,3 +94,11 @@ func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, e
 	adminControllerAdminController := adminController.NewAdminController(adminService)
 	return adminControllerAdminController, nil
 }
+
+func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
+	supportRepository := repository.NewSupportRepository(db)
+	userRepository := repository.NewUserRepository(db)
+	supportTicketService := services.NewSupportTicketService(supportRepository, userRepository)
+	supportTicketController := controllers.NewTicketController(supportTicketService)
+	return supportTicketController, nil
+}

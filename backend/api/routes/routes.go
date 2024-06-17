@@ -13,6 +13,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	apiKeyController, _ := InitializeAPIKeyController(db)
 	smtpController, _ := InitializeSMTPController(db)
 	transactionController, _ := InitializeTransactionController(db)
+	supportTicketController, _ := InitializeSupportTicketController(db)
 
 	//subscription service for testing only
 	subscriptionController, _ := InitializeSubscriptionController(db)
@@ -30,6 +31,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-billing/{billingId}", middleware.JWTMiddleware(transactionController.GetSingleBillingRecord)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-all-billing", middleware.JWTMiddleware(transactionController.GetAllUserBilling)).Queries("page", "{page}").Methods("GET", "OPTIONS")
+
 	//public api
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET", "OPTIONS")
@@ -49,6 +51,10 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/create-session", sessionController.CreateSessions).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-sessions", middleware.JWTMiddleware(sessionController.GetAllSessions)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/delete-session", middleware.JWTMiddleware(sessionController.DeleteSession)).Methods("DELETE", "OPTIONS")
+
+	//support ticket
+
+	router.HandleFunc("/create-ticket", middleware.JWTMiddleware(supportTicketController.CreateTicket)).Methods("POST", "OPTIONS")
 
 	// Testing API
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
