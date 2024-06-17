@@ -7,10 +7,10 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/google/uuid"
 )
 
 type BillingService struct {
@@ -46,7 +46,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	}
 
 	//get the userId
-	userUUID  := &model.User{UUID: data.UserID}
+	userUUID := &model.User{UUID: data.UserID}
 
 	userId, err := s.UserRepo.FindUserById(userUUID)
 

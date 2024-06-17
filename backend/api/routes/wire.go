@@ -111,3 +111,14 @@ func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, e
 	)
 	return nil, nil
 }
+
+func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
+	wire.Build(
+		controllers.NewTicketController,
+		services.NewSupportTicketService,
+		repository.NewSupportRepository,
+		repository.NewUserRepository,
+	)
+
+	return nil, nil
+}

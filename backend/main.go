@@ -3,12 +3,17 @@ package main
 import (
 	"context"
 	"email-marketing-service/api/database"
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/observers"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/routes"
 	"email-marketing-service/api/services"
 	"email-marketing-service/api/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -16,10 +21,6 @@ import (
 	"runtime"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
 )
 
 var (
@@ -74,13 +75,10 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				// Log the panic
 				fmt.Println("Recovered from panic:", r)
-				// Print the stack trace
 				stack := make([]byte, 1024*8)
 				stack = stack[:runtime.Stack(stack, false)]
 				fmt.Printf("Panic Stack Trace:\n%s\n", stack)
-				// Respond with an internal server error
 
 				errorStack := map[string]interface{}{
 					"Message": "Internal Server Error",
@@ -88,10 +86,9 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 
 				response.ErrorResponse(w, errorStack)
 
-				//http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
 		}()
-		// Call the next handler in the chain
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -105,6 +102,8 @@ func main() {
 	}
 	defer logger.Close()
 
+	dto.InitValidate() //initiliase custom validator
+
 	// Initialize the database connection
 	dbConn, err := database.InitDB()
 	if err != nil {
@@ -112,9 +111,7 @@ func main() {
 	}
 
 	smtpWebHookRepo := repository.NewMailStatusRepository(dbConn)
-
 	eventBus := utils.GetEventBus()
-
 	dbObserver := observers.NewCreateEmailStatusObserver(smtpWebHookRepo)
 	eventBus.Register("send_success", dbObserver)
 	eventBus.Register("send_failed", dbObserver)
