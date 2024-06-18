@@ -1,63 +1,96 @@
+import { Link } from "react-router-dom";
+import useAuthStore from "../../store/AuthStore";
+
 const LoginTemplate = () => {
-  const hello = (e) => {
-    e.preventDefault();
-  };
+  const { isLoading, loginValues, setLoginValues,loginUser } = useAuthStore();
+
+
+  const handleLogin = async (e)=>{
+    e.preventDefault()
+  }
 
   return (
     <>
-      <main className="min-h-screen">
-        <div className="grid grid-cols-1 md:grid-cols-12 md:h-screen overflow-hidden">
-          <div className="col-span-1 shadow-lg bg-white p-4 md:col-span-6 overflow-y-auto border-gray-950"></div>
-          <div className="col-span-1 md:col-span-6 overflow-y-auto bg-[rgb(236,245,255)]">
-            <div className="bg-white rounded-lg shadow-sm h-screen md:min-h-screen w-full mx-auto mt-8 md:w-[550px]">
-              <h1 className="text-center mt-10 mb-4 text-green-500 text-4xl">
-                Logo
-              </h1>
-
-              <form onSubmit={hello}>
-                <div className="w-full mx-auto max-w-sm mb-8">
-                  <label className="form-control w-full mt-5">
-                    <div className="label">
-                      <span className="label-text text-medium font-medium">
-                        Student First Name
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder=""
-                      className="p-3 px-4 rounded-btn border border-gray-500 w-full"
-                    />
-                  </label>
-                  <label className="form-control w-full mt-5">
-                    <div className="label">
-                      <span className="label-text text-medium font-medium">
-                        Student Last Name
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder=""
-                      className="p-3 px-4 rounded-btn border border-gray-500 w-full"
-                    />
-                  </label>
-                  <label className="form-control w-full mt-5">
-                    <div className="label">
-                      <span className="label-text text-medium font-medium">
-                        Student Email
-                      </span>
-                    </div>
-                    <input
-                      type="email"
-                      placeholder=""
-                      className="p-3 px-4 rounded-btn border border-gray-500 w-full"
-                    />
-                  </label>
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <div className="container mx-auto">
+          <h3 className="text-2xl font-bold  text-center mb-4">MailCrib</h3>
+          <div className="bg-white shadow-lg rounded-lg max-w-lg mx-auto mt-2 p-6">
+            <h3 className="text-2xl font-semibold text-center mb-4">Log in</h3>
+            <form>
+              <div className="mb-4">
+                <label
+                  htmlFor="email"
+                  className="block text-gray-700 font-bold mb-2"
+                >
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="email"
+                  className="block w-full p-2 border border-gray-300 rounded-md"
+                  placeholder=""
+                  onChange={(event) => {
+                    setLoginValues({
+                      ...loginValues,
+                      email: event.target.value,
+                    });
+                  }}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="password"
+                  className="block text-gray-700 font-bold mb-2"
+                >
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    className="block w-full p-2 border border-gray-300 rounded-md"
+                    placeholder=""
+                    onChange={(event) => {
+                      setLoginValues({
+                        ...loginValues,
+                        password: event.target.value,
+                      });
+                    }}
+                  />
                 </div>
-              </form>
-            </div>
+              </div>
+              <div className="text-center">
+                {isLoading ? (
+                  <button
+                    className="bg-black text-white py-2 px-4 rounded-md mt-3 hover:bg-gray-800"
+                    type="submit"
+                  >
+                    Login
+                  </button>
+                ) : (
+                  <button className="bg-black text-white py-2 px-4 rounded-md mt-3 hover:bg-gray-800">
+                    Please wait{" "}
+                    <span className="loading loading-dots loading-sm"></span>
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+          <div className="text-center mt-4">
+            <p>
+              <Link to="" className="text-gray-700 hover:underline">
+                Forgot Password
+              </Link>
+              <Link
+                to="/auth/sign-up"
+                className="text-gray-700 hover:underline ml-4"
+              >
+                Create Account
+              </Link>
+            </p>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 };

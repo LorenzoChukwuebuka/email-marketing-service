@@ -1,8 +1,8 @@
 package dto
 
 type OTP struct {
-	UserId    int       `json:"user_id"`
-	Token     string    `json:"token" validated:"required"`
+	UserId int    `json:"user_id"`
+	Token  string `json:"token" validated:"required"`
 }
 
 type ResendOTP struct {
