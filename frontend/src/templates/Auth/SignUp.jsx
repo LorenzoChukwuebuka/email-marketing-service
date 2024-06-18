@@ -12,6 +12,7 @@ const SignUpTemplate = () => {
     setFormValues,
     redirectToOTP,
     registerUser,
+    userId,
   } = useAuthStore();
   const navigate = useNavigate();
 
@@ -47,8 +48,14 @@ const SignUpTemplate = () => {
   };
 
   useEffect(() => {
-    if ( redirectToOTP === true) {
-      navigate("/auth/otp-token");
+    if (redirectToOTP === true) {
+      setTimeout(() => {
+        navigate(
+          `/auth/otp-token?email=${encodeURIComponent(formValues.email)}
+                    &username=${encodeURIComponent(formValues.fullname)}
+                    &userId=${encodeURIComponent(userId)}`
+        );
+      }, 1500);
     }
   });
 
@@ -180,14 +187,10 @@ const SignUpTemplate = () => {
                 Create Account
               </button>
             ) : (
-              <button
-                type="submit"
-                className="rounded-full pt-1 bg-red-500 text-white p-2"
-              >
+              <button className="rounded-full pt-1 bg-red-500 text-white p-2">
                 <span className="flex flex-row items-center">
-                  {" "}
-                  Please wait{" "}
-                  <span className="loading loading-dots loading-sm"></span>{" "}
+                  Please wait
+                  <span className="loading loading-dots loading-sm"></span>
                 </span>
               </button>
             )}
