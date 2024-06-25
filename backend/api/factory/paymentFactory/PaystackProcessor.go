@@ -5,9 +5,9 @@ import (
 	"email-marketing-service/api/utils"
 	"encoding/json"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"net/http"
 	"strconv"
-	"github.com/go-resty/resty/v2"
 )
 
 type PaystackPaymentProcessor struct {
@@ -15,17 +15,19 @@ type PaystackPaymentProcessor struct {
 }
 
 var (
-	config   = utils.LoadEnv()
-	key      = config.PaystackKey
-	api_base = config.PaystackBaseURL
+	config       = utils.LoadEnv()
+	key          = config.PaystackKey
+	api_base     = config.PaystackBaseURL
+	callback_url = config.PAYSTACK_CALLBACK_URL
 )
 
 func (c *PaystackPaymentProcessor) OpenDeposit(d *dto.BasePaymentModelData) (map[string]interface{}, error) {
 	url := api_base + "transaction/initialize"
 
 	data := map[string]interface{}{
-		"amount": d.AmountToPay * 100,
-		"email":  d.Email,
+		"amount":       d.AmountToPay * 100,
+		"email":        d.Email,
+		"callback_url": callback_url,
 		"metadata": map[string]interface{}{
 			"user_id":  d.UserId,
 			"plan_id":  d.PlanId,
@@ -104,7 +106,6 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *dto.BaseProcessPaymentModel
 		return nil, fmt.Errorf("error converting planID to int: %s", err)
 	}
 
-
 	paymentData := &dto.BasePaymentResponse{
 		Amount:   amount,
 		PlanID:   planID,
@@ -113,8 +114,6 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *dto.BaseProcessPaymentModel
 		Email:    email,
 		Status:   status,
 	}
-
-	 
 
 	return paymentData, nil
 }

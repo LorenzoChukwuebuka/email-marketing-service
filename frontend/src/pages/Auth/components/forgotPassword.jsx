@@ -1,3 +1,9 @@
+import { ForgotPasswordTemplate } from "../../../templates/Auth";
+
 export default function ForgotPassword() {
-  return <>Forgot Password</>;
+  return <>
+  
+  <ForgotPasswordTemplate/>
+  
+  </>;
 }

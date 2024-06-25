@@ -1,9 +1,9 @@
-export default function ResetPassword(){
-    return (
-        <>
-        
-        Reset Password
+import ResetPasswordTemplate from "../../../templates/Auth/ResetPassword";
 
-        </>
-    )
+export default function ResetPassword() {
+  return (
+    <>
+      <ResetPasswordTemplate />
+    </>
+  );
 }

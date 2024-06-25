@@ -25,6 +25,7 @@ const useAuthStore = create((set, get) => ({
     email: '',
     password: ''
   },
+  forgetPasswordValues: { email: '' },
 
   setFormValues: newFormValues => set({ formValues: newFormValues }),
   setError: newError => set({ error: newError }),
@@ -38,6 +39,8 @@ const useAuthStore = create((set, get) => ({
   setOTPValue: newOtpValue => set({ otpValue: newOtpValue }),
   setIsVerified: newVerification => set({ isVerified: newVerification }),
   setLoginValues: newLoginValues => set({ loginValues: newLoginValues }),
+  setForgetPasswordValues: newforgetPasswordValues =>
+    set({ forgetPasswordValues: newforgetPasswordValues }),
 
   registerUser: async () => {
     const {
@@ -54,7 +57,12 @@ const useAuthStore = create((set, get) => ({
       if (response.data.status === true) {
         setRedirectToOTP(true)
         await createUserSession(response.data.payload.userId)
-        setUserId(response.data.payload.userId)
+        setUserId(response?.data?.payload?.userId)
+        const registeredData = {
+          userId: response?.data?.payload?.userId,
+          email: formValues.email,
+          fullname: formValues.fullname
+        }
         setFormValues({
           fullname: '',
           company: '',
@@ -62,6 +70,7 @@ const useAuthStore = create((set, get) => ({
           password: '',
           confirmPassword: ''
         })
+        return registeredData // Return the necessary data
       }
     } catch (error) {
       console.log(error)
@@ -69,7 +78,6 @@ const useAuthStore = create((set, get) => ({
       get().setIsLoading(false)
     }
   },
-
   createUserSession: async userId => {
     const userAgent = navigator.userAgent
     const browserInfo = parseUserAgent(userAgent)
@@ -124,7 +132,25 @@ const useAuthStore = create((set, get) => ({
       get().setIsLoading(false)
     }
   },
-  forgotPass: async () => {},
+  forgotPass: async () => {
+    try {
+      const { setIsLoading, forgetPasswordValues } = get()
+      setIsLoading(true)
+      let response = await axiosInstance.post(
+        '/user-forget-password',
+        forgetPasswordValues
+      )
+      console.log(response.data)
+    } catch (error) {
+      console.log(error)
+      eventBus.emit(
+        'error',
+        error.response.data.payload || 'An unexpected error occured'
+      )
+    } finally {
+      get().setIsLoading(false)
+    }
+  },
   resetPassword: async () => {},
   changePassword: async () => {},
   loginUser: async () => {

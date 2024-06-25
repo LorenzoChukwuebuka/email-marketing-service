@@ -1,13 +1,33 @@
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/AuthStore";
+import * as Yup from "yup";
+import { useState } from "react";
 
 const LoginTemplate = () => {
-  const { isLoading, loginValues, setLoginValues,loginUser } = useAuthStore();
+  const { isLoading, loginValues, setLoginValues, loginUser } = useAuthStore();
+  const [errors, setErrors] = useState({});
 
+  const validationSchema = Yup.object().shape({
+    password: Yup.string().required("token is required"),
+    email: Yup.string()
+      .required("password is required")
+      .email("invalid email format"),
+  });
 
-  const handleLogin = async (e)=>{
-    e.preventDefault()
-  }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      await validationSchema.validate(loginValues, { abortEarly: false });
+      await loginUser()
+    } catch (error) {
+      const validationErrors = {};
+      error.inner.forEach((error) => {
+        validationErrors[error.path] = error.message;
+      });
+      setErrors(validationErrors);
+    }
+  };
 
   return (
     <>
@@ -16,7 +36,7 @@ const LoginTemplate = () => {
           <h3 className="text-2xl font-bold  text-center mb-4">MailCrib</h3>
           <div className="bg-white shadow-lg rounded-lg max-w-lg mx-auto mt-2 p-6">
             <h3 className="text-2xl font-semibold text-center mb-4">Log in</h3>
-            <form>
+            <form onSubmit={handleLogin}>
               <div className="mb-4">
                 <label
                   htmlFor="email"
@@ -37,6 +57,9 @@ const LoginTemplate = () => {
                   }}
                   required
                 />
+                {errors.email && (
+                  <div style={{ color: "red" }}>{errors.email}</div>
+                )}
               </div>
               <div className="mb-4">
                 <label
@@ -57,10 +80,13 @@ const LoginTemplate = () => {
                       });
                     }}
                   />
+                  {errors.password && (
+                    <div style={{ color: "red" }}>{errors.password}</div>
+                  )}
                 </div>
               </div>
               <div className="text-center">
-                {isLoading ? (
+                {!isLoading ? (
                   <button
                     className="bg-black text-white py-2 px-4 rounded-md mt-3 hover:bg-gray-800"
                     type="submit"
