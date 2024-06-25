@@ -7,18 +7,19 @@ import (
 )
 
 type Config struct {
-	DB_User         string `env:"DB_USER"`
-	DBPassword      string `env:"DB_PASSWORD"`
-	DBName          string `env:"DB_NAME"`
-	DBHost          string `env:"DB_HOST"`
-	DBPort          string `env:"DB_PORT"`
-	MailUsername    string `env:"MAIL_USERNAME"`
-	MailPassword    string `env:"MAIL_PASSWORD"`
-	JWTKey          string `env:"JWT_KEY"`
-	PaystackKey     string `env:"PAYSTACK_KEY"`
-	PaystackBaseURL string `env:"PAYSTACK_BASE_URL"`
-	DB_URL          string `env:"DB_URL"`
-	APPName         string `env:"APP_NAME"`
+	DB_User               string `env:"DB_USER"`
+	DBPassword            string `env:"DB_PASSWORD"`
+	DBName                string `env:"DB_NAME"`
+	DBHost                string `env:"DB_HOST"`
+	DBPort                string `env:"DB_PORT"`
+	MailUsername          string `env:"MAIL_USERNAME"`
+	MailPassword          string `env:"MAIL_PASSWORD"`
+	JWTKey                string `env:"JWT_KEY"`
+	PaystackKey           string `env:"PAYSTACK_KEY"`
+	PaystackBaseURL       string `env:"PAYSTACK_BASE_URL"`
+	DB_URL                string `env:"DB_URL"`
+	APPName               string `env:"APP_NAME"`
+	PAYSTACK_CALLBACK_URL string `env:"PAYSTACK_CALLBACK_URL"`
 }
 
 var LoadEnv = func() *Config {
@@ -28,18 +29,19 @@ var LoadEnv = func() *Config {
 	}
 
 	config := &Config{
-		DB_User:         os.Getenv("DB_USER"),
-		DBPassword:      os.Getenv("DB_PASSWORD"),
-		DBName:          os.Getenv("DB_NAME"),
-		DBHost:          os.Getenv("DB_HOST"),
-		DBPort:          os.Getenv("DB_PORT"),
-		MailUsername:    os.Getenv("MAIL_USERNAME"),
-		MailPassword:    os.Getenv("MAIL_PASSWORD"),
-		JWTKey:          os.Getenv("JWT_KEY"),
-		PaystackKey:     os.Getenv("PAYSTACK_KEY"),
-		PaystackBaseURL: os.Getenv("PAYSTACK_BASE_URL"),
-		DB_URL:          os.Getenv("DB_URL"),
-		APPName:         os.Getenv("APP_NAME"),
+		DB_User:               os.Getenv("DB_USER"),
+		DBPassword:            os.Getenv("DB_PASSWORD"),
+		DBName:                os.Getenv("DB_NAME"),
+		DBHost:                os.Getenv("DB_HOST"),
+		DBPort:                os.Getenv("DB_PORT"),
+		MailUsername:          os.Getenv("MAIL_USERNAME"),
+		MailPassword:          os.Getenv("MAIL_PASSWORD"),
+		JWTKey:                os.Getenv("JWT_KEY"),
+		PaystackKey:           os.Getenv("PAYSTACK_KEY"),
+		PaystackBaseURL:       os.Getenv("PAYSTACK_BASE_URL"),
+		DB_URL:                os.Getenv("DB_URL"),
+		APPName:               os.Getenv("APP_NAME"),
+		PAYSTACK_CALLBACK_URL: os.Getenv("PAYSTACK_CALLBACK_URL"),
 	}
 
 	return config

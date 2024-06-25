@@ -10,7 +10,6 @@ const SignUpTemplate = () => {
     formValues,
     isLoading,
     setFormValues,
-    redirectToOTP,
     registerUser,
     userId,
   } = useAuthStore();
@@ -36,7 +35,16 @@ const SignUpTemplate = () => {
     e.preventDefault();
     try {
       await validationSchema.validate(formValues, { abortEarly: false });
-      await registerUser();
+      let registeredData = await registerUser();
+
+      if (registeredData) {
+        navigate(
+          `/auth/otp-token?email=${encodeURIComponent(registeredData.email)}
+          &username=${encodeURIComponent(registeredData.fullname)}
+          &userId=${encodeURIComponent(registeredData.userId)}`
+        );
+      }
+
       setErrors({});
     } catch (err) {
       const validationErrors = {};
@@ -48,14 +56,12 @@ const SignUpTemplate = () => {
   };
 
   useEffect(() => {
-    if (redirectToOTP === true) {
-      setTimeout(() => {
-        navigate(
-          `/auth/otp-token?email=${encodeURIComponent(formValues.email)}
-                    &username=${encodeURIComponent(formValues.fullname)}
-                    &userId=${encodeURIComponent(userId)}`
-        );
-      }, 1500);
+    if (userId) {
+      navigate(
+        `/auth/otp-token?email=${encodeURIComponent(formValues.email)}
+          &username=${encodeURIComponent(formValues.fullname)}
+          &userId=${encodeURIComponent(userId)}`
+      );
     }
   });
 

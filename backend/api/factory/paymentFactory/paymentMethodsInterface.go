@@ -1,8 +1,7 @@
 package paymentmethodFactory
 
 import (
-	"email-marketing-service/api/dto"
-	 
+	"email-marketing-service/api/dto"	 
 )
 
 type PaymentInterface interface {
@@ -13,3 +12,5 @@ type PaymentInterface interface {
 	ChargeCard(amount float64)
 	Status() string
 }
+
+
