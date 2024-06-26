@@ -17,11 +17,11 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
 	return model.UserResponse{
-		ID:         user.ID,
-		UUID:       user.UUID,
-		FullName:   user.FullName,
-		Email:      user.Email,
-		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
+		ID:       user.ID,
+		UUID:     user.UUID,
+		FullName: user.FullName,
+		Email:    user.Email,
+		//Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:   user.Verified,
 		CreatedAt:  user.CreatedAt,
 		VerifiedAt: user.VerifiedAt.Format(time.RFC3339),
@@ -122,7 +122,7 @@ func (r *UserRepository) ResetPassword(d *model.User) error {
 	var user model.User
 
 	// Fetch the User record from the database
-	if err := r.DB.First(&user, d.ID).Error; err != nil {
+	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return err
 		}
@@ -140,7 +140,6 @@ func (r *UserRepository) ResetPassword(d *model.User) error {
 
 	return nil
 }
-
 func (r *UserRepository) FindAllUsers() ([]model.UserResponse, error) {
 
 	return nil, nil

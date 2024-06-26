@@ -1,7 +1,7 @@
 import * as Yup from "yup";
 import useAuthStore from "../../store/AuthStore";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SignUpTemplate = () => {
   const [errors, setErrors] = useState({});
@@ -74,7 +74,7 @@ const SignUpTemplate = () => {
       </div>
 
       <div className="bg-white w-[60%] min-h-auto md:h-[20em] -mt-[7em] mx-auto rounded-btn">
-        <h1 className="text-[rgb(4,22,43)] text-2xl font-semibold text-center mt-5">
+        <h1 className="text-[rgb(4,22,43)] text-2xl font-semibold text-center mt-10">
           Get Started with Mail Crib
         </h1>
 
@@ -185,21 +185,30 @@ const SignUpTemplate = () => {
               )}
             </label>
 
-            {!isLoading ? (
+            <div className="flex flex-row justify-between">
+              {!isLoading ? (
+                <button
+                  type="submit"
+                  className="rounded-full pt-1 bg-red-500 text-white p-2"
+                >
+                  Create Account
+                </button>
+              ) : (
+                <button className="rounded-full pt-1 bg-red-500 text-white p-2">
+                  <span className="flex flex-row items-center">
+                    Please wait
+                    <span className="loading loading-dots loading-sm"></span>
+                  </span>
+                </button>
+              )}
+
               <button
-                type="submit"
-                className="rounded-full pt-1 bg-red-500 text-white p-2"
+                type=""
+                className="rounded-full pt-1 bg-gray-500 text-white p-2"
               >
-                Create Account
+                <Link to="/auth/login"> Login </Link>
               </button>
-            ) : (
-              <button className="rounded-full pt-1 bg-red-500 text-white p-2">
-                <span className="flex flex-row items-center">
-                  Please wait
-                  <span className="loading loading-dots loading-sm"></span>
-                </span>
-              </button>
-            )}
+            </div>
           </form>
         </div>
       </div>

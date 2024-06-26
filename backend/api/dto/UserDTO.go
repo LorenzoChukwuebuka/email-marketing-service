@@ -29,7 +29,7 @@ type ChangePassword struct {
 }
 
 type UserSession struct {
-	UserId    string    `json:"user_id"`
+	UserId    string  `json:"user_id"`
 	Device    *string `json:"device"`
 	IPAddress *string `json:"ip_address"`
 	Browser   *string `json:"browser"`

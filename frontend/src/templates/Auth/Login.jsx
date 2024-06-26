@@ -19,7 +19,7 @@ const LoginTemplate = () => {
 
     try {
       await validationSchema.validate(loginValues, { abortEarly: false });
-      await loginUser()
+      await loginUser();
     } catch (error) {
       const validationErrors = {};
       error.inner.forEach((error) => {
@@ -104,7 +104,7 @@ const LoginTemplate = () => {
           </div>
           <div className="text-center mt-4">
             <p>
-              <Link to="" className="text-gray-700 hover:underline">
+              <Link to="/auth/forgot-password" className="text-gray-700 hover:underline">
                 Forgot Password
               </Link>
               <Link

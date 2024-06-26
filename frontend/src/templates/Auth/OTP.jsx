@@ -62,7 +62,9 @@ const OTPTemplate = () => {
 
   useEffect(() => {
     if (isVerified) {
-      navigate("/auth/login");
+      setTimeout(() => {
+        navigate("/auth/login");
+      }, 1500);
     }
   });
 

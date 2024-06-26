@@ -1,6 +1,7 @@
 import useAuthStore from "../../store/AuthStore";
 import * as Yup from "yup";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 const ForgotPasswordTemplate = () => {
   const {
     isLoading,
@@ -34,10 +35,6 @@ const ForgotPasswordTemplate = () => {
       });
       setErrors(validationErrors);
     }
-  };
-
-  const resendEmail = async (e) => {
-    e.preventDefault();
   };
 
   return (
@@ -77,9 +74,9 @@ const ForgotPasswordTemplate = () => {
                     })
                   }
                 />
-                 {errors.email && (
-                <div  className="text-red-500 text-center">{errors.email}</div>
-              )}
+                {errors.email && (
+                  <div className="text-red-500 text-center">{errors.email}</div>
+                )}
               </div>
               <div className="text-center">
                 {!isLoading ? (
@@ -97,16 +94,10 @@ const ForgotPasswordTemplate = () => {
                 )}
               </div>
             </form>
-
             <div className="text-center mt-4">
               <p>
-                Didn`t receive the OTP?
-                <button
-                  className="text-blue-600 hover:underline ml-2"
-                  type="submit"
-                >
-                  Resend Email
-                </button>
+                Remember you password? <Link to="/auth/login"  className="text-gray-700 hover:underline ml-4"> Login </Link>
+                
               </p>
             </div>
           </div>
