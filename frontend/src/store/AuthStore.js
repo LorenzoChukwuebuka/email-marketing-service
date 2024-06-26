@@ -26,7 +26,14 @@ const useAuthStore = create((set, get) => ({
     password: ''
   },
   forgetPasswordValues: { email: '' },
+  resetPasswordValues: {
+    password: '',
+    confirmPassword: '',
+    token: '',
+    email: ''
+  },
 
+  //initializers
   setFormValues: newFormValues => set({ formValues: newFormValues }),
   setError: newError => set({ error: newError }),
   setSuccess: newSuccess => set({ success: newSuccess }),
@@ -41,7 +48,10 @@ const useAuthStore = create((set, get) => ({
   setLoginValues: newLoginValues => set({ loginValues: newLoginValues }),
   setForgetPasswordValues: newforgetPasswordValues =>
     set({ forgetPasswordValues: newforgetPasswordValues }),
+  setResetPasswordValues: newResetPasswordValues =>
+    set({ resetPasswordValues: newResetPasswordValues }),
 
+  //functions
   registerUser: async () => {
     const {
       setIsLoading,
@@ -134,13 +144,16 @@ const useAuthStore = create((set, get) => ({
   },
   forgotPass: async () => {
     try {
-      const { setIsLoading, forgetPasswordValues } = get()
+      const { setIsLoading, forgetPasswordValues, setForgetPasswordValues } =
+        get()
       setIsLoading(true)
       let response = await axiosInstance.post(
         '/user-forget-password',
         forgetPasswordValues
       )
-      console.log(response.data)
+
+      eventBus.emit('message', response.data.payload)
+      setForgetPasswordValues({ email: '' })
     } catch (error) {
       console.log(error)
       eventBus.emit(
@@ -151,7 +164,21 @@ const useAuthStore = create((set, get) => ({
       get().setIsLoading(false)
     }
   },
-  resetPassword: async () => {},
+  resetPassword: async () => {
+    const { setIsLoading, resetPasswordValues } = get()
+    try {
+      setIsLoading(true)
+      let response = await axiosInstance.post(
+        '/user-reset-password',
+        resetPasswordValues
+      )
+      eventBus.emit('success', response.data.payload)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      get().setIsLoading(false)
+    }
+  },
   changePassword: async () => {},
   loginUser: async () => {
     const { loginValues, setIsLoading } = get()

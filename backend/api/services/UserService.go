@@ -289,6 +289,8 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 		return err
 	}
 
+	// fmt.Printf("ResetPassword function called with data: %+v\n", d)
+
 	data := &model.OTP{
 		Token: d.Token,
 	}
