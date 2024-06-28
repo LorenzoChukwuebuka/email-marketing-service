@@ -1,17 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/AuthStore";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const LoginTemplate = () => {
-  const { isLoading, loginValues, setLoginValues, loginUser } = useAuthStore();
+  const { isLoading, loginValues, setLoginValues, loginUser,isLoggedIn } = useAuthStore();
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate()
 
   const validationSchema = Yup.object().shape({
-    password: Yup.string().required("token is required"),
     email: Yup.string()
-      .required("password is required")
-      .email("invalid email format"),
+      .required("Email is required")
+      .email("Invalid email format"),
+    password: Yup.string().required("Password is required"),
   });
 
   const handleLogin = async (e) => {
@@ -22,12 +23,22 @@ const LoginTemplate = () => {
       await loginUser();
     } catch (error) {
       const validationErrors = {};
-      error.inner.forEach((error) => {
-        validationErrors[error.path] = error.message;
-      });
+      if (error.inner) {
+        error.inner.forEach((error) => {
+          validationErrors[error.path] = error.message;
+        });
+      }
       setErrors(validationErrors);
+      console.log(error);
     }
   };
+
+
+  useEffect(()=>{
+    if(isLoggedIn){
+       navigate('/user/dash') 
+    }
+  })
 
   return (
     <>
@@ -70,7 +81,7 @@ const LoginTemplate = () => {
                 </label>
                 <div className="relative">
                   <input
-                    id="password"
+                    type="password"
                     className="block w-full p-2 border border-gray-300 rounded-md"
                     placeholder=""
                     onChange={(event) => {
@@ -104,7 +115,10 @@ const LoginTemplate = () => {
           </div>
           <div className="text-center mt-4">
             <p>
-              <Link to="/auth/forgot-password" className="text-gray-700 hover:underline">
+              <Link
+                to="/auth/forgot-password"
+                className="text-gray-700 hover:underline"
+              >
                 Forgot Password
               </Link>
               <Link

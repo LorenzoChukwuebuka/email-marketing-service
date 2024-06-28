@@ -1,9 +1,9 @@
-import { ForgotPasswordTemplate } from "../../../templates/Auth";
+import { ForgotPasswordTemplate } from "../../../templates";
 
 export default function ForgotPassword() {
-  return <>
-  
-  <ForgotPasswordTemplate/>
-  
-  </>;
+  return (
+    <>
+      <ForgotPasswordTemplate />
+    </>
+  );
 }

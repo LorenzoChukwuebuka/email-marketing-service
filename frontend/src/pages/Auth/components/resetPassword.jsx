@@ -1,4 +1,4 @@
-import ResetPasswordTemplate from "../../../templates/Auth/ResetPassword";
+import { ResetPasswordTemplate } from "../../../templates";
 
 export default function ResetPassword() {
   return (

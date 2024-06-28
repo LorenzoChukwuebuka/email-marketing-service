@@ -1,18 +1,12 @@
 import * as Yup from "yup";
 import useAuthStore from "../../store/AuthStore";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const SignUpTemplate = () => {
   const [errors, setErrors] = useState({});
 
-  const {
-    formValues,
-    isLoading,
-    setFormValues,
-    registerUser,
-    userId,
-  } = useAuthStore();
+  const { formValues, isLoading, setFormValues, registerUser } = useAuthStore();
   const navigate = useNavigate();
 
   const validationSchema = Yup.object().shape({
@@ -54,16 +48,6 @@ const SignUpTemplate = () => {
       setErrors(validationErrors);
     }
   };
-
-  useEffect(() => {
-    if (userId) {
-      navigate(
-        `/auth/otp-token?email=${encodeURIComponent(formValues.email)}
-          &username=${encodeURIComponent(formValues.fullname)}
-          &userId=${encodeURIComponent(userId)}`
-      );
-    }
-  });
 
   return (
     <main className="min-h-screen">

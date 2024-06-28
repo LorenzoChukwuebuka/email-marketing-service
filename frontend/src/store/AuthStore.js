@@ -3,6 +3,8 @@ import axiosInstance from '../utils/api'
 import parseUserAgent from '../utils/userAgent'
 import axios from 'axios'
 import eventBus from '../utils/eventBus'
+import Cookies from 'js-cookie'
+
 const useAuthStore = create((set, get) => ({
   formValues: {
     fullname: '',
@@ -32,6 +34,7 @@ const useAuthStore = create((set, get) => ({
     token: '',
     email: ''
   },
+  isLoggedIn: false,
 
   //initializers
   setFormValues: newFormValues => set({ formValues: newFormValues }),
@@ -50,6 +53,7 @@ const useAuthStore = create((set, get) => ({
     set({ forgetPasswordValues: newforgetPasswordValues }),
   setResetPasswordValues: newResetPasswordValues =>
     set({ resetPasswordValues: newResetPasswordValues }),
+  setIsLoggedIn: newIsLoggedIn => set({ isLoggedIn: newIsLoggedIn }),
 
   //functions
   registerUser: async () => {
@@ -181,17 +185,34 @@ const useAuthStore = create((set, get) => ({
   },
   changePassword: async () => {},
   loginUser: async () => {
-    const { loginValues, setIsLoading } = get()
+    const { loginValues, setIsLoading, setLoginValues, setIsLoggedIn } = get()
     try {
       setIsLoading(true)
 
       let response = await axiosInstance.post('/user-login', loginValues)
-      console.log(response)
+      if (response.data.message === 'success') {
+        //save the user Credentials to a cookie
+
+        Cookies.set('Cookies', JSON.stringify(response.data.payload), {
+          expires: 7,
+          sameSite: 'Strict',
+          secure: true
+        })
+
+        setIsLoggedIn(true)
+      }
+
+      setLoginValues({
+        email: '',
+        password: ''
+      })
     } catch (error) {
       eventBus.emit(
         'error',
         error.response.data.payload || 'An unexpected error occured'
       )
+
+      console.log(error)
     } finally {
       get().setIsLoading(false)
     }

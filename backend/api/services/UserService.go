@@ -76,7 +76,7 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if err := mail.SignUpMail(d.Email, d.FullName, otp); err != nil {
+	if err := mail.SignUpMail(d.Email, d.FullName,usermodel.UUID, otp); err != nil {
 		return nil, err
 	}
 
@@ -384,7 +384,7 @@ func (s *UserService) ResendOTP(d *dto.ResendOTP) error {
 
 	if d.OTPType == "emailVerify" {
 
-		if err := mail.SignUpMail(d.Email, d.Username, otp); err != nil {
+		if err := mail.SignUpMail(d.Email, d.Username,d.UserId, otp); err != nil {
 			return err
 		}
 	} else if d.OTPType == "passwordReset" {

@@ -6,6 +6,7 @@ import IndexLandingPage from "./pages/landingPage/index";
 import { useEffect } from "react";
 import eventBus from "./utils/eventBus";
 import { toast } from "react-toastify";
+import { UserDashRoute } from "./layouts/userDashRoute";
 function App() {
   const handleSuccess = (message) => {
     toast.success(message, {
@@ -66,10 +67,10 @@ function App() {
   return (
     <>
       <ToastContainer />
-
       <Routes>
         <Route index element={<IndexLandingPage />} />
         <Route path="/auth/*" element={<AuthRoute />} />
+        <Route path="/user/*" element={<UserDashRoute />} />
       </Routes>
     </>
   );

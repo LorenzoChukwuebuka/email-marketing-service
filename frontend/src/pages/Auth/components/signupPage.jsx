@@ -1,4 +1,4 @@
-import { SignUpTemplate } from "../../../templates/Auth";
+import { SignUpTemplate } from "../../../templates";
 
 export default function SignUpPage() {
   return (
