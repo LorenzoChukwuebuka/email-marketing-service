@@ -23,7 +23,7 @@ type UserResponse struct {
 	UUID       string    `json:"uuid,omitempty"`
 	FullName   string    `json:"fullname,omitempty"`
 	Email      string    `json:"email,omitempty"`
-	Password   string    `json:"password,omitempty"`
+	Password   string    `json:"-"`
 	Verified   bool      `json:"verified,omitempty"`
 	CreatedAt  time.Time `json:"created_at,omitempty"`
 	VerifiedAt string    `json:"verified_at,omitempty"`

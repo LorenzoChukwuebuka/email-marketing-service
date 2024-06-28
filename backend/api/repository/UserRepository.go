@@ -21,7 +21,7 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 		UUID:     user.UUID,
 		FullName: user.FullName,
 		Email:    user.Email,
-		//Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
+		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:   user.Verified,
 		CreatedAt:  user.CreatedAt,
 		VerifiedAt: user.VerifiedAt.Format(time.RFC3339),

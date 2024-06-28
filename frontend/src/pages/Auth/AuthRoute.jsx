@@ -9,7 +9,7 @@ const AuthRoute = () => (
     <Route path="forgot-password" element={<ForgotPassword />} />
     <Route path="reset-password" element={<ResetPassword />} />
     <Route path="sign-up" element={<SignUpPage />} />
-    <Route path="otp-token" element={<OTPPage />} />
+    <Route path="account-verification" element={<OTPPage />} />
   </Routes>
 );
 

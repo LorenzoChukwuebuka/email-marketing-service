@@ -1,4 +1,4 @@
-import { OTPTemplate } from "../../../templates/Auth";
+import { OTPTemplate } from "../../../templates";
 
 export default function OTPPage() {
   return <OTPTemplate />;
