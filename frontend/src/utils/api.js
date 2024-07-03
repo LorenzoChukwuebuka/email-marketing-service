@@ -4,8 +4,11 @@ import Cookies from 'js-cookie'
 export const APIURL = import.meta.env.VITE_API_URL
 
 const getToken = () => {
-  const cookies = Cookies.get('Cookies')
-  return cookies ? cookies.token : null
+  let cookies = Cookies.get('Cookies')
+
+  let cookieData = JSON.parse(cookies)
+
+  return cookies ? cookieData.token : null
 }
 
 const axiosInstance = axios.create({

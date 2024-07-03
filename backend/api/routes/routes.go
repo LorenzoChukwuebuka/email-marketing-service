@@ -38,6 +38,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 
 	//subscription route
 	router.HandleFunc("/cancel-subscription/{subscriptionId}", middleware.JWTMiddleware(subscriptionController.CancelSubscription)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/get-user-current-sub", middleware.JWTMiddleware(userController.GetUserSubscription)).Methods("GET", "OPTIONS")
 
 	//api key route
 	router.HandleFunc("/generate-apikey", middleware.JWTMiddleware(apiKeyController.GenerateAPIKEY)).Methods("POST", "OPTIONS")

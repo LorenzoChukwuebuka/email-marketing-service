@@ -25,7 +25,8 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	planRepository := repository.NewPlanRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	billingRepository := repository.NewBillingRepository(db)
-	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository)
+	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, dailyMailCalcRepository)
 	userController := controllers.NewUserController(userService)
 	return userController, nil
 }

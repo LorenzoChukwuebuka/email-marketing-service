@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import eventBus from "./utils/eventBus";
 import { toast } from "react-toastify";
 import { UserDashRoute } from "./layouts/userDashRoute";
+import { ProtectedRoute } from "./utils/protectedRoute";
 function App() {
   const handleSuccess = (message) => {
     toast.success(message, {
@@ -70,7 +71,9 @@ function App() {
       <Routes>
         <Route index element={<IndexLandingPage />} />
         <Route path="/auth/*" element={<AuthRoute />} />
-        <Route path="/user/*" element={<UserDashRoute />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/user/*" element={<UserDashRoute />} />
+        </Route>
       </Routes>
     </>
   );

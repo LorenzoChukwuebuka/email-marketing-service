@@ -18,6 +18,7 @@ func NewSubscriptionRepository(db *gorm.DB) *SubscriptionRepository {
 func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription) *model.SubscriptionResponseModel {
 
 	response := &model.SubscriptionResponseModel{
+		Id: s.Id,
 		UUID:      s.UUID,
 		UserId:    s.UserId,
 		PlanId:    s.PlanId,
@@ -159,6 +160,20 @@ func (r *SubscriptionRepository) FindSubscriptionById(id string, userId int) (*m
 		return nil, fmt.Errorf("failed to find subscription: %w", err)
 	}
 	return r.createSubscriptionResponse(subscription), nil
+}
+
+func (r *SubscriptionRepository) GetUsersCurrentSubscription(userId int) (*model.SubscriptionResponseModel, error) {
+	var subscription model.Subscription
+
+	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ?", userId).First(&subscription).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("subscription not found: %w", err)
+		}
+		return nil, fmt.Errorf("failed to find subscription:%w", err)
+	}
+
+	return r.createSubscriptionResponse(subscription), nil
+
 }
 
 //for the future....
