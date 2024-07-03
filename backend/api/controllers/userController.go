@@ -161,3 +161,21 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	response.SuccessResponse(w, 200, "User edited successfully")
 }
+
+func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.userService.GetUserCurrentRunningSubscriptionWithMailsRemaining(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}

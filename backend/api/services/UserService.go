@@ -7,31 +7,38 @@ import (
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"strings"
-	"time"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
+	"time"
 )
 
 type UserService struct {
-	userRepository   *repository.UserRepository
-	otpService       *OTPService
-	PlanRepo         *repository.PlanRepository
-	SubscriptionRepo *repository.SubscriptionRepository
-	BillingRepo      *repository.BillingRepository
+	userRepository    *repository.UserRepository
+	otpService        *OTPService
+	PlanRepo          *repository.PlanRepository
+	SubscriptionRepo  *repository.SubscriptionRepository
+	BillingRepo       *repository.BillingRepository
+	DailyMailCalcRepo *repository.DailyMailCalcRepository
 }
 
 var (
 	mail = &custom.Mail{}
 )
 
-func NewUserService(userRepo *repository.UserRepository, otpSvc *OTPService, planRepo *repository.PlanRepository, subscriptionRepo *repository.SubscriptionRepository, billingRepo *repository.BillingRepository) *UserService {
+func NewUserService(userRepo *repository.UserRepository,
+	otpSvc *OTPService,
+	planRepo *repository.PlanRepository,
+	subscriptionRepo *repository.SubscriptionRepository,
+	billingRepo *repository.BillingRepository,
+	dailyMailCalcRepo *repository.DailyMailCalcRepository) *UserService {
 	return &UserService{
-		userRepository:   userRepo,
-		otpService:       otpSvc,
-		PlanRepo:         planRepo,
-		SubscriptionRepo: subscriptionRepo,
-		BillingRepo:      billingRepo,
+		userRepository:    userRepo,
+		otpService:        otpSvc,
+		PlanRepo:          planRepo,
+		SubscriptionRepo:  subscriptionRepo,
+		BillingRepo:       billingRepo,
+		DailyMailCalcRepo: dailyMailCalcRepo,
 	}
 }
 
@@ -76,7 +83,7 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if err := mail.SignUpMail(d.Email, d.FullName,usermodel.UUID, otp); err != nil {
+	if err := mail.SignUpMail(d.Email, d.FullName, usermodel.UUID, otp); err != nil {
 		return nil, err
 	}
 
@@ -289,16 +296,12 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 		return err
 	}
 
-	// fmt.Printf("ResetPassword function called with data: %+v\n", d)
-
 	data := &model.OTP{
 		Token: d.Token,
 	}
 
 	otpService := s.otpService
-
 	otpData, err := otpService.RetrieveOTP(data)
-
 	if err != nil {
 		return err
 	}
@@ -313,8 +316,6 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 	if err = s.userRepository.ResetPassword(user); err != nil {
 		return err
 	}
-
-	//delete otp from the database
 
 	if err = otpService.DeleteOTP(otpData.Id); err != nil {
 		return err
@@ -344,7 +345,6 @@ func (s *UserService) ChangePassword(userId int, d *dto.ChangePassword) error {
 		return fmt.Errorf("password does not match the records")
 	}
 
-	//hash password if it passes test
 	password, _ := bcrypt.GenerateFromPassword([]byte(d.NewPassword), 14)
 
 	data.Password = string(password)
@@ -384,7 +384,7 @@ func (s *UserService) ResendOTP(d *dto.ResendOTP) error {
 
 	if d.OTPType == "emailVerify" {
 
-		if err := mail.SignUpMail(d.Email, d.Username,d.UserId, otp); err != nil {
+		if err := mail.SignUpMail(d.Email, d.Username, d.UserId, otp); err != nil {
 			return err
 		}
 	} else if d.OTPType == "passwordReset" {
@@ -395,4 +395,33 @@ func (s *UserService) ResendOTP(d *dto.ResendOTP) error {
 	}
 
 	return nil
+}
+
+func (s *UserService) GetUserCurrentRunningSubscriptionWithMailsRemaining(userId string) (map[string]interface{}, error) {
+	//find user by id
+	userModel := &model.User{UUID: userId}
+	user, err := s.userRepository.FindUserById(userModel)
+	if err != nil {
+		return nil, err
+	}
+
+	//get users current running subscription ....
+	currentSub, err := s.SubscriptionRepo.GetUsersCurrentSubscription(user.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dailyMailCalc, err := s.DailyMailCalcRepo.GetUserActiveCalculation(currentSub.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	successMap := map[string]interface{}{
+		"plan":           currentSub.Plan.PlanName,
+		"mailsPerDay":    currentSub.Plan.NumberOfMailsPerDay,
+		"remainingMails": dailyMailCalc.RemainingMails,
+	}
+
+	return successMap, nil
 }

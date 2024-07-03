@@ -1,12 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link} from "react-router-dom";
 import useAuthStore from "../../store/AuthStore";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
 
 const LoginTemplate = () => {
-  const { isLoading, loginValues, setLoginValues, loginUser,isLoggedIn } = useAuthStore();
+  const {
+    isLoading,
+    loginValues,
+    setLoginValues,
+    loginUser,
+    isLoggedIn,
+  } = useAuthStore();
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate()
+
 
   const validationSchema = Yup.object().shape({
     email: Yup.string()
@@ -33,12 +39,11 @@ const LoginTemplate = () => {
     }
   };
 
-
-  useEffect(()=>{
-    if(isLoggedIn){
-       navigate('/user/dash') 
+  useEffect(() => {
+    if (isLoggedIn) {
+      location.href = "/user/dash"
     }
-  })
+  }, [isLoggedIn]);
 
   return (
     <>

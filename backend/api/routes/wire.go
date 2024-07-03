@@ -24,6 +24,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		repository.NewPlanRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewBillingRepository,
+		repository.NewDailyMailCalcRepository,
 	)
 
 	return nil, nil

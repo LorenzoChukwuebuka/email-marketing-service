@@ -57,8 +57,9 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	mailTemplate :=
 		`<html>
     <body style="font-family: Arial, sans-serif;">
-        <h2>Hi .Username,</h2>
-       <p> You have requested to reset the password to your account on Paystack. Click the link below to get started. </p>
+        <h2>Hello .Username,</h2>
+       <p>  
+         We’ve received a request to change your password. If it was you, please confirm the password change. </p>
         <p>Click the link below to reset your password:</p>
         <p><a href="http://localhost:5174/auth/reset-password?email=.Email&token=.Token" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
         <p>If you did not attempt to reset your password, please ignore this email.</p>

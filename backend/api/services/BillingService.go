@@ -19,7 +19,9 @@ type BillingService struct {
 	UserRepo        *repository.UserRepository
 }
 
-func NewBillingService(billingRepository *repository.BillingRepository, subscriptionSVC *SubscriptionService, userRepo *repository.UserRepository) *BillingService {
+func NewBillingService(billingRepository *repository.BillingRepository,
+	subscriptionSVC *SubscriptionService,
+	userRepo *repository.UserRepository) *BillingService {
 	return &BillingService{
 		BillingRepo:     billingRepository,
 		SubscriptionSVC: subscriptionSVC,

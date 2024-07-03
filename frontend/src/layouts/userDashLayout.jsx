@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import reactSVG from "./../assets/0832855c4b75f4d5a1dd822d6fb0d38d.jpg";
+import useDailyUserMailSentCalc from "../store/userDashStore";
+
 const UserDashLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
   const [userName, setUserName] = useState("");
+  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const { mailData, getUserMailData } = useDailyUserMailSentCalc();
 
   const getLinkClassName = (path) => {
     const baseClass = "mb-4 text-center text-lg font-semibold";
@@ -13,8 +19,36 @@ const UserDashLayout = () => {
     const inactiveClass =
       "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
     return `${baseClass} ${
-      location.pathname === path ? activeClass : inactiveClass
+      location.pathname.startsWith(path) ? activeClass : inactiveClass
     }`;
+  };
+
+  const toggleSettingsDropdown = () => {
+    setSettingsDropdownOpen(!settingsDropdownOpen);
+  };
+
+  const Logout = () => {
+    const confirmResult = confirm("Do you want to logout?");
+
+    if (confirmResult) {
+      let cookies = Cookies.get("Cookies");
+
+      if (cookies) {
+        Cookies.remove("Cookies");
+        navigate("/auth/login");
+      }
+    } else {
+      console.log("Logout canceled");
+    }
+
+    const confirmDialog = document.querySelector("div[role='dialog']");
+    if (confirmDialog) {
+      confirmDialog.style.backgroundColor = "white";
+      confirmDialog.style.color = "black";
+      confirmDialog.style.padding = "20px";
+      confirmDialog.style.borderRadius = "5px";
+      confirmDialog.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+    }
   };
 
   useEffect(() => {
@@ -22,6 +56,16 @@ const UserDashLayout = () => {
     let user = JSON.parse(cookie)?.details?.fullname;
     setUserName(user);
   }, []);
+
+  useEffect(() => {
+    getUserMailData(); // Call this function to fetch the data when component mounts
+  }, [getUserMailData]);
+
+  useEffect(() => {
+    if (mailData) {
+      console.log(mailData);
+    }
+  }, [mailData]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -32,26 +76,68 @@ const UserDashLayout = () => {
         } transition-all duration-300 bg-[rgb(26,46,68)]`}
       >
         {sidebarOpen && (
-          <nav className="p-4 text-white">
+          <nav className="p-4 text-white h-full">
             <h2 className="text-xl font-bold mt-4 text-center mb-4">
               Mail Crib
             </h2>
             <ul className="mt-12 w-full">
               <li className={getLinkClassName("/user/dash")}>
-                <Link to="/user/dash">
-                  <i className="bi bi-house"></i> Home{" "}
+                <Link to="/user/dash" className="flex items-center">
+                  <i className="bi bi-house mr-2"></i> Home
                 </Link>
               </li>
-              <li className={getLinkClassName("")}>
-                <Link to="">
-                  <i className="bi bi-bar-chart"></i> Analytics{" "}
+              <li className={getLinkClassName("/user/analytics")}>
+                <Link to="/user/analytics" className="flex items-center">
+                  <i className="bi bi-bar-chart mr-2"></i> Analytics
                 </Link>
               </li>
-              <li className={getLinkClassName("")}>
-                <Link to="">
-                  {" "}
-                  <i className="bi bi-gear"></i> Settings{" "}
+              <li className={getLinkClassName("/user/analytics")}>
+                <Link to="/user/analytics" className="flex items-center">
+                  <i className="bi bi-wallet"></i> &nbsp; Billing
                 </Link>
+              </li>
+              <li className={`${getLinkClassName("/user/setting")} relative`}>
+                <button
+                  onClick={toggleSettingsDropdown}
+                  className="flex items-center w-full justify-between"
+                >
+                  <span className="flex items-center">
+                    <i className="bi bi-gear mr-2"></i> Settings
+                  </span>
+                  <i
+                    className={`bi ${
+                      settingsDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    } ml-2`}
+                  ></i>
+                </button>
+                {settingsDropdownOpen && (
+                  <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
+                    <li className="py-1">
+                      <Link
+                        to="/user/setting/profile"
+                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                      >
+                        Profile
+                      </Link>
+                    </li>
+                    <li className="py-1">
+                      <Link
+                        to="/user/setting/account"
+                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                      >
+                        Account
+                      </Link>
+                    </li>
+                    <li className="py-1">
+                      <Link
+                        to="/user/setting/privacy"
+                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                      >
+                        Privacy
+                      </Link>
+                    </li>
+                  </ul>
+                )}
               </li>
             </ul>
           </nav>
@@ -72,7 +158,38 @@ const UserDashLayout = () => {
           <button className="hover:bg-blue-200 hover:rounded-btn hover:text-blue-500 font-semibold p-1">
             Usage and Plans
           </button>
-          <span className="w-auto h-auto"> {userName} </span>
+
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className="m-1">
+              {userName}
+            </div>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+            >
+              <li>
+                <div className="flex flex-col items-center">
+                  <span className="text-base-300 border-b-2 border-black mb-4">
+                    Emails sent: {mailData?.remainingMails}/
+                    {mailData?.mailsPerDay}
+                  </span>
+                  <span className="text-black bg-gray-300 rounded-md">
+                    Plan: {mailData?.plan}
+                  </span>
+                  <img
+                    className="h-8 w-8 rounded-full"
+                    src={reactSVG}
+                    alt="User avatar"
+                  />
+                  {userName}
+                  <span className="text-blue-500">
+                    <Link to="/user/setting/profile"> My Profile </Link>
+                  </span>
+                  <a onClick={Logout}>Logout</a>
+                </div>
+              </li>
+            </ul>
+          </div>
         </header>
 
         {/* Content area */}
