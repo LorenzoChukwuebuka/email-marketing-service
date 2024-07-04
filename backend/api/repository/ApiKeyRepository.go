@@ -21,6 +21,7 @@ func (r *APIKeyRepository) createAPIKeyResponse(apiKey model.APIKey) model.APIKe
 	return model.APIKeyResponseModel{
 		UUID:      apiKey.UUID,
 		UserId:    apiKey.UserId,
+		Name: apiKey.Name,
 		APIKey:    apiKey.APIKey,
 		CreatedAt: apiKey.CreatedAt.String(),
 		UpdatedAt: apiKey.UpdatedAt.Format(time.RFC3339),
@@ -36,15 +37,19 @@ func (r *APIKeyRepository) CreateAPIKey(d *model.APIKey) (*model.APIKey, error) 
 
 }
 
-func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId string) (model.APIKeyResponseModel, error) {
+func (r *APIKeyRepository) GetUserAPIKeyByUserId(userId string) ([]model.APIKeyResponseModel, error) {
+	var apiKeys []model.APIKey
 
-	var apiKey model.APIKey
-
-	if err := r.DB.Model(&model.APIKey{}).Where("user_id = ?", userId).First(&apiKey).Error; err != nil {
-		return model.APIKeyResponseModel{}, nil
+	if err := r.DB.Model(&model.APIKey{}).Where("user_id = ?", userId).Find(&apiKeys).Error; err != nil {
+		return nil, fmt.Errorf("failed to find keys: %w", err)
 	}
 
-	return r.createAPIKeyResponse(apiKey), nil
+	var response []model.APIKeyResponseModel
+	for _, apiKey := range apiKeys {
+		response = append(response, r.createAPIKeyResponse(apiKey))
+	}
+
+	return response, nil
 }
 
 func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKey) error {

@@ -190,59 +190,6 @@ func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId 
 	return nil
 }
 
-// func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId int) error {
-
-// 	UUID := uuid.New().String()
-
-// 	recipientEmails := make([]string, 0)
-// 	switch to := emailRequest.To.(type) {
-// 	case dto.Recipient:
-// 		recipientEmails = append(recipientEmails, to.Email)
-// 	case []dto.Recipient:
-// 		for _, recipient := range to {
-// 			recipientEmails = append(recipientEmails, recipient.Email)
-// 		}
-// 	default:
-// 		return fmt.Errorf("invalid recipient type")
-// 	}
-// 	recipientEmailsStr := strings.Join(recipientEmails, ", ")
-
-// 	emailData := &model.SentEmails{
-// 		UUID:           UUID,
-// 		Sender:         uint(userId),
-// 		Recipient:      recipientEmailsStr,
-// 		MessageContent: getMessageContent(emailRequest), // Assuming you want to store the HTML content
-// 		Status:         model.Sending,
-// 	}
-
-// 	err := s.MailStatusRepo.CreateStatus(emailData)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	mailS, err := smtpfactory.MailFactory("mailtrap")
-// 	if err != nil {
-// 		emailData.Status = model.Failed
-// 		s.MailStatusRepo.UpdateReport(emailData)
-// 		return err
-// 	}
-
-// 	err = mailS.HandleSendMail(emailRequest)
-// 	if err != nil {
-
-// 		emailData.Status = model.Failed
-// 		s.MailStatusRepo.UpdateReport(emailData)
-
-// 		return err
-// 	}
-
-// 	emailData.Status = model.Success
-// 	s.MailStatusRepo.UpdateReport(emailData)
-
-// 	return nil
-// }
-
 func getMessageContent(emailRequest *dto.EmailRequest) string {
 	if emailRequest.HtmlContent != nil {
 		return *emailRequest.HtmlContent

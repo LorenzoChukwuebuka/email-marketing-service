@@ -1,49 +1,54 @@
 import { useState } from "react";
-import {
-  APIKeysComponentTable,
-  SMTPKeysTableComponent,
-  Modal,
-} from "../components";
+import { APIKeysComponentTable, Modal } from "../components";
 import useAPIKeyStore from "../../../store/userstore/apiKeyStore";
 
-
+// Main component
 const APISettingsDashTemplate = () => {
   const [activeTab, setActiveTab] = useState("API Keys");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: "", content: "" });
 
-  const { isLoading, generateAPIKey } = useAPIKeyStore();
-
-
+  const {
+    isLoading,
+    generateAPIKey,
+    setFormValues,
+    formValues,
+    getAPIKey,
+  } = useAPIKeyStore();
 
   const openModal = (title, content) => {
     setModalContent({ title, content });
     setIsModalOpen(true);
   };
 
-  const handleGenerateAPIKey = async (e) => {
-    e.preventDefault();
-    let key = await generateAPIKey();
+  const handleGenerateAPIKey = () => {
+    openModal("Generate New API Key", "");
+  };
 
+  const handleSubmitApiKeyName = async (e) => {
+    e.preventDefault();
+    setIsModalOpen(false);
+
+    const key = await generateAPIKey();
     if (key) {
-      openModal(
-        "New API Key Generated",
-        `Your API key is ${key?.apiKey}. Note that this will be displayed only once.`
-      );
+      setModalContent({
+        title: "New API Key Generated",
+        content: `Your API key is ${key.apiKey}. Note that this will be displayed only once.`,
+      });
+      setIsKeyModalOpen(true);
     }
+    getAPIKey();
+    setFormValues({ name: "" });
   };
 
   const handleGenerateSMTPKey = async () => {
-    const newSmtpKey = await generateNewSMTPKey();
+    // Simulate API call or key generation logic
+    const newSmtpKey = "SMTP_" + Math.random().toString(36).substr(2, 9);
     openModal(
       "New SMTP Key Generated",
       `Your SMTP key is ${newSmtpKey}. Note that this will be displayed only once.`
     );
-  };
-
-  const generateNewSMTPKey = async () => {
-    // Simulate API call or key generation logic
-    return "SMTP_" + Math.random().toString(36).substr(2, 9);
   };
 
   return (
@@ -57,11 +62,11 @@ const APISettingsDashTemplate = () => {
               className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
             >
               {!isLoading ? (
-                <>Generate a new API Key </>
+                <>Generate a new API Key</>
               ) : (
                 <>
                   Please wait
-                  <span className="loading loading-dots loading-sm"></span>{" "}
+                  <span className="loading loading-dots loading-sm"></span>
                 </>
               )}
             </button>
@@ -102,18 +107,68 @@ const APISettingsDashTemplate = () => {
         </nav>
       </div>
 
-      {activeTab === "API Keys" && <APIKeysComponentTable />}
-      {activeTab === "SMTP" && <SMTPKeysTableComponent />}
+      {activeTab === "API Keys" && (
+        <>
+          {" "}
+          <APIKeysComponentTable />{" "}
+        </>
+      )}
+      {activeTab === "SMTP" && <div>SMTP Keys Table Component</div>}
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={modalContent.title}
       >
-        <p className="mb-4">{modalContent.content}</p>
+        <form onSubmit={handleSubmitApiKeyName}>
+          <div className="mb-4">
+            <label
+              htmlFor="apiKeyName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              API Key Name or Description
+            </label>
+            <input
+              type="text"
+              id="apiKeyName"
+              value={formValues.name}
+              onChange={(event) =>
+                setFormValues({
+                  ...formValues,
+                  name: event.target.value,
+                })
+              }
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Generate Key
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isKeyModalOpen}
+        onClose={() => setIsKeyModalOpen(false)}
+        title={modalContent.title}
+      >
+        <p className="mb-4">{modalContent.content} </p>
         <div className="flex justify-end space-x-2">
           <button
-            onClick={() => setIsModalOpen(false)}
+            onClick={() => setIsKeyModalOpen(false)}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Close

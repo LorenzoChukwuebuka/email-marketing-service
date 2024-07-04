@@ -110,7 +110,7 @@ func (s *UserSessionService) sendDeviceVerificationMail(d *model.UserSession, re
 	userEmail := userRepo.Email
 	userName := userRepo.FullName
 	code := utils.GenerateOTP(8)
-	err = mail.DeviceVerificationMail(userName, userEmail, d, code)
+	err = mailer.DeviceVerificationMail(userName, userEmail, d, code)
 
 	if err != nil {
 		resultChan <- Result{Error: fmt.Errorf("email sending failed: %w", err)}

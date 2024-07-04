@@ -5,9 +5,11 @@ import eventBus from '../../utils/eventBus'
 const useAPIKeyStore = create((set, get) => ({
   apiKeyData: null,
   isLoading: false,
+  formValues: { name: '' },
 
   setAPIKeyData: newAPIkeyData => set({ apiKeyData: newAPIkeyData }),
   setIsLoading: newIsLoading => set({ isLoading: newIsLoading }),
+  setFormValues: newFormValue => set({ formValues: newFormValue }),
 
   getAPIKey: async () => {
     try {
@@ -20,13 +22,14 @@ const useAPIKeyStore = create((set, get) => ({
     }
   },
   generateAPIKey: async () => {
-    const { setIsLoading } = get()
+    const { setIsLoading, formValues } = get()
     try {
       setIsLoading(true)
-      let response = await axiosInstance.post('/generate-apikey')
+      let response = await axiosInstance.post('/generate-apikey', formValues)
       return response.data.payload
     } catch (error) {
-      console.log(error)
+      console.log(error) 
+      eventBus.emit('error',error.response.data.payload)
     } finally {
       get().setIsLoading(false)
     }

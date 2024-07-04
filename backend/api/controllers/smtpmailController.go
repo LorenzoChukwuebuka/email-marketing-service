@@ -69,9 +69,6 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 }
 
-
-
-
 //################################################### TEST #################################################################
 
 func (c *SMTPMailController) CreateRecordDailyMailCalculation(w http.ResponseWriter, r *http.Request) {

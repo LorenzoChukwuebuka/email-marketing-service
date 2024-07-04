@@ -1,28 +1,33 @@
 package services
 
 import (
+	"fmt"
+
+	"github.com/google/uuid"
+
 	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
 	"email-marketing-service/api/utils"
-	"fmt"
-
-	"github.com/google/uuid"
 )
 
-var EmptyPlanResponse = model.PlanResponse{} // Zero-initialized instance
+var (
+	ErrPlanExists   = fmt.Errorf("plan already exists")
+	ErrNoPlansFound = fmt.Errorf("no plans found")
+	ErrNoPlanFound  = fmt.Errorf("no plan found")
+)
 
 type PlanService struct {
-	PlanRepo *repository.PlanRepository
+	planRepo *repository.PlanRepository
 }
 
 func NewPlanService(planRepo *repository.PlanRepository) *PlanService {
-	return &PlanService{PlanRepo: planRepo}
+	return &PlanService{planRepo: planRepo}
 }
 
 func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 	if err := utils.ValidateData(d); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid plan data: %w", err)
 	}
 
 	planModel := &model.Plan{
@@ -35,51 +40,45 @@ func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 		Status:              d.Status,
 	}
 
-	planExists, err := s.PlanRepo.PlanExistsByName(d.PlanName)
-
+	exists, err := s.planRepo.PlanExistsByName(d.PlanName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking plan existence: %w", err)
+	}
+	if exists {
+		return nil, ErrPlanExists
 	}
 
-	if planExists {
-		return nil, fmt.Errorf("plan already exists")
-	}
-
-	_, err = s.PlanRepo.CreatePlan(planModel)
-
+	_, err = s.planRepo.CreatePlan(planModel)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating plan: %w", err)
 	}
 
 	return planModel, nil
 }
 
 func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
-	plans, err := s.PlanRepo.GetAllPlans()
-
+	plans, err := s.planRepo.GetAllPlans()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching plans: %w", err)
 	}
-
 	if len(plans) == 0 {
-		return nil, fmt.Errorf("no user found: %w", err)
+		return nil, ErrNoPlansFound
 	}
 	return plans, nil
 }
 
 func (s *PlanService) GetASinglePlan(id string) (model.PlanResponse, error) {
-	plan, err := s.PlanRepo.GetSinglePlan(id)
+	plan, err := s.planRepo.GetSinglePlan(id)
 	if err != nil {
-		return EmptyPlanResponse, err
+		return model.PlanResponse{}, fmt.Errorf("error fetching plan: %w", err)
 	}
-	if plan == EmptyPlanResponse {
-		return EmptyPlanResponse, fmt.Errorf("no record found")
+	if plan == (model.PlanResponse{}) {
+		return model.PlanResponse{}, ErrNoPlanFound
 	}
 	return plan, nil
 }
 
 func (s *PlanService) UpdatePlan(d *dto.EditPlan) error {
-
 	planModel := &model.Plan{
 		UUID:                d.UUID,
 		PlanName:            d.PlanName,
@@ -90,15 +89,15 @@ func (s *PlanService) UpdatePlan(d *dto.EditPlan) error {
 		Status:              d.Status,
 	}
 
-	if err := s.PlanRepo.EditPlan(planModel); err != nil {
-		return err
+	if err := s.planRepo.EditPlan(planModel); err != nil {
+		return fmt.Errorf("error updating plan: %w", err)
 	}
 	return nil
 }
 
 func (s *PlanService) DeletePlan(id string) error {
-	if err := s.PlanRepo.DeletePlan(id); err != nil {
-		return err
+	if err := s.planRepo.DeletePlan(id); err != nil {
+		return fmt.Errorf("error deleting plan: %w", err)
 	}
 	return nil
 }
