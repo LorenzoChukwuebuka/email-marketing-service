@@ -15,14 +15,9 @@ const APIKeysTableComponent = () => {
 
   const handleDelete = async (id) => {
     setDeletingId(id);
-    try {
-      await deleteAPIKey(id);
-      // Refresh the API key list after deletion
-      getAPIKey();
-    } catch (error) {
-      console.error("Error deleting API key:", error);
-      // Handle error (e.g., show an error message to the user)
-    }
+    await deleteAPIKey(id);
+    getAPIKey();
+
     setDeletingId(null);
   };
 

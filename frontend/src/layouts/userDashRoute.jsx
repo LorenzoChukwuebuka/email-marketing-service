@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import UserDashLayout from "./userDashLayout";
 import UserDashPage from "../pages/userDashboard/userHomeDashPage";
-import { APISettingsDashTemplate } from "../templates";
+import { AccountSettingsTemplate, APISettingsDashTemplate } from "../templates";
 import UserMgtSettingsDashTemplate from "../templates/user/SettingsTemplate/userManagementTemplate";
 
 const UserDashRoute = () => (
@@ -12,6 +12,10 @@ const UserDashRoute = () => (
       <Route
         path="settings/user-management"
         element={<UserMgtSettingsDashTemplate />}
+      />
+      <Route
+        path="settings/account-management"
+        element={<AccountSettingsTemplate />}
       />
     </Route>
   </Routes>
