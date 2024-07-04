@@ -15,7 +15,7 @@ const UserDashLayout = () => {
 
   const getLinkClassName = (path) => {
     const baseClass = "mb-4 text-center text-lg font-semibold";
-    const activeClass = "text-white bg-[rgb(56,68,94)] p-1 px-2 rounded-md";
+    const activeClass = "text-white bg-[rgb(56,68,94)] p-[1.5] px-2 rounded-md";
     const inactiveClass =
       "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
     return `${baseClass} ${
@@ -61,8 +61,6 @@ const UserDashLayout = () => {
     getUserMailData();
   }, [getUserMailData]);
 
-
-
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -78,17 +76,26 @@ const UserDashLayout = () => {
             </h2>
             <ul className="mt-12 w-full">
               <li className={getLinkClassName("/user/dash")}>
-                <Link to="/user/dash" className="flex items-center">
+                <Link
+                  to="/user/dash"
+                  className="flex font-semibold text-base items-center"
+                >
                   <i className="bi bi-house mr-2"></i> Home
                 </Link>
               </li>
               <li className={getLinkClassName("/analytics")}>
-                <Link to="" className="flex items-center">
+                <Link
+                  to=""
+                  className="flex font-semibold text-base items-center"
+                >
                   <i className="bi bi-bar-chart mr-2"></i> Analytics
                 </Link>
               </li>
               <li className={getLinkClassName("/billing")}>
-                <Link to="" className="flex items-center">
+                <Link
+                  to=""
+                  className="flex font-semibold text-base items-center"
+                >
                   <i className="bi bi-wallet"></i> &nbsp; Billing
                 </Link>
               </li>
@@ -97,7 +104,7 @@ const UserDashLayout = () => {
                   onClick={toggleSettingsDropdown}
                   className="flex items-center w-full justify-between"
                 >
-                  <span className="flex items-center">
+                  <span className="flex font-semibold text-base items-center">
                     <i className="bi bi-gear mr-2"></i> Settings
                   </span>
                   <i
@@ -134,11 +141,11 @@ const UserDashLayout = () => {
                     </li>
                     <li
                       className={`py-1 ${getLinkClassName(
-                        "/user/dash/settings/account"
+                        "/user/dash/settings/account-management"
                       )}`}
                     >
                       <Link
-                        to=""
+                        to="/user/dash/settings/account-management"
                         className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
                       >
                         Account Settings

@@ -28,10 +28,18 @@ const useAPIKeyStore = create((set, get) => ({
       let response = await axiosInstance.post('/generate-apikey', formValues)
       return response.data.payload
     } catch (error) {
-      console.log(error) 
-      eventBus.emit('error',error.response.data.payload)
+      console.log(error)
+      eventBus.emit('error', error.response.data.payload)
     } finally {
       get().setIsLoading(false)
+    }
+  },
+  deleteAPIKey: async apiId => {
+    try {
+      let response = await axiosInstance.delete('/delete-apikey/' + apiId)
+      eventBus.emit('success', response.data.payload)
+    } catch (error) {
+      eventBus.emit('error', error)
     }
   }
 }))

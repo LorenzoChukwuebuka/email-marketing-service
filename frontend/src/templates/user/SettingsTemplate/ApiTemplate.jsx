@@ -85,7 +85,7 @@ const APISettingsDashTemplate = () => {
       <div className="mb-6">
         <nav className="flex space-x-4 border-b">
           <button
-            className={`py-2 border-b-2 ${
+            className={`py-2  border-b-2 ${
               activeTab === "SMTP"
                 ? "border-blue-500 text-blue-500"
                 : "border-transparent hover:border-gray-300"
