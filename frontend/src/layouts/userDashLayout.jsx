@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import reactSVG from "./../assets/0832855c4b75f4d5a1dd822d6fb0d38d.jpg";
-import useDailyUserMailSentCalc from "../store/userDashStore";
+import useDailyUserMailSentCalc from "../store/userstore/userDashStore";
 
 const UserDashLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -15,7 +15,7 @@ const UserDashLayout = () => {
 
   const getLinkClassName = (path) => {
     const baseClass = "mb-4 text-center text-lg font-semibold";
-    const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
+    const activeClass = "text-white bg-[rgb(56,68,94)] p-1 px-2 rounded-md";
     const inactiveClass =
       "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
     return `${baseClass} ${
@@ -58,14 +58,10 @@ const UserDashLayout = () => {
   }, []);
 
   useEffect(() => {
-    getUserMailData(); // Call this function to fetch the data when component mounts
+    getUserMailData();
   }, [getUserMailData]);
 
-  useEffect(() => {
-    if (mailData) {
-      console.log(mailData);
-    }
-  }, [mailData]);
+
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -86,13 +82,13 @@ const UserDashLayout = () => {
                   <i className="bi bi-house mr-2"></i> Home
                 </Link>
               </li>
-              <li className={getLinkClassName("/user/analytics")}>
-                <Link to="/user/analytics" className="flex items-center">
+              <li className={getLinkClassName("/analytics")}>
+                <Link to="" className="flex items-center">
                   <i className="bi bi-bar-chart mr-2"></i> Analytics
                 </Link>
               </li>
-              <li className={getLinkClassName("/user/analytics")}>
-                <Link to="/user/analytics" className="flex items-center">
+              <li className={getLinkClassName("/billing")}>
+                <Link to="" className="flex items-center">
                   <i className="bi bi-wallet"></i> &nbsp; Billing
                 </Link>
               </li>
@@ -112,28 +108,40 @@ const UserDashLayout = () => {
                 </button>
                 {settingsDropdownOpen && (
                   <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
-                    <li className="py-1">
+                    <li
+                      className={`py-1 ${getLinkClassName(
+                        "/user/dash/settings/user-management"
+                      )}`}
+                    >
                       <Link
-                        to="/user/setting/profile"
-                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                        to="/user/dash/settings/user-management"
+                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
                       >
-                        Profile
+                        User Management
                       </Link>
                     </li>
-                    <li className="py-1">
+                    <li
+                      className={`py-1 ${getLinkClassName(
+                        "/user/dash/settings/api"
+                      )}`}
+                    >
                       <Link
-                        to="/user/setting/account"
-                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                        to="/user/dash/settings/api"
+                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
                       >
-                        Account
+                        API Tokens
                       </Link>
                     </li>
-                    <li className="py-1">
+                    <li
+                      className={`py-1 ${getLinkClassName(
+                        "/user/dash/settings/account"
+                      )}`}
+                    >
                       <Link
-                        to="/user/setting/privacy"
-                        className="block px-4 py-2 text-sm hover:bg-[rgb(56,68,94)] rounded"
+                        to=""
+                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
                       >
-                        Privacy
+                        Account Settings
                       </Link>
                     </li>
                   </ul>

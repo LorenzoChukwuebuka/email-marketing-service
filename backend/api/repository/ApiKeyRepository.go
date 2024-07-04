@@ -22,7 +22,7 @@ func (r *APIKeyRepository) createAPIKeyResponse(apiKey model.APIKey) model.APIKe
 		UUID:      apiKey.UUID,
 		UserId:    apiKey.UserId,
 		APIKey:    apiKey.APIKey,
-		CreatedAt: apiKey.CreatedAt,
+		CreatedAt: apiKey.CreatedAt.String(),
 		UpdatedAt: apiKey.UpdatedAt.Format(time.RFC3339),
 	}
 }

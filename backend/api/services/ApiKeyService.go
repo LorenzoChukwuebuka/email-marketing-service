@@ -66,7 +66,7 @@ func (s *APIKeyService) GetAPIKey(userId string) (model.APIKeyResponseModel, err
 	}
 
 	if userApiKey == EmptyAPIKeyResponse {
-		return EmptyAPIKeyResponse, fmt.Errorf("no api key generated yet")
+		return EmptyAPIKeyResponse,  nil
 	}
 	return userApiKey, nil
 }

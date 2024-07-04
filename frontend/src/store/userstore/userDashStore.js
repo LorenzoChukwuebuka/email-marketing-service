@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import axiosInstance from '../utils/api'
-import eventBus from '../utils/eventBus'
+import axiosInstance from '../../utils/api'
+import eventBus from '../../utils/eventBus'
 
 const useDailyUserMailSentCalc = create((set, get) => ({
   mailData: null,
@@ -18,5 +18,6 @@ const useDailyUserMailSentCalc = create((set, get) => ({
     }
   }
 }))
+
 
 export default useDailyUserMailSentCalc

@@ -14,10 +14,10 @@ type APIKey struct {
 }
 
 type APIKeyResponseModel struct {
-	Id        int       `json:"-"`
-	UUID      string    `json:"uuid"`
-	UserId    string    `json:"user_id"`
-	APIKey    string    `json:"api_key"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt string    `json:"updated_at"`
+	Id        int    `json:"-"`
+	UUID      string `json:"uuid,omitempty"`
+	UserId    string `json:"user_id,omitempty"`
+	APIKey    string `json:"api_key,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }
