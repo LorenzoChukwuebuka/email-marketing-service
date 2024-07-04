@@ -93,8 +93,5 @@ func (r *DailyMailCalcRepository) GetUserActiveCalculation(subscriptionId int) (
 		CreatedAt:      record.CreatedAt,
 	}
 
-	
-	fmt.Printf("Record: %+v\n", record)
-
 	return response, nil
 }
