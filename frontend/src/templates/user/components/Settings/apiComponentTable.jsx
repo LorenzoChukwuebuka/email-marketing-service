@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react";
 import useAPIKeyStore from "../../../../store/userstore/apiKeyStore";
-import {
-  convertToNormalTime,
-  copyToClipboard,
-  maskAPIKey,
-} from "../../../../utils/utils";
+import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
 
 const APIKeysTableComponent = () => {
-  const { getAPIKey, apiKeyData } = useAPIKeyStore();
-  const [copied, setCopied] = useState(false);
+  const { getAPIKey, apiKeyData, deleteAPIKey } = useAPIKeyStore();
+
+  const [deletingId, setDeletingId] = useState(null);
 
   const shouldRenderNoKey = () => {
-    return !apiKeyData || apiKeyData.payload === null;
+    return (
+      !apiKeyData || !apiKeyData.payload || apiKeyData.payload.length === 0
+    );
   };
 
-  const copyText = (text) => {
-    copyToClipboard(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    try {
+      await deleteAPIKey(id);
+      // Refresh the API key list after deletion
+      getAPIKey();
+    } catch (error) {
+      console.error("Error deleting API key:", error);
+      // Handle error (e.g., show an error message to the user)
+    }
+    setDeletingId(null);
   };
 
   useEffect(() => {
@@ -34,12 +40,15 @@ const APIKeysTableComponent = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-xl font-semibold mb-4">API Key</h2>
+      <h2 className="text-xl font-semibold mb-4">API Keys</h2>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 API key value
               </th>
@@ -49,36 +58,47 @@ const APIKeysTableComponent = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created on
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500 mr-2">
-                    {maskAPIKey(apiKeyData?.payload?.api_key)}
+            {apiKeyData.payload.map((key) => (
+              <tr key={key.uuid}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {key.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-500 mr-2">
+                      {maskAPIKey(key.api_key)}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    Active
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {convertToNormalTime(key.created_at)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <button
-                    className="p-1 px-2 rounded-full bg-gray-200 hover:bg-gray-300"
-                    onClick={() => copyText(apiKeyData?.payload?.api_key)}
+                    onClick={() => handleDelete(key.uuid)}
+                    className="text-red-600 hover:text-red-900"
+                    disabled={deletingId === key.uuid}
                   >
-                    {copied ? (
-                      <i className="bi bi-check-circle"></i>
+                    {deletingId === key.uuid ? (
+                      <span className="loading loading-spinner loading-sm"></span>
                     ) : (
-                      <i className="bi bi-clipboard2"></i>
+                      <i className="bi bi-trash"></i>
                     )}
                   </button>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  Active
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {convertToNormalTime(apiKeyData?.payload?.created_at)}
-              </td>
-            </tr>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

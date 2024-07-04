@@ -1,11 +1,15 @@
 package services
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/model"
 	"email-marketing-service/api/repository"
+	"email-marketing-service/api/utils"
 	"fmt"
-	"github.com/google/uuid"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type APIKeyService struct {
@@ -20,55 +24,56 @@ func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
 	}
 }
 
-func (s *APIKeyService) GenerateAPIKey(userId string) (map[string]interface{}, error) {
+func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}, error) {
 	uuidObj := uuid.New().String()
-	apiKey := "skey-" + uuidObj
-
+	apiKey := "skey-" + strings.ReplaceAll(uuidObj, "-", "")
+	if err := utils.ValidateData(d); err != nil {
+		return nil, err
+	}
 	apiKeyModel := &model.APIKey{
 		UUID:      uuid.New().String(),
-		UserId:    userId,
+		UserId:    d.UserId,
 		APIKey:    apiKey,
+		Name:      d.Name,
 		CreatedAt: time.Now(),
 	}
 
-	existingAPIKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
+	existingKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(d.UserId)
 	if err != nil {
-		return nil, fmt.Errorf("error checking existing API key: %v", err)
+		return nil, err
 	}
 
-	if existingAPIKey != EmptyAPIKeyResponse {
-		// If an existing API key is found, update it
+	// Check if the name already exists
+	for _, existingKey := range existingKeys {
+		if existingKey.Name == d.Name {
+			return nil, fmt.Errorf("API key with name '%s' already exists", d.Name)
+		}
+	}
 
-		err := s.APIKeyRepo.UpdateAPIKey(apiKeyModel)
-		if err != nil {
-			return nil, fmt.Errorf("error updating API key: %v", err)
-		}
-	} else {
-		// If no existing API key, create a new one
-		_, err := s.APIKeyRepo.CreateAPIKey(apiKeyModel)
-		if err != nil {
-			return nil, fmt.Errorf("error generating API key: %v", err)
-		}
+	// If the name doesn't exist, create the new API key
+	createAPIKey, err := s.APIKeyRepo.CreateAPIKey(apiKeyModel)
+	if err != nil {
+		return nil, err
 	}
 
 	successMap := map[string]interface{}{
-		"apiKey": apiKeyModel.APIKey,
+		"apiKey": createAPIKey.APIKey,
 	}
-
 	return successMap, nil
 }
 
-func (s *APIKeyService) GetAPIKey(userId string) (model.APIKeyResponseModel, error) {
-	userApiKey, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
+func (s *APIKeyService) GetAPIKey(userId string) ([]model.APIKeyResponseModel, error) {
+	userApiKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
 
 	if err != nil {
-		return EmptyAPIKeyResponse, err
+		return nil, err
 	}
 
-	if userApiKey == EmptyAPIKeyResponse {
-		return EmptyAPIKeyResponse,  nil
+	if len(userApiKeys) == 0 {
+		return nil, nil
 	}
-	return userApiKey, nil
+
+	return userApiKeys, nil
 }
 
 func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {

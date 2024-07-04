@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"email-marketing-service/api/dto"
 	"email-marketing-service/api/services"
+	"email-marketing-service/api/utils"
 	"net/http"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )
@@ -18,6 +21,9 @@ func NewAPIKeyController(apiKeyService *services.APIKeyService) *ApiKeyControlle
 }
 
 func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request) {
+
+	var reqdata *dto.APIkeyDTO
+
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
@@ -26,7 +32,11 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 
 	userId := claims["userId"].(string)
 
-	result, err := c.APIkeySVC.GenerateAPIKey(userId)
+	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.UserId = userId
+
+	result, err := c.APIkeySVC.GenerateAPIKey(reqdata)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
