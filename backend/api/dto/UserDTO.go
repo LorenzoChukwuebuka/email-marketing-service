@@ -8,6 +8,14 @@ type User struct {
 	Verified bool   `json:"verified"`
 }
 
+type EditUserDTO struct {
+	UUID     string `json:"uuid"`
+	FullName string `json:"fullname"`
+	Company  string `json:"company"`
+	Email    string `json:"email"`
+	PhoneNumber string `json:"phonenumber"`
+}
+
 type Login struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`

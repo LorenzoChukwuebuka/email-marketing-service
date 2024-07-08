@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ChangePasswordComponent,
   DeleteAccountComponent,
   ProfileInformationComponent,
 } from "../components";
@@ -60,6 +61,13 @@ const AccountSettingsTemplate = () => {
       {activeTab === "Account Details" && (
         <>
           <ProfileInformationComponent />
+        </>
+      )}
+
+      {activeTab === "Change Password" && (
+        <>
+          {" "}
+          <ChangePasswordComponent />{" "}
         </>
       )}
     </>

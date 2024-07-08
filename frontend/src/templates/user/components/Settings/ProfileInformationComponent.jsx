@@ -1,64 +1,124 @@
-import   { useState } from 'react';
+import { useEffect, useState } from "react";
+import useAuthStore from "../../../../store/AuthStore";
+import * as Yup from "yup";
 
 const ProfileInformationComponent = () => {
-  const [formData, setFormData] = useState({
-    username: 'lawrenceobi2@gmail.com',
-    firstName: 'Lawrence',
-    lastName: 'Obi',
-    email: 'lawrenceobi2@gmail.com',
-    phoneNumber: '08134514639',
-  });
+  const {
+    userData,
+    getUserDetails,
+    setEditFormValues,
+    editFormValues,
+    editUserDetails,
+  } = useAuthStore();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+  const [errors, setErrors] = useState({});
+
+  const initEdit = () => {
+    setEditFormValues({
+      fullname: userData?.fullname || "",
+      email: userData?.email || "",
+      company: userData?.company || "",
+      phonenumber: userData?.phonenumber || "",
     });
   };
 
-  const handleEditInformation = () => {
-    // Logic for editing the information
-    alert('Edit information functionality!');
+  // Define the validation schema
+  const validationSchema = Yup.object().shape({
+    phonenumber: Yup.string()
+      .required("Phone number is required")
+      //.matches(/^[0-9]+$/, "Phone number must contain only digits")
+      .min(11, "Phone number must be exactly 11 digits")
+      .max(11, "Phone number must be exactly 11 digits"),
+  });
+
+  const handleEditInformation = async (e) => {
+    try {
+      e.preventDefault();
+      await validationSchema.validate(
+        { phonenumber: editFormValues.phonenumber },
+        {
+          abortEarly: false,
+        }
+      );
+      editUserDetails();
+      initEdit()
+    } catch (error) {
+      const validationErrors = {};
+      error.inner.forEach((error) => {
+        validationErrors[error.path] = error.message;
+      });
+      setErrors(validationErrors);
+    }
   };
+
+  useEffect(() => {
+    getUserDetails();
+  }, [getUserDetails]);
+
+  useEffect(() => {
+    if (userData) {
+      initEdit();
+    }
+  }, [userData]);
 
   return (
     <div className="max-w-2xl ml-5 p-6 ">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Profile Information</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">
+        Profile Information
+      </h1>
       <p className="text-gray-600 mb-6">
-        This is the information we have associated with your Seemailer profile, which you can use to access multiple Seemailer accounts. 
-        <strong> All contact information is kept strictly confidential.</strong>
+        This is the information we have associated with your Crabmailer profile,
+        which you can use to access multiple Crabmailer accounts.
+        <strong className="block">
+          All contact information is kept strictly confidential.
+        </strong>
       </p>
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-gray-700 font-bold mb-1">Username</label>
+            <label className="block text-gray-700 font-bold mb-1">
+              Username
+            </label>
             <input
               type="text"
               name="username"
-              value={formData.username}
-              onChange={handleChange}
+              value={editFormValues?.email || ""}
+              readOnly
               className="w-full bg-gray-100 p-2 rounded-md"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-700 font-bold mb-1">Firstname</label>
+              <label className="block text-gray-700 font-bold mb-1">
+                FullName
+              </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
+                name="fullName"
+                value={editFormValues?.fullname || ""}
+                onChange={(event) =>
+                  setEditFormValues({
+                    ...editFormValues,
+                    fullname: event.target.value,
+                  })
+                }
                 className="w-full bg-gray-100 p-2 rounded-md"
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-bold mb-1">Lastname</label>
+              <label className="block text-gray-700 font-bold mb-1">
+                Company
+              </label>
               <input
                 type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
+                name="company"
+                value={editFormValues?.company || ""}
+                onChange={(event) =>
+                  setEditFormValues({
+                    ...editFormValues,
+                    company: event.target.value,
+                  })
+                }
                 className="w-full bg-gray-100 p-2 rounded-md"
               />
             </div>
@@ -69,20 +129,31 @@ const ProfileInformationComponent = () => {
           <input
             type="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
+            value={editFormValues?.email || ""}
+            readOnly
             className="w-full bg-gray-100 p-2 rounded-md"
           />
         </div>
         <div>
-          <label className="block text-gray-700 font-bold mb-1">Phone Number</label>
+          <label className="block text-gray-700 font-bold mb-1">
+            Phone Number
+          </label>
           <input
             type="text"
             name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            className="w-full bg-gray-100 p-2 rounded-md"
+            value={editFormValues?.phonenumber || ""}
+            max="11"
+            onChange={(event) =>
+              setEditFormValues({
+                ...editFormValues,
+                phonenumber: event.target.value,
+              })
+            }
+            className="w-[20em] bg-gray-100 p-2 rounded-md"
           />
+          {errors.phonenumber && (
+            <div className="text-red-500 ">{errors.phonenumber}</div>
+          )}
         </div>
       </div>
       <button

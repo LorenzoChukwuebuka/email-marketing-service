@@ -15,7 +15,7 @@ const UserDashLayout = () => {
 
   const getLinkClassName = (path) => {
     const baseClass = "mb-4 text-center text-lg font-semibold";
-    const activeClass = "text-white bg-[rgb(56,68,94)] p-[1.5] px-2 rounded-md";
+    const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
     const inactiveClass =
       "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
     return `${baseClass} ${
