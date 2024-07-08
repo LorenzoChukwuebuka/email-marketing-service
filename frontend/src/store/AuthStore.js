@@ -35,6 +35,8 @@ const useAuthStore = create((set, get) => ({
     email: ''
   },
   isLoggedIn: false,
+  editFormValues: { fullname: '', company: '', email: '', phonenumber: '' },
+  userData: null,
 
   //initializers
   setFormValues: newFormValues => set({ formValues: newFormValues }),
@@ -54,6 +56,9 @@ const useAuthStore = create((set, get) => ({
   setResetPasswordValues: newResetPasswordValues =>
     set({ resetPasswordValues: newResetPasswordValues }),
   setIsLoggedIn: newIsLoggedIn => set({ isLoggedIn: newIsLoggedIn }),
+  setEditFormValues: newEditFormValues =>
+    set({ editFormValues: newEditFormValues }),
+  setUserData: newUserData => set({ userData: newUserData }),
 
   //functions
   registerUser: async () => {
@@ -213,6 +218,39 @@ const useAuthStore = create((set, get) => ({
       )
 
       console.log(error)
+    } finally {
+      get().setIsLoading(false)
+    }
+  },
+
+  getUserDetails: async () => {
+    try {
+      const { setIsLoading, setUserData } = get()
+      setIsLoading(true)
+      let response = await axiosInstance.get('/get-user-details')
+      setUserData(response.data.payload)
+    } catch (error) {
+      eventBus.emit(
+        'error',
+        error.response.data.payload || 'An unexpected error occured'
+      )
+    } finally {
+      get().setIsLoading(false)
+    }
+  },
+
+  editUserDetails: async () => {
+    try {
+      const { setIsLoading, editFormValues } = get()
+      setIsLoading(true)
+      let response = await axiosInstance.put(
+        '/edit-user-details',
+        editFormValues
+      )
+
+      eventBus.emit('success', response.data.payload)
+    } catch (error) {
+      eventBus.emit('error', error)
     } finally {
       get().setIsLoading(false)
     }

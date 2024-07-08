@@ -1,10 +1,25 @@
- 
-
 const SMTPKeysTableComponent = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6">Your SMTP Settings</h2>
+      <div className="mb-6">
+        <div className="mb-2">
+          <span className="font-semibold">SMTP Server:</span>{" "}
+          smtp-relay.brevo.com
+        </div>
+        <div className="mb-2">
+          <span className="font-semibold">Port:</span> 587
+        </div>
+        <div className="mb-2">
+          <span className="font-semibold">Login:</span> 5fcfdb001@smtp-brevo.com
+        </div>
+      </div>
+      <button className="text-blue-600 hover:text-blue-800 mb-6">
+        Regenerate SMTP Login and Master password
+      </button>
+
       <h2 className="text-xl font-semibold mb-4">Your SMTP Keys</h2>
-      
+
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
@@ -27,17 +42,39 @@ const SMTPKeysTableComponent = () => {
             <tr>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <input type="checkbox" className="mr-3 h-4 w-4 text-blue-600" />
-                  <div className="text-sm font-medium text-gray-900">Master Password</div>
+                  <input
+                    type="checkbox"
+                    className="mr-3 h-4 w-4 text-blue-600"
+                  />
+                  <div className="text-sm font-medium text-gray-900">
+                    Master Password
+                  </div>
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <span className="text-sm text-gray-500 mr-2">****************</span>
+                  <span className="text-sm text-gray-500 mr-2">
+                    ****************
+                  </span>
                   <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
-                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="h-4 w-4 text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
                   </button>
                 </div>

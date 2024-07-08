@@ -17,10 +17,12 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
 	return model.UserResponse{
-		ID:       user.ID,
-		UUID:     user.UUID,
-		FullName: user.FullName,
-		Email:    user.Email,
+		ID:         user.ID,
+		UUID:       user.UUID,
+		FullName:   user.FullName,
+		Email:      user.Email,
+		Company:    user.Company,
+		PhoneNumber: user.PhoneNumber,
 		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:   user.Verified,
 		CreatedAt:  user.CreatedAt,
@@ -147,7 +149,7 @@ func (r *UserRepository) FindAllUsers() ([]model.UserResponse, error) {
 
 func (r *UserRepository) ChangeUserPassword(d *model.User) error {
 	var user model.User
-	if err := r.DB.Where("id = ?", d.UUID).First(&user).Error; err != nil {
+	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil
 		}
@@ -166,6 +168,28 @@ func (r *UserRepository) ChangeUserPassword(d *model.User) error {
 }
 
 func (r *UserRepository) UpdateUserRecords(d *model.User) error {
+	var user model.User
+
+	// Fetch the user record from the database based on the UUID
+	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("user not found")
+		}
+		return fmt.Errorf("error querying database: %w", err)
+	}
+
+	// Update the fields of the user record
+	user.FullName = d.FullName
+	user.Email = d.Email
+	user.PhoneNumber = d.PhoneNumber
+	user.Company = d.Company
+	user.UpdatedAt = time.Now()
+
+	// Save the updated user record to the database
+	if err := r.DB.Save(&user).Error; err != nil {
+		fmt.Printf("Error updating user: %v\n", err)
+		return fmt.Errorf("failed to update user: %w", err)
+	}
 
 	return nil
 }

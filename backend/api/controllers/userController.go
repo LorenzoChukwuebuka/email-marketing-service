@@ -127,13 +127,13 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
 	var reqdata *dto.ChangePassword
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	err := c.userService.ChangePassword(int(userId), reqdata)
+	err := c.userService.ChangePassword(userId, reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -148,18 +148,38 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
 	var reqdata *model.User
 
 	utils.DecodeRequestBody(r, &reqdata)
 
-	if err := c.userService.EditUser(int(userId), reqdata); err != nil {
+	reqdata.UUID = userId
+
+	if err := c.userService.EditUser(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
 	response.SuccessResponse(w, 200, "User edited successfully")
+}
+
+func (c *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.userService.GetUserDetails(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
 }
 
 func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Request) {

@@ -308,12 +308,12 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 	return s.otpService.DeleteOTP(otpData.Id)
 }
 
-func (s *UserService) ChangePassword(userId int, d *dto.ChangePassword) error {
+func (s *UserService) ChangePassword(userId string, d *dto.ChangePassword) error {
 	if err := utils.ValidateData(d); err != nil {
 		return fmt.Errorf("invalid change password data: %w", err)
 	}
 
-	user, err := s.userRepo.FindUserById(&model.User{ID: userId})
+	user, err := s.userRepo.FindUserById(&model.User{UUID: userId})
 	if err != nil {
 		return fmt.Errorf("error finding user: %w", err)
 	}
@@ -327,10 +327,10 @@ func (s *UserService) ChangePassword(userId int, d *dto.ChangePassword) error {
 		return fmt.Errorf("error hashing password: %w", err)
 	}
 
-	return s.userRepo.ChangeUserPassword(&model.User{ID: userId, Password: string(hashedPassword)})
+	return s.userRepo.ChangeUserPassword(&model.User{UUID: userId, Password: string(hashedPassword)})
 }
 
-func (s *UserService) EditUser(id int, d *model.User) error {
+func (s *UserService) EditUser( d *model.User) error {
 	return s.userRepo.UpdateUserRecords(d)
 }
 
@@ -375,4 +375,17 @@ func (s *UserService) GetUserCurrentRunningSubscriptionWithMailsRemaining(userId
 		"mailsPerDay":    currentSub.Plan.NumberOfMailsPerDay,
 		"remainingMails": dailyMailCalc.RemainingMails,
 	}, nil
+}
+
+func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error) {
+
+	userModel := &model.User{UUID: userId}
+
+	userDetails, err := s.userRepo.FindUserById(userModel)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &userDetails, nil
 }

@@ -26,6 +26,8 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST", "OPTIONS")
 	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/resend-otp", userController.ResendOTP).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-user-details",middleware.JWTMiddleware(userController.GetUserDetails)).Methods("GET","OPTIONS")
+	router.HandleFunc("/edit-user-details",middleware.JWTMiddleware(userController.EditUser)).Methods("PUT","OPTIONS")
 	//transaction routes
 	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
