@@ -5,10 +5,10 @@ import (
 	adminmodel "email-marketing-service/api/model/admin"
 	"email-marketing-service/api/utils"
 	"fmt"
-	"log"
-	"sync"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
+	"sync"
 )
 
 var (
@@ -66,7 +66,7 @@ func autoMigrateModels() {
 		&model.SupportTicket{},
 		&model.TicketFiles{},
 		&model.SentEmails{},
-		// &model.KnowledgeBaseArticle{},
-		// &model.KnowledgeBaseCategory{},
+		&model.KnowledgeBaseArticle{},
+		&model.KnowledgeBaseCategory{},
 	)
 }

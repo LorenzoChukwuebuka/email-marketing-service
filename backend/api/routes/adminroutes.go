@@ -14,8 +14,8 @@ var RegisterAdminRoutes = func(router *mux.Router, db *gorm.DB) {
 	planController, _ := InitializePlanController(db)
 
 	//admin routes
-	router.HandleFunc("/create-admin", adminController.CreateAdmin).Methods("POST")
-	router.HandleFunc("/admin-login", adminController.Login).Methods("POST")
+	router.HandleFunc("/create-admin", adminController.CreateAdmin).Methods("POST","OPTIONS")
+	router.HandleFunc("/admin-login", adminController.Login).Methods("POST","OPTIONS")
 
 	//create plans
 	router.HandleFunc("/create-plan", middleware.AdminJWTMiddleware(planController.CreatePlan)).Methods("POST")

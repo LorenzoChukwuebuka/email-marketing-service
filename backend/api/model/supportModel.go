@@ -45,22 +45,22 @@ type TicketFiles struct {
 }
 
 // KnowledgeBaseArticle represents an article in the knowledge base
-// type KnowledgeBaseArticle struct {
-// 	ID         uint      `gorm:"primary_key" json:"id"`
-// 	Title      string    `json:"title"`
-// 	Content    string    `gorm:"type:text" json:"content"`
-// 	CategoryID uint      `json:"category_id"`
-// 	CreatedAt  time.Time `json:"created_at"`
-// 	UpdatedAt  time.Time `json:"updated_at"`
-// }
+type KnowledgeBaseArticle struct {
+	ID         uint      `gorm:"primary_key" json:"id"`
+	Title      string    `json:"title"`
+	Content    string    `gorm:"type:text" json:"content"`
+	CategoryID uint      `json:"category_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
 
-// // KnowledgeBaseCategory represents a category for knowledge base articles
-// type KnowledgeBaseCategory struct {
-// 	ID          uint                   `gorm:"primary_key" json:"id"`
-// 	Name        string                 `json:"name"`
-// 	Description string                 `json:"description"`
-// 	ParentID    *uint                  `json:"parent_id"`
-// 	CreatedAt   time.Time              `json:"created_at"`
-// 	UpdatedAt   time.Time              `json:"updated_at"`
-// 	Articles    []KnowledgeBaseArticle `gorm:"foreignkey:CategoryID" json:"articles"`
-// }
+// KnowledgeBaseCategory represents a category for knowledge base articles
+type KnowledgeBaseCategory struct {
+	ID          uint                   `gorm:"primary_key" json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	ParentID    *uint                  `json:"parent_id"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+	Articles    []KnowledgeBaseArticle `gorm:"foreignkey:CategoryID" json:"articles"`
+}

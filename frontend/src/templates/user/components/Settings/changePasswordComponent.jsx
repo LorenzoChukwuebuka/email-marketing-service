@@ -1,21 +1,65 @@
+import { useState } from "react";
 import useAuthStore from "../../../../store/AuthStore";
+import * as Yup from "yup";
 
 const ChangePasswordComponent = () => {
-  const { isLoading } = useAuthStore();
+  const {
+    isLoading,
+    changePasswordValues,
+    changePassword,
+    setChangePasswordValues,
+  } = useAuthStore();
+  const [errors, setErrors] = useState({});
+  const validationSchema = Yup.object().shape({
+    old_password: Yup.string().required("current password is required"),
+    new_password: Yup.string().required("new password is required"),
+    confirm_password: Yup.string()
+      .oneOf([Yup.ref("new_password"), null], "Passwords must match")
+      .required("Confirm Password is required"),
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await validationSchema.validate(changePasswordValues, {
+        abortEarly: false,
+      });
+      await changePassword();
+      setErrors({});
+    } catch (error) {
+      const validationErrors = {};
+      error.inner.forEach((error) => {
+        validationErrors[error.path] = error.message;
+      });
+      setErrors(validationErrors);
+    }
+  };
+
   return (
     <>
       <div className="mt-8 mb-5">
-        <form className=" w-full max-w-xs space-y-4">
+        <form className=" w-full max-w-xs space-y-4" onSubmit={handleSubmit}>
           <label className="block">
             <span className="text-medium font-medium">Current Password</span>
             <input
               type="password"
               placeholder=""
+              value={changePasswordValues.old_password}
+              onChange={(event) =>
+                setChangePasswordValues({
+                  ...changePasswordValues,
+                  old_password: event.target.value,
+                })
+              }
               className="mt-1 block w-full rounded-md border-2 
                  h-10 border-gray-300 shadow-sm
                  focus:border-indigo-300 focus:ring
                   focus:ring-indigo-200 focus:ring-opacity-50"
             />
+            {errors.old_password && (
+              <div style={{ color: "red" }}>{errors.old_password}</div>
+            )}
           </label>
 
           <label className="block">
@@ -23,11 +67,21 @@ const ChangePasswordComponent = () => {
             <input
               type="password"
               placeholder=""
+              value={changePasswordValues.new_password}
+              onChange={(event) =>
+                setChangePasswordValues({
+                  ...changePasswordValues,
+                  new_password: event.target.value,
+                })
+              }
               className="mt-1 block w-full rounded-md border-2 
                  h-10 border-gray-300 shadow-sm
                  focus:border-indigo-300 focus:ring
                   focus:ring-indigo-200 focus:ring-opacity-50"
             />
+            {errors.new_password && (
+              <div style={{ color: "red" }}>{errors.new_password}</div>
+            )}
           </label>
           <label className="block">
             <span className="text-medium font-medium">
@@ -36,10 +90,20 @@ const ChangePasswordComponent = () => {
             <input
               type="password"
               placeholder=""
+              value={changePasswordValues.confirm_password}
+              onChange={(event) =>
+                setChangePasswordValues({
+                  ...changePasswordValues,
+                  confirm_password: event.target.value,
+                })
+              }
               className="mt-1 block w-full rounded-md border-2  h-10 border-gray-300
                  shadow-sm focus:border-indigo-300 focus:ring
                   focus:ring-indigo-200 focus:ring-opacity-50"
             />
+            {errors.confirm_password && (
+              <div style={{ color: "red" }}>{errors.confirm_password}</div>
+            )}
           </label>
 
           <div className="flex flex-row justify-between">
