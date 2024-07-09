@@ -37,6 +37,11 @@ const useAuthStore = create((set, get) => ({
   isLoggedIn: false,
   editFormValues: { fullname: '', company: '', email: '', phonenumber: '' },
   userData: null,
+  changePasswordValues: {
+    old_password: '',
+    new_password: '',
+    confirm_password: ''
+  },
 
   //initializers
   setFormValues: newFormValues => set({ formValues: newFormValues }),
@@ -59,6 +64,8 @@ const useAuthStore = create((set, get) => ({
   setEditFormValues: newEditFormValues =>
     set({ editFormValues: newEditFormValues }),
   setUserData: newUserData => set({ userData: newUserData }),
+  setChangePasswordValues: newChangePasswordValues =>
+    set({ changePasswordValues: newChangePasswordValues }),
 
   //functions
   registerUser: async () => {
@@ -188,7 +195,25 @@ const useAuthStore = create((set, get) => ({
       get().setIsLoading(false)
     }
   },
-  changePassword: async () => {},
+  changePassword: async () => {
+    try {
+      const { setIsLoading, changePasswordValues } = get()
+      setIsLoading(true)
+      let response = await axiosInstance.put(
+        '/change-user-password',
+        changePasswordValues
+      )
+
+      eventBus.emit('success', response.data.payload)
+    } catch (error) {
+      eventBus.emit(
+        'error',
+        error.response.data.payload || 'An unexpected error occured'
+      )
+    } finally {
+      get().setIsLoading(false)
+    }
+  },
   loginUser: async () => {
     const { loginValues, setIsLoading, setLoginValues, setIsLoggedIn } = get()
     try {

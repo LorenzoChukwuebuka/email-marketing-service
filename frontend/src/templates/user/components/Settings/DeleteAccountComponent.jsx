@@ -5,7 +5,7 @@ const DeleteAccountComponent = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow-sm rounded-md">
+    <div className="max-w-2xl  p-6 bg-white mx-auto rounded-md">
       <h1 className="text-2xl font-bold text-red-600 mb-4">Deleting Account</h1>
       <p className="text-gray-600 mb-6">
         Pay special attention when entering this area!

@@ -66,7 +66,7 @@ const UserDashLayout = () => {
       {/* Sidebar */}
       <div
         className={`${
-          sidebarOpen ? "w-48" : "w-0"
+          sidebarOpen ? "w-64" : "w-0"
         } transition-all duration-300 bg-[rgb(26,46,68)]`}
       >
         {sidebarOpen && (

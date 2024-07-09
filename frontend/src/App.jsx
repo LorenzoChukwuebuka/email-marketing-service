@@ -8,6 +8,8 @@ import eventBus from "./utils/eventBus";
 import { toast } from "react-toastify";
 import { UserDashRoute } from "./layouts/userDashRoute";
 import { ProtectedRoute } from "./utils/protectedRoute";
+import { AdminAuthRoute } from "./pages/admin";
+import { AdminDashRoute } from "./layouts/adminDashRoute";
 function App() {
   const handleSuccess = (message) => {
     toast.success(message, {
@@ -71,8 +73,10 @@ function App() {
       <Routes>
         <Route index element={<IndexLandingPage />} />
         <Route path="/auth/*" element={<AuthRoute />} />
+        <Route path="/next/*" element={<AdminAuthRoute />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/user/*" element={<UserDashRoute />} />
+          <Route path="/zen/*" element={<AdminDashRoute />} />
         </Route>
       </Routes>
     </>
