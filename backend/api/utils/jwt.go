@@ -41,7 +41,7 @@ func AdminJWTEncode(userId int, user_uuid string, admintype string, email string
 	// Create a new token object with claims
 	claims := jwt.MapClaims{
 		"sub":    "The server",
-		"exp":    time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours                            // Include username claim
+		"exp":    time.Now().Add(time.Hour * 72).Unix(), // Token expires in 72 hours                            // Include username claim
 		"email":  email,
 		"uuid":   user_uuid,
 		"userId": userId, // Include userId claim

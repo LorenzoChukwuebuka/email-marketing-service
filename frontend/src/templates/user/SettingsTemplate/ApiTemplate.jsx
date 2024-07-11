@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { APIKeysComponentTable, Modal, SMTPKeysTableComponent } from "../components";
+import { APIKeysComponentTable, SMTPKeysTableComponent } from "../components";
 import useAPIKeyStore from "../../../store/userstore/apiKeyStore";
+import { Modal } from "../../../components";
 
 // Main component
 const APISettingsDashTemplate = () => {
@@ -113,7 +114,12 @@ const APISettingsDashTemplate = () => {
           <APIKeysComponentTable />{" "}
         </>
       )}
-      {activeTab === "SMTP" && <> <SMTPKeysTableComponent/> </>}
+      {activeTab === "SMTP" && (
+        <>
+          {" "}
+          <SMTPKeysTableComponent />{" "}
+        </>
+      )}
 
       <Modal
         isOpen={isModalOpen}

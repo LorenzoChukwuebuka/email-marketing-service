@@ -2,7 +2,6 @@ package dto
 
 
 type Admin struct {
-	 
 	FirstName  *string   `json:"firstname"`
 	MiddleName *string   `json:"middlename"`
 	LastName   *string   `json:"lastname"`
