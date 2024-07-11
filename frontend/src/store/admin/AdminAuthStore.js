@@ -22,7 +22,6 @@ const useAdminAuthStore = create((set, get) => ({
       let response = await axiosInstance.post('admin/admin-login', loginValues)
 
       if (response.data.message === 'success') {
-        //save the user Credentials to a cookie
         Cookies.set('Cookies', JSON.stringify(response.data.payload), {
           expires: 7,
           sameSite: 'Strict',

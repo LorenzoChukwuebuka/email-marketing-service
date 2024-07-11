@@ -1,21 +1,29 @@
-import axios from 'axios'
-import Cookies from 'js-cookie'
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
-export const APIURL = import.meta.env.VITE_API_URL
+export const APIURL = import.meta.env.VITE_API_URL;
 
 const getToken = () => {
-  let cookies = Cookies.get('Cookies')
+  let cookies = Cookies.get('Cookies');
 
-  let cookieData = JSON.parse(cookies)
+  if (!cookies) {
+    return null;
+  }
 
-  return cookies ? cookieData.token : null
-}
+  try {
+    let cookieData = JSON.parse(cookies);
+    return cookieData.token;
+  } catch (error) {
+    console.error('Failed to parse cookies:', error);
+    return null;
+  }
+};
 
 const axiosInstance = axios.create({
   baseURL: APIURL,
   headers: {
     Authorization: `Bearer ${getToken()}`
   }
-})
+});
 
-export default axiosInstance
+export default axiosInstance;
