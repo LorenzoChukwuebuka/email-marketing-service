@@ -29,9 +29,9 @@ const PlansDashTemplate = () => {
           {selectedId.length > 0 && (
             <button
               className="bg-red-200  px-4 py-2 rounded-md  transition duration-300"
-              onClick={() => handleDelete()}
+              onClick={(e) => handleDelete(e)}
             >
-              <span className="text-red-500"> Delete Plan </span>{" "}
+              <span className="text-red-500"> Delete Plan </span> 
               <i className="bi bi-trash text-red-500"></i>
             </button>
           )}

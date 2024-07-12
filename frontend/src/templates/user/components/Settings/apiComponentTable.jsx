@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import useAPIKeyStore from "../../../../store/userstore/apiKeyStore";
 import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
+import decryptApiKey from "../../../../utils/decryptEncryption";
 
 const APIKeysTableComponent = () => {
   const { getAPIKey, apiKeyData, deleteAPIKey } = useAPIKeyStore();
 
   const [deletingId, setDeletingId] = useState(null);
+  // This should match the key used on the backend
 
   const shouldRenderNoKey = () => {
     return (
@@ -67,7 +69,7 @@ const APIKeysTableComponent = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <span className="text-sm text-gray-500 mr-2">
-                      {maskAPIKey(key.api_key)}
+                      {maskAPIKey(decryptApiKey(key.api_key))}
                     </span>
                   </div>
                 </td>

@@ -10,6 +10,7 @@ import { UserDashRoute } from "./layouts/userDashRoute";
 import { ProtectedRoute } from "./utils/protectedRoute";
 import { AdminAuthRoute } from "./pages/admin";
 import { AdminDashRoute } from "./layouts/adminDashRoute";
+  
 function App() {
   const handleSuccess = (message) => {
     toast.success(message, {

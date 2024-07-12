@@ -64,16 +64,31 @@ func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}
 
 func (s *APIKeyService) GetAPIKey(userId string) ([]model.APIKeyResponseModel, error) {
 	userApiKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(userId)
-
 	if err != nil {
 		return nil, err
 	}
-
 	if len(userApiKeys) == 0 {
 		return nil, nil
 	}
 
-	return userApiKeys, nil
+	encryptedKeys := make([]model.APIKeyResponseModel, len(userApiKeys))
+	for i, apiKey := range userApiKeys {
+		encryptedKey, err := utils.EncryptKey(apiKey.APIKey)
+		if err != nil {
+			fmt.Println("Error encrypting:", err)
+			continue // skip this API key and continue with others
+		}
+		encryptedKeys[i] = model.APIKeyResponseModel{
+			UUID:      apiKey.UUID,
+			UserId:    apiKey.UserId,
+			Name:      apiKey.Name,
+			APIKey:    encryptedKey,
+			CreatedAt: apiKey.CreatedAt,
+			UpdatedAt: apiKey.UpdatedAt,
+		}
+	}
+	fmt.Println(encryptedKeys)
+	return encryptedKeys, nil
 }
 
 func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {

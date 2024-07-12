@@ -54,7 +54,7 @@ const ResetPasswordTemplate = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-lg mx-auto mt-5">
           <div className="bg-white shadow-md rounded-lg p-8">
-            <h3 className="text-2xl font-bold text-center mb-4">MailCrib</h3>
+            <h3 className="text-2xl font-bold text-center mb-4">{import.meta.env.VITE_API_NAME}</h3>
 
             <h3 className="text-2xl font-bold text-center mb-4">
               Reset Password

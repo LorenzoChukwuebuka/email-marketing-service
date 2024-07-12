@@ -26,6 +26,7 @@ var (
 	ErrCreatingBilling      = errors.New("failed to create billing")
 	ErrCreatingSubscription = errors.New("failed to create subscription")
 	ErrInvalidOTPType       = errors.New("invalid OTP type")
+	ErrCreatingSMTPKey      = errors.New("error creating smtp key")
 )
 
 const (
@@ -47,6 +48,7 @@ type UserService struct {
 	subscriptionRepo  *repository.SubscriptionRepository
 	billingRepo       *repository.BillingRepository
 	dailyMailCalcRepo *repository.DailyMailCalcRepository
+	smtpKeyRepo       *repository.SMTPKeyRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -54,7 +56,9 @@ func NewUserService(userRepo *repository.UserRepository,
 	planRepo *repository.PlanRepository,
 	subscriptionRepo *repository.SubscriptionRepository,
 	billingRepo *repository.BillingRepository,
-	dailyMailCalcRepo *repository.DailyMailCalcRepository) *UserService {
+	dailyMailCalcRepo *repository.DailyMailCalcRepository,
+	smtpKeyRepo *repository.SMTPKeyRepository,
+) *UserService {
 	return &UserService{
 		userRepo:          userRepo,
 		otpService:        otpSvc,
@@ -62,6 +66,7 @@ func NewUserService(userRepo *repository.UserRepository,
 		subscriptionRepo:  subscriptionRepo,
 		billingRepo:       billingRepo,
 		dailyMailCalcRepo: dailyMailCalcRepo,
+		smtpKeyRepo:       smtpKeyRepo,
 	}
 }
 
@@ -94,6 +99,10 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 
 	otp := utils.GenerateOTP(otpLength)
 	if err := s.createAndSendOTP(user, otp); err != nil {
+		return nil, err
+	}
+
+	if err := s.createSMTPKey(user.UUID, user.Email); err != nil {
 		return nil, err
 	}
 
@@ -238,6 +247,25 @@ func (s *UserService) createSubscription(userId int, plan *model.PlanResponse, t
 	return nil
 }
 
+func (s *UserService) createSMTPKey(userId string, useremail string) error {
+
+	smtpkeyModel := &model.SMTPDetails{
+		UUID:      uuid.New().String(),
+		UserId:    userId,
+		KeyName:   "master password",
+		SMTPLogin: useremail,
+		Password:  utils.GenerateOTP(8),
+	}
+
+	err := s.smtpKeyRepo.CreateSMTPKey(smtpkeyModel)
+
+	if err != nil {
+		return ErrCreatingSMTPKey
+	}
+
+	return nil
+}
+
 func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid login data: %w", err)
@@ -330,7 +358,7 @@ func (s *UserService) ChangePassword(userId string, d *dto.ChangePassword) error
 	return s.userRepo.ChangeUserPassword(&model.User{UUID: userId, Password: string(hashedPassword)})
 }
 
-func (s *UserService) EditUser( d *model.User) error {
+func (s *UserService) EditUser(d *model.User) error {
 	return s.userRepo.UpdateUserRecords(d)
 }
 
@@ -388,4 +416,32 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 	}
 
 	return &userDetails, nil
+}
+
+func (s *UserService) GetUserSMTPKey(userId string) (*model.SMTPDetailsResponse, error) {
+	user, err := s.smtpKeyRepo.GetUserSMTPKey(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) GenerateNewSMTPMasterKey(userId string) error {
+
+	return nil
+}
+
+func (s *UserService) CreateNewUserSMTPKey() error {
+	smtpkeyModel := &model.SMTPDetails{}
+
+	err := s.smtpKeyRepo.CreateSMTPKey(smtpkeyModel)
+
+	if err != nil {
+		return ErrCreatingSMTPKey
+	}
+
+	return nil
+	
 }

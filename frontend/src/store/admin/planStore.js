@@ -80,7 +80,23 @@ const usePlanStore = create((set, get) => ({
   },
 
   deletePlan: async () => {
-    console.log(get().selectedId)
+    try {
+      var i = 0
+
+      const { selectedId } = get()
+
+      for (i; i < selectedId.length; i++) {
+        let response = await axiosInstance.delete(
+          '/admin/delete-plan/' + selectedId[i]
+        )
+
+        eventBus.emit('success', response.data.payload)
+      }
+    } catch (error) {
+      eventBus.emit('error', error)
+    } finally {
+      get().selectedId([])
+    }
   }
 }))
 

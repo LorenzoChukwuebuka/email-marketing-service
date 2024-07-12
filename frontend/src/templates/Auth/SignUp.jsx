@@ -53,13 +53,13 @@ const SignUpTemplate = () => {
     <main className="min-h-screen">
       <div className="bg-[rgb(4,22,43)] h-[15em] pt-2">
         <h1 className="text-center text-2xl font-semibold text-white mt-8">
-          MailCrib
+       {import.meta.env.VITE_API_NAME}
         </h1>
       </div>
 
       <div className="bg-white w-[60%] min-h-auto md:h-[20em] -mt-[7em] mx-auto rounded-btn">
         <h1 className="text-[rgb(4,22,43)] text-2xl font-semibold text-center mt-10">
-          Get Started with Mail Crib
+          Get Started with {import.meta.env.VITE_API_NAME}
         </h1>
 
         <div className="mt-8 mb-5">

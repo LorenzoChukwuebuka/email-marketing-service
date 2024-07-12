@@ -17,18 +17,18 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
 	return model.UserResponse{
-		ID:         user.ID,
-		UUID:       user.UUID,
-		FullName:   user.FullName,
-		Email:      user.Email,
-		Company:    user.Company,
+		ID:          user.ID,
+		UUID:        user.UUID,
+		FullName:    user.FullName,
+		Email:       user.Email,
+		Company:     user.Company,
 		PhoneNumber: user.PhoneNumber,
-		Password:   user.Password, // Note: Make sure you have a good reason to include the password in the response
-		Verified:   user.Verified,
-		CreatedAt:  user.CreatedAt,
-		VerifiedAt: user.VerifiedAt.Format(time.RFC3339),
-		UpdatedAt:  user.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:  user.DeletedAt.Format(time.RFC3339),
+		Password:    user.Password, // Note: Make sure you have a good reason to include the password in the response
+		Verified:    user.Verified,
+		CreatedAt:   user.CreatedAt,
+		VerifiedAt:  user.VerifiedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:   user.DeletedAt.Format(time.RFC3339),
 	}
 }
 
