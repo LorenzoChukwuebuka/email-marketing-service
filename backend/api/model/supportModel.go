@@ -62,5 +62,5 @@ type KnowledgeBaseCategory struct {
 	ParentID    *uint                  `json:"parent_id"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
-	Articles    []KnowledgeBaseArticle `gorm:"foreignkey:CategoryID" json:"articles"`
+	//    []KnowledgeBaseArticle `gorm:"foreignkey:CategoryID" json:"articles"`
 }

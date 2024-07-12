@@ -52,7 +52,7 @@ func initializeDatabase() {
 }
 
 func autoMigrateModels() {
-	db.AutoMigrate(
+	err := db.AutoMigrate(
 		&model.User{},
 		&model.OTP{},
 		&model.UserSession{},
@@ -68,5 +68,10 @@ func autoMigrateModels() {
 		&model.SentEmails{},
 		&model.KnowledgeBaseArticle{},
 		&model.KnowledgeBaseCategory{},
+		&model.SMTPDetails{},
 	)
+
+	if err != nil {
+		log.Fatalf("Migration Failed: %v", err)
+	}
 }

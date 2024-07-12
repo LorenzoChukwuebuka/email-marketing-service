@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { APIKeysComponentTable, SMTPKeysTableComponent } from "../components";
+import {
+  APIInfo,
+  APIKeysComponentTable,
+  SMTPKeysTableComponent,
+} from "../components";
 import useAPIKeyStore from "../../../store/userstore/apiKeyStore";
 import { Modal } from "../../../components";
 
@@ -53,7 +57,7 @@ const APISettingsDashTemplate = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl ">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">SMTP & API</h1>
         <div>
@@ -110,8 +114,8 @@ const APISettingsDashTemplate = () => {
 
       {activeTab === "API Keys" && (
         <>
-          {" "}
-          <APIKeysComponentTable />{" "}
+          <APIKeysComponentTable />
+          <APIInfo />
         </>
       )}
       {activeTab === "SMTP" && (

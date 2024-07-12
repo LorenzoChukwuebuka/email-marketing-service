@@ -8,9 +8,9 @@ FE_DIR := ./frontend/
 wire:
 		cd $(WIRE_PATH) && wire
 run:
-		go run main.go
+		cd ${ROOT_DIR} && go run main.go
 build:
-		go build main.go
+		cd ${ROOT_DIR} && go build main.go
 air:
 		cd $(ROOT_DIR) && air
 npmi:

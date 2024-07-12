@@ -21,7 +21,7 @@ func (r *APIKeyRepository) createAPIKeyResponse(apiKey model.APIKey) model.APIKe
 	return model.APIKeyResponseModel{
 		UUID:      apiKey.UUID,
 		UserId:    apiKey.UserId,
-		Name: apiKey.Name,
+		Name:      apiKey.Name,
 		APIKey:    apiKey.APIKey,
 		CreatedAt: apiKey.CreatedAt.String(),
 		UpdatedAt: apiKey.UpdatedAt.Format(time.RFC3339),

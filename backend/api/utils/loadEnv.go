@@ -20,6 +20,7 @@ type Config struct {
 	DB_URL                string `env:"DB_URL"`
 	APPName               string `env:"APP_NAME"`
 	PAYSTACK_CALLBACK_URL string `env:"PAYSTACK_CALLBACK_URL"`
+	ENC_KEY               string `env:"ENC_KEY"`
 }
 
 var LoadEnv = func() *Config {
@@ -42,6 +43,7 @@ var LoadEnv = func() *Config {
 		DB_URL:                os.Getenv("DB_URL"),
 		APPName:               os.Getenv("APP_NAME"),
 		PAYSTACK_CALLBACK_URL: os.Getenv("PAYSTACK_CALLBACK_URL"),
+		ENC_KEY:               os.Getenv("ENC_KEY"),
 	}
 
 	return config
