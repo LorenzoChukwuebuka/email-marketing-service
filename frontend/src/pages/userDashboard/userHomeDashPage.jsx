@@ -8,5 +8,4 @@ const UserDashPage = () => {
   );
 };
 
-
-export default UserDashPage
+export default UserDashPage;

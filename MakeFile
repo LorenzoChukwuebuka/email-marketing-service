@@ -1,5 +1,5 @@
-WIRE_PATH := ./backend/api/routes
-MAIN_PATH := ./backend/api
+WIRE_PATH := ./backend/api/v1/routes
+MAIN_PATH := ./backend/api/v1
 ROOT_DIR := ./backend/
 FE_DIR := ./frontend/
 .PHONY: wire build
