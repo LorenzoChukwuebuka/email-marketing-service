@@ -134,3 +134,15 @@ func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketC
 
 	return nil, nil
 }
+
+func InitializeContactController(db *gorm.DB) (*controllers.ContactController, error) {
+	wire.Build(
+		controllers.NewContactController,
+		services.NewContactService,
+		repository.NewContactRepository,
+		repository.NewUserRepository,
+		repository.NewSubscriptionRepository,
+	)
+
+	return nil, nil
+}

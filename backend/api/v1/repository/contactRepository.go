@@ -41,6 +41,14 @@ func (r *ContactRepository) CheckIfEmailExists(d *model.Contact) (bool, error) {
 
 }
 
+func (r *ContactRepository) BulkCreateContacts(contacts []model.Contact) error {
+	result := r.DB.CreateInBatches(contacts, 100) // Insert in batches of 100
+	if result.Error != nil {
+		return fmt.Errorf("error bulk creating contacts: %w", result.Error)
+	}
+	return nil
+}
+
 func (r *ContactRepository) GetAllContacts(userId string) {
 
 }

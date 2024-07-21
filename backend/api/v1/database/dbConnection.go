@@ -70,12 +70,12 @@ func autoMigrateModels() {
 		&model.KnowledgeBaseCategory{},
 		&model.SMTPKey{},
 		&model.SMTPMasterKey{},
+		&model.ContactGroup{},
+		&model.Contact{},
+		&model.UserContactGroup{},
 	)
 
 	if err != nil {
 		log.Fatalf("Migration Failed: %v", err)
 	}
 }
-
-
-

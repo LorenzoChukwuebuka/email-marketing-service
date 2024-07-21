@@ -111,3 +111,12 @@ func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketC
 	supportTicketController := controllers.NewTicketController(supportTicketService)
 	return supportTicketController, nil
 }
+
+func InitializeContactController(db *gorm.DB) (*controllers.ContactController, error) {
+	contactRepository := repository.NewContactRepository(db)
+	contactService := services.NewContactService(contactRepository)
+	userRepository := repository.NewUserRepository(db)
+	subscriptionRepository := repository.NewSubscriptionRepository(db)
+	contactController := controllers.NewContactController(contactService, userRepository, subscriptionRepository)
+	return contactController, nil
+}

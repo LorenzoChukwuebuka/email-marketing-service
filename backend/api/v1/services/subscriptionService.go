@@ -35,6 +35,11 @@ func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.
 	return d, nil
 }
 
+
+func (s *SubscriptionService) GetUsersCurrentSubscription(){
+	
+}
+
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
 	//0.5 check if the user already cancelled
 	userCancelledSub, err := s.SubscriptionRepo.FindSubscriptionById(subscriptionId, userId)

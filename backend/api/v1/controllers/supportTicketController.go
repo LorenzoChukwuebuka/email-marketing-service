@@ -3,7 +3,6 @@ package controllers
 import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
-
 	"github.com/golang-jwt/jwt"
 	"net/http"
 )

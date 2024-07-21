@@ -15,6 +15,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	transactionController, _ := InitializeTransactionController(db)
 	supportTicketController, _ := InitializeSupportTicketController(db)
 	smptKeyController, _ := InitializeSMTPKeyController(db)
+	contactController, _ := InitializeContactController(db)
 
 	//subscription service for testing only
 	subscriptionController, _ := InitializeSubscriptionController(db)
@@ -50,12 +51,15 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/get-apikey", middleware.JWTMiddleware(apiKeyController.GetAPIKey)).Methods("GET", "OPTIONS")
 
 	//smtp key route
-
 	router.HandleFunc("/generate-new-smtp-master-password", middleware.JWTMiddleware(smptKeyController.GenerateNewSMTPMasterPassword)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/get-smtp-keys", middleware.JWTMiddleware(smptKeyController.GetUserSMTPKeys)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/create-smtp-key", middleware.JWTMiddleware(smptKeyController.CreateSMTPKey)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/toggle-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.ToggleSMTPKeyStatus)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.DeleteSMTPKey)).Methods("DELETE", "OPTIONS")
+
+	//contact route
+	router.HandleFunc("/create-contact", middleware.JWTMiddleware(contactController.CreateContact)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/upload-contact-csv",middleware.JWTMiddleware(contactController.UploadContactViaCSV)).Methods("POST","OPTIONS")
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
@@ -66,7 +70,6 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/delete-session", middleware.JWTMiddleware(sessionController.DeleteSession)).Methods("DELETE", "OPTIONS")
 
 	//support ticket
-
 	router.HandleFunc("/create-ticket", middleware.JWTMiddleware(supportTicketController.CreateTicket)).Methods("POST", "OPTIONS")
 
 	// Testing API
