@@ -89,9 +89,28 @@ const UserDashLayout = () => {
                   to="/user/dash"
                   className="flex font-semibold text-base items-center"
                 >
-                  <i className="bi bi-house mr-2"></i> Home
+                  <i className="bi bi-house mr-2"></i> Dashboard
                 </Link>
               </li>
+
+              <li className={getLinkClassName("/campaigns")}>
+                <Link
+                  to=""
+                  className="flex font-semibold text-base items-center"
+                >
+                  <i className="bi bi-megaphone"></i> &nbsp; Campaigns
+                </Link>
+              </li>
+
+              <li className={getLinkClassName("/contacts")}>
+                <Link
+                  to=""
+                  className="flex font-semibold text-base items-center"
+                >
+                  <i className="bi bi-telephone"></i> &nbsp; Contacts
+                </Link>
+              </li>
+
               <li className={getLinkClassName("/analytics")}>
                 <Link
                   to=""
@@ -106,6 +125,14 @@ const UserDashLayout = () => {
                   className="flex font-semibold text-base items-center"
                 >
                   <i className="bi bi-wallet"></i> &nbsp; Billing
+                </Link>
+              </li>
+              <li className={getLinkClassName("/support")}>
+                <Link
+                  to=""
+                  className="flex font-semibold text-base items-center"
+                >
+                  <i className="bi bi-headset"></i> &nbsp; Help & Support
                 </Link>
               </li>
               <li className={`${getLinkClassName("/user/setting")} relative`}>
@@ -178,10 +205,10 @@ const UserDashLayout = () => {
           >
             <span style={{ fontSize: "24px" }}>{sidebarOpen ? "≡" : "☰"}</span>
           </button>
-          <h1 className="text-xl font-semibold">Home </h1>
-          <button className="hover:bg-blue-200 hover:rounded-btn hover:text-blue-500 font-semibold p-1">
+          <h1 className="text-xl font-semibold"> Dashboard </h1>
+          {/* <button className="hover:bg-blue-200 hover:rounded-btn hover:text-blue-500 font-semibold p-1">
             Usage and Plans
-          </button>
+          </button> */}
 
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="m-1">

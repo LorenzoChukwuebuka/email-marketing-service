@@ -68,7 +68,7 @@ func autoMigrateModels() {
 		&model.SentEmails{},
 		&model.KnowledgeBaseArticle{},
 		&model.KnowledgeBaseCategory{},
-		&model.SMTPDetails{},
+		&model.SMTPKey{},
 		&model.SMTPMasterKey{},
 	)
 
@@ -76,3 +76,6 @@ func autoMigrateModels() {
 		log.Fatalf("Migration Failed: %v", err)
 	}
 }
+
+
+

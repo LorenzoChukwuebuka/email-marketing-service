@@ -27,6 +27,7 @@ var (
 	ErrCreatingSubscription = errors.New("failed to create subscription")
 	ErrInvalidOTPType       = errors.New("invalid OTP type")
 	ErrCreatingSMTPKey      = errors.New("error creating smtp key")
+	ErrBlocked              = errors.New("your account has been blocked. Kindly contact the admin")
 )
 
 const (
@@ -39,6 +40,8 @@ const (
 
 var (
 	mailer = &custom.Mail{}
+	config = utils.LoadEnv()
+	smtpserver = config.SMTP_SERVER
 )
 
 type UserService struct {
@@ -102,7 +105,7 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if err := s.createSMTPKey(user.UUID, user.Email); err != nil {
+	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
 		return nil, err
 	}
 
@@ -163,7 +166,7 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 	user := &model.User{
 		UUID:       otpData.UserId,
 		Verified:   true,
-		VerifiedAt: time.Now(),
+		VerifiedAt: time.Now().UTC(),
 	}
 
 	userId, err := s.userRepo.VerifyUserAccount(user)
@@ -217,7 +220,7 @@ func (s *UserService) createBilling(userId int, plan *model.PlanResponse, transa
 		PlanId:        plan.ID,
 		ExpiryDate:    time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 		TransactionId: transactionId,
-		CreatedAt:     time.Now(),
+		CreatedAt:     time.Now().UTC(),
 	}
 
 	bill, err := s.billingRepo.CreateBilling(billing)
@@ -232,10 +235,10 @@ func (s *UserService) createSubscription(userId int, plan *model.PlanResponse, t
 	subscription := &model.Subscription{
 		UserId:        userId,
 		PlanId:        plan.ID,
-		StartDate:     time.Now(),
+		StartDate:     time.Now().UTC(),
 		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 		TransactionId: transactionId,
-		CreatedAt:     time.Now(),
+		CreatedAt:     time.Now().UTC(),
 		PaymentId:     paymentId,
 	}
 
@@ -247,17 +250,21 @@ func (s *UserService) createSubscription(userId int, plan *model.PlanResponse, t
 	return nil
 }
 
-func (s *UserService) createSMTPKey(userId string, useremail string) error {
+func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error {
 
-	smtpkeyModel := &model.SMTPDetails{
+
+
+	smtpkeyModel := &model.SMTPMasterKey{
 		UUID:      uuid.New().String(),
+		KeyName:   "Master",
 		UserId:    userId,
-		KeyName:   "master password",
-		SMTPLogin: useremail,
-		Password:  utils.GenerateOTP(8),
+		SMTPLogin: userEmail+ "@" + smtpserver,
+		Password:  utils.GenerateOTP(15),
+		Status:    model.KeyStatus("active"),
+		CreatedAt: time.Now().UTC(),
 	}
 
-	err := s.smtpKeyRepo.CreateSMTPKey(smtpkeyModel)
+	err := s.smtpKeyRepo.CreateSMTPMasterKey(smtpkeyModel)
 
 	if err != nil {
 		return ErrCreatingSMTPKey
@@ -274,6 +281,10 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 	user, err := s.userRepo.Login(&model.User{Email: strings.ToLower(d.Email)})
 	if err != nil {
 		return nil, fmt.Errorf("error during login: %w", err)
+	}
+
+	if user.Blocked {
+		return nil, ErrBlocked
 	}
 
 	if !user.Verified {
@@ -416,34 +427,4 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 	}
 
 	return &userDetails, nil
-}
-
-func (s *UserService) GetUserSMTPKey(userId string) (map[string]interface{}, error) {
-	user, err := s.smtpKeyRepo.GetUserSMTPKey(userId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Print(user)
-
-	return nil, nil
-}
-
-func (s *UserService) GenerateNewSMTPMasterKey(userId string) error {
-
-	return nil
-}
-
-func (s *UserService) CreateNewUserSMTPKey() error {
-	smtpkeyModel := &model.SMTPDetails{}
-
-	err := s.smtpKeyRepo.CreateSMTPKey(smtpkeyModel)
-
-	if err != nil {
-		return ErrCreatingSMTPKey
-	}
-
-	return nil
-	
 }

@@ -76,6 +76,13 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 	return smtpMailController, nil
 }
 
+func InitializeSMTPKeyController(db *gorm.DB) (*controllers.SMTPKeyController, error) {
+	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
+	smtpKeyService := services.NewSMTPKeyService(smtpKeyRepository)
+	smtpKeyController := controllers.NewSMTPKeyController(smtpKeyService)
+	return smtpKeyController, nil
+}
+
 func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionController, error) {
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepository)

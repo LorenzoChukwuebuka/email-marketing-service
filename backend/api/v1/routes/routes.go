@@ -14,6 +14,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	smtpController, _ := InitializeSMTPController(db)
 	transactionController, _ := InitializeTransactionController(db)
 	supportTicketController, _ := InitializeSupportTicketController(db)
+	smptKeyController, _ := InitializeSMTPKeyController(db)
 
 	//subscription service for testing only
 	subscriptionController, _ := InitializeSubscriptionController(db)
@@ -26,8 +27,9 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/user-reset-password", userController.ResetPassword).Methods("POST", "OPTIONS")
 	router.HandleFunc("/change-user-password", middleware.JWTMiddleware(userController.ChangeUserPassword)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/resend-otp", userController.ResendOTP).Methods("POST", "OPTIONS")
-	router.HandleFunc("/get-user-details",middleware.JWTMiddleware(userController.GetUserDetails)).Methods("GET","OPTIONS")
-	router.HandleFunc("/edit-user-details",middleware.JWTMiddleware(userController.EditUser)).Methods("PUT","OPTIONS")
+	router.HandleFunc("/get-user-details", middleware.JWTMiddleware(userController.GetUserDetails)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/edit-user-details", middleware.JWTMiddleware(userController.EditUser)).Methods("PUT", "OPTIONS")
+
 	//transaction routes
 	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
@@ -46,6 +48,14 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/generate-apikey", middleware.JWTMiddleware(apiKeyController.GenerateAPIKEY)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/delete-apikey/{apiKeyId}", middleware.JWTMiddleware(apiKeyController.DeleteAPIKey)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/get-apikey", middleware.JWTMiddleware(apiKeyController.GetAPIKey)).Methods("GET", "OPTIONS")
+
+	//smtp key route
+
+	router.HandleFunc("/generate-new-smtp-master-password", middleware.JWTMiddleware(smptKeyController.GenerateNewSMTPMasterPassword)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/get-smtp-keys", middleware.JWTMiddleware(smptKeyController.GetUserSMTPKeys)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/create-smtp-key", middleware.JWTMiddleware(smptKeyController.CreateSMTPKey)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/toggle-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.ToggleSMTPKeyStatus)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/delete-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.DeleteSMTPKey)).Methods("DELETE", "OPTIONS")
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")

@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-
 type Billing struct {
 	Id            int        `json:"-" gorm:"primaryKey"`
 	UUID          string     `json:"uuid"`

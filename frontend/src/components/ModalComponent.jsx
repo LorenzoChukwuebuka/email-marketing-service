@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-const Modal = ({ isOpen, onClose, title, children, width = "w-[25em]" }) => {
+const Modal = ({ isOpen, onClose, title, children, width = "w-[35em]" }) => {
   if (!isOpen) return null;
 
   return (

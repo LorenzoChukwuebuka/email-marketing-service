@@ -1,4 +1,6 @@
 const SMTPKeysTableComponent = () => {
+
+    
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Your SMTP Settings</h2>
