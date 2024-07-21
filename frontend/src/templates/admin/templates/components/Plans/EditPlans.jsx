@@ -32,7 +32,7 @@ const EditPlans = ({ isOpen, onClose, plan }) => {
   }, [plan]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Plan" width="w-[30em]">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Plan">
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label

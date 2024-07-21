@@ -13,9 +13,21 @@ const AdminDashLayout = () => {
     const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
     const inactiveClass =
       "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
-    return `${baseClass} ${
-      location.pathname.startsWith(path) ? activeClass : inactiveClass
-    }`;
+    // return `${baseClass} ${
+    //   location.pathname.startsWith(path) ? activeClass : inactiveClass
+    // }`;
+
+    if (path === "/zen/dash") {
+      // Exact match for dashboard
+      return `${baseClass} ${
+        location.pathname === path ? activeClass : inactiveClass
+      }`;
+    } else {
+      // Starts with for other routes
+      return `${baseClass} ${
+        location.pathname.startsWith(path) ? activeClass : inactiveClass
+      }`;
+    }
   };
 
   const toggleSettingsDropdown = () => {

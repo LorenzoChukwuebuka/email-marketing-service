@@ -6,10 +6,9 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type APIKeyService struct {
@@ -35,7 +34,7 @@ func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}
 		UserId:    d.UserId,
 		APIKey:    apiKey,
 		Name:      d.Name,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	existingKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(d.UserId)

@@ -17,7 +17,6 @@ const CreatePlan = ({ isOpen, onClose }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Create Plan"
-      width="w-[25em]"
     >
       <form onSubmit={handleSubmit}>
         <div className="mb-4">

@@ -86,6 +86,16 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 	return nil, nil
 }
 
+func InitializeSMTPKeyController(db *gorm.DB) (*controllers.SMTPKeyController, error) {
+	wire.Build(
+		controllers.NewSMTPKeyController,
+		services.NewSMTPKeyService,
+		repository.NewSMTPkeyRepository,
+	)
+
+	return nil, nil
+}
+
 func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionController, error) {
 	wire.Build(
 		controllers.NewSubscriptionController,

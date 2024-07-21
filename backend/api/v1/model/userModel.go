@@ -13,6 +13,7 @@ type User struct {
 	PhoneNumber string    `json:"phonenumber" gorm:"type:varchar(255);default:null"`
 	Password    string    `json:"password"  gorm:"index"`
 	Verified    bool      `json:"verified"`
+	Blocked     bool      `json:"blocked" gorm:"default:false"`
 	CreatedAt   time.Time `json:"created_at" gorm:"type:TIMESTAMP;default:CURRENT_TIMESTAMP"`
 	VerifiedAt  time.Time `json:"verified_at" gorm:"type:TIMESTAMP;null;default:null"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
@@ -28,6 +29,7 @@ type UserResponse struct {
 	PhoneNumber string    `json:"phonenumber,omitempty"`
 	Password    string    `json:"-"`
 	Verified    bool      `json:"verified,omitempty"`
+	Blocked     bool      `json:"blocked"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	VerifiedAt  string    `json:"verified_at,omitempty"`
 	UpdatedAt   string    `json:"updated_at,omitempty"`

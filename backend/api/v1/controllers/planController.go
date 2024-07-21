@@ -5,7 +5,6 @@ import (
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 

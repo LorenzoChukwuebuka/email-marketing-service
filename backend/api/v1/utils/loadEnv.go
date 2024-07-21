@@ -21,6 +21,8 @@ type Config struct {
 	APPName               string `env:"APP_NAME"`
 	PAYSTACK_CALLBACK_URL string `env:"PAYSTACK_CALLBACK_URL"`
 	ENC_KEY               string `env:"ENC_KEY"`
+	SMTP_SERVER           string `env:"SMTP_SERVER"`
+	SMTP_PORT             string `env:"SMTP_PORT"`
 }
 
 var LoadEnv = func() *Config {
@@ -44,6 +46,8 @@ var LoadEnv = func() *Config {
 		APPName:               os.Getenv("APP_NAME"),
 		PAYSTACK_CALLBACK_URL: os.Getenv("PAYSTACK_CALLBACK_URL"),
 		ENC_KEY:               os.Getenv("ENC_KEY"),
+		SMTP_SERVER:           os.Getenv("SMTP_SERVER"),
+		SMTP_PORT:             os.Getenv("SMTP_PORT"),
 	}
 
 	return config
