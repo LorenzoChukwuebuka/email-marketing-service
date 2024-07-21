@@ -7,10 +7,9 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"log"
-
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
+	"log"
 )
 
 func cronJobs(dbConn *gorm.DB) *cron.Cron {

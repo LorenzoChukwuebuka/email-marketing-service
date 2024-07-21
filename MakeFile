@@ -8,7 +8,7 @@ FE_DIR := ./frontend/
 wire:
 		cd $(WIRE_PATH) && wire
 run:
-		cd ${ROOT_DIR} && go run main.go
+		cd ${ROOT_DIR} && go run .
 build:
 		cd ${ROOT_DIR} && go build main.go
 air:
