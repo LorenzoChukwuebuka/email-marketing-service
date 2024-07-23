@@ -6,9 +6,8 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-
 	"github.com/golang-jwt/jwt"
+	"net/http"
 )
 
 type ContactController struct {
@@ -119,3 +118,30 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 	response.SuccessResponse(w, 200, "contacts uploaded successfully")
 
 }
+
+func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.ContactService.GetAllContacts(userId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
+func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Request) {}
+
+func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request) {}
+
+func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {}
+
+func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Request) {}

@@ -88,8 +88,7 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 	}
 
 	// Process the records
-	var contacts []model.Contact
-	//emails := make([]string, 0)
+	var newContacts []model.Contact
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -99,10 +98,8 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 			return fmt.Errorf("error reading CSV record: %w", err)
 		}
 
-		//email := record[columnMap["email"]]
-		//emails = append(emails, email)
-
 		contact := model.Contact{
+			UUID:      uuid.New().String(),
 			FirstName: record[columnMap["first name"]],
 			LastName:  record[columnMap["last name"]],
 			Email:     record[columnMap["email"]],
@@ -115,14 +112,23 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 			contact.From = record[idx]
 		}
 
-		contacts = append(contacts, contact)
+		// Check if email already exists
+		exists, err := s.ContactRepo.CheckIfEmailExists(&contact)
+		if err != nil {
+			return fmt.Errorf("error checking email existence: %w", err)
+		}
 
+		if !exists {
+			newContacts = append(newContacts, contact)
+		}
 	}
 
-	//Batch insert contacts
-	err = s.ContactRepo.BulkCreateContacts(contacts)
-	if err != nil {
-		return fmt.Errorf("error bulk inserting contacts: %w", err)
+	// Batch insert new contacts
+	if len(newContacts) > 0 {
+		err = s.ContactRepo.BulkCreateContacts(newContacts)
+		if err != nil {
+			return fmt.Errorf("error bulk inserting contacts: %w", err)
+		}
 	}
 
 	return nil
@@ -130,9 +136,22 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 
 func (s *ContactService) UpdateContact() {}
 
-func (s *ContactService) GetAllContacts() {}
+func (s *ContactService) GetAllContacts(userId string) ([]model.ContactResponse, error) {
+	contacts, err := s.ContactRepo.GetAllContacts(userId)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *ContactService) DeleteContact() {}
+	if len(contacts) == 0 {
+		return []model.ContactResponse{}, nil
+	}
+
+	return contacts, nil
+}
+
+func (s *ContactService) DeleteContact(userId string,contactId string) {
+	
+}
 
 func (s *ContactService) CreateGroup() {}
 

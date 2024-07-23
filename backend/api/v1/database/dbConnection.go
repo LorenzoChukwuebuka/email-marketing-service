@@ -61,7 +61,6 @@ func autoMigrateModels() {
 		&model.DailyMailCalc{},
 		&model.Subscription{},
 		&model.Billing{},
-		&model.Logger{},
 		&adminmodel.Admin{},
 		&model.SupportTicket{},
 		&model.TicketFiles{},

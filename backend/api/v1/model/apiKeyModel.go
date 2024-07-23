@@ -18,7 +18,7 @@ type APIKey struct {
 	Name      string    `json:"name"`
 	APIKey    string    `json:"api_key" gorm:"index"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	UpdatedAt *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
 
 type APIKeyResponseModel struct {

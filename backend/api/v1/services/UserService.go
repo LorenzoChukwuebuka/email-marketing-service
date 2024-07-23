@@ -163,10 +163,13 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		return fmt.Errorf("error retrieving OTP: %w", err)
 	}
 
+
+	htime := time.Now().UTC()
+
 	user := &model.User{
 		UUID:       otpData.UserId,
 		Verified:   true,
-		VerifiedAt: time.Now().UTC(),
+		VerifiedAt: &htime,
 	}
 
 	userId, err := s.userRepo.VerifyUserAccount(user)

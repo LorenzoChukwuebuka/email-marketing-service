@@ -63,7 +63,9 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) (int, error) {
 
 	user.Verified = d.Verified
 	user.VerifiedAt = d.VerifiedAt
-	user.UpdatedAt = time.Now()
+
+	htime := time.Now().UTC()
+	user.UpdatedAt = &htime
 
 	if err := r.DB.Save(&user).Error; err != nil {
 		fmt.Printf("Error updating user: %v\n", err)
@@ -183,7 +185,9 @@ func (r *UserRepository) UpdateUserRecords(d *model.User) error {
 	user.Email = d.Email
 	user.PhoneNumber = d.PhoneNumber
 	user.Company = d.Company
-	user.UpdatedAt = time.Now()
+
+	htime := time.Now().UTC()
+	user.UpdatedAt = &htime
 
 	// Save the updated user record to the database
 	if err := r.DB.Save(&user).Error; err != nil {
