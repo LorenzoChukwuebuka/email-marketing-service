@@ -44,15 +44,15 @@ type ContactGroup struct {
 }
 
 type ContactResponse struct {
-	ID        uint   ` json:"-"`
-	UUID      string `json:"uuid" `
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	GroupId   uint   `json:"group_id"`
-	From      string `json:"from"`
-	UserId    string `json:"user_id" `
-	CreatedAt string `json:"created_at" `
-	UpdatedAt string `json:"updated_at" `
-	DeletedAt string `json:"deleted_at"`
+	ID        uint           ` json:"-"`
+	UUID      string         `json:"uuid" `
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     string         `json:"email"`
+	From      string         `json:"from"`
+	UserId    string         `json:"user_id" `
+	CreatedAt string         `json:"created_at" `
+	UpdatedAt *string        `json:"updated_at" `
+	DeletedAt *string        `json:"deleted_at"`
+	Groups    []ContactGroup `json:"groups"`
 }

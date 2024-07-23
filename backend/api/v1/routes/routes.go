@@ -59,7 +59,8 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 
 	//contact route
 	router.HandleFunc("/create-contact", middleware.JWTMiddleware(contactController.CreateContact)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/upload-contact-csv",middleware.JWTMiddleware(contactController.UploadContactViaCSV)).Methods("POST","OPTIONS")
+	router.HandleFunc("/upload-contact-csv", middleware.JWTMiddleware(contactController.UploadContactViaCSV)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-all-contacts", middleware.JWTMiddleware(contactController.GetAllContacts)).Methods("GET", "OPTIONS")
 
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
