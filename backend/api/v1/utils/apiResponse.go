@@ -10,7 +10,7 @@ type ApiResponse struct {
 
 func (r *ApiResponse) SuccessResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
 	successResponse := map[string]interface{}{
-		"status":    true,
+		"status":  true,
 		"message": "success",
 		"payload": payload,
 	}
@@ -19,7 +19,7 @@ func (r *ApiResponse) SuccessResponse(w http.ResponseWriter, statusCode int, pay
 
 func (r *ApiResponse) ErrorResponse(w http.ResponseWriter, payload interface{}) {
 	errorResponse := map[string]interface{}{
-		"status":    false,
+		"status":  false,
 		"message": "failed",
 		"payload": payload,
 	}

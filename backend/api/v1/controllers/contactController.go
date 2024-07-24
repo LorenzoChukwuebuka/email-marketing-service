@@ -7,7 +7,9 @@ import (
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 type ContactController struct {
@@ -47,37 +49,31 @@ func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		response.ErrorResponse(w, "Invalid claims")
 		return
 	}
 
 	userId := claims["userId"].(string)
 
-	//get the users id in int
-
 	userModel := &model.User{UUID: userId}
-
 	user, err := c.UserRepo.FindUserById(userModel)
-
 	if err != nil {
-		response.ErrorResponse(w, err)
+		response.ErrorResponse(w, err.Error())
 		return
 	}
 
 	sub, err := c.SubscriptionRepo.GetUserCurrentRunningSubscription(user.ID)
-
 	if err != nil {
-		response.ErrorResponse(w, err)
+		response.ErrorResponse(w, err.Error())
+		return
 	}
 
 	var fileSizeLimit int64
-
 	switch sub.Plan.PlanName {
 	case "free":
 		fileSizeLimit = 5 << 20 // 5 MB
@@ -89,37 +85,82 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 		fileSizeLimit = 10 << 20 // 10 MB default
 	}
 
-	err = r.ParseMultipartForm(fileSizeLimit)
+	// Set a reasonable limit for the entire form, separate from file size limit
+	err = r.ParseMultipartForm(32 << 20) // 32 MB
 	if err != nil {
-		http.Error(w, "File too large or unable to parse form", http.StatusBadRequest)
+		response.ErrorResponse(w, "Error parsing form")
 		return
 	}
 
 	// Get the file from the form
 	file, header, err := r.FormFile("contacts_csv")
 	if err != nil {
-		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
+		response.ErrorResponse(w, "Error retrieving the file")
 		return
 	}
 	defer file.Close()
 
 	// Check file size
 	if header.Size > fileSizeLimit {
-		http.Error(w, "File size exceeds the limit for your subscription", http.StatusBadRequest)
+		response.ErrorResponse(w, "File size exceeds the limit for your subscription")
 		return
 	}
 
 	err = c.ContactService.UploadContactViaCSV(file, header.Filename, userId)
 	if err != nil {
-		http.Error(w, "Error uploading CSV: "+err.Error(), http.StatusInternalServerError)
+		response.ErrorResponse(w, "Error uploading CSV: "+err.Error())
 		return
 	}
 
-	response.SuccessResponse(w, 200, "contacts uploaded successfully")
+	response.SuccessResponse(w, http.StatusOK, "Contacts uploaded successfully")
 
 }
 
 func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		response.ErrorResponse(w, "Invalid claims")
+		return
+	}
+
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
+
+	page, err := strconv.Atoi(page1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page number")
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
+	userId, ok := claims["userId"].(string)
+	if !ok {
+		response.ErrorResponse(w, "Invalid user ID")
+		return
+	}
+
+	result, err := c.ContactService.GetAllContacts(userId, page, pageSize)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, http.StatusOK, result)
+
+}
+
+func (c *ContactController) UpdateContact(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.EditContactDTO
+
+	vars := mux.Vars(r)
+
+	contactId := vars["contactId"]
+
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
@@ -128,19 +169,44 @@ func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Reques
 
 	userId := claims["userId"].(string)
 
-	result, err := c.ContactService.GetAllContacts(userId)
+	utils.DecodeRequestBody(r, &reqdata)
 
-	if err != nil {
+	reqdata.UserId = userId
+	reqdata.ContactId = contactId
+
+	if err := c.ContactService.UpdateContact(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
+		return
 	}
 
-	response.SuccessResponse(w, 200, result)
+	response.SuccessResponse(w, 200, "contact updated successfully")
+
+}
+
+func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	contactId := vars["contactId"]
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	if err := c.ContactService.DeleteContact(userId, contactId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "contact deleted successfully")
 
 }
 
 func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Request) {}
-
-func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request) {}
 
 func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {}
 
