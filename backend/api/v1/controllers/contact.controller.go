@@ -206,6 +206,32 @@ func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request
 
 }
 
+func (c *ContactController) CreateGroupController(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.ContactGroupDTO
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.UserId = userId
+
+	result, err := c.ContactService.CreateGroup(reqdata)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
 func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Request) {}
 
 func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {}
