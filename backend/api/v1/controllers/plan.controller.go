@@ -4,8 +4,8 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type PlanController struct {

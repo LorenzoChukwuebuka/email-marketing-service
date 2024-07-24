@@ -175,9 +175,9 @@ func (s *ContactService) DeleteContact(userId string, contactId string) error {
 	return nil
 }
 
-func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) error {
+func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interface{},error) {
 	if err := utils.ValidateData(d); err != nil {
-		return fmt.Errorf("invalid plan data: %w", err)
+		return nil, fmt.Errorf("invalid plan data: %w", err)
 	}
 
 	groupModel := &model.ContactGroup{
@@ -189,18 +189,24 @@ func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) error {
 
 	groupNameExists, err := s.ContactRepo.CheckIfGroupNameExists(groupModel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if groupNameExists {
-		return fmt.Errorf("group name already exists")
+		return nil, fmt.Errorf("group name already exists")
 	}
 
 	if err := s.ContactRepo.CreateGroup(groupModel); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return map[string]interface{}{
+		"data":    groupModel,
+		"message": "contact group added successfully",
+	}, nil
+
+
+	
 }
 
 func (s *ContactService) AddContactsToGroup(userId string, contactId string, groupId string) {
