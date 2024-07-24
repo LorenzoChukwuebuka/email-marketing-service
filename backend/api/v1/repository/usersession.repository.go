@@ -4,7 +4,7 @@ import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
 	"gorm.io/gorm"
-	"time"
+	
 )
 
 type UserSessionRepository struct {
@@ -17,12 +17,7 @@ func NewUserSessionRepository(db *gorm.DB) *UserSessionRepository {
 	}
 }
 
-func FormatTime(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return t.Format(time.RFC3339)
-}
+
 
 func (r *UserSessionRepository) createUserSessionResponseModel(session *model.UserSession) *model.UserSessionResponseModel {
 	return &model.UserSessionResponseModel{
