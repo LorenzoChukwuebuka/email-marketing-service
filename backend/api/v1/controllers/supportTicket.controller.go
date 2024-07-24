@@ -56,9 +56,6 @@ func (c *SupportTicketController) CreateTicket(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-
-	
-
 	ticketFile := fileBytes[:n]
 	reqdata.TicketFile = &ticketFile
 

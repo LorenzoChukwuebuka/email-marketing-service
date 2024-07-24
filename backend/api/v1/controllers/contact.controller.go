@@ -206,7 +206,7 @@ func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request
 
 }
 
-func (c *ContactController) CreateGroupController(w http.ResponseWriter, r *http.Request) {
+func (c *ContactController) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ContactGroupDTO
 
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
