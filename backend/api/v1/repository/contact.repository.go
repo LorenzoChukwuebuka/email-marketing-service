@@ -242,7 +242,7 @@ func (r *ContactRepository) UpdateGroup(d *model.ContactGroup) error {
 }
 
 func (r *ContactRepository) CheckIfGroupNameExists(d *model.ContactGroup) (bool, error) {
-	result := r.DB.Where("group_name = ? AND user_id", d.GroupName, d.UserId).First(&d)
+	result := r.DB.Where("group_name = ? AND user_id = ?", d.GroupName, d.UserId).First(&d)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return false, nil

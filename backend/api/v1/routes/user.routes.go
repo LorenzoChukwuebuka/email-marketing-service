@@ -63,7 +63,8 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/get-all-contacts", middleware.JWTMiddleware(contactController.GetAllContacts)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
 	router.HandleFunc("/update-contact/{contactId}", middleware.JWTMiddleware(contactController.UpdateContact)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-contact/{contactId}", middleware.JWTMiddleware(contactController.DeleteContact)).Methods("DELETE", "OPTIONS")
-	
+	router.HandleFunc("/create-contact-group", middleware.JWTMiddleware(contactController.CreateGroup)).Methods("POST", "OPTIONS")
+
 	//smtp
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
 
