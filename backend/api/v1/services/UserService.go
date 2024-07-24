@@ -42,6 +42,7 @@ var (
 	mailer = &custom.Mail{}
 	config = utils.LoadEnv()
 	smtpserver = config.SMTP_SERVER
+
 )
 
 type UserService struct {

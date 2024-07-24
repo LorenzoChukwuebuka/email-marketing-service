@@ -10,6 +10,7 @@ type ContactDTO struct {
 }
 
 type EditContactDTO struct {
+	ContactId string `json:"contact_id"`
 	UserId    string `json:"user_id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -18,4 +19,7 @@ type EditContactDTO struct {
 }
 
 type ContactGroupDTO struct {
+	UserId      string `json:"user_id" validate:"required"`
+	GroupName   string `json:"group_name" valiate:"required"`
+	Description string `json:"description"`
 }

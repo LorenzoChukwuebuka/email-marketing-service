@@ -7,9 +7,10 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"encoding/csv"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"mime/multipart"
+	"github.com/google/uuid"
+
 	//"strconv"
 	"strings"
 	"time"
@@ -134,28 +135,77 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 	return nil
 }
 
-func (s *ContactService) UpdateContact() {}
+func (s *ContactService) UpdateContact(d *dto.EditContactDTO) error {
+	contactModel := &model.Contact{
+		UUID:      d.ContactId,
+		UserId:    d.UserId,
+		FirstName: d.FirstName,
+		LastName:  d.LastName,
+		Email:     d.LastName,
+		From:      d.From,
+	}
 
-func (s *ContactService) GetAllContacts(userId string) ([]model.ContactResponse, error) {
-	contacts, err := s.ContactRepo.GetAllContacts(userId)
+	if err := s.ContactRepo.UpdateContact(contactModel); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ContactService) GetAllContacts(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+    paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+    contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams)
+    if err != nil {
+        return repository.PaginatedResult{}, err
+    }
+
+    // If you want to check for empty results, you can do:
+    if contacts.TotalCount == 0 {
+        return repository.PaginatedResult{}, fmt.Errorf("no contacts found")
+    }
+
+    return contacts, nil
+}
+
+func (s *ContactService) DeleteContact(userId string, contactId string) error {
+	if err := s.ContactRepo.DeleteContact(userId, contactId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) error {
+	if err := utils.ValidateData(d); err != nil {
+		return fmt.Errorf("invalid plan data: %w", err)
+	}
+
+	groupModel := &model.ContactGroup{
+		UUID:        uuid.New().String(),
+		GroupName:   d.GroupName,
+		Description: d.Description,
+		UserId:      d.UserId,
+	}
+
+	groupNameExists, err := s.ContactRepo.CheckIfGroupNameExists(groupModel)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if len(contacts) == 0 {
-		return []model.ContactResponse{}, nil
+	if groupNameExists {
+		return fmt.Errorf("group name already exists")
 	}
 
-	return contacts, nil
+	if err := s.ContactRepo.CreateGroup(groupModel); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *ContactService) DeleteContact(userId string,contactId string) {
-	
+func (s *ContactService) AddContactsToGroup(userId string, contactId string, groupId string) {
+
 }
-
-func (s *ContactService) CreateGroup() {}
-
-func (s *ContactService) AddContactsToGroup() {}
 
 func (s *ContactService) RemoveContactFromGroup() {}
 

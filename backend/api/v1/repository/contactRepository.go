@@ -3,9 +3,8 @@ package repository
 import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
-	"time"
-
 	"gorm.io/gorm"
+	"time"
 )
 
 type ContactRepository struct {
@@ -27,7 +26,7 @@ func (r *ContactRepository) CreateContact(d *model.Contact) error {
 }
 
 func (r *ContactRepository) CheckIfEmailExists(d *model.Contact) (bool, error) {
-	result := r.DB.Where("email = ? AND user_id", d.Email, d.UserId).First(&d)
+	result := r.DB.Where("email = ? AND user_id =?", d.Email, d.UserId).First(&d)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return false, nil
@@ -46,72 +45,85 @@ func (r *ContactRepository) BulkCreateContacts(contacts []model.Contact) error {
 	return nil
 }
 
-func (r *ContactRepository) GetAllContacts(userId string) ([]model.ContactResponse, error) {
+func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams) (PaginatedResult, error) {
 	var contacts []model.Contact
-	var contactResponses []model.ContactResponse
 
-	// Query the database to get all contacts for the given user ID
-	result := r.DB.Where("user_id = ?", userId).Preload("Groups").Find(&contacts)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to get contacts: %w", result.Error)
+	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Preload("Groups")
+
+	paginatedResult, err := Paginate(query, params, &contacts)
+	if err != nil {
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
 	}
 
-	// Map the contacts to the ContactResponse type
+	// Log the number of contacts retrieved
+	fmt.Printf("Retrieved %d contacts\n", len(contacts))
+
+	// Map the contacts to ContactResponse
+	var contactResponses []model.ContactResponse
 	for _, contact := range contacts {
-		response := model.ContactResponse{
-			ID:        contact.ID,
-			UUID:      contact.UUID,
-			FirstName: contact.FirstName,
-			LastName:  contact.LastName,
-			Email:     contact.Email,
-			From:      contact.From,
-			UserId:    contact.UserId,
-			CreatedAt: contact.CreatedAt.Format(time.RFC3339),
-		}
-
-		// Check if UpdatedAt is not nil before formatting
-		if contact.UpdatedAt != nil {
-			formatted := contact.UpdatedAt.Format(time.RFC3339)
-			response.UpdatedAt = &formatted
-		}
-
-		// Check if DeletedAt is not nil before formatting
-		if contact.DeletedAt.Valid {
-			formatted := contact.DeletedAt.Time.Format(time.RFC3339)
-			response.DeletedAt = &formatted
-		}
-
-		// Map the groups
-		for _, group := range contact.Groups {
-			groupResponse := model.ContactGroup{
-				ID:          group.ID,
-				UUID:        group.UUID,
-				GroupName:   group.GroupName,
-				Description: group.Description,
-				CreatedAt:   group.CreatedAt,
-			}
-
-			// Check if UpdatedAt is not nil before assigning
-			if group.UpdatedAt != nil {
-				groupResponse.UpdatedAt = group.UpdatedAt
-			}
-
-			// Assign DeletedAt
-			groupResponse.DeletedAt = group.DeletedAt
-
-			response.Groups = append(response.Groups, groupResponse)
-		}
-
+		response := mapContactToResponse(contact)
 		contactResponses = append(contactResponses, response)
 	}
 
-	return contactResponses, nil
+	paginatedResult.Data = contactResponses
+
+	// Log the final result
+	fmt.Printf("Paginated result: %+v\n", paginatedResult)
+
+	return paginatedResult, nil
+}
+
+func mapContactToResponse(contact model.Contact) model.ContactResponse {
+	response := model.ContactResponse{
+		ID:        contact.ID,
+		UUID:      contact.UUID,
+		FirstName: contact.FirstName,
+		LastName:  contact.LastName,
+		Email:     contact.Email,
+		From:      contact.From,
+		UserId:    contact.UserId,
+		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
+	}
+
+	if contact.UpdatedAt != nil {
+		formatted := contact.UpdatedAt.Format(time.RFC3339)
+		response.UpdatedAt = &formatted
+	}
+
+	if contact.DeletedAt.Valid {
+		formatted := contact.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
+	}
+
+	for _, group := range contact.Groups {
+		groupResponse := mapGroupToResponse(group)
+		response.Groups = append(response.Groups, groupResponse)
+	}
+
+	return response
+}
+
+func mapGroupToResponse(group model.ContactGroup) model.ContactGroup {
+	groupResponse := model.ContactGroup{
+		ID:          group.ID,
+		UUID:        group.UUID,
+		GroupName:   group.GroupName,
+		Description: group.Description,
+		CreatedAt:   group.CreatedAt,
+		DeletedAt:   group.DeletedAt,
+	}
+
+	if group.UpdatedAt != nil {
+		groupResponse.UpdatedAt = group.UpdatedAt
+	}
+
+	return groupResponse
 }
 
 func (r *ContactRepository) DeleteContact(userId string, contactId string) error {
 
 	var existingContact model.Contact
-	if err := r.DB.Where("uuid = ? AND user_id", contactId, userId).First(&existingContact).Error; err != nil {
+	if err := r.DB.Where("uuid = ? AND user_id =?", contactId, userId).First(&existingContact).Error; err != nil {
 		return fmt.Errorf("failed to find plan for deletion: %w", err)
 	}
 
@@ -125,7 +137,7 @@ func (r *ContactRepository) DeleteContact(userId string, contactId string) error
 
 func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	var existingContact model.Contact
-	if err := r.DB.Where("uuid = ? AND user_id", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
+	if err := r.DB.Where("uuid = ? AND user_id =?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
 		return fmt.Errorf("failed to find plan for deletion: %w", err)
 	}
 
@@ -209,4 +221,34 @@ func (r *ContactRepository) RemoveContactFromGroup(groupId string, userId string
 	}
 
 	return nil
+}
+
+func (r *ContactRepository) UpdateGroup(d *model.ContactGroup) error {
+
+	var existingContactGroup model.ContactGroup
+
+	if err := r.DB.Where("uuid = ? AND user_id", d.UUID, d.UserId).First(&existingContactGroup).Error; err != nil {
+		return fmt.Errorf("failed to find plan for deletion: %w", err)
+	}
+
+	existingContactGroup.GroupName = d.GroupName
+	existingContactGroup.Description = d.Description
+
+	if err := r.DB.Save(&existingContactGroup).Error; err != nil {
+		return fmt.Errorf("failed to update plan: %w", err)
+	}
+
+	return nil
+}
+
+func (r *ContactRepository) CheckIfGroupNameExists(d *model.ContactGroup) (bool, error) {
+	result := r.DB.Where("group_name = ? AND user_id", d.GroupName, d.UserId).First(&d)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return false, nil
+		}
+		return false, result.Error
+	}
+	return true, nil
+
 }

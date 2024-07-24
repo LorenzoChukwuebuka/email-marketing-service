@@ -36,6 +36,7 @@ type ContactGroup struct {
 	ID          uint           `gorm:"primaryKey" json:"-"`
 	UUID        string         `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
 	GroupName   string         `json:"group_name"`
+	UserId      string         `json:"user_id"`
 	Description string         `json:"description"`
 	CreatedAt   time.Time      `json:"created_at" gorm:"type:TIMESTAMP;default:CURRENT_TIMESTAMP"`
 	UpdatedAt   *time.Time     `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
