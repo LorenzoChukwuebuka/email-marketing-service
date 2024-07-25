@@ -232,7 +232,32 @@ func (c *ContactController) CreateGroup(w http.ResponseWriter, r *http.Request) 
 
 }
 
-func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Request) {}
+func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Request) {
+
+	var reqdata *dto.AddContactsToGroupDTO
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.UserId = userId
+
+	result, err := c.ContactService.AddContactsToGroup(reqdata)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, result)
+
+}
 
 func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {}
 

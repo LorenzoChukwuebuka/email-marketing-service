@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
-	"time"
+	
 )
 
 type APIKeyService struct {
@@ -34,7 +34,7 @@ func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}
 		UserId:    d.UserId,
 		APIKey:    apiKey,
 		Name:      d.Name,
-		CreatedAt: time.Now().UTC(),
+		
 	}
 
 	existingKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(d.UserId)

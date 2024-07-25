@@ -45,6 +45,29 @@ func (r *ContactRepository) BulkCreateContacts(contacts []model.Contact) error {
 	return nil
 }
 
+func (r *ContactRepository) GetASingleContact(contactId string, userId string) (*model.ContactResponse, error) {
+	var contact model.Contact
+
+	result := r.DB.First(&contact, "uuid = ? AND user_id =?", contactId, userId)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil // No contact found with the given ID
+		}
+		return nil, fmt.Errorf("failed to retrieve contact: %w", result.Error)
+	}
+
+	//htime := contact.UpdatedAt
+
+	contactResponse := &model.ContactResponse{
+		ID:        contact.ID,
+		Email:     contact.Email,
+		UserId:    contact.UserId,
+		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
+	}
+
+	return contactResponse, nil
+}
+
 func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams) (PaginatedResult, error) {
 	var contacts []model.Contact
 
@@ -54,9 +77,6 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 	if err != nil {
 		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
 	}
-
-	// Log the number of contacts retrieved
-	fmt.Printf("Retrieved %d contacts\n", len(contacts))
 
 	// Map the contacts to ContactResponse
 	var contactResponses []model.ContactResponse
@@ -83,11 +103,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 		From:      contact.From,
 		UserId:    contact.UserId,
 		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
-	}
-
-	if contact.UpdatedAt != nil {
-		formatted := contact.UpdatedAt.Format(time.RFC3339)
-		response.UpdatedAt = &formatted
+		UpdatedAt: FormatTime(contact.UpdatedAt).(*string),
 	}
 
 	if contact.DeletedAt.Valid {
@@ -105,16 +121,9 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 
 func mapGroupToResponse(group model.ContactGroup) model.ContactGroup {
 	groupResponse := model.ContactGroup{
-		ID:          group.ID,
 		UUID:        group.UUID,
 		GroupName:   group.GroupName,
 		Description: group.Description,
-		CreatedAt:   group.CreatedAt,
-		DeletedAt:   group.DeletedAt,
-	}
-
-	if group.UpdatedAt != nil {
-		groupResponse.UpdatedAt = group.UpdatedAt
 	}
 
 	return groupResponse
@@ -146,7 +155,7 @@ func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	existingContact.Email = d.Email
 	existingContact.From = d.From
 	htime := time.Now().UTC()
-	existingContact.UpdatedAt = &htime
+	existingContact.UpdatedAt = htime
 
 	if err := r.DB.Save(&existingContact).Error; err != nil {
 		return fmt.Errorf("failed to update plan: %w", err)
@@ -181,6 +190,15 @@ func (r *ContactRepository) GetAllGroups(userId string) ([]model.ContactGroup, e
 }
 
 func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*model.ContactGroup, error) {
+	var groups model.ContactGroup
+	err := r.DB.Where("user_id = ?", userId).Find(&groups).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all groups: %w", err)
+	}
+	return &groups, nil
+}
+
+func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId string) (*model.ContactGroup, error) {
 	var group model.ContactGroup
 	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 		return db.Select("contacts.*").
@@ -194,6 +212,7 @@ func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*mod
 		}
 		return nil, fmt.Errorf("failed to fetch group with contacts: %w", err)
 	}
+
 	return &group, nil
 }
 

@@ -59,10 +59,10 @@ func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKey) error {
 		return fmt.Errorf("failed to find API key for update: %w", err)
 	}
 
-	existingAPIKey.APIKey = d.APIKey 
+	existingAPIKey.APIKey = d.APIKey
 
 	htime := time.Now().UTC()
-	existingAPIKey.UpdatedAt = &htime
+	existingAPIKey.UpdatedAt = htime
 
 	if err := r.DB.Save(&existingAPIKey).Error; err != nil {
 		return fmt.Errorf("failed to update API key: %w", err)

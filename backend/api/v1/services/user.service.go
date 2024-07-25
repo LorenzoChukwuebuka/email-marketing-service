@@ -39,10 +39,9 @@ const (
 )
 
 var (
-	mailer = &custom.Mail{}
-	config = utils.LoadEnv()
+	mailer     = &custom.Mail{}
+	config     = utils.LoadEnv()
 	smtpserver = config.SMTP_SERVER
-
 )
 
 type UserService struct {
@@ -164,7 +163,6 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		return fmt.Errorf("error retrieving OTP: %w", err)
 	}
 
-
 	htime := time.Now().UTC()
 
 	user := &model.User{
@@ -178,14 +176,14 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		return fmt.Errorf("unable to verify user: %w", err)
 	}
 
-	if err = s.otpService.DeleteOTP(otpData.Id); err != nil {
+	if err = s.otpService.DeleteOTP(int(otpData.ID)); err != nil {
 		return fmt.Errorf("unable to delete OTP: %w", err)
 	}
 
 	return s.createUserBasicPlan(userId)
 }
 
-func (s *UserService) createUserBasicPlan(userId int) error {
+func (s *UserService) createUserBasicPlan(userId uint) error {
 	basicPlan, err := s.findBasicPlan()
 	if err != nil {
 		return err
@@ -198,7 +196,7 @@ func (s *UserService) createUserBasicPlan(userId int) error {
 		return err
 	}
 
-	return s.createSubscription(userId, basicPlan, transactionId, billing.Id)
+	return s.createSubscription(userId, basicPlan, transactionId, int(billing.ID))
 }
 
 func (s *UserService) findBasicPlan() (*model.PlanResponse, error) {
@@ -216,7 +214,7 @@ func (s *UserService) findBasicPlan() (*model.PlanResponse, error) {
 	return nil, ErrNoBasicPlan
 }
 
-func (s *UserService) createBilling(userId int, plan *model.PlanResponse, transactionId string) (*model.Billing, error) {
+func (s *UserService) createBilling(userId uint, plan *model.PlanResponse, transactionId string) (*model.Billing, error) {
 	billing := &model.Billing{
 		UUID:          uuid.New().String(),
 		UserId:        userId,
@@ -224,7 +222,6 @@ func (s *UserService) createBilling(userId int, plan *model.PlanResponse, transa
 		PlanId:        plan.ID,
 		ExpiryDate:    time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 		TransactionId: transactionId,
-		CreatedAt:     time.Now().UTC(),
 	}
 
 	bill, err := s.billingRepo.CreateBilling(billing)
@@ -235,14 +232,13 @@ func (s *UserService) createBilling(userId int, plan *model.PlanResponse, transa
 	return bill, nil
 }
 
-func (s *UserService) createSubscription(userId int, plan *model.PlanResponse, transactionId string, paymentId int) error {
+func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, transactionId string, paymentId int) error {
 	subscription := &model.Subscription{
 		UserId:        userId,
 		PlanId:        plan.ID,
 		StartDate:     time.Now().UTC(),
 		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 		TransactionId: transactionId,
-		CreatedAt:     time.Now().UTC(),
 		PaymentId:     paymentId,
 	}
 
@@ -256,16 +252,13 @@ func (s *UserService) createSubscription(userId int, plan *model.PlanResponse, t
 
 func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error {
 
-
-
 	smtpkeyModel := &model.SMTPMasterKey{
 		UUID:      uuid.New().String(),
 		KeyName:   "Master",
 		UserId:    userId,
-		SMTPLogin: userEmail+ "@" + smtpserver,
+		SMTPLogin: userEmail + "@" + smtpserver,
 		Password:  utils.GenerateOTP(15),
 		Status:    model.KeyStatus("active"),
-		CreatedAt: time.Now().UTC(),
 	}
 
 	err := s.smtpKeyRepo.CreateSMTPMasterKey(smtpkeyModel)
@@ -348,7 +341,7 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 		return fmt.Errorf("error resetting password: %w", err)
 	}
 
-	return s.otpService.DeleteOTP(otpData.Id)
+	return s.otpService.DeleteOTP(int(otpData.ID))
 }
 
 func (s *UserService) ChangePassword(userId string, d *dto.ChangePassword) error {

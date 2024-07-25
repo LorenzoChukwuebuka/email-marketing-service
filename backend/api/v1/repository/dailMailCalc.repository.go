@@ -34,18 +34,14 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(subscriptionId int)
 	}
 
 	response := &model.DailyMailCalcResponseModel{
-		ID:             record.ID,
+		ID:             int(record.ID),
 		UUID:           record.UUID,
 		SubscriptionID: record.SubscriptionID,
 		MailsForADay:   record.MailsForADay,
 		MailsSent:      record.MailsSent,
 		RemainingMails: record.RemainingMails,
-		CreatedAt:      record.CreatedAt,
-	}
-
-	if record.UpdatedAt != nil {
-		updatedAt := record.UpdatedAt.Format(time.RFC3339)
-		response.UpdatedAt = &updatedAt
+		CreatedAt:      record.CreatedAt.String(),
+		UpdatedAt:      FormatTime(record.UpdatedAt).(*string),
 	}
 
 	fmt.Printf("Record: %+v\n", record)
@@ -84,13 +80,13 @@ func (r *DailyMailCalcRepository) GetUserActiveCalculation(subscriptionId int) (
 	}
 
 	response := &model.DailyMailCalcResponseModel{
-		ID:             record.ID,
+		ID:             int(record.ID),
 		UUID:           record.UUID,
 		SubscriptionID: record.SubscriptionID,
 		MailsForADay:   record.MailsForADay,
 		MailsSent:      record.MailsSent,
 		RemainingMails: record.RemainingMails,
-		CreatedAt:      record.CreatedAt,
+		CreatedAt:      FormatTime(record.CreatedAt).(string),
 	}
 
 	return response, nil

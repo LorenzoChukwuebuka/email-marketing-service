@@ -6,10 +6,8 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/google/uuid"
+	"log"
 )
 
 type UserSessionService struct {
@@ -32,7 +30,7 @@ func NewUserSessionService(usersessionRepo *repository.UserSessionRepository, us
 
 func (s *UserSessionService) CreateSession(d *dto.UserSession) (map[string]interface{}, error) {
 
-	session := &model.UserSession{UUID: uuid.New().String(), UserId: d.UserId, Device: d.Device, IPAddress: d.IPAddress, Browser: d.Browser, CreatedAt: time.Now()}
+	session := &model.UserSession{UUID: uuid.New().String(), UserId: d.UserId, Device: d.Device, IPAddress: d.IPAddress, Browser: d.Browser}
 
 	var response map[string]interface{}
 

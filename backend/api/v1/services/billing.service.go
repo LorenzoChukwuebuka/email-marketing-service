@@ -70,7 +70,6 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		TransactionId: transactionId,
 		PaymentMethod: paymentmethod,
 		Status:        data.Status,
-		CreatedAt:     time.Now(),
 	}
 
 	billingRepo, err := s.BillingRepo.CreateBilling(billingServiceData)
@@ -83,12 +82,11 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		UUID:          uuid.New().String(),
 		UserId:        userId.ID,
 		PlanId:        data.PlanID,
-		PaymentId:     billingRepo.Id,
+		PaymentId:     int(billingRepo.ID),
 		StartDate:     time.Now(),
 		EndDate:       calculateExpiryDate(data.Duration),
 		Expired:       false,
 		TransactionId: transactionId,
-		CreatedAt:     time.Now(),
 	}
 
 	_, err = s.SubscriptionSVC.CreateSubscription(subscription)
