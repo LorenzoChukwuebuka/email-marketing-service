@@ -2,9 +2,10 @@ package repository
 
 import "time"
 
-func FormatTime(t time.Time) string {
+func FormatTime(t time.Time) interface{} {
 	if t.IsZero() {
-		return ""
+		return nil
 	}
-	return t.Format(time.RFC3339)
+	formattedTime := t.Format(time.RFC3339)
+	return &formattedTime
 }

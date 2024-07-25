@@ -7,13 +7,11 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"encoding/csv"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"mime/multipart"
-	"github.com/google/uuid"
-
-	//"strconv"
 	"strings"
-	"time"
+	
 )
 
 type ContactService struct {
@@ -40,7 +38,6 @@ func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{
 		Email:     d.Email,
 		From:      d.From,
 		UserId:    d.UserId,
-		CreatedAt: time.Now().UTC(),
 	}
 
 	checkIfUserExists, err := s.ContactRepo.CheckIfEmailExists(contactModel)
@@ -106,7 +103,6 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 			Email:     record[columnMap["email"]],
 			From:      "web",
 			UserId:    userId,
-			CreatedAt: time.Now(),
 		}
 
 		if idx, exists := columnMap["from"]; exists && idx < len(record) {
@@ -153,18 +149,18 @@ func (s *ContactService) UpdateContact(d *dto.EditContactDTO) error {
 }
 
 func (s *ContactService) GetAllContacts(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
-    paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
-    contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams)
-    if err != nil {
-        return repository.PaginatedResult{}, err
-    }
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams)
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
 
-    // If you want to check for empty results, you can do:
-    if contacts.TotalCount == 0 {
-        return repository.PaginatedResult{}, fmt.Errorf("no contacts found")
-    }
+	// If you want to check for empty results, you can do:
+	if contacts.TotalCount == 0 {
+		return repository.PaginatedResult{}, fmt.Errorf("no contacts found")
+	}
 
-    return contacts, nil
+	return contacts, nil
 }
 
 func (s *ContactService) DeleteContact(userId string, contactId string) error {
@@ -175,7 +171,7 @@ func (s *ContactService) DeleteContact(userId string, contactId string) error {
 	return nil
 }
 
-func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interface{},error) {
+func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid plan data: %w", err)
 	}
@@ -205,11 +201,42 @@ func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interfa
 		"message": "contact group added successfully",
 	}, nil
 
-
-	
 }
 
-func (s *ContactService) AddContactsToGroup(userId string, contactId string, groupId string) {
+func (s *ContactService) AddContactsToGroup(d *dto.AddContactsToGroupDTO) (map[string]interface{}, error) {
+	if err := utils.ValidateData(d); err != nil {
+		return nil, fmt.Errorf("invalid plan data: %w", err)
+	}
+
+	getContactId, err := s.ContactRepo.GetASingleContact(d.ContactId, d.UserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	getGroupId, err := s.ContactRepo.GetASingleGroup(d.UserId, d.GroupId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	addToGroupModel := &model.UserContactGroup{
+		UUID:           uuid.New().String(),
+		UserId:         d.UserId,
+		ContactId:      getContactId.ID,
+		ContactGroupId: getGroupId.ID,
+	}
+
+	err = s.ContactRepo.AddContactsToGroup(addToGroupModel)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"data":    addToGroupModel,
+		"message": "contact group added successfully",
+	}, nil
 
 }
 

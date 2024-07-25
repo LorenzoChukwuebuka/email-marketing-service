@@ -10,7 +10,6 @@ import (
 	"strconv"
 	//"sync"
 	//"strings"
-	"time"
 )
 
 type SMTPMailService struct {
@@ -55,7 +54,7 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 	}
 
 	// Get the daily mail calculator
-	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(subscription.Id)
+	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(int(subscription.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error fetching record")
 	}
@@ -121,7 +120,7 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 	return nil, nil
 }
 
-func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId int) error {
+func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId uint) error {
 	var recipients []dto.Recipient
 	switch to := emailRequest.To.(type) {
 	case dto.Recipient:
@@ -226,10 +225,9 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 
 		dailyCalcData := &model.DailyMailCalc{
 			UUID:           uuid.New().String(),
-			SubscriptionID: activeSub.Id,
+			SubscriptionID: int(activeSub.ID),
 			MailsForADay:   num,
 			MailsSent:      0,
-			CreatedAt:      time.Now(),
 			RemainingMails: num,
 		}
 

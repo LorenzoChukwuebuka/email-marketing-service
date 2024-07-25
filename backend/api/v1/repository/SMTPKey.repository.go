@@ -19,18 +19,18 @@ func NewSMTPkeyRepository(db *gorm.DB) *SMTPKeyRepository {
 
 func (r *SMTPKeyRepository) createSMTPKeyResponse(smtpKey model.SMTPKey) (model.SMTPDetailsResponse, error) {
 	response := model.SMTPDetailsResponse{
-		Id:        int(smtpKey.Id),
 		UUID:      smtpKey.UUID,
 		UserId:    smtpKey.UserId,
 		KeyName:   smtpKey.KeyName,
 		Password:  smtpKey.Password,
-		CreatedAt: smtpKey.CreatedAt.String(),
+		Status:    string(smtpKey.Status),
+		CreatedAt: FormatTime(smtpKey.CreatedAt).(string),
+		UpdatedAt: FormatTime(smtpKey.UpdatedAt).(*string),
 	}
 
-	if smtpKey.UpdatedAt != nil {
-		response.UpdatedAt = smtpKey.UpdatedAt.Format(time.RFC3339)
-	} else {
-		response.UpdatedAt = ""
+	if smtpKey.DeletedAt.Valid {
+		formatted := smtpKey.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
 	}
 
 	return response, nil
@@ -112,7 +112,7 @@ func (r *SMTPKeyRepository) ToggleSMTPKeyStatus(userId string, smtpkeyId string)
 	}
 
 	currentTime := time.Now().UTC()
-	smtpKey.UpdatedAt = &currentTime
+	smtpKey.UpdatedAt = currentTime
 
 	// Save the updated record back to the database
 	if err := r.DB.Save(&smtpKey).Error; err != nil {

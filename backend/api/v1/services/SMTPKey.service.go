@@ -7,7 +7,7 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"github.com/google/uuid"
-	"time"
+
 )
 
 type SMTPKeyService struct {
@@ -102,7 +102,7 @@ func (s *SMTPKeyService) CreateSMTPKey(d *dto.SMTPKeyDTO) (map[string]interface{
 		KeyName:   d.KeyName,
 		Password:  password,
 		Status:    model.KeyActive,
-		CreatedAt: time.Now().UTC(),
+		
 	}
 
 	err = s.SMTPKeyRepo.CreateSMTPKey(smtpKey)

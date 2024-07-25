@@ -131,10 +131,10 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 
 	for _, subscription := range subscriptions {
 		if subscription.EndDate.Before(currentTime) && !subscription.Expired {
-			fmt.Printf("Subscription ID %d has expired.\n", subscription.Id)
+			fmt.Printf("Subscription ID %d has expired.\n", subscription.ID)
 
 			// Update the subscription as expired
-			err := s.SubscriptionRepo.UpdateExpiredSubscription(subscription.Id)
+			err := s.SubscriptionRepo.UpdateExpiredSubscription(int(subscription.ID))
 			if err != nil {
 				return nil, err
 			}
@@ -145,7 +145,7 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 				return nil, err
 			}
 		} else {
-			fmt.Printf("Subscription ID %d has not expired.\n", subscription.Id)
+			fmt.Printf("Subscription ID %d has not expired.\n", subscription.ID)
 		}
 	}
 
@@ -168,10 +168,10 @@ func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error
 
 		// Check if the time difference is 5 days or fewer
 		if timeDifference.Hours() <= 24*5 {
-			fmt.Printf("Subscription ID %d will expire within 5 days.\n", subscription.Id)
-			expiredUserIDs = append(expiredUserIDs, subscription.UserId)
+			fmt.Printf("Subscription ID %d will expire within 5 days.\n", subscription.ID)
+			expiredUserIDs = append(expiredUserIDs, int(subscription.UserId))
 		} else {
-			fmt.Printf("Subscription ID %d has not expired.\n", subscription.Id)
+			fmt.Printf("Subscription ID %d has not expired.\n", subscription.ID)
 		}
 	}
 

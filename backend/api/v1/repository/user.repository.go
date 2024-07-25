@@ -16,7 +16,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
-	return model.UserResponse{
+	response := model.UserResponse{
 		ID:          user.ID,
 		UUID:        user.UUID,
 		FullName:    user.FullName,
@@ -25,11 +25,17 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 		PhoneNumber: user.PhoneNumber,
 		Password:    user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:    user.Verified,
-		CreatedAt:   user.CreatedAt,
-		VerifiedAt:  user.VerifiedAt.Format(time.RFC3339),
-		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:   user.DeletedAt.Format(time.RFC3339),
+		CreatedAt:   FormatTime(user.CreatedAt).(string),
+		VerifiedAt:  FormatTime(*user.VerifiedAt).(*string),
+		UpdatedAt:   FormatTime(user.UpdatedAt).(*string),
 	}
+
+	if user.DeletedAt.Valid {
+		formatted := user.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
+	}
+
+	return response
 }
 
 func (r *UserRepository) CreateUser(d *model.User) (*model.User, error) {
@@ -50,7 +56,7 @@ func (r *UserRepository) CheckIfEmailAlreadyExists(d *model.User) (bool, error) 
 	return true, nil
 }
 
-func (r *UserRepository) VerifyUserAccount(d *model.User) (int, error) {
+func (r *UserRepository) VerifyUserAccount(d *model.User) (uint, error) {
 	var user model.User
 
 	// Fetch the User record from the database
@@ -65,7 +71,7 @@ func (r *UserRepository) VerifyUserAccount(d *model.User) (int, error) {
 	user.VerifiedAt = d.VerifiedAt
 
 	htime := time.Now().UTC()
-	user.UpdatedAt = &htime
+	user.UpdatedAt = htime
 
 	if err := r.DB.Save(&user).Error; err != nil {
 		fmt.Printf("Error updating user: %v\n", err)
@@ -187,7 +193,7 @@ func (r *UserRepository) UpdateUserRecords(d *model.User) error {
 	user.Company = d.Company
 
 	htime := time.Now().UTC()
-	user.UpdatedAt = &htime
+	user.UpdatedAt = htime
 
 	// Save the updated user record to the database
 	if err := r.DB.Save(&user).Error; err != nil {

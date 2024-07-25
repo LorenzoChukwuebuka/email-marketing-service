@@ -31,24 +31,18 @@ func (r *BillingRepository) createBillingResponse(billing model.Billing) model.B
 		AmountPaid:    billing.AmountPaid,
 		PlanId:        billing.PlanId,
 		Duration:      billing.Duration,
-		ExpiryDate:    billing.ExpiryDate,
+		ExpiryDate:    FormatTime(billing.ExpiryDate).(string),
 		Reference:     billing.Reference,
 		TransactionId: billing.TransactionId,
 		PaymentMethod: billing.PaymentMethod,
 		Status:        billing.Status,
-		CreatedAt:     billing.CreatedAt,
+		CreatedAt:     FormatTime(billing.CreatedAt).(string),
+		UpdatedAt:     FormatTime(billing.UpdatedAt).(*string),
 	}
 
-	if billing.UpdatedAt != nil {
-		response.UpdatedAt = billing.UpdatedAt.Format(time.RFC3339)
-	} else {
-		response.UpdatedAt = ""
-	}
-
-	if billing.DeletedAt != nil {
-		response.DeletedAt = billing.DeletedAt.Format(time.RFC3339)
-	} else {
-		response.UpdatedAt = ""
+	if billing.DeletedAt.Valid {
+		formatted := billing.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
 	}
 
 	if billing.Plan != nil {
@@ -60,28 +54,21 @@ func (r *BillingRepository) createBillingResponse(billing model.Billing) model.B
 			NumberOfMailsPerDay: billing.Plan.NumberOfMailsPerDay,
 			Details:             billing.Plan.Details,
 			Status:              billing.Plan.Status,
-			CreatedAt:           billing.Plan.CreatedAt,
+			CreatedAt:           FormatTime(billing.CreatedAt).(string),
+			UpdatedAt:           FormatTime(billing.Plan.UpdatedAt).(*string),
 		}
 
-		if billing.Plan.UpdatedAt != nil {
-			response.Plan.UpdatedAt = billing.Plan.UpdatedAt.Format(time.RFC3339)
-		} else {
-			response.Plan.UpdatedAt = ""
-		}
-
-		if billing.DeletedAt != nil {
-			response.DeletedAt = billing.DeletedAt.Format(time.RFC3339)
-		} else {
-			response.UpdatedAt = ""
+		if billing.Plan.DeletedAt.Valid {
+			formatted := billing.Plan.DeletedAt.Time.Format(time.RFC3339)
+			response.DeletedAt = &formatted
 		}
 
 	}
 
 	if billing.User != nil {
 		response.User = &model.UserResponse{
-			UUID:       billing.User.UUID,
-			FullName:  billing.User.FullName,
-			 
+			UUID:     billing.User.UUID,
+			FullName: billing.User.FullName,
 		}
 	}
 

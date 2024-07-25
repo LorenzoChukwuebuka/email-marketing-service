@@ -1,7 +1,7 @@
 package model
 
 import (
-	"time"
+	"gorm.io/gorm"
 )
 
 type KeyStatus string
@@ -12,13 +12,11 @@ const (
 )
 
 type APIKey struct {
-	Id        int       `json:"-" gorm:"primaryKey;index"`
-	UUID      string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	UserId    string    `json:"user_id" gorm:"type:uuid"`
-	Name      string    `json:"name"`
-	APIKey    string    `json:"api_key" gorm:"index"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	gorm.Model
+	UUID   string `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	UserId string `json:"user_id" gorm:"type:uuid"`
+	Name   string `json:"name"`
+	APIKey string `json:"api_key" gorm:"index"`
 }
 
 type APIKeyResponseModel struct {
@@ -32,36 +30,33 @@ type APIKeyResponseModel struct {
 }
 
 type SMTPMasterKey struct {
-	Id        int        `json:"-"`
-	UUID      string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	UserId    string     `json:"user_id" gorm:"type:uuid"`
-	SMTPLogin string     `json:"smtp_login"`
-	KeyName   string     `json:"key_name"`
-	Password  string     `json:"password"`
-	Status    KeyStatus  `json:"status"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	gorm.Model
+	UUID      string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	UserId    string    `json:"user_id" gorm:"type:uuid"`
+	SMTPLogin string    `json:"smtp_login"`
+	KeyName   string    `json:"key_name"`
+	Password  string    `json:"password"`
+	Status    KeyStatus `json:"status"`
 }
 
 type SMTPKey struct {
-	Id        uint       `json:"-" gorm:"primaryKey;index"`
-	UUID      string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	UserId    string     `json:"user_id" gorm:"type:uuid"`
-	KeyName   string     `json:"key_name" gorm:"index"`
-	Password  string     `json:"password"`
-	Status    KeyStatus  `json:"status"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
+	gorm.Model
+	UUID     string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	UserId   string    `json:"user_id" gorm:"type:uuid"`
+	KeyName  string    `json:"key_name" gorm:"index"`
+	Password string    `json:"password"`
+	Status   KeyStatus `json:"status"`
 }
 
 type SMTPDetailsResponse struct {
-	Id        int    `json:"-" `
-	UUID      string `json:"uuid"`
-	UserId    string `json:"user_id"`
-	KeyName   string `json:"key_name" `
-	SMTPLogin string `json:"smtp_login"`
-	Password  string `json:"password"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at" `
+	Id        int     `json:"-" `
+	UUID      string  `json:"uuid"`
+	UserId    string  `json:"user_id"`
+	KeyName   string  `json:"key_name" `
+	SMTPLogin string  `json:"smtp_login"`
+	Password  string  `json:"password"`
+	Status    string  `json:"status"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt *string `json:"updated_at" `
+	DeletedAt *string `json:"deleted_at"`
 }

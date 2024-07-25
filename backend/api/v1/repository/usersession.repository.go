@@ -4,7 +4,6 @@ import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
 	"gorm.io/gorm"
-	
 )
 
 type UserSessionRepository struct {
@@ -17,20 +16,19 @@ func NewUserSessionRepository(db *gorm.DB) *UserSessionRepository {
 	}
 }
 
-
-
 func (r *UserSessionRepository) createUserSessionResponseModel(session *model.UserSession) *model.UserSessionResponseModel {
-	return &model.UserSessionResponseModel{
-		Id:        session.Id,
+	response := &model.UserSessionResponseModel{
+		Id:        int(session.ID),
 		UUID:      session.UUID,
 		UserId:    session.UserId,
 		Device:    session.Device,
 		IPAddress: session.IPAddress,
 		Browser:   session.Browser,
 		CreatedAt: session.CreatedAt,
-		UpdatedAt: FormatTime(session.UpdatedAt),
-		DeletedAt: FormatTime(session.DeletedAt),
+		UpdatedAt: FormatTime(session.UpdatedAt).(string),
 	}
+
+	return response
 }
 
 // Add a utility function to format time to string

@@ -23,3 +23,9 @@ type ContactGroupDTO struct {
 	GroupName   string `json:"group_name" valiate:"required"`
 	Description string `json:"description"`
 }
+
+type AddContactsToGroupDTO struct {
+	UserId    string `json:"user_id" validate:"required"`
+	GroupId   string `json:"group_id" validate:"required"`
+	ContactId string `json:"contact_id" validate:"required"`
+}

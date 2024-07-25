@@ -5,13 +5,12 @@ import (
 )
 
 type EmailTemplate struct {
-    ID           uint `gorm:"primary_key"`
+    
     Name         string
     Description  string
     HTMLContent  string `gorm:"type:longtext"`
     TextContent  string `gorm:"type:longtext"`
-    CreatedAt    time.Time
-    UpdatedAt    time.Time
+  
     Categories   []TemplateCategoryMapping `gorm:"foreignkey:TemplateID"`
 }
 

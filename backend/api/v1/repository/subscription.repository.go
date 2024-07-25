@@ -4,7 +4,7 @@ import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
 	"gorm.io/gorm"
-	"time"
+	
 )
 
 type SubscriptionRepository struct {
@@ -18,7 +18,7 @@ func NewSubscriptionRepository(db *gorm.DB) *SubscriptionRepository {
 func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription) *model.SubscriptionResponseModel {
 
 	response := &model.SubscriptionResponseModel{
-		Id: s.Id,
+		Id:        int(s.ID),
 		UUID:      s.UUID,
 		UserId:    s.UserId,
 		PlanId:    s.PlanId,
@@ -26,13 +26,7 @@ func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription
 		StartDate: s.StartDate,
 		EndDate:   s.EndDate,
 		Expired:   s.Expired,
-		CreatedAt: s.CreatedAt,
-	}
-
-	if s.UpdatedAt != nil {
-		response.UpdatedAt = s.UpdatedAt.Format(time.RFC3339)
-	} else {
-		response.UpdatedAt = ""
+		CreatedAt: s.CreatedAt.String(),
 	}
 
 	if s.Plan != nil {
@@ -44,13 +38,8 @@ func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription
 			NumberOfMailsPerDay: s.Plan.NumberOfMailsPerDay,
 			Details:             s.Plan.Details,
 			Status:              s.Plan.Status,
-			CreatedAt:           s.Plan.CreatedAt,
-		}
-
-		if s.Plan.UpdatedAt != nil {
-			response.Plan.UpdatedAt = s.Plan.UpdatedAt.Format(time.RFC3339)
-		} else {
-			response.Plan.UpdatedAt = ""
+			CreatedAt:           FormatTime(s.Plan.CreatedAt).(string),
+			UpdatedAt:           FormatTime(s.Plan.UpdatedAt).(*string),
 		}
 
 	}
@@ -73,7 +62,7 @@ func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) error
 	return nil
 }
 
-func (r *SubscriptionRepository) GetUserCurrentRunningSubscription(userId int) (*model.Subscription, error) {
+func (r *SubscriptionRepository) GetUserCurrentRunningSubscription(userId uint) (*model.Subscription, error) {
 	var subscription model.Subscription
 
 	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ? and expired = ?", userId, false).First(&subscription).Error; err != nil {
@@ -162,7 +151,7 @@ func (r *SubscriptionRepository) FindSubscriptionById(id string, userId int) (*m
 	return r.createSubscriptionResponse(subscription), nil
 }
 
-func (r *SubscriptionRepository) GetUsersCurrentSubscription(userId int) (*model.SubscriptionResponseModel, error) {
+func (r *SubscriptionRepository) GetUsersCurrentSubscription(userId uint) (*model.SubscriptionResponseModel, error) {
 	var subscription model.Subscription
 
 	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ?", userId).First(&subscription).Error; err != nil {

@@ -27,19 +27,13 @@ func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse 
 		NumberOfMailsPerDay: plan.NumberOfMailsPerDay,
 		Details:             plan.Details,
 		Status:              plan.Status,
-		CreatedAt:           plan.CreatedAt,
+		CreatedAt:           FormatTime(plan.CreatedAt).(string),
+		UpdatedAt:           FormatTime(plan.UpdatedAt).(*string),
 	}
 
-	if plan.UpdatedAt != nil {
-		response.UpdatedAt = plan.UpdatedAt.Format(time.RFC3339)
-	} else {
-		response.UpdatedAt = ""
-	}
-
-	if plan.DeletedAt != nil {
-		response.DeletedAt = plan.DeletedAt.Format(time.RFC3339)
-	} else {
-		response.DeletedAt = ""
+	if plan.DeletedAt.Valid {
+		formatted := plan.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
 	}
 
 	return response
