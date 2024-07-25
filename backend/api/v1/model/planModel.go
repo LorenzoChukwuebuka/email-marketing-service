@@ -24,7 +24,7 @@ type Plan struct {
 }
 
 type PlanResponse struct {
-	ID                  int       `json:"-"`
+	ID                  uint       `json:"-"`
 	UUID                string    `json:"uuid"`
 	PlanName            string    `json:"planname" validate:"required"`
 	Duration            string    `json:"duration" validate:"required"`
@@ -33,6 +33,6 @@ type PlanResponse struct {
 	Details             string    `json:"details" validate:"required"`
 	Status              *string   `json:"status"`
 	CreatedAt           string `json:"created_at"`
-	UpdatedAt           *string    `json:"updated_at"`
+	UpdatedAt           string    `json:"updated_at"`
 	DeletedAt           *string    `json:"deleted_at"`
 }

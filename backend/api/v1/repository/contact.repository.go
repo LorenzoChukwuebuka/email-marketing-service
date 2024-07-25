@@ -103,7 +103,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 		From:      contact.From,
 		UserId:    contact.UserId,
 		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: FormatTime(contact.UpdatedAt).(*string),
+		UpdatedAt: contact.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if contact.DeletedAt.Valid {

@@ -9,7 +9,7 @@ type Subscription struct {
 	gorm.Model
 	UUID          string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4()"`
 	UserId        uint       `json:"user_id"`
-	PlanId        int        `json:"plan_id"`
+	PlanId        uint        `json:"plan_id"`
 	PaymentId     int        `json:"payment_id"`
 	StartDate     time.Time  `json:"start_date"`
 	EndDate       time.Time  `json:"end_date"`
@@ -26,7 +26,7 @@ type SubscriptionResponseModel struct {
 	Id            int              `json:"-"`
 	UUID          string           `json:"uuid"`
 	UserId        uint             `json:"user_id"`
-	PlanId        int              `json:"plan_id"`
+	PlanId        uint              `json:"plan_id"`
 	PaymentId     int              `json:"payment_id"`
 	StartDate     time.Time        `json:"start_date"`
 	EndDate       time.Time        `json:"end_date"`

@@ -44,7 +44,7 @@ type ContactResponse struct {
 	From      string         `json:"from"`
 	UserId    string         `json:"user_id" `
 	CreatedAt string         `json:"created_at" `
-	UpdatedAt *string        `json:"updated_at" `
+	UpdatedAt string        `json:"updated_at" `
 	DeletedAt *string        `json:"deleted_at"`
 	Groups    []ContactGroup `json:"groups"`
 }

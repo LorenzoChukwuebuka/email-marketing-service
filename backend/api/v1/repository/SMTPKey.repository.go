@@ -18,14 +18,16 @@ func NewSMTPkeyRepository(db *gorm.DB) *SMTPKeyRepository {
 }
 
 func (r *SMTPKeyRepository) createSMTPKeyResponse(smtpKey model.SMTPKey) (model.SMTPDetailsResponse, error) {
+
+	htime := smtpKey.UpdatedAt.String()
 	response := model.SMTPDetailsResponse{
 		UUID:      smtpKey.UUID,
 		UserId:    smtpKey.UserId,
 		KeyName:   smtpKey.KeyName,
 		Password:  smtpKey.Password,
 		Status:    string(smtpKey.Status),
-		CreatedAt: FormatTime(smtpKey.CreatedAt).(string),
-		UpdatedAt: FormatTime(smtpKey.UpdatedAt).(*string),
+		CreatedAt: smtpKey.CreatedAt.String(),
+		UpdatedAt: &htime,
 	}
 
 	if smtpKey.DeletedAt.Valid {

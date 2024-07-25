@@ -16,6 +16,9 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
+
+	htime := user.VerifiedAt.String()
+
 	response := model.UserResponse{
 		ID:          user.ID,
 		UUID:        user.UUID,
@@ -25,9 +28,9 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 		PhoneNumber: user.PhoneNumber,
 		Password:    user.Password, // Note: Make sure you have a good reason to include the password in the response
 		Verified:    user.Verified,
-		CreatedAt:   FormatTime(user.CreatedAt).(string),
-		VerifiedAt:  FormatTime(*user.VerifiedAt).(*string),
-		UpdatedAt:   FormatTime(user.UpdatedAt).(*string),
+		CreatedAt:   user.CreatedAt.String(),
+		VerifiedAt:  &htime,
+		UpdatedAt:   user.UpdatedAt.String(),
 	}
 
 	if user.DeletedAt.Valid {

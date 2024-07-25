@@ -189,6 +189,8 @@ func (s *UserService) createUserBasicPlan(userId uint) error {
 		return err
 	}
 
+	fmt.Println(basicPlan)
+
 	transactionId := uuid.New().String()
 
 	billing, err := s.createBilling(userId, basicPlan, transactionId)
@@ -219,7 +221,7 @@ func (s *UserService) createBilling(userId uint, plan *model.PlanResponse, trans
 		UUID:          uuid.New().String(),
 		UserId:        userId,
 		AmountPaid:    plan.Price,
-		PlanId:        plan.ID,
+		PlanId:        uint(plan.ID),
 		ExpiryDate:    time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 		TransactionId: transactionId,
 	}
