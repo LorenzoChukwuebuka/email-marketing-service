@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"net/http"
-	"strconv"
 )
 
 type PaystackPaymentProcessor struct {
@@ -101,14 +100,9 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *dto.BaseProcessPaymentModel
 	email, _ := data["customer"].(map[string]interface{})["email"].(string)
 	status, _ := data["status"].(string)
 
-	planID, err := strconv.Atoi(planIDStr)
-	if err != nil {
-		return nil, fmt.Errorf("error converting planID to int: %s", err)
-	}
-
 	paymentData := &dto.BasePaymentResponse{
 		Amount:   amount,
-		PlanID:   planID,
+		PlanID:   planIDStr,
 		UserID:   userID,
 		Duration: duration,
 		Email:    email,

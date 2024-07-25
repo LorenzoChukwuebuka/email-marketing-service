@@ -7,7 +7,6 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"net/http"
 	"strconv"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )

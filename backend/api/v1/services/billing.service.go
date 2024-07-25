@@ -18,16 +18,21 @@ type BillingService struct {
 	SubscriptionSVC  *SubscriptionService
 	UserRepo         *repository.UserRepository
 	SubscriptionRepo *repository.SubscriptionRepository
+	PlanRepo         *repository.PlanRepository
 }
 
-func NewBillingService(billingRepository *repository.BillingRepository,
+func NewBillingService(
+	billingRepository *repository.BillingRepository,
 	subscriptionSVC *SubscriptionService,
-	userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *BillingService {
+	userRepo *repository.UserRepository,
+	subscriptionRepo *repository.SubscriptionRepository,
+	planRepo *repository.PlanRepository) *BillingService {
 	return &BillingService{
 		BillingRepo:      billingRepository,
 		SubscriptionSVC:  subscriptionSVC,
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
+		PlanRepo:         planRepo,
 	}
 }
 
@@ -44,6 +49,14 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	}
 
 	data, err := paymenservice.ProcessDeposit(params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//get the planId
+
+	planR, err := s.PlanRepo.GetSinglePlan(data.PlanID)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +83,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		UUID:          uuid.New().String(),
 		UserId:        userId.ID,
 		AmountPaid:    float32(data.Amount),
-		PlanId:        uint(data.PlanID),
+		PlanId:        planR.ID,
 		Email:         data.Email,
 		Duration:      data.Duration,
 		ExpiryDate:    calculateExpiryDate(data.Duration),
@@ -89,7 +102,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	subscription := &model.Subscription{
 		UUID:          uuid.New().String(),
 		UserId:        userId.ID,
-		PlanId:        uint(data.PlanID),
+		PlanId:        planR.ID,
 		PaymentId:     int(billingRepo.ID),
 		StartDate:     time.Now(),
 		EndDate:       calculateExpiryDate(data.Duration),
