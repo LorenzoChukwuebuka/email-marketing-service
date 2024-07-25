@@ -62,7 +62,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 		UUID:          uuid.New().String(),
 		UserId:        userId.ID,
 		AmountPaid:    float32(data.Amount),
-		PlanId:        data.PlanID,
+		PlanId:        uint(data.PlanID),
 		Email:         data.Email,
 		Duration:      data.Duration,
 		ExpiryDate:    calculateExpiryDate(data.Duration),
@@ -81,7 +81,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	subscription := &model.Subscription{
 		UUID:          uuid.New().String(),
 		UserId:        userId.ID,
-		PlanId:        data.PlanID,
+		PlanId:        uint(data.PlanID),
 		PaymentId:     int(billingRepo.ID),
 		StartDate:     time.Now(),
 		EndDate:       calculateExpiryDate(data.Duration),

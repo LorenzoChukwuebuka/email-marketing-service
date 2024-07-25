@@ -10,7 +10,7 @@ type Billing struct {
 	UUID          string    `json:"uuid"`
 	UserId        uint      `json:"user_id"`
 	AmountPaid    float32   `json:"amount_paid" validated:"required"`
-	PlanId        int       `json:"plan_id" validated:"required"`
+	PlanId        uint      `json:"plan_id" validated:"required" gorm:"foreignKey:ID"`
 	Email         string    `json:"email"`
 	Duration      string    `json:"duration"`
 	ExpiryDate    time.Time `json:"expiry_date"`
@@ -35,7 +35,7 @@ type BillingResponse struct {
 	PaymentMethod string        `json:"payment_method"`
 	Status        string        `json:"status"`
 	CreatedAt     string        `json:"created_at"`
-	UpdatedAt     *string       `json:"updated_at"`
+	UpdatedAt     string       `json:"updated_at"`
 	DeletedAt     *string       `json:"deleted_at"`
 	User          *UserResponse `json:"user,omitempty"`
 	Plan          *PlanResponse `json:"plan,omitempty"`

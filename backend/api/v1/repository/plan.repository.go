@@ -20,6 +20,7 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse {
 
 	response := model.PlanResponse{
+		ID:                  plan.ID,
 		UUID:                plan.UUID,
 		PlanName:            plan.PlanName,
 		Duration:            plan.Duration,
@@ -27,8 +28,8 @@ func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse 
 		NumberOfMailsPerDay: plan.NumberOfMailsPerDay,
 		Details:             plan.Details,
 		Status:              plan.Status,
-		CreatedAt:           FormatTime(plan.CreatedAt).(string),
-		UpdatedAt:           FormatTime(plan.UpdatedAt).(*string),
+		CreatedAt:           plan.CreatedAt.String(),
+		UpdatedAt:           plan.UpdatedAt.String(),
 	}
 
 	if plan.DeletedAt.Valid {
@@ -57,11 +58,17 @@ func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
 }
 
 func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
-	var plans []model.PlanResponse
+	var plans []model.Plan
 	if err := r.DB.Model(&model.Plan{}).Find(&plans).Error; err != nil {
 		return nil, err
 	}
-	return plans, nil
+
+	var planResponses []model.PlanResponse
+	for _, plan := range plans {
+		planResponses = append(planResponses, r.createPlanResponse(plan))
+	}
+
+	return planResponses, nil
 }
 
 func (r *PlanRepository) GetSinglePlan(uuid string) (model.PlanResponse, error) {

@@ -29,15 +29,15 @@ func (r *BillingRepository) createBillingResponse(billing model.Billing) model.B
 		UUID:          billing.UUID,
 		UserId:        billing.UserId,
 		AmountPaid:    billing.AmountPaid,
-		PlanId:        billing.PlanId,
+		PlanId:        int(billing.PlanId),
 		Duration:      billing.Duration,
-		ExpiryDate:    FormatTime(billing.ExpiryDate).(string),
+		ExpiryDate:    billing.ExpiryDate.String(),
 		Reference:     billing.Reference,
 		TransactionId: billing.TransactionId,
 		PaymentMethod: billing.PaymentMethod,
 		Status:        billing.Status,
-		CreatedAt:     FormatTime(billing.CreatedAt).(string),
-		UpdatedAt:     FormatTime(billing.UpdatedAt).(*string),
+		CreatedAt:     billing.CreatedAt.String(),
+		UpdatedAt:     billing.UpdatedAt.String(),
 	}
 
 	if billing.DeletedAt.Valid {
@@ -54,8 +54,8 @@ func (r *BillingRepository) createBillingResponse(billing model.Billing) model.B
 			NumberOfMailsPerDay: billing.Plan.NumberOfMailsPerDay,
 			Details:             billing.Plan.Details,
 			Status:              billing.Plan.Status,
-			CreatedAt:           FormatTime(billing.CreatedAt).(string),
-			UpdatedAt:           FormatTime(billing.Plan.UpdatedAt).(*string),
+			CreatedAt:           billing.CreatedAt.String(),
+			UpdatedAt:           billing.Plan.UpdatedAt.String(),
 		}
 
 		if billing.Plan.DeletedAt.Valid {

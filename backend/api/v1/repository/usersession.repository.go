@@ -25,13 +25,13 @@ func (r *UserSessionRepository) createUserSessionResponseModel(session *model.Us
 		IPAddress: session.IPAddress,
 		Browser:   session.Browser,
 		CreatedAt: session.CreatedAt,
-		UpdatedAt: FormatTime(session.UpdatedAt).(string),
+		UpdatedAt: session.UpdatedAt.String(),
 	}
 
 	return response
 }
 
-// Add a utility function to format time to string
+
 
 func (r *UserSessionRepository) CreateSession(session *model.UserSession) error {
 	if err := r.DB.Create(&session).Error; err != nil {

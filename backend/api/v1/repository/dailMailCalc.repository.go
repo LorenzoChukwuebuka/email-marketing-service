@@ -41,7 +41,7 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(subscriptionId int)
 		MailsSent:      record.MailsSent,
 		RemainingMails: record.RemainingMails,
 		CreatedAt:      record.CreatedAt.String(),
-		UpdatedAt:      FormatTime(record.UpdatedAt).(*string),
+		UpdatedAt:      record.UpdatedAt.String(),
 	}
 
 	fmt.Printf("Record: %+v\n", record)
@@ -86,7 +86,7 @@ func (r *DailyMailCalcRepository) GetUserActiveCalculation(subscriptionId int) (
 		MailsForADay:   record.MailsForADay,
 		MailsSent:      record.MailsSent,
 		RemainingMails: record.RemainingMails,
-		CreatedAt:      FormatTime(record.CreatedAt).(string),
+		CreatedAt:      record.CreatedAt.String(),
 	}
 
 	return response, nil

@@ -4,7 +4,6 @@ import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
 	"gorm.io/gorm"
-	
 )
 
 type SubscriptionRepository struct {
@@ -38,8 +37,8 @@ func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription
 			NumberOfMailsPerDay: s.Plan.NumberOfMailsPerDay,
 			Details:             s.Plan.Details,
 			Status:              s.Plan.Status,
-			CreatedAt:           FormatTime(s.Plan.CreatedAt).(string),
-			UpdatedAt:           FormatTime(s.Plan.UpdatedAt).(*string),
+			CreatedAt:           s.Plan.CreatedAt.String(),
+			UpdatedAt:           s.Plan.UpdatedAt.String(),
 		}
 
 	}

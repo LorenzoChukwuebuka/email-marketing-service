@@ -30,6 +30,6 @@ type UserResponse struct {
 	Blocked     bool      `json:"blocked"`
 	CreatedAt   string `json:"created_at"`
 	VerifiedAt  *string    `json:"verified_at"`
-	UpdatedAt   *string    `json:"updated_at"`
+	UpdatedAt   string    `json:"updated_at"`
 	DeletedAt   *string    `json:"deleted_at"`
 }
