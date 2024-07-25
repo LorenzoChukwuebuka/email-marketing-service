@@ -14,18 +14,20 @@ import (
 )
 
 type BillingService struct {
-	BillingRepo     *repository.BillingRepository
-	SubscriptionSVC *SubscriptionService
-	UserRepo        *repository.UserRepository
+	BillingRepo      *repository.BillingRepository
+	SubscriptionSVC  *SubscriptionService
+	UserRepo         *repository.UserRepository
+	SubscriptionRepo *repository.SubscriptionRepository
 }
 
 func NewBillingService(billingRepository *repository.BillingRepository,
 	subscriptionSVC *SubscriptionService,
-	userRepo *repository.UserRepository) *BillingService {
+	userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *BillingService {
 	return &BillingService{
-		BillingRepo:     billingRepository,
-		SubscriptionSVC: subscriptionSVC,
-		UserRepo:        userRepo,
+		BillingRepo:      billingRepository,
+		SubscriptionSVC:  subscriptionSVC,
+		UserRepo:         userRepo,
+		SubscriptionRepo: subscriptionRepo,
 	}
 }
 
@@ -51,6 +53,12 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	userUUID := &model.User{UUID: data.UserID}
 
 	userId, err := s.UserRepo.FindUserById(userUUID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.cancelFreePlan(userId.ID)
 
 	if err != nil {
 		return nil, err
@@ -116,6 +124,28 @@ func calculateExpiryDate(duration string) time.Time {
 	default:
 		return time.Now()
 	}
+}
+
+func (s *BillingService) cancelFreePlan(userId uint) error {
+	getUserCurrentSub, err := s.SubscriptionSVC.GetUsersCurrentSubscription(userId)
+
+	if err != nil {
+		return nil
+	}
+
+	fmt.Printf("%+v\n", getUserCurrentSub)
+
+	if getUserCurrentSub.Plan.PlanName == "free" {
+		err := s.SubscriptionRepo.UpdateExpiredSubscription(getUserCurrentSub.Id)
+
+		if err != nil {
+			return nil
+		}
+
+	}
+
+	return nil
+
 }
 
 func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.BillingResponse, error) {

@@ -34,7 +34,6 @@ const (
 	bcryptCost     = 14
 	otpLength      = 8
 	successMessage = "Account created successfully. Kindly verify your account"
-	basicPlanName  = "basic"
 	freePlanName   = "free"
 )
 
@@ -208,7 +207,7 @@ func (s *UserService) findBasicPlan() (*model.PlanResponse, error) {
 	}
 
 	for _, plan := range plans {
-		if strings.ToLower(plan.PlanName) == basicPlanName || strings.ToLower(plan.PlanName) == freePlanName {
+		if strings.ToLower(plan.PlanName) == freePlanName {
 			return &plan, nil
 		}
 	}

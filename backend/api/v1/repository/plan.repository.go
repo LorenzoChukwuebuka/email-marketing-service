@@ -115,3 +115,11 @@ func (r *PlanRepository) DeletePlan(id string) error {
 
 	return nil
 }
+
+func (r *PlanRepository) GetPlanById(id uint) (model.PlanResponse, error) {
+	var plan model.Plan
+	if err := r.DB.Model(&model.Plan{}).Where("id = ?", id).First(&plan).Error; err != nil {
+		return model.PlanResponse{}, err
+	}
+	return r.createPlanResponse(plan), nil
+}
