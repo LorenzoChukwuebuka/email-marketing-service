@@ -59,7 +59,7 @@ func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionContr
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepository)
 	userRepository := repository.NewUserRepository(db)
-	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository)
+	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository, subscriptionRepository)
 	transactionController := controllers.NewTransactionController(billingService)
 	return transactionController, nil
 }

@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"strconv"
-	//"sync"
-	//"strings"
 )
 
 type SMTPMailService struct {

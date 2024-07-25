@@ -35,9 +35,14 @@ func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.
 	return d, nil
 }
 
+func (s *SubscriptionService) GetUsersCurrentSubscription(userId uint) (*model.SubscriptionResponseModel,error) {
+   subScription,err := s.SubscriptionRepo.GetUsersCurrentSubscription(userId)
 
-func (s *SubscriptionService) GetUsersCurrentSubscription(){
-	
+   if err != nil {
+	return nil,err
+   }
+
+   return subScription,nil
 }
 
 func (s *SubscriptionService) CancelSubscriptionService(userId int, subscriptionId string) (map[string]interface{}, error) {
@@ -100,6 +105,9 @@ func (s *SubscriptionService) CancelSubscriptionService(userId int, subscription
 	return successMap, nil
 }
 
+
+
+
 func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate time.Time, amountPaid float32) (float32, error) {
 
 	//1. total number of days
@@ -118,6 +126,10 @@ func calculateAmountToRefund(remainingDays int, startDate time.Time, endDate tim
 
 	return float32(amountToRefund), nil
 }
+
+
+
+
 
 /** ############################################################### JOBS ####################################################################### **/
 func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription, error) {
@@ -148,6 +160,8 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 			fmt.Printf("Subscription ID %d has not expired.\n", subscription.ID)
 		}
 	}
+
+	//for all expired subscriptions, return set them back to Free plan
 
 	return subscriptions, err
 }

@@ -73,7 +73,7 @@ func (r *APIKeyRepository) UpdateAPIKey(d *model.APIKey) error {
 
 func (r *APIKeyRepository) CheckIfAPIKEYExists(apiKey string) (bool, error) {
 	var existingAPIKey model.APIKey
-	result := r.DB.Where("api_key = ?", apiKey).First(&existingAPIKey)
+	result := r.DB.Where("api_key = ?", apiKey).First(&existingAPIKey).Order("DESC")
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
