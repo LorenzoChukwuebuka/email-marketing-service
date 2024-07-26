@@ -6,28 +6,34 @@ import {
 } from "../components";
 import useAPIKeyStore from "../../../store/userstore/apiKeyStore";
 import { Modal } from "../../../components";
+import useSMTPKeyStore from "../../../store/userstore/smtpkeyStore";
 
 interface ModalContent {
     title: string;
     content: string;
 }
 
-
-
-// Main component
 const APISettingsDashTemplate: React.FC = () => {
     const [activeTab, setActiveTab] = useState<"API Keys" | "SMTP">("SMTP");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
     const [modalContent, setModalContent] = useState<ModalContent>({ title: "", content: "" });
+    const [keyType, setKeyType] = useState<"API" | "SMTP" | null>(null);
 
     const {
         isLoading,
         generateAPIKey,
-        setFormValues,
-        formValues,
+        setFormValues: setAPIFormValues,
+        formValues: apiFormValues,
         getAPIKey,
     } = useAPIKeyStore();
+
+    const {
+        generateSMTPKey,
+        setSmtpFormValues,
+        getSMTPKeys,
+        smtpformValues
+    } = useSMTPKeyStore();
 
     const openModal = (title: string, content: string): void => {
         setModalContent({ title, content });
@@ -35,36 +41,63 @@ const APISettingsDashTemplate: React.FC = () => {
     };
 
     const handleGenerateAPIKey = (): void => {
-        openModal("Generate New API Key", "");
+        setKeyType("API");
+        setAPIFormValues({ name: "" });
+        openModal("Generate New API Key", "Please provide a name or description for your new API key.");
     };
 
-    const handleSubmitApiKeyName = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    const handleGenerateSMTPKey = (): void => {
+        setKeyType("SMTP");
+        setSmtpFormValues({ key_name: "" });
+        openModal("Generate New SMTP Key", "Please provide a name or description for your new SMTP key.");
+    };
+
+    const handleSubmitKeyForm = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setIsModalOpen(false);
 
-        const key = await generateAPIKey();
-        if (key) {
+        try {
+            if (keyType === "SMTP") {
+                await generateSMTPKey();
+                getSMTPKeys();
+                setModalContent({
+                    title: "New SMTP Key Generated",
+                    content: "Your new SMTP key has been generated successfully. You can view it in the SMTP keys table.",
+                });
+            } else if (keyType === "API") {
+                await generateAPIKey();
+                getAPIKey();
+                setModalContent({
+                    title: "New API Key Generated",
+                    content: "Your new API key has been generated successfully. You can view it in the API keys table.",
+                });
+            }
+        } catch (error) {
             setModalContent({
-                title: "New API Key Generated",
-                content: `Your API key is ${key.apiKey}. Note that this will be displayed only once.`,
+                title: "Error",
+                content: `Failed to generate ${keyType} key. Please try again.`,
             });
-            setIsKeyModalOpen(true);
         }
-        getAPIKey();
-        setFormValues({ name: "" });
+
+        setIsKeyModalOpen(true);
+        if (keyType === "API") {
+            setAPIFormValues({ name: "" });
+        } else {
+            setSmtpFormValues({ key_name: "" });
+        }
     };
 
-    const handleGenerateSMTPKey = async (): Promise<void> => {
-        // Simulate API call or key generation logic
-        const newSmtpKey = "SMTP_" + Math.random().toString(36).substr(2, 9);
-        openModal(
-            "New SMTP Key Generated",
-            `Your SMTP key is ${newSmtpKey}. Note that this will be displayed only once.`
-        );
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
+        if (keyType === "API") {
+            setAPIFormValues({ name: value });
+        } else {
+            setSmtpFormValues({ key_name: value });
+        }
     };
 
     return (
-        <div className="p-6 max-w-5xl ">
+        <div className="p-6 max-w-5xl">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">SMTP & API</h1>
                 <div>
@@ -97,7 +130,7 @@ const APISettingsDashTemplate: React.FC = () => {
             <div className="mb-6">
                 <nav className="flex space-x-4 border-b">
                     <button
-                        className={`py-2  border-b-2 ${activeTab === "SMTP"
+                        className={`py-2 border-b-2 ${activeTab === "SMTP"
                             ? "border-blue-500 text-blue-500"
                             : "border-transparent hover:border-gray-300"
                             } transition-colors`}
@@ -125,8 +158,7 @@ const APISettingsDashTemplate: React.FC = () => {
             )}
             {activeTab === "SMTP" && (
                 <>
-                    {" "}
-                    <SMTPKeysTableComponent />{" "}
+                    <SMTPKeysTableComponent />
                 </>
             )}
 
@@ -135,24 +167,20 @@ const APISettingsDashTemplate: React.FC = () => {
                 onClose={() => setIsModalOpen(false)}
                 title={modalContent.title}
             >
-                <form onSubmit={handleSubmitApiKeyName}>
+                <form onSubmit={handleSubmitKeyForm}>
+                    <p className="mb-4 text-gray-600">{modalContent.content}</p>
                     <div className="mb-4">
                         <label
-                            htmlFor="apiKeyName"
+                            htmlFor="keyName"
                             className="block text-sm font-medium text-gray-700"
                         >
-                            API Key Name or Description
+                            {keyType} Key Name or Description
                         </label>
                         <input
                             type="text"
-                            id="apiKeyName"
-                            value={formValues.name}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                setFormValues({
-                                    ...formValues,
-                                    name: event.target.value,
-                                })
-                            }
+                            id="keyName"
+                            value={keyType === "API" ? apiFormValues.name : smtpformValues.key_name}
+                            onChange={handleInputChange}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             required
                         />
@@ -169,7 +197,7 @@ const APISettingsDashTemplate: React.FC = () => {
                             type="submit"
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                         >
-                            Generate Key
+                            Generate {keyType} Key
                         </button>
                     </div>
                 </form>
@@ -180,7 +208,7 @@ const APISettingsDashTemplate: React.FC = () => {
                 onClose={() => setIsKeyModalOpen(false)}
                 title={modalContent.title}
             >
-                <p className="mb-4">{modalContent.content} </p>
+                <p className="mb-4">{modalContent.content}</p>
                 <div className="flex justify-end space-x-2">
                     <button
                         onClick={() => setIsKeyModalOpen(false)}

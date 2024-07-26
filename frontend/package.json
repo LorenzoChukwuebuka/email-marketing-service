@@ -19,6 +19,8 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.1",
     "react-toastify": "^10.0.5",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "yup": "^1.4.0",
     "zustand": "^4.5.2"
   },
@@ -26,6 +28,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.14.12",
+    "@types/postcss-load-config": "^3.0.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.17.0",

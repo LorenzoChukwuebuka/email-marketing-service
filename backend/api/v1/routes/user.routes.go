@@ -55,7 +55,7 @@ var RegisterUserRoutes = func(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/get-smtp-keys", middleware.JWTMiddleware(smptKeyController.GetUserSMTPKeys)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/create-smtp-key", middleware.JWTMiddleware(smptKeyController.CreateSMTPKey)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/toggle-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.ToggleSMTPKeyStatus)).Methods("PUT", "OPTIONS")
-	router.HandleFunc("/delete-smtp-key-status/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.DeleteSMTPKey)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/delete-smtp-key/{smtpKeyId}", middleware.JWTMiddleware(smptKeyController.DeleteSMTPKey)).Methods("DELETE", "OPTIONS")
 
 	//contact route
 	router.HandleFunc("/create-contact", middleware.JWTMiddleware(contactController.CreateContact)).Methods("POST", "OPTIONS")
