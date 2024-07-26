@@ -89,7 +89,7 @@ func (r *SubscriptionRepository) GetAllCurrentRunningSubscription() ([]model.Sub
 
 	var subscriptions []model.Subscription
 
-	if err := r.DB.Where("expired = ?", false).
+	if err := r.DB.Where("expired = ? ", false).
 		Preload("Plan").
 		Preload("User").
 		Preload("Billing").
@@ -118,6 +118,10 @@ func (r *SubscriptionRepository) UpdateExpiredSubscription(id int) error {
 	// Save the updated subscription
 	if err := r.DB.Save(&subscription).Error; err != nil {
 		return fmt.Errorf("failed to update expired subscription: %w", err)
+	}
+
+	if err := r.DB.Delete(&subscription).Error; err != nil {
+		return fmt.Errorf("failed to delete plan: %w", err)
 	}
 
 	return nil

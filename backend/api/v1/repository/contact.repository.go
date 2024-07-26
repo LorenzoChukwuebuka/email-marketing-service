@@ -119,11 +119,24 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 	return response
 }
 
-func mapGroupToResponse(group model.ContactGroup) model.ContactGroup {
-	groupResponse := model.ContactGroup{
+func mapGroupToResponse(group model.ContactGroup) model.ContactGroupResponse {
+	groupResponse := model.ContactGroupResponse{
 		UUID:        group.UUID,
 		GroupName:   group.GroupName,
+		UserId:      group.UserId,
 		Description: group.Description,
+		CreatedAt:   group.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   group.UpdatedAt.Format(time.RFC3339),
+	}
+
+	if group.DeletedAt.Valid {
+		formatted := group.DeletedAt.Time.Format(time.RFC3339)
+		groupResponse.DeletedAt = &formatted
+	}
+
+	for _, contact := range group.Contacts {
+		contactResponse := mapContactToResponse(contact)
+		groupResponse.Contacts = append(groupResponse.Contacts, contactResponse)
 	}
 
 	return groupResponse
@@ -227,7 +240,8 @@ func (r *ContactRepository) DeleteContactGroup(userId string, groupId string) er
 	return nil
 }
 
-func (r *ContactRepository) RemoveContactFromGroup(groupId string, userId string, contactId uint) error {
+
+func (r *ContactRepository) RemoveContactFromGroup(groupId int, userId string, contactId int) error {
 	result := r.DB.Where("group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
 		Delete(&model.UserContactGroup{})
 
