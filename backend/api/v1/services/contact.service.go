@@ -11,7 +11,6 @@ import (
 	"io"
 	"mime/multipart"
 	"strings"
-	
 )
 
 type ContactService struct {
@@ -28,7 +27,7 @@ func NewContactService(contactRepo *repository.ContactRepository) *ContactServic
 func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{}, error) {
 
 	if err := utils.ValidateData(d); err != nil {
-		return nil, fmt.Errorf("invalid plan data: %w", err)
+		return nil, fmt.Errorf("invalid data: %w", err)
 	}
 
 	contactModel := &model.Contact{
@@ -173,7 +172,7 @@ func (s *ContactService) DeleteContact(userId string, contactId string) error {
 
 func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
-		return nil, fmt.Errorf("invalid plan data: %w", err)
+		return nil, fmt.Errorf("invalid  data: %w", err)
 	}
 
 	groupModel := &model.ContactGroup{
@@ -205,7 +204,7 @@ func (s *ContactService) CreateGroup(d *dto.ContactGroupDTO) (map[string]interfa
 
 func (s *ContactService) AddContactsToGroup(d *dto.AddContactsToGroupDTO) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
-		return nil, fmt.Errorf("invalid plan data: %w", err)
+		return nil, fmt.Errorf("invalid  data: %w", err)
 	}
 
 	getContactId, err := s.ContactRepo.GetASingleContact(d.ContactId, d.UserId)
@@ -240,6 +239,43 @@ func (s *ContactService) AddContactsToGroup(d *dto.AddContactsToGroupDTO) (map[s
 
 }
 
-func (s *ContactService) RemoveContactFromGroup() {}
+func (s *ContactService) RemoveContactFromGroup(d *dto.AddContactsToGroupDTO) error {
+	if err := utils.ValidateData(d); err != nil {
+		return fmt.Errorf("invalid data: %w", err)
+	}
 
-func (s *ContactService) DeleteContactGroup() {}
+	//contactId, err := s.ContactRepo.GetASingleContact(d.ContactId,d.UserId);
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if err := s.ContactRepo.RemoveContactFromGroup(d.GroupId,d.UserId,int(contactId.ID)); err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO) error {
+
+	groupModel := &model.ContactGroup{
+
+		GroupName:   d.GroupName,
+		Description: d.Description,
+		UserId:      d.UserId,
+	}
+
+	if err := s.ContactRepo.UpdateGroup(groupModel); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ContactService) DeleteContactGroup(userId string, groupId string) error {
+	if err := s.ContactRepo.DeleteContactGroup(userId, groupId); err != nil {
+		return err
+	}
+
+	return nil
+}

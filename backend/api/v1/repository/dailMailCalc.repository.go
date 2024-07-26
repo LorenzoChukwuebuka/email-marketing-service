@@ -29,7 +29,7 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(subscriptionId int)
 	startOfDay, _ := time.Parse("2006-01-02 15:04:05", today+" 00:00:00")
 	endOfDay, _ := time.Parse("2006-01-02 15:04:05", today+" 23:59:59")
 
-	if err := r.DB.Where("subscription_id = ? AND created_at >= ? AND created_at <= ?", subscriptionId, startOfDay, endOfDay).First(&record).Error; err != nil {
+	if err := r.DB.Where("subscription_id = ? AND created_at >= ? AND created_at <= ? ", subscriptionId, startOfDay, endOfDay).First(&record).Error; err != nil {
 		return nil, fmt.Errorf("error fetching record: %w", err)
 	}
 
