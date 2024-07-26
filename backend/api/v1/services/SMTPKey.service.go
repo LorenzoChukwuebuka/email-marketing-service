@@ -7,7 +7,6 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"github.com/google/uuid"
-
 )
 
 type SMTPKeyService struct {
@@ -71,6 +70,7 @@ func (s *SMTPKeyService) GetSMTPKeys(userId string) (map[string]interface{}, err
 		"smtp_port":            config.SMTP_PORT,
 		"smtp_server":          config.SMTP_SERVER,
 		"smtp_master_status":   masterSMTP.Status,
+		"smtp_created_at":      masterSMTP.CreatedAt,
 		"keys":                 keyValue,
 	}
 
@@ -97,12 +97,11 @@ func (s *SMTPKeyService) CreateSMTPKey(d *dto.SMTPKeyDTO) (map[string]interface{
 	}
 
 	smtpKey := &model.SMTPKey{
-		UUID:      uuid.New().String(),
-		UserId:    d.UserId,
-		KeyName:   d.KeyName,
-		Password:  password,
-		Status:    model.KeyActive,
-		
+		UUID:     uuid.New().String(),
+		UserId:   d.UserId,
+		KeyName:  d.KeyName,
+		Password: password,
+		Status:   model.KeyActive,
 	}
 
 	err = s.SMTPKeyRepo.CreateSMTPKey(smtpKey)

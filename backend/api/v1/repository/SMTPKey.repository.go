@@ -124,10 +124,13 @@ func (r *SMTPKeyRepository) ToggleSMTPKeyStatus(userId string, smtpkeyId string)
 	return nil
 }
 
-func (r *SMTPKeyRepository) DeleteSMTPKey(smtkeyId string) error {
-	if err := r.DB.Where("uuid = ?", smtkeyId).Delete(&model.APIKey{}).Error; err != nil {
-		return fmt.Errorf("failed to delete API key: %w", err)
+func (r *SMTPKeyRepository) DeleteSMTPKey(smtpKeyId string) error {
+	result := r.DB.Where("uuid = ?", smtpKeyId).Delete(&model.SMTPKey{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete SMTP key: %w", result.Error)
 	}
-
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no SMTP key found with UUID: %s", smtpKeyId)
+	}
 	return nil
 }

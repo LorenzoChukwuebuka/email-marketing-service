@@ -1,8 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSMTPKeyStore from "../../../../store/userstore/smtpkeyStore";
+import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
 
 const SMTPKeysTableComponent: React.FC = () => {
-    const { getSMTPKeys, smtpKeyData } = useSMTPKeyStore()
+    const { getSMTPKeys, smtpKeyData, deleteSMTPKey } = useSMTPKeyStore()
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const handleDelete = async (id: string) => {
+        deleteSMTPKey(id)
+    }
 
     useEffect(() => {
         getSMTPKeys()
@@ -45,16 +51,14 @@ const SMTPKeysTableComponent: React.FC = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created on
                             </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Delete </th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         <tr>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="mr-3 h-4 w-4 text-blue-600"
-                                    />
+
                                     <div className="text-sm font-medium text-gray-900">
                                         {smtpKeyData.smtp_master}
                                     </div>
@@ -94,18 +98,14 @@ const SMTPKeysTableComponent: React.FC = () => {
                                 </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {/* You might want to add a created_at field for the master key */}
-                                N/A
+                                {new Date(smtpKeyData.smtp_created_at).toLocaleString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })}
+
                             </td>
                         </tr>
-                        {smtpKeyData.keys && smtpKeyData.keys.map((key) => (
+                        {smtpKeyData.keys.length > 0 && smtpKeyData.keys.map((key) => (
                             <tr key={key.uuid}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            className="mr-3 h-4 w-4 text-blue-600"
-                                        />
                                         <div className="text-sm font-medium text-gray-900">
                                             {key.key_name}
                                         </div>
@@ -114,7 +114,7 @@ const SMTPKeysTableComponent: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <span className="text-sm text-gray-500 mr-2">
-                                            {key.password}
+                                            {maskAPIKey(key.password)}
                                         </span>
                                         <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
                                             <svg
@@ -145,7 +145,21 @@ const SMTPKeysTableComponent: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {new Date(key.created_at).toLocaleString()}
+                                    {convertToNormalTime(key.created_at)}
+                                </td>
+
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button
+                                        onClick={() => handleDelete(key.uuid)}
+                                        className="text-red-600 hover:text-red-900"
+                                        disabled={deletingId === key.uuid}
+                                    >
+                                        {deletingId === key.uuid ? (
+                                            <span className="loading loading-spinner loading-sm"></span>
+                                        ) : (
+                                            <i className="bi bi-trash"></i>
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))}
