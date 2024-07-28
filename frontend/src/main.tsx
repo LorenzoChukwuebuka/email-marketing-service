@@ -7,6 +7,8 @@ import AuthContextProvider from "./context/AuthContext";
 
 const rootElement = document.getElementById("root");
 
+document.title = import.meta.env.VITE_API_NAME || 'Default Title';
+
 if (rootElement) {
     ReactDOM.createRoot(rootElement).render(
         <React.StrictMode>

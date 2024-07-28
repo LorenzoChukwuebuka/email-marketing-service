@@ -3,8 +3,9 @@ package repository
 import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type PlanRepository struct {
@@ -18,9 +19,7 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 }
 
 func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse {
-
 	response := model.PlanResponse{
-		ID:                  plan.ID,
 		UUID:                plan.UUID,
 		PlanName:            plan.PlanName,
 		Duration:            plan.Duration,
@@ -28,24 +27,45 @@ func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse 
 		NumberOfMailsPerDay: plan.NumberOfMailsPerDay,
 		Details:             plan.Details,
 		Status:              plan.Status,
+		Features:            plan.Features,
 		CreatedAt:           plan.CreatedAt.String(),
 		UpdatedAt:           plan.UpdatedAt.String(),
 	}
 
 	if plan.DeletedAt.Valid {
-		formatted := plan.DeletedAt.Time.Format(time.RFC3339)
-		response.DeletedAt = &formatted
+		htime := plan.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &htime
 	}
 
 	return response
 }
 
-func (r *PlanRepository) CreatePlan(d *model.Plan) (*model.Plan, error) {
-	if err := r.DB.Create(&d).Error; err != nil {
-		return nil, fmt.Errorf("failed to insert plan: %w", err)
+func (r *PlanRepository) CreatePlan(plan *model.Plan, features []model.PlanFeature) (*model.Plan, error) {
+	err := r.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the plan
+		if err := tx.Create(plan).Error; err != nil {
+			return fmt.Errorf("failed to insert plan: %w", err)
+		}
+
+		// Now that we have the plan ID, set it for each feature and create the features
+		for i := range features {
+			features[i].PlanID = plan.ID
+			if err := tx.Create(&features[i]).Error; err != nil {
+				return fmt.Errorf("failed to insert plan feature: %w", err)
+			}
+		}
+
+		// Set the features on the plan
+		plan.Features = features
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	return d, nil
+	return plan, nil
 }
 
 func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
@@ -59,7 +79,7 @@ func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
 
 func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 	var plans []model.Plan
-	if err := r.DB.Model(&model.Plan{}).Find(&plans).Error; err != nil {
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Find(&plans).Error; err != nil {
 		return nil, err
 	}
 
@@ -73,52 +93,74 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 
 func (r *PlanRepository) GetSinglePlan(uuid string) (model.PlanResponse, error) {
 	var plan model.Plan
-	if err := r.DB.Model(&model.Plan{}).Where("uuid = ?", uuid).First(&plan).Error; err != nil {
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Where("uuid = ?", uuid).First(&plan).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return model.PlanResponse{}, gorm.ErrRecordNotFound
+		}
 		return model.PlanResponse{}, err
 	}
 	return r.createPlanResponse(plan), nil
 }
 
 func (r *PlanRepository) EditPlan(data *model.Plan) error {
-	existingPlan := model.Plan{}
-	if err := r.DB.Model(&model.Plan{}).Where("uuid = ?", data.UUID).First(&existingPlan).Error; err != nil {
-		return fmt.Errorf("failed to find plan for editing: %w", err)
-	}
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		existingPlan := model.Plan{}
+		if err := tx.Preload("Features").Where("uuid = ?", data.UUID).First(&existingPlan).Error; err != nil {
+			return fmt.Errorf("failed to find plan for editing: %w", err)
+		}
 
-	// Update the existing plan with the new data
-	existingPlan.PlanName = data.PlanName
-	existingPlan.Duration = data.Duration
-	existingPlan.Price = data.Price
-	existingPlan.NumberOfMailsPerDay = data.NumberOfMailsPerDay
-	existingPlan.Details = data.Details
-	existingPlan.Status = data.Status
+		// Update the existing plan with the new data
+		existingPlan.PlanName = data.PlanName
+		existingPlan.Duration = data.Duration
+		existingPlan.Price = data.Price
+		existingPlan.NumberOfMailsPerDay = data.NumberOfMailsPerDay
+		existingPlan.Details = data.Details
+		existingPlan.Status = data.Status
 
-	// Save the changes to the database
-	if err := r.DB.Save(&existingPlan).Error; err != nil {
-		return fmt.Errorf("failed to update plan: %w", err)
-	}
+		// Delete existing features
+		if err := tx.Where("plan_id = ?", existingPlan.ID).Delete(&model.PlanFeature{}).Error; err != nil {
+			return fmt.Errorf("failed to delete existing features: %w", err)
+		}
 
-	return nil
+		// Add new features
+		existingPlan.Features = data.Features
+		for i := range existingPlan.Features {
+			existingPlan.Features[i].PlanID = existingPlan.ID
+		}
+
+		// Save the changes to the database
+		if err := tx.Save(&existingPlan).Error; err != nil {
+			return fmt.Errorf("failed to update plan: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (r *PlanRepository) DeletePlan(id string) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		var existingPlan model.Plan
+		if err := tx.Where("uuid = ?", id).First(&existingPlan).Error; err != nil {
+			return fmt.Errorf("failed to find plan for deletion: %w", err)
+		}
 
-	var existingPlan model.Plan
-	if err := r.DB.Where("uuid = ?", id).First(&existingPlan).Error; err != nil {
-		return fmt.Errorf("failed to find plan for deletion: %w", err)
-	}
+		// Delete associated features
+		if err := tx.Where("plan_id = ?", existingPlan.ID).Delete(&model.PlanFeature{}).Error; err != nil {
+			return fmt.Errorf("failed to delete associated features: %w", err)
+		}
 
-	// Soft delete by marking the plan as deleted
-	if err := r.DB.Delete(&existingPlan).Error; err != nil {
-		return fmt.Errorf("failed to delete plan: %w", err)
-	}
+		// Soft delete the plan
+		if err := tx.Delete(&existingPlan).Error; err != nil {
+			return fmt.Errorf("failed to delete plan: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *PlanRepository) GetPlanById(id uint) (model.PlanResponse, error) {
 	var plan model.Plan
-	if err := r.DB.Model(&model.Plan{}).Where("id = ?", id).First(&plan).Error; err != nil {
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Where("id = ?", id).First(&plan).Error; err != nil {
 		return model.PlanResponse{}, err
 	}
 	return r.createPlanResponse(plan), nil

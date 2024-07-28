@@ -7,13 +7,14 @@ import (
 // Contact represents a contact entity.
 type Contact struct {
 	gorm.Model
-	UUID      string         `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     string         `json:"email"`
-	From      string         `json:"from"`
-	UserId    string         `json:"user_id" gorm:"type:uuid"`
-	Groups    []ContactGroup `json:"groups" gorm:"many2many:user_contact_groups;"`
+	UUID         string         `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Email        string         `json:"email"`
+	From         string         `json:"from"`
+	IsSubscribed bool           `json:"is_subscribed"`
+	UserId       string         `json:"user_id" gorm:"type:uuid"`
+	Groups       []ContactGroup `json:"groups" gorm:"many2many:user_contact_groups;"`
 }
 
 type UserContactGroup struct {

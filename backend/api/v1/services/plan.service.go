@@ -1,14 +1,14 @@
 package services
 
 import (
-	"fmt"
-
-	"github.com/google/uuid"
-
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
+	"errors"
+	"fmt"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 var (
@@ -37,7 +37,21 @@ func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 		Details:             d.Details,
 		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
 		Price:               d.Price,
-		Status:              d.Status,
+		Status:              model.PlanStatus(d.Status),
+	}
+
+	// Create slice of PlanFeature, but don't set PlanID yet
+	features := make([]model.PlanFeature, len(d.Features))
+	for i, feature := range d.Features {
+		features[i] = model.PlanFeature{
+			UUID:        uuid.New().String(),
+			Name:        feature.Name,
+			Identifier:  feature.Identifier,
+			CountLimit:  feature.CountLimit,
+			SizeLimit:   feature.SizeLimit,
+			IsActive:    feature.IsActive,
+			Description: feature.Description,
+		}
 	}
 
 	exists, err := s.planRepo.PlanExistsByName(d.PlanName)
@@ -48,12 +62,13 @@ func (s *PlanService) CreatePlan(d *dto.Plan) (*model.Plan, error) {
 		return nil, ErrPlanExists
 	}
 
-	_, err = s.planRepo.CreatePlan(planModel)
+	// Pass both the plan and features to the repository
+	createdPlan, err := s.planRepo.CreatePlan(planModel, features)
 	if err != nil {
 		return nil, fmt.Errorf("error creating plan: %w", err)
 	}
 
-	return planModel, nil
+	return createdPlan, nil
 }
 
 func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
@@ -70,10 +85,10 @@ func (s *PlanService) GetAllPlans() ([]model.PlanResponse, error) {
 func (s *PlanService) GetASinglePlan(id string) (model.PlanResponse, error) {
 	plan, err := s.planRepo.GetSinglePlan(id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return model.PlanResponse{}, ErrNoPlanFound
+		}
 		return model.PlanResponse{}, fmt.Errorf("error fetching plan: %w", err)
-	}
-	if plan == (model.PlanResponse{}) {
-		return model.PlanResponse{}, ErrNoPlanFound
 	}
 	return plan, nil
 }
@@ -86,7 +101,20 @@ func (s *PlanService) UpdatePlan(d *dto.EditPlan) error {
 		Details:             d.Details,
 		NumberOfMailsPerDay: d.NumberOfMailsPerDay,
 		Price:               d.Price,
-		Status:              d.Status,
+		Status:              model.PlanStatus(d.Status),
+		Features:            make([]model.PlanFeature, len(d.Features)),
+	}
+
+	for i, feature := range d.Features {
+		planModel.Features[i] = model.PlanFeature{
+			UUID:        uuid.New().String(),
+			Name:        feature.Name,
+			Identifier:  feature.Identifier,
+			CountLimit:  feature.CountLimit,
+			SizeLimit:   feature.SizeLimit,
+			IsActive:    feature.IsActive,
+			Description: feature.Description,
+		}
 	}
 
 	if err := s.planRepo.EditPlan(planModel); err != nil {

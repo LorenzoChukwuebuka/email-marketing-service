@@ -100,9 +100,9 @@ const UserDashLayout: React.FC = () => {
                                 </Link>
                             </li>
 
-                            <li className={getLinkClassName("/contacts")}>
+                            <li className={getLinkClassName("/user/dash/contacts")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/contacts"
                                     className="flex font-semibold text-base items-center"
                                 >
                                     <i className="bi bi-telephone"></i> &nbsp; Contacts

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import useSMTPKeyStore from "../../../../store/userstore/smtpkeyStore";
-import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
+import { convertToNormalTime, copyToClipboard, maskAPIKey } from "../../../../utils/utils";
 
 const SMTPKeysTableComponent: React.FC = () => {
-    const { getSMTPKeys, smtpKeyData, deleteSMTPKey } = useSMTPKeyStore()
+    const { getSMTPKeys, smtpKeyData, deleteSMTPKey, generateSMTPKey } = useSMTPKeyStore()
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleDelete = async (id: string) => {
-        deleteSMTPKey(id)
+        await deleteSMTPKey(id)
     }
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const SMTPKeysTableComponent: React.FC = () => {
                     <span className="font-semibold">Login:</span>  {smtpKeyData.smtp_login}
                 </div>
             </div>
-            <button className="text-blue-600 hover:text-blue-800 mb-6">
+            <button className="text-blue-600 hover:text-blue-800 mb-6" onClick={async () => await generateSMTPKey()}>
                 Regenerate SMTP Login and Master password
             </button>
 
@@ -67,9 +67,9 @@ const SMTPKeysTableComponent: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                     <span className="text-sm text-gray-500 mr-2">
-                                        {smtpKeyData.smtp_master_password}
+                                        {maskAPIKey(smtpKeyData.smtp_master_password)}
                                     </span>
-                                    <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
+                                    <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300" onClick={() => copyToClipboard(smtpKeyData.smtp_master_password)} title="click here to copy">
                                         <svg
                                             className="h-4 w-4 text-gray-600"
                                             fill="none"
@@ -116,7 +116,7 @@ const SMTPKeysTableComponent: React.FC = () => {
                                         <span className="text-sm text-gray-500 mr-2">
                                             {maskAPIKey(key.password)}
                                         </span>
-                                        <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
+                                        <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300" onClick={() => copyToClipboard(key.password)}>
                                             <svg
                                                 className="h-4 w-4 text-gray-600"
                                                 fill="none"

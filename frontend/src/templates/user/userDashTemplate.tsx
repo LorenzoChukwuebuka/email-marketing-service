@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
 interface UserDetails {
     fullname: string;
@@ -9,8 +10,17 @@ interface CookieData {
     details: UserDetails;
 }
 
+interface ActionCardInterface {
+    title: string;
+    description: string;
+    icon: string;
+    onClick: () => void;
+}
+
+
 const UserDashboardTemplate: React.FC = () => {
     const [userName, setUserName] = useState<string>("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const cookie = Cookies.get("Cookies");
@@ -22,9 +32,12 @@ const UserDashboardTemplate: React.FC = () => {
                 console.error("Failed to parse cookie", error);
             }
         }
-    }, [])
+    }, []);
 
-    
+    const handleSendCampaign = () => navigate('/send-campaign');
+    const handleCreateContact = () => navigate('/user/dash/contacts');
+    const handleCreateEmailTemplate = () => navigate('/create-email-template');
+
     return (
         <>
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -37,16 +50,21 @@ const UserDashboardTemplate: React.FC = () => {
                         title="Send Campaign"
                         description="Create a campaign and send marketing mails to your audience easily"
                         icon="📢"
+                        onClick={handleSendCampaign}
                     />
+
                     <ActionCard
                         title="Create Contact"
                         description="Add or upload your contacts to your mailing lists"
                         icon="👤"
+                        onClick={handleCreateContact}
                     />
+
                     <ActionCard
                         title="Create Email Template"
                         description="Start a new email template or pick from an existing one"
                         icon="✉️"
+                        onClick={handleCreateEmailTemplate}
                     />
                 </div>
             </div>
@@ -55,14 +73,9 @@ const UserDashboardTemplate: React.FC = () => {
 };
 
 
-interface ActionCardInterface {
-    title: string
-    description: string
-    icon: string
-}
 
-const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon }) => (
-    <div className="bg-white rounded-lg shadow p-4 w-1/3 mr-4">
+const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, onClick }) => (
+    <div className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4" onClick={onClick}>
         <div className="flex items-center mb-2">
             <span className="text-2xl mr-2">{icon}</span>
             <h3 className="font-semibold">{title}</h3>

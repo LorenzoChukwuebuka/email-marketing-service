@@ -57,6 +57,7 @@ func autoMigrateModels() {
 		&model.OTP{},
 		&model.UserSession{},
 		&model.Plan{},
+		&model.PlanFeature{},
 		&model.APIKey{},
 		&model.DailyMailCalc{},
 		&model.Subscription{},
