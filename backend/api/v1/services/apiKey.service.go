@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
-	
 )
 
 type APIKeyService struct {
@@ -30,11 +29,10 @@ func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}
 		return nil, err
 	}
 	apiKeyModel := &model.APIKey{
-		UUID:      uuid.New().String(),
-		UserId:    d.UserId,
-		APIKey:    apiKey,
-		Name:      d.Name,
-		
+		UUID:   uuid.New().String(),
+		UserId: d.UserId,
+		APIKey: apiKey,
+		Name:   d.Name,
 	}
 
 	existingKeys, err := s.APIKeyRepo.GetUserAPIKeyByUserId(d.UserId)
@@ -86,7 +84,7 @@ func (s *APIKeyService) GetAPIKey(userId string) ([]model.APIKeyResponseModel, e
 			UpdatedAt: apiKey.UpdatedAt,
 		}
 	}
-	fmt.Println(encryptedKeys)
+
 	return encryptedKeys, nil
 }
 

@@ -2,12 +2,23 @@ import { create } from 'zustand'
 import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
 
+interface Feature {
+    name: string;
+    identifier: string;
+    count_limit: number;
+    size_limit: number;
+    is_active: boolean;
+    description: string;
+}
+
 interface PlanValues {
     planname: string;
     duration: string;
-    price: string;
+    price: number;
     details: string;
     number_of_mails_per_day: string;
+    status: string;
+    features: Feature[];
 }
 
 interface EditPlanValues extends PlanValues {
@@ -22,11 +33,23 @@ interface PlanData {
     number_of_mails_per_day: string;
     details: string;
     status: string;
+    features: {
+        ID: number;
+        CreatedAt: string;
+        UpdatedAt: string;
+        DeletedAt: string | null;
+        uuid: string;
+        plan_id: number;
+        name: string;
+        identifier: string;
+        count_limit: number;
+        size_limit: number;
+        is_active: boolean;
+        description: string;
+    }[];
     created_at: string;
     updated_at: string;
-    deleted_at: string | null;
 }
-
 
 interface PlanState {
     planValues: PlanValues;
@@ -50,17 +73,21 @@ const usePlanStore = create<PlanState>((set, get) => ({
     planValues: {
         planname: '',
         duration: '',
-        price: '',
+        price: 0,
         details: '',
-        number_of_mails_per_day: ''
+        number_of_mails_per_day: '',
+        status: 'active',
+        features: []
     },
     editPlanValues: {
         uuid: '',
         planname: '',
         duration: '',
-        price: '',
+        price: 0,
         details: '',
-        number_of_mails_per_day: ''
+        number_of_mails_per_day: '',
+        status: 'active',
+        features: []
     },
     isLoading: false,
     planData: [],

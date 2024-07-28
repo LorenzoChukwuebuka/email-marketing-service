@@ -8,11 +8,11 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width = "w-[35em]" }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width = "md:w-[35em]" }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center overflow-y-auto items-center z-50">
             <div className={`bg-white p-6 rounded-lg shadow-lg ${width} w-auto`}>
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl text-center font-bold">{title}</h2>

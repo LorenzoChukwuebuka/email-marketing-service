@@ -29,7 +29,7 @@ const APISettingsDashTemplate: React.FC = () => {
     } = useAPIKeyStore();
 
     const {
-        generateSMTPKey,
+        createSMTPKey,
         setSmtpFormValues,
         getSMTPKeys,
         smtpformValues
@@ -58,8 +58,8 @@ const APISettingsDashTemplate: React.FC = () => {
 
         try {
             if (keyType === "SMTP") {
-                await generateSMTPKey();
-                getSMTPKeys();
+                await createSMTPKey();
+                await getSMTPKeys();
                 setModalContent({
                     title: "New SMTP Key Generated",
                     content: "Your new SMTP key has been generated successfully. You can view it in the SMTP keys table.",

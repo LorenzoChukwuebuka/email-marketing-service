@@ -36,9 +36,10 @@ interface SMTPStore {
 
     setSmtpFormValues: (newFormValues: FormValues) => void;
     setSmtpKeyData: (data: SMTPKeyDATA) => void;
-    getSMTPKeys: () => void
+    getSMTPKeys: () => Promise<void>
     generateSMTPKey: () => Promise<void>
-    deleteSMTPKey: (smtpKeyId: string) => void
+    deleteSMTPKey: (smtpKeyId: string) => Promise<void>
+    createSMTPKey: () => Promise<void>
 }
 
 const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
@@ -69,7 +70,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
         }
     },
 
-    generateSMTPKey: async () => {
+    createSMTPKey: async () => {
         try {
             const { smtpformValues } = get();
             const response = await axiosInstance.post('/create-smtp-key', smtpformValues);
@@ -85,7 +86,17 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
         try {
             const response = await axiosInstance.delete(`/delete-smtp-key/${smtpKeyId}`);
             eventBus.emit('success', 'SMTP key deleted successfully');
-            get().getSMTPKeys(); 
+            get().getSMTPKeys();
+        } catch (error) {
+            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    },
+
+    generateSMTPKey: async () => {
+        try {
+            const response = await axiosInstance.put('/generate-new-smtp-master-password');
+            eventBus.emit('success', 'SMTP credentials changed successfully');
+            get().getSMTPKeys();
         } catch (error) {
             eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred');
         }
