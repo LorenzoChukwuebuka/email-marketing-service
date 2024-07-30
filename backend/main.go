@@ -1,6 +1,7 @@
 package main
 
 import (
+	"email-marketing-service/api/v1"
 	"email-marketing-service/api/v1/database"
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/observers"
@@ -54,6 +55,6 @@ func main() {
 		select {}
 	}()
 
-	server := NewServer(dbConn)
+	server := v1.NewServer(dbConn)
 	server.Start()
 }

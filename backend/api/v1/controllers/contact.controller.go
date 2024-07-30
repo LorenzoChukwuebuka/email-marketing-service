@@ -16,6 +16,7 @@ type ContactController struct {
 	ContactService   *services.ContactService
 	UserRepo         *repository.UserRepository
 	SubscriptionRepo *repository.SubscriptionRepository
+	//Response *utils.ApiResponse
 }
 
 func NewContactController(contactsvc *services.ContactService, userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *ContactController {
@@ -23,6 +24,7 @@ func NewContactController(contactsvc *services.ContactService, userRepo *reposit
 		ContactService:   contactsvc,
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
+		//Response : &utils.ApiResponse{},
 	}
 }
 
@@ -76,17 +78,17 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 	var fileSizeLimit int64
 	switch sub.Plan.PlanName {
 	case "free":
-		fileSizeLimit = 5 << 20 // 5 MB
+		fileSizeLimit = 2 << 20 // 2 MB
 	case "basic":
-		fileSizeLimit = 20 << 20 // 20 MB
+		fileSizeLimit = 5 << 20 // 5 MB
 	case "premium":
-		fileSizeLimit = 50 << 20 // 50 MB
+		fileSizeLimit = 10 << 20 // 10 MB
 	default:
-		fileSizeLimit = 10 << 20 // 10 MB default
+		fileSizeLimit = 2 << 20 // 2 MB default
 	}
 
 	// Set a reasonable limit for the entire form, separate from file size limit
-	err = r.ParseMultipartForm(32 << 20) // 32 MB
+	err = r.ParseMultipartForm(15 << 20) // 32 MB
 	if err != nil {
 		response.ErrorResponse(w, "Error parsing form")
 		return
@@ -259,6 +261,75 @@ func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Req
 
 }
 
-func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {}
+func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.AddContactsToGroupDTO
 
-func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Request) {}
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.UserId = userId
+
+	err := c.ContactService.RemoveContactFromGroup(reqdata)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, "contact removed successfully")
+
+}
+
+func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.ContactGroupDTO
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	utils.DecodeRequestBody(r, &reqdata)
+
+	reqdata.UserId = userId
+
+	err := c.ContactService.UpdateContactGroup(reqdata)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, "contact group updated successfully")
+}
+
+func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	vars := mux.Vars(r)
+
+	groupId := vars["groupId"]
+
+	if err := c.ContactService.DeleteContactGroup(userId, groupId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, "group deleted successfully")
+
+}

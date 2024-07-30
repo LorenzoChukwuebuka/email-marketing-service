@@ -6,20 +6,26 @@ import (
 	"gorm.io/gorm"
 )
 
-var RegisterAdminRoutes = func(router *mux.Router, db *gorm.DB) {
+type AdminRoute struct {
+	db *gorm.DB
+}
 
-	adminController, _ := InitializeAdminController(db)
-	planController, _ := InitializePlanController(db)
+func NewAdminRoute(db *gorm.DB) *AdminRoute {
+	return &AdminRoute{db: db}
+}
 
-	//admin routes
+func (ar *AdminRoute) InitRoutes(router *mux.Router) {
+	adminController, _ := InitializeAdminController(ar.db)
+	planController, _ := InitializePlanController(ar.db)
+
+	// Admin routes
 	router.HandleFunc("/create-admin", adminController.CreateAdmin).Methods("POST", "OPTIONS")
 	router.HandleFunc("/admin-login", adminController.Login).Methods("POST", "OPTIONS")
 
-	//create plans
+	// Plan routes
 	router.HandleFunc("/create-plan", middleware.AdminJWTMiddleware(planController.CreatePlan)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-plans", middleware.AdminJWTMiddleware(planController.GetAllPlans)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-plan/{id}", middleware.AdminJWTMiddleware(planController.GetSinglePlan)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/edit-plan/{id}", middleware.AdminJWTMiddleware(planController.UpdatePlan)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-plan/{id}", middleware.AdminJWTMiddleware(planController.DeletePlan)).Methods("DELETE", "OPTIONS")
-
 }

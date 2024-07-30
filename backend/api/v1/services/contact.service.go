@@ -244,15 +244,21 @@ func (s *ContactService) RemoveContactFromGroup(d *dto.AddContactsToGroupDTO) er
 		return fmt.Errorf("invalid data: %w", err)
 	}
 
-	//contactId, err := s.ContactRepo.GetASingleContact(d.ContactId,d.UserId);
+	contactId, err := s.ContactRepo.GetASingleContact(d.ContactId, d.UserId)
 
-	// if err != nil {
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
 
-	// if err := s.ContactRepo.RemoveContactFromGroup(d.GroupId,d.UserId,int(contactId.ID)); err != nil {
-	// 	return err
-	// }
+	groupId, err := s.ContactRepo.GetASingleGroup(d.UserId, d.GroupId)
+
+	if err != nil {
+		return err
+	}
+
+	if err := s.ContactRepo.RemoveContactFromGroup(int(groupId.ID), d.UserId, int(contactId.ID)); err != nil {
+		return err
+	}
 
 	return nil
 }

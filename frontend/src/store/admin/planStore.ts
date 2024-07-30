@@ -21,7 +21,7 @@ interface PlanValues {
     features: Feature[];
 }
 
-interface EditPlanValues extends PlanValues {
+interface EditPlanValues extends Partial<PlanValues> {
     uuid: string;
 }
 

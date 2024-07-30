@@ -1,4 +1,4 @@
-package main
+package v1
 
 import (
 	"context"
@@ -35,15 +35,24 @@ var (
 
 func (s *Server) setupRoutes() {
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
-	adminRouter := s.router.PathPrefix("/api/v1/admin").Subrouter()
 
-	apiV1Router.Use(enableCORS)
-	adminRouter.Use(enableCORS)
+	// apiV1Router.Use(enableCORS)
+	// adminRouter.Use(enableCORS)
 
-	routes.RegisterUserRoutes(apiV1Router, s.db)
-	routes.RegisterAdminRoutes(adminRouter, s.db)
+	// routes.RegisterUserRoutes(apiV1Router, s.db)
+	// routes.RegisterAdminRoutes(adminRouter, s.db)
+
+	routeMap := map[string]routes.Route{
+		"admin": routes.NewAdminRoute(s.db),
+		"":  routes.NewUserRoute(s.db),
+	}
+
+	for path, route := range routeMap {
+		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
+	}
 
 	s.router.Use(recoveryMiddleware)
+	s.router.Use(enableCORS)
 	s.router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }
 

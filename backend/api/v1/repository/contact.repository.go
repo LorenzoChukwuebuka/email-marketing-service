@@ -230,16 +230,38 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 }
 
 func (r *ContactRepository) DeleteContactGroup(userId string, groupId string) error {
-	result := r.DB.Where("user_id = ? AND uuid = ?", userId, groupId).Delete(&model.ContactGroup{})
+	// Start a new transaction
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to start transaction: %w", tx.Error)
+	}
+
+	// Delete associated user contact groups
+	result := tx.Where("group_id = ?", groupId).Delete(&model.UserContactGroup{})
 	if result.Error != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete user contact groups: %w", result.Error)
+	}
+
+	// Delete the contact group
+	result = tx.Where("user_id = ? AND uuid = ?", userId, groupId).Delete(&model.ContactGroup{})
+	if result.Error != nil {
+		tx.Rollback()
 		return fmt.Errorf("failed to delete contact group: %w", result.Error)
 	}
+
 	if result.RowsAffected == 0 {
+		tx.Rollback()
 		return fmt.Errorf("group not found or already deleted")
 	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
-
 
 func (r *ContactRepository) RemoveContactFromGroup(groupId int, userId string, contactId int) error {
 	result := r.DB.Where("group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
