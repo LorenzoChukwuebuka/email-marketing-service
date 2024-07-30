@@ -34,6 +34,7 @@ type ContactGroup struct {
 	UserId      string    `json:"user_id"`
 	Description string    `json:"description"`
 	Contacts    []Contact `json:"contacts" gorm:"many2many:user_contact_groups;"`
+	Campaigns   []Campaign `json:"campaigns" gorm:"many2many:campaign_groups;"`
 }
 
 type ContactResponse struct {

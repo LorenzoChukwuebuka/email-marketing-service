@@ -1,87 +1,48 @@
 package model
 
 import (
-    "time"
+	"time"
+
+	"gorm.io/gorm"
 )
 
-// Campaign represents an email campaign
+type CampaignStatus string
+
+const (
+	Draft     CampaignStatus = "draft"
+	Saved     CampaignStatus = "saved"
+	Scheduled CampaignStatus = "scheduled"
+	Sent      CampaignStatus = "sent"
+)
+
 type Campaign struct {
-    ID           uint `gorm:"primary_key"`
-    Name         string
-    Subject      string
-    FromName     string
-    FromEmail    string
-    ReplyTo      string
-    Status       string `gorm:"type:enum('draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled')"`
-    CreatedAt    time.Time
-    UpdatedAt    time.Time
-    ScheduledAt  *time.Time
-    SentAt       *time.Time
-    Lists        []CampaignList
-    Segments     []CampaignSegment
-    Content      CampaignContent
-    Tracking     CampaignTracking
-    Clicks       []EmailClick
-    Opens        []EmailOpen
-    Links        []CampaignLink
+	gorm.Model
+	UUID           string          `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	Name           string          `json:"name"`
+	Subject        *string         `json:"subject" gorm:"type:text;default:null"`
+	PreviewText    *string         `json:"preview_text"`
+	SenderId       *string         `json:"sender_id"`
+	SenderFromName *string         `json:"senderFromName"`
+	TemplateId     *string         `json:"templateId"`
+	SentTemplateId *string         `json:"sentTemplateId"`
+	RecipientInfo  *string         `json:"recipientInfo"`
+	IsPublished    bool            `json:"isPublished"`
+	Status         string          `json:"status"`
+	TrackType      string          `json:"trackType"`
+	IsArchived     bool            `json:"isArchived"`
+	SentAt         *time.Time      `json:"sentAt"`
+	CreatedBy      string          `json:"createdBy"`
+	LastEditedBy   string          `json:"lastEditedBy"`
+	Template       *string         `json:"template"`
+	Sender         *string         `json:"sender"`
+	CampaignGroups []CampaignGroup `json:"campaign_groups" gorm:"foreignKey:CampaignId"`
 }
 
-// CampaignList maps a campaign to a contact list
-type CampaignList struct {
-    ID         uint `gorm:"primary_key"`
-    CampaignID uint
-    ListID     uint
-}
-
-// CampaignSegment represents a segment for a campaign
-type CampaignSegment struct {
-    ID             uint `gorm:"primary_key"`
-    CampaignID     uint
-    SegmentName    string
-    SegmentCriteria string
-}
-
-// CampaignContent stores the email content for a campaign
-type CampaignContent struct {
-    ID           uint `gorm:"primary_key"`
-    CampaignID   uint
-    HTMLContent  string `gorm:"type:longtext"`
-    TextContent  string `gorm:"type:longtext"`
-}
-
-// CampaignTracking stores tracking data for a campaign
-type CampaignTracking struct {
-    ID              uint `gorm:"primary_key"`
-    CampaignID      uint
-    TotalRecipients int
-    TotalOpens      int
-    TotalClicks     int
-}
-
-// EmailOpen represents an email open event
-type EmailOpen struct {
-    ID         uint `gorm:"primary_key"`
-    CampaignID uint
-    ContactID  uint
-    OpenTime   time.Time
-    IPAddress  string
-    UserAgent  string
-}
-
-// EmailClick represents an email click event
-type EmailClick struct {
-    ID         uint `gorm:"primary_key"`
-    CampaignID uint
-    ContactID  uint
-    ClickTime  time.Time
-    LinkURL    string
-    IPAddress  string
-    UserAgent  string
-}
-
-// CampaignLink represents a link used in a campaign
-type CampaignLink struct {
-    ID         uint `gorm:"primary_key"`
-    CampaignID uint
-    LinkURL    string
+type CampaignGroup struct {
+	gorm.Model
+	UUID         string       `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	CampaignId   uint         `json:"campaign_id"`
+	GroupId      uint         `json:"group_id"`
+	Campaign     Campaign     `json:"-" gorm:"foreignKey:CampaignId"`
+	ContactGroup ContactGroup `json:"-" gorm:"foreignKey:GroupId"`
 }

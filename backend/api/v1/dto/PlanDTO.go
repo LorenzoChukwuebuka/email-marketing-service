@@ -10,7 +10,7 @@ const (
 type Plan struct {
 	PlanName            string        `json:"planname" validate:"required"`
 	Duration            string        `json:"duration" validate:"required"`
-	Price               float32       `json:"price" validate:"required"`
+	Price               float32       `json:"price"`
 	NumberOfMailsPerDay string        `json:"number_of_mails_per_day" validate:"required"`
 	Details             string        `json:"details" validate:"required"`
 	Status              PlanStatus    `json:"status" validate:"required"`
