@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import useContactStore from "../../../../store/userstore/contactStore";
 import { convertToNormalTime } from '../../../../utils/utils';
+import Pagination from "../../../../components/Pagination";
 
 
 
@@ -183,31 +184,9 @@ const GetAllContacts: React.FC = () => {
                         )}
                     </tbody>
                 </table>
-
             </div>
 
-            <div className="mt-4 flex justify-between items-center">
-                <div>Total Contacts: {paginationInfo.total_count}</div>
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => handlePageChange(paginationInfo.current_page - 1)}
-                        disabled={paginationInfo.current_page === 1}
-                        className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-                    >
-                        Previous
-                    </button>
-                    <span className="py-2">
-                        Page {paginationInfo.current_page} of {paginationInfo.total_pages}
-                    </span>
-                    <button
-                        onClick={() => handlePageChange(paginationInfo.current_page + 1)}
-                        disabled={paginationInfo.current_page === paginationInfo.total_pages}
-                        className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-                    >
-                        Next
-                    </button>
-                </div>
-            </div>
+            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Contacts"/>
 
             {/* <EditContact
                 isOpen={isModalOpen}

@@ -4,6 +4,8 @@ import parseUserAgent from '../utils/userAgent'
 import axios from 'axios'
 import eventBus from '../utils/eventBus'
 import Cookies from 'js-cookie'
+import { BaseEntity } from '../interface/baseentity.interface'
+import { APIResponse } from '../interface/api.interface'
 
 type FormValues = {
     fullname: string;
@@ -22,6 +24,15 @@ type ForgetPasswordValues = Pick<FormValues, 'email'>
 type ResetPasswordValues = Pick<FormValues, 'email' | 'confirmPassword' | 'password' | 'token'>
 
 type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | 'token'>;
+
+type UserDetails = {
+    fullname: string
+    email: string
+    company: string
+    phonenumber: string
+    verified: boolean,
+    blocked: boolean,
+} & BaseEntity
 
 type ChangePasswordValues = {
     old_password: string;
@@ -332,7 +343,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         try {
             const { setIsLoading, setUserData } = get()
             setIsLoading(true)
-            let response = await axiosInstance.get('/get-user-details')
+            let response = await axiosInstance.get<APIResponse<UserDetails>>('/get-user-details')
             setUserData(response.data.payload)
         } catch (error: any) {
             eventBus.emit(
