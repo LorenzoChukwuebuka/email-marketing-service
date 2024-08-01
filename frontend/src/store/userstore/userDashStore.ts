@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
+import { APIResponse } from '../../interface/api.interface';
 
 
 interface MailData {
     remainingMails: number;
     mailsPerDay: number;
-    plan: string;
+    plan?: string;
 }
 
 
@@ -25,7 +26,7 @@ const useDailyUserMailSentCalc = create<DailyUserMailStore>((set, get) => ({
     getUserMailData: async () => {
         const { setMailData } = get()
         try {
-            let response = await axiosInstance.get('/get-user-current-sub')
+            let response = await axiosInstance.get<APIResponse<MailData>>('/get-user-current-sub')
             setMailData(response.data.payload)
 
             console.log(response.data)

@@ -11,30 +11,17 @@ interface FormValues {
     email: string;
     password: string;
     confirmPassword: string;
-}
-
-interface LoginValues {
-    email: string;
-    password: string;
-}
-
-interface ForgetPasswordValues {
-    email: string;
-}
-
-interface ResetPasswordValues {
-    password: string;
-    confirmPassword: string;
     token: string;
-    email: string;
-}
-
-interface EditFormValues {
-    fullname: string;
-    company: string;
-    email: string;
     phonenumber: string;
 }
+
+interface LoginValues extends Pick<FormValues, 'email' | 'password'> { }
+
+interface ForgetPasswordValues extends Pick<FormValues, 'email'> { }
+
+interface ResetPasswordValues extends Pick<FormValues, 'email' | 'confirmPassword' | 'password' | 'token'> { }
+
+type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | 'token'>;
 
 interface ChangePasswordValues {
     old_password: string;
@@ -43,7 +30,7 @@ interface ChangePasswordValues {
 }
 
 interface AuthStore {
-    formValues: FormValues;
+    formValues: Omit<FormValues, 'token' | 'phonenumber'>;
     error: boolean;
     success: boolean;
     errorMessage: string;
@@ -62,7 +49,7 @@ interface AuthStore {
     userData: any;
     changePasswordValues: ChangePasswordValues;
 
-    setFormValues: (newFormValues: FormValues) => void;
+    setFormValues: (newFormValues: Omit<FormValues, 'token' | 'phonenumber'>) => void;
     setError: (newError: boolean) => void;
     setSuccess: (newSuccess: boolean) => void;
     setErrorMessage: (newErrorMessage: string) => void;
