@@ -1,54 +1,48 @@
 import { create } from 'zustand'
 import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
+import { APIResponse } from '../../interface/api.interface';
+import { BaseEntity } from '../../interface/baseentity.interface';
 
-interface Feature {
+
+
+type Feature = BaseEntity & {
     name: string;
     identifier: string;
-    count_limit: number;
-    size_limit: number;
-    is_active: boolean;
+    countLimit: number;
+    sizeLimit: number;
+    isActive: boolean;
     description: string;
 }
 
-interface PlanValues {
+type PlanFeature = Feature & {
+    ID: number;
+    planId: number;
+}
+type BasePlan = {
     planname: string;
     duration: string;
     price: number;
     details: string;
     number_of_mails_per_day: string;
     status: string;
-    features: Feature[];
+}
+
+type PlanValues = BasePlan & {
+    features: Omit<Feature, keyof BaseEntity>[];
 }
 
 interface EditPlanValues extends Partial<PlanValues> {
     uuid: string;
 }
 
-interface PlanData {
-    uuid: string;
-    planname: string;
-    duration: string;
-    price: number;
-    number_of_mails_per_day: string;
-    details: string;
-    status: string;
-    features: {
-        ID: number;
-        CreatedAt: string;
-        UpdatedAt: string;
-        DeletedAt: string | null;
-        uuid: string;
-        plan_id: number;
-        name: string;
-        identifier: string;
-        count_limit: number;
-        size_limit: number;
-        is_active: boolean;
-        description: string;
-    }[];
-    created_at: string;
-    updated_at: string;
+interface PlanData extends BaseEntity, BasePlan {
+    features: PlanFeature[];
+}
+
+// Type guard to check if a feature is a PlanFeature
+function isPlanFeature(feature: Feature | PlanFeature): feature is PlanFeature {
+    return 'ID' in feature && 'planId' in feature;
 }
 
 interface PlanState {
@@ -131,7 +125,7 @@ const usePlanStore = create<PlanState>((set, get) => ({
 
         try {
             setIsLoading(true)
-            let response = await axiosInstance.get('/admin/get-plans')
+            let response = await axiosInstance.get<APIResponse<PlanData[]>>('/admin/get-plans')
             setPlanData(response.data.payload)
         } catch (error) {
             if (error instanceof Error) {

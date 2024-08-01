@@ -1,21 +1,18 @@
 import { create } from 'zustand';
 import axiosInstance from '../../utils/api';
 import eventBus from '../../utils/eventBus';
+import { BaseEntity } from '../../interface/baseentity.interface';
 
 interface FormValues {
     key_name: string;
 }
 
-interface SMTPKey {
-    uuid: string;
+type SMTPKey = BaseEntity & {
     user_id: string;
     key_name: string;
     smtp_login: string;
     password: string;
     status: string;
-    created_at: string;
-    updated_at: string;
-    deleted_at: string | null;
 }
 
 interface SMTPKeyDATA {
@@ -32,8 +29,6 @@ interface SMTPKeyDATA {
 interface SMTPStore {
     smtpKeyData: SMTPKeyDATA;
     smtpformValues: FormValues;
-
-
     setSmtpFormValues: (newFormValues: FormValues) => void;
     setSmtpKeyData: (data: SMTPKeyDATA) => void;
     getSMTPKeys: () => Promise<void>
@@ -84,7 +79,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
 
     deleteSMTPKey: async (smtpKeyId: string) => {
         try {
-            const response = await axiosInstance.delete(`/delete-smtp-key/${smtpKeyId}`);
+            await axiosInstance.delete(`/delete-smtp-key/${smtpKeyId}`);
             eventBus.emit('success', 'SMTP key deleted successfully');
             get().getSMTPKeys();
         } catch (error) {
