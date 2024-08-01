@@ -157,6 +157,10 @@ func (r *ContactRepository) DeleteContact(userId string, contactId string) error
 	return nil
 }
 
+func (r *ContactRepository) ToggleSubscription() error {
+	return nil
+}
+
 func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	var existingContact model.Contact
 	if err := r.DB.Where("uuid = ? AND user_id =?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {

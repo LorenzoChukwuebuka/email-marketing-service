@@ -1,6 +1,6 @@
 export type BaseEntity = {
     uuid: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
 }

@@ -35,8 +35,14 @@ func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{
 		FirstName: d.FirstName,
 		LastName:  d.LastName,
 		Email:     d.Email,
-		From:      d.From,
-		UserId:    d.UserId,
+		From: func() string {
+			if d.From != "" {
+				return d.From
+			}
+			return "web"
+		}(),
+		UserId:       d.UserId,
+		IsSubscribed: d.IsSubscribed || true,
 	}
 
 	checkIfUserExists, err := s.ContactRepo.CheckIfEmailExists(contactModel)
@@ -96,12 +102,13 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 		}
 
 		contact := model.Contact{
-			UUID:      uuid.New().String(),
-			FirstName: record[columnMap["first name"]],
-			LastName:  record[columnMap["last name"]],
-			Email:     record[columnMap["email"]],
-			From:      "web",
-			UserId:    userId,
+			UUID:         uuid.New().String(),
+			FirstName:    record[columnMap["first name"]],
+			LastName:     record[columnMap["last name"]],
+			Email:        record[columnMap["email"]],
+			From:         "web",
+			UserId:       userId,
+			IsSubscribed: true,
 		}
 
 		if idx, exists := columnMap["from"]; exists && idx < len(record) {
@@ -156,7 +163,7 @@ func (s *ContactService) GetAllContacts(userId string, page int, pageSize int) (
 
 	// If you want to check for empty results, you can do:
 	if contacts.TotalCount == 0 {
-		return repository.PaginatedResult{}, fmt.Errorf("no contacts found")
+		return repository.PaginatedResult{}, nil
 	}
 
 	return contacts, nil
