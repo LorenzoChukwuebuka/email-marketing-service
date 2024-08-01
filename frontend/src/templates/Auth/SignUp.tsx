@@ -3,8 +3,6 @@ import useAuthStore from "../../store/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-
-
 const SignUpTemplate: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -104,8 +102,8 @@ const SignUpTemplate: React.FC = () => {
                                     })
                                 }
                                 className="mt-1 block w-full border-2  h-10 rounded-md
-                 border-gray-300 shadow-sm focus:border-indigo-300
-                  focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                border-gray-300 shadow-sm focus:border-indigo-300
+                                focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                             />
                             {errors.email && (
                                 <div style={{ color: "red" }}>{errors.email}</div>
@@ -124,8 +122,8 @@ const SignUpTemplate: React.FC = () => {
                                     })
                                 }
                                 className="mt-1 block w-full border-2  h-10 rounded-md
-                 border-gray-300 shadow-sm focus:border-indigo-300
-                  focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                border-gray-300 shadow-sm focus:border-indigo-300
+                                focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                             />
                             {errors.company && (
                                 <div style={{ color: "red" }}>{errors.company}</div>
@@ -182,7 +180,10 @@ const SignUpTemplate: React.FC = () => {
                                     Create Account
                                 </button>
                             ) : (
-                                <button className="rounded-full pt-1 bg-red-500 text-white p-2" disabled>
+                                <button
+                                    className="rounded-full pt-1 bg-red-500 text-white p-2"
+                                    disabled
+                                >
                                     <span className="flex flex-row items-center">
                                         Please wait
                                         <span className="loading loading-dots loading-sm"></span>

@@ -5,7 +5,7 @@ import axios from 'axios'
 import eventBus from '../utils/eventBus'
 import Cookies from 'js-cookie'
 
-interface FormValues {
+type FormValues = {
     fullname: string;
     company: string;
     email: string;
@@ -15,21 +15,20 @@ interface FormValues {
     phonenumber: string;
 }
 
-interface LoginValues extends Pick<FormValues, 'email' | 'password'> { }
+type LoginValues = Pick<FormValues, 'email' | 'password'>
 
-interface ForgetPasswordValues extends Pick<FormValues, 'email'> { }
+type ForgetPasswordValues = Pick<FormValues, 'email'>
 
-interface ResetPasswordValues extends Pick<FormValues, 'email' | 'confirmPassword' | 'password' | 'token'> { }
+type ResetPasswordValues = Pick<FormValues, 'email' | 'confirmPassword' | 'password' | 'token'>
 
 type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | 'token'>;
 
-interface ChangePasswordValues {
+type ChangePasswordValues = {
     old_password: string;
     new_password: string;
     confirm_password: string;
 }
-
-interface AuthStore {
+type AuthStore = {
     formValues: Omit<FormValues, 'token' | 'phonenumber'>;
     error: boolean;
     success: boolean;
@@ -172,8 +171,12 @@ const useAuthStore = create<AuthStore>((set, get) => ({
                 })
                 return registeredData // Return the necessary data
             }
-        } catch (error) {
+        } catch (error: any) {
             console.log(error)
+            eventBus.emit(
+                'error',
+                error.response?.data?.payload || 'An unexpected error occurred'
+            );
         } finally {
             get().setIsLoading(false)
         }
@@ -182,7 +185,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         const userAgent = navigator.userAgent
         const browserInfo = parseUserAgent(userAgent)
 
-        let response = await axios.get('https://api.ipify.org/?format=json')
+        let response = await axios.get<Record<string, string>>('https://api.ipify.org/?format=json')
 
         let userDevice = {
             user_id: userId,
@@ -209,8 +212,9 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         } catch (error: any) {
             eventBus.emit(
                 'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
+
+                error.response?.data?.payload || 'An unexpected error occurred'
+            );
         } finally {
             get().setIsLoading(false)
         }
@@ -226,8 +230,10 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             console.log(error)
             eventBus.emit(
                 'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
+                error instanceof Error
+                    ? error.message
+                    : error.response?.data?.payload || 'An unexpected error occurred'
+            );
         } finally {
             get().setIsLoading(false)
         }
@@ -322,7 +328,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         }
     },
 
-    getUserDetails: async () => {
+    getUserDetails: async (): Promise<void> => {
         try {
             const { setIsLoading, setUserData } = get()
             setIsLoading(true)
@@ -338,7 +344,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         }
     },
 
-    editUserDetails: async () => {
+    editUserDetails: async (): Promise<void> => {
         try {
             const { setIsLoading, editFormValues } = get()
             setIsLoading(true)

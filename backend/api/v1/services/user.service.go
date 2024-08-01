@@ -183,21 +183,40 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 }
 
 func (s *UserService) createUserBasicPlan(userId uint) error {
+	// Start a database transaction
+	tx := s.userRepo.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	basicPlan, err := s.findBasicPlan()
 	if err != nil {
-		return err
+		tx.Rollback()
+		return fmt.Errorf("failed to find basic plan: %w", err)
 	}
-
-	fmt.Println(basicPlan)
 
 	transactionId := uuid.New().String()
 
 	billing, err := s.createBilling(userId, basicPlan, transactionId)
 	if err != nil {
-		return err
+		tx.Rollback()
+		return fmt.Errorf("failed to create billing: %w", err)
 	}
 
-	return s.createSubscription(userId, basicPlan, transactionId, int(billing.ID))
+	err = s.createSubscription(userId, basicPlan, transactionId, int(billing.ID))
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	// Commit the transaction if everything is successful
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (s *UserService) findBasicPlan() (*model.PlanResponse, error) {

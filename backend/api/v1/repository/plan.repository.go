@@ -20,6 +20,7 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 
 func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse {
 	response := model.PlanResponse{
+		ID: plan.ID,
 		UUID:                plan.UUID,
 		PlanName:            plan.PlanName,
 		Duration:            plan.Duration,

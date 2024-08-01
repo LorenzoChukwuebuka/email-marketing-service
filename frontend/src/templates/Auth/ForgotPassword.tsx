@@ -3,11 +3,6 @@ import * as Yup from "yup";
 import useAuthStore from "../../store/AuthStore";
 import { Link } from "react-router-dom";
 
-// Define types for the form values
-interface ForgetPasswordValues {
-    email: string;
-}
-
 const ForgotPasswordTemplate: React.FC = () => {
     const {
         isLoading,

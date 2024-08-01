@@ -1,22 +1,43 @@
 
-import { ChangeEvent, FormEvent } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import useContactStore from "../../../../store/userstore/contactStore";
 import { Modal } from "../../../../components";
+import * as Yup from "yup";
 
 interface CreateContactProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-
 const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
     const { setContactFormValues, contactFormValues, createContact, getAllContacts } = useContactStore();
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+
+    const validationSchema = Yup.object().shape({
+        first_name: Yup.string()
+            .required("first is required"),
+        last_name: Yup.string().required("last name is required"),
+        email: Yup.string().required("email is required").email("invalid email format")
+    });
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        await createContact();
-        await getAllContacts();
-        onClose();
+        try {
+            await validationSchema.validate(contactFormValues, { abortEarly: false });
+            await createContact();
+            await getAllContacts();
+            onClose();
+            setErrors({})
+        } catch (err) {
+            const validationErrors: { [key: string]: string } = {};
+            if (err instanceof Yup.ValidationError) {
+                err.inner.forEach((error) => {
+                    validationErrors[error.path || ""] = error.message;
+                });
+                setErrors(validationErrors);
+            }
+        }
     };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +67,9 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         required
                     />
+                    {errors.first_name && (
+                        <div style={{ color: "red" }}>{errors.first_name}</div>
+                    )}
                 </div>
 
                 <div className="mb-4">
@@ -63,6 +87,9 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         required
                     />
+                    {errors.last_name && (
+                        <div style={{ color: "red" }}>{errors.last_name}</div>
+                    )}
                 </div>
 
                 <div className="mb-4">
@@ -80,6 +107,9 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         required
                     />
+                    {errors.email && (
+                        <div style={{ color: "red" }}>{errors.email}</div>
+                    )}
                 </div>
 
                 <div className="mb-4">
@@ -97,6 +127,7 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         required
                     />
+
                 </div>
 
                 <div className="flex justify-end space-x-2">
