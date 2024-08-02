@@ -223,7 +223,6 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         } catch (error: any) {
             eventBus.emit(
                 'error',
-
                 error.response?.data?.payload || 'An unexpected error occurred'
             );
         } finally {

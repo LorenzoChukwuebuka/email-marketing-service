@@ -1,39 +1,12 @@
 import React, { useEffect, useState } from "react";
-import usePlanStore from "../../../../../store/admin/planStore";
+import usePlanStore, { PlanData } from "../../../../../store/admin/planStore";
 import EditPlans from "./EditPlans";
 
-interface Feature {
-    ID: number;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt: string | null;
-    uuid: string;
-    plan_id: number;
-    name: string;
-    identifier: string;
-    count_limit: number;
-    size_limit: number;
-    is_active: boolean;
-    description: string;
-}
-
-interface Plan {
-    uuid: string;
-    planname: string;
-    price: number;
-    duration: string;
-    details: string;
-    number_of_mails_per_day: string;
-    status: string;
-    features: Feature[];
-    created_at: string;
-    updated_at: string;
-}
 
 const GetAllPlans: React.FC = () => {
     const { getPlans, planData, selectedId, setSelectedId } = usePlanStore();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<PlanData | null>(null);
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
     useEffect(() => {
@@ -57,7 +30,7 @@ const GetAllPlans: React.FC = () => {
         }
     };
 
-    const openEditModal = (plan: Plan) => {
+    const openEditModal = (plan: PlanData) => {
         setSelectedPlan(plan);
         setIsModalOpen(true);
     };

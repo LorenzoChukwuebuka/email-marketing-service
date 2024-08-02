@@ -8,6 +8,7 @@ interface CreatePlanProps {
 }
 
 interface Feature {
+    plan_Id: number;
     name: string;
     identifier: string;
     count_limit: number;
@@ -27,6 +28,7 @@ interface PlanValues {
 }
 
 const initialFeature: Feature = {
+    plan_Id: 0,
     name: "",
     identifier: "",
     count_limit: 0,

@@ -7,19 +7,18 @@ import { BaseEntity } from '../../interface/baseentity.interface';
 
 
 type Feature = BaseEntity & {
+    plan_Id: number;
     name: string;
     identifier: string;
-    countLimit: number;
-    sizeLimit: number;
-    isActive: boolean;
+    count_limit: number;
+    size_limit: number;
+    is_active: boolean;
     description: string;
 }
 
-type PlanFeature = Feature & {
-    ID: number;
-    planId: number;
-}
+
 type BasePlan = {
+    ID: number;
     planname: string;
     duration: string;
     price: number;
@@ -28,22 +27,20 @@ type BasePlan = {
     status: string;
 }
 
-type PlanValues = BasePlan & {
+export type PlanValues = Omit<BasePlan, "ID"> & {
     features: Omit<Feature, keyof BaseEntity>[];
 }
 
-interface EditPlanValues extends Partial<PlanValues> {
+type EditPlanValues = Partial<PlanValues> & {
     uuid: string;
 }
 
-interface PlanData extends BaseEntity, BasePlan {
-    features: PlanFeature[];
+export interface PlanData extends BaseEntity, BasePlan {
+    features: Feature[];
 }
 
-// Type guard to check if a feature is a PlanFeature
-function isPlanFeature(feature: Feature | PlanFeature): feature is PlanFeature {
-    return 'ID' in feature && 'planId' in feature;
-}
+
+
 
 interface PlanState {
     planValues: PlanValues;

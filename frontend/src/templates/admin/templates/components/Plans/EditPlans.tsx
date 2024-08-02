@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "../../../../../components";
 import usePlanStore from "../../../../../store/admin/planStore";
 
-interface Feature {
+type Feature = {
     name: string;
     identifier: string;
     count_limit: number;
@@ -55,6 +55,7 @@ const EditPlans: React.FC<EditPlansProps> = ({ isOpen, onClose, plan }) => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        //@ts-ignore
         setEditPlanValues(localEditPlanValues);
         await updatePlan();
         await getPlans();
