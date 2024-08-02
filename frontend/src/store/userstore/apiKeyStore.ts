@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axiosInstance from '../../utils/api';
 import eventBus from '../../utils/eventBus';
+import { isError } from '../../utils/isError';
 
 interface FormValues {
     name: string;
@@ -36,7 +37,11 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             let response = await axiosInstance.get('/get-apikey');
             setAPIKeyData(response.data);
         } catch (error) {
-            eventBus.emit('error', error);
+            if (isError(error)) {
+                eventBus.emit('error', error.message)
+            } else {
+                console.error("error:", error);
+            }
         }
     },
     generateAPIKey: async () => {
@@ -45,9 +50,12 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             setIsLoading(true);
             let response = await axiosInstance.post('/generate-apikey', formValues);
             return response.data.payload;
-        } catch (error: any) {
-            console.log(error);
-            eventBus.emit('error', error.response.data.payload);
+        } catch (error) {
+            if (isError(error)) {
+                eventBus.emit('error', error.message)
+            } else {
+                console.error("error:", error);
+            }
         } finally {
             get().setIsLoading(false);
         }
@@ -57,7 +65,11 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             let response = await axiosInstance.delete('/delete-apikey/' + apiId);
             eventBus.emit('success', response.data.payload);
         } catch (error) {
-            eventBus.emit('error', error);
+            if (isError(error)) {
+                eventBus.emit('error', error.message)
+            } else {
+                console.error("error:", error);
+            }
         }
     }
 }));

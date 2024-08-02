@@ -19,6 +19,8 @@ type Sender struct {
 	Name  *string `json:"name"`
 }
 
+ 
+
 type Recipient struct {
 	Email string `json:"email"`
 }

@@ -1,21 +1,10 @@
 import { useEffect, useState } from "react";
-import useContactStore from "../../../../store/userstore/contactStore";
+import useContactStore, { Contact } from "../../../../store/userstore/contactStore";
 import { convertToNormalTime } from '../../../../utils/utils';
 import Pagination from "../../../../components/Pagination";
+import EditContact from "./editContactComponent";
 
 
-
-interface Contact {
-    uuid: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    from: string;
-    user_id: string;
-    created_at: string;
-    updated_at: string;
-    deleted_at: string;
-}
 
 const GetAllContacts: React.FC = () => {
     const { getAllContacts, contactData, selectedIds, setSelectedId, paginationInfo } = useContactStore();
@@ -65,16 +54,16 @@ const GetAllContacts: React.FC = () => {
             // Find the contact in the contactData array
             const contactIndex = contactData.findIndex(contact => contact.uuid === uuid);
             if (contactIndex === -1) return;
-    
+
             // Toggle the is_subscribed status
             const updatedContact = {
                 ...contactData[contactIndex],
                 is_subscribed: !contactData[contactIndex].is_subscribed
             };
-    
+
             // Update the contact in your backend
-         //   await updateContactSubscription(uuid, updatedContact.is_subscribed);
-    
+            //   await updateContactSubscription(uuid, updatedContact.is_subscribed);
+
             // Update the state
             // setContactData(prevData => {
             //     const newData = [...prevData];
@@ -184,15 +173,18 @@ const GetAllContacts: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+
             </div>
 
-            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Contacts"/>
+            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Contacts" />
 
-            {/* <EditContact
+            <EditContact
                 isOpen={isModalOpen}
                 onClose={closeEditModal}
                 contact={selectedContact}
-            /> */}
+            />
+
+
         </>
     );
 };

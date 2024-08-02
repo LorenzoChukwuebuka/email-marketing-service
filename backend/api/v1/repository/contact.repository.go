@@ -87,9 +87,6 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 
 	paginatedResult.Data = contactResponses
 
-	// Log the final result
-	fmt.Printf("Paginated result: %+v\n", paginatedResult)
-
 	return paginatedResult, nil
 }
 

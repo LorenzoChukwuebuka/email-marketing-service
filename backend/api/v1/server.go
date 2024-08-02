@@ -35,13 +35,6 @@ var (
 
 func (s *Server) setupRoutes() {
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
-
-	// apiV1Router.Use(enableCORS)
-	// adminRouter.Use(enableCORS)
-
-	// routes.RegisterUserRoutes(apiV1Router, s.db)
-	// routes.RegisterAdminRoutes(adminRouter, s.db)
-
 	routeMap := map[string]routes.Route{
 		"admin": routes.NewAdminRoute(s.db),
 		"":  routes.NewUserRoute(s.db),

@@ -8,7 +8,6 @@ import (
 	"log"
 	"strings"
 	"time"
-
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 )
