@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import useContactStore, { Contact } from "../../../../store/userstore/contactStore";
-import { convertToNormalTime } from '../../../../utils/utils';
 import Pagination from "../../../../components/Pagination";
 import EditContact from "./editContactComponent";
+import useContactGroupStore from "../../../../store/userstore/contactGroupStore";
 
 
 
 const GetAllContacts: React.FC = () => {
     const { getAllContacts, contactData, selectedIds, setSelectedId, paginationInfo } = useContactStore();
+    const { setSelectedContactIds } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
@@ -25,8 +26,10 @@ const GetAllContacts: React.FC = () => {
         if (e.target.checked) {
             const allIds = contactData.map((contact) => contact.uuid);
             setSelectedId(allIds);
+            setSelectedContactIds(allIds)
         } else {
             setSelectedId([]);
+            setSelectedContactIds([])
         }
     };
 
@@ -79,7 +82,7 @@ const GetAllContacts: React.FC = () => {
     return (
         <>
             <div className="overflow-x-auto mt-8">
-                <table className="min-w-full w-full rounded-sm bg-white">
+                <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="py-3 px-4 text-left">

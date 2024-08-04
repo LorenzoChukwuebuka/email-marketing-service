@@ -6,6 +6,7 @@ import eventBus from '../utils/eventBus'
 import Cookies from 'js-cookie'
 import { BaseEntity } from '../interface/baseentity.interface'
 import { APIResponse } from '../interface/api.interface'
+import { errResponse } from '../utils/isError'
 
 type FormValues = {
     fullname: string;
@@ -182,12 +183,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
                 })
                 return registeredData // Return the necessary data
             }
-        } catch (error: any) {
-            console.log(error)
-            eventBus.emit(
-                'error',
-                error.response?.data?.payload || 'An unexpected error occurred'
-            );
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -220,11 +223,15 @@ const useAuthStore = create<AuthStore>((set, get) => ({
                     'Your account has been successfully verified. Redirecting to login'
                 )
             }
-        } catch (error: any) {
-            eventBus.emit(
-                'error',
-                error.response?.data?.payload || 'An unexpected error occurred'
-            );
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+
         } finally {
             get().setIsLoading(false)
         }
@@ -236,14 +243,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             setIsLoading(true)
             let response = await axiosInstance.post('/resend-otp', data)
             console.log(response)
-        } catch (error: any) {
-            console.log(error)
-            eventBus.emit(
-                'error',
-                error instanceof Error
-                    ? error.message
-                    : error.response?.data?.payload || 'An unexpected error occurred'
-            );
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -261,11 +268,13 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             eventBus.emit('message', response.data.payload)
             setForgetPasswordValues({ email: '' })
         } catch (error: any) {
-            console.log(error)
-            eventBus.emit(
-                'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -280,7 +289,13 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             )
             eventBus.emit('success', response.data.payload)
         } catch (error) {
-            console.log(error)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -295,11 +310,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             )
 
             eventBus.emit('success', response.data.payload)
-        } catch (error: any) {
-            eventBus.emit(
-                'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -326,13 +344,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
                 email: '',
                 password: ''
             })
-        } catch (error: any) {
-            eventBus.emit(
-                'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
-
-            console.log(error)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -344,11 +363,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             setIsLoading(true)
             let response = await axiosInstance.get<APIResponse<UserDetails>>('/get-user-details')
             setUserData(response.data.payload)
-        } catch (error: any) {
-            eventBus.emit(
-                'error',
-                error.response.data.payload || 'An unexpected error occured'
-            )
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }
@@ -365,7 +387,13 @@ const useAuthStore = create<AuthStore>((set, get) => ({
 
             eventBus.emit('success', response.data.payload)
         } catch (error) {
-            eventBus.emit('error', error)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setIsLoading(false)
         }

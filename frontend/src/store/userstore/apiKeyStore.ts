@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axiosInstance from '../../utils/api';
 import eventBus from '../../utils/eventBus';
-import { isError } from '../../utils/isError';
+import { errResponse } from '../../utils/isError';
 
 interface FormValues {
     name: string;
@@ -37,10 +37,12 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             let response = await axiosInstance.get('/get-apikey');
             setAPIKeyData(response.data);
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         }
     },
@@ -51,10 +53,12 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             let response = await axiosInstance.post('/generate-apikey', formValues);
             return response.data.payload;
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setIsLoading(false);
@@ -65,10 +69,12 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             let response = await axiosInstance.delete('/delete-apikey/' + apiId);
             eventBus.emit('success', response.data.payload);
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         }
     }

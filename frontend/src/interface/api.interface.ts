@@ -21,7 +21,7 @@ type JSONValue =
     | null
     | JSONObject;
 
-  interface JSONObject {
+interface JSONObject {
     [key: string]: JSONValue;
 }
 

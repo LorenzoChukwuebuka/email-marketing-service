@@ -71,7 +71,7 @@ func (r *ContactRepository) GetASingleContact(contactId string, userId string) (
 func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams) (PaginatedResult, error) {
 	var contacts []model.Contact
 
-	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Preload("Groups")
+	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
 
 	paginatedResult, err := Paginate(query, params, &contacts)
 	if err != nil {
@@ -194,13 +194,70 @@ func (r *ContactRepository) AddContactsToGroup(d *model.UserContactGroup) error 
 	return nil
 }
 
-func (r *ContactRepository) GetAllGroups(userId string) ([]model.ContactGroup, error) {
-	var groups []model.ContactGroup
-	err := r.DB.Where("user_id = ?", userId).Find(&groups).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch all groups: %w", err)
+func mapToContactGroupResponse(group model.ContactGroup) model.ContactGroupResponse {
+	response := model.ContactGroupResponse{
+		ID:          group.ID,
+		UUID:        group.UUID,
+		GroupName:   group.GroupName,
+		UserId:      group.UserId,
+		Description: group.Description,
+		CreatedAt:   group.CreatedAt.Format(time.RFC3339), // Format time as needed
+		UpdatedAt:   group.UpdatedAt.Format(time.RFC3339),
+		Contacts:    mapContactsToResponse(group.Contacts),
 	}
-	return groups, nil
+
+	if group.DeletedAt.Valid {
+		formatted := group.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &formatted
+	}
+	return response
+}
+
+func mapContactsToResponse(contacts []model.Contact) []model.ContactResponse {
+	var contactResponses []model.ContactResponse
+	for _, contact := range contacts {
+
+		contactResponses = append(contactResponses, model.ContactResponse{
+			ID:        contact.ID,
+			UUID:      contact.UUID,
+			FirstName: contact.FirstName,
+			LastName:  contact.LastName,
+			Email:     contact.Email,
+			From:      contact.From,
+			UserId:    contact.UserId,
+			CreatedAt: contact.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: contact.UpdatedAt.Format(time.RFC3339),
+			DeletedAt: func() *string {
+				var htime string
+				if contact.DeletedAt.Valid {
+					htime = contact.DeletedAt.Time.Format(time.RFC3339)
+				}
+				return &htime
+			}(),
+		})
+
+	}
+	return contactResponses
+}
+
+func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams) (PaginatedResult, error) {
+	var groups []model.ContactGroup
+	query := r.DB.Where("user_id = ?", userId).Find(&groups)
+
+	paginatedResult, err := Paginate(query, params, &groups)
+	if err != nil {
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
+	}
+
+	var response []model.ContactGroupResponse
+
+	for _, group := range groups {
+		response = append(response, mapGroupToResponse(group))
+	}
+
+	paginatedResult.Data = response
+
+	return paginatedResult, nil
 }
 
 func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*model.ContactGroup, error) {
@@ -212,22 +269,25 @@ func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*mod
 	return &groups, nil
 }
 
-func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId string) (*model.ContactGroup, error) {
+func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId string, params PaginationParams) (PaginatedResult, error) {
 	var group model.ContactGroup
-	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
+	query := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 		return db.Select("contacts.*").
 			Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
 			Where("user_contact_groups.user_id = ?", userId)
-	}).Where("contact_groups.uuid = ?", groupId).First(&group).Error
+	}).Where("contact_groups.uuid = ?", groupId).First(&group)
+
+	paginatedResult, err := Paginate(query, params, &group)
 
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("group not found")
-		}
-		return nil, fmt.Errorf("failed to fetch group with contacts: %w", err)
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contact group: %w", err)
 	}
 
-	return &group, nil
+	response := mapToContactGroupResponse(group)
+
+	paginatedResult.Data = response
+
+	return paginatedResult, nil
 }
 
 func (r *ContactRepository) DeleteContactGroup(userId string, groupId string) error {

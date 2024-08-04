@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ContactsDashComponent from "../components/contacts/contactDashComponent";
+import ContactGroupDash from "../components/contactGroup/contactGroupDashComponent";
 
 const ContactDashTemplate: React.FC = () => {
 
@@ -8,7 +9,7 @@ const ContactDashTemplate: React.FC = () => {
 
     console.log("Active Tab:", activeTab);
     return <>
-        <div className="p-6 max-w-5xl">
+        <div className="p-6 max-w-full">
           
                 <h1 className="text-2xl font-bold">{activeTab}</h1>
                 <nav className="flex space-x-8 mt-5  border-b">
@@ -44,7 +45,7 @@ const ContactDashTemplate: React.FC = () => {
 
                 {activeTab === "Contact Group" && (
                     <>
-                        hello group
+                      <ContactGroupDash/>
                     </>
                 )}
             </div>

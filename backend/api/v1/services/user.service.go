@@ -99,14 +99,16 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
+		return nil, err
+	}
+
 	otp := utils.GenerateOTP(otpLength)
 	if err := s.createAndSendOTP(user, otp); err != nil {
 		return nil, err
 	}
 
-	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
-		return nil, err
-	}
+	
 
 	return s.createSuccessResponse(user.UUID), nil
 }
