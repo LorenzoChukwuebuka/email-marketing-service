@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
 import { APIResponse } from '../../interface/api.interface';
+import { errResponse } from '../../utils/isError';
 
 
 interface MailData {
@@ -17,8 +18,6 @@ interface DailyUserMailStore {
     getUserMailData: () => Promise<void>;
 }
 
-
-
 const useDailyUserMailSentCalc = create<DailyUserMailStore>((set, get) => ({
     mailData: null,
     setMailData: newMailData => set({ mailData: newMailData }),
@@ -31,7 +30,13 @@ const useDailyUserMailSentCalc = create<DailyUserMailStore>((set, get) => ({
 
             console.log(response.data)
         } catch (error) {
-            eventBus.emit('error', error)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     }
 }))

@@ -26,7 +26,7 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	contactController, _ := InitializeContactController(ur.db)
 	subscriptionController, _ := InitializeSubscriptionController(ur.db)
 
-	// User routes
+	// auth routes
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST", "OPTIONS")
@@ -72,6 +72,11 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/delete-contact/{contactId}", middleware.JWTMiddleware(contactController.DeleteContact)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/create-contact-group", middleware.JWTMiddleware(contactController.CreateGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/add-contact-to-group", middleware.JWTMiddleware(contactController.AddContactToGroup)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-all-contact-groups", middleware.JWTMiddleware(contactController.GetAllContactGroups)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
+	router.HandleFunc("/add-contact-to-group", middleware.JWTMiddleware(contactController.AddContactToGroup)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/remove-contact-from-group", middleware.JWTMiddleware(contactController.RemoveContactFromGroup)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-single-group/{groupId}", middleware.JWTMiddleware(contactController.GetASingleGroupWithContacts)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
+	router.HandleFunc("delete-group/{groupId}", middleware.JWTMiddleware(contactController.DeleteContactGroup)).Methods("DELETE", "OPTIONS")
 
 	// SMTP routes
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")

@@ -238,7 +238,7 @@ const UserDashLayout: React.FC = () => {
                 </header>
 
                 {/* Content area */}
-                <main className="flex-1 p-6 overflow-auto">
+                <main className="flex-1 p-2 w-full overflow-auto">
                     <Outlet />
                 </main>
             </div>

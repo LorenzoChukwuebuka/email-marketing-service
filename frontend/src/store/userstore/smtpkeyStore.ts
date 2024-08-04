@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import axiosInstance from '../../utils/api';
 import eventBus from '../../utils/eventBus';
 import { BaseEntity } from '../../interface/baseentity.interface';
+import { errResponse } from '../../utils/isError';
 
 interface FormValues {
     key_name: string;
@@ -50,18 +51,23 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
     },
     smtpformValues: { key_name: "" },
 
-    //initialize 
+
     setSmtpFormValues: (newFormValues) => set(() => ({ smtpformValues: newFormValues })),
     setSmtpKeyData: (data) => set(() => ({ smtpKeyData: data })),
 
-    //functions
     getSMTPKeys: async () => {
         try {
             const { setSmtpKeyData } = get()
             let response = await axiosInstance.get('/get-smtp-keys')
             setSmtpKeyData(response.data.payload)
         } catch (error) {
-            eventBus.emit('error', error instanceof Error || 'An unexpected error occured')
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
 
@@ -72,8 +78,13 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             eventBus.emit('success', 'SMTP key generated successfully');
             return response.data.payload;
         } catch (error) {
-            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred');
-            throw error;
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
 
@@ -83,7 +94,13 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             eventBus.emit('success', 'SMTP key deleted successfully');
             get().getSMTPKeys();
         } catch (error) {
-            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred');
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
 
@@ -93,7 +110,13 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             eventBus.emit('success', 'SMTP credentials changed successfully');
             get().getSMTPKeys();
         } catch (error) {
-            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred');
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     }
 }));

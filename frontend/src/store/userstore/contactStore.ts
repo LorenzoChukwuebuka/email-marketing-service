@@ -4,7 +4,7 @@ import eventBus from '../../utils/eventBus';
 import { BaseEntity } from '../../interface/baseentity.interface';
 import { PaginatedResponse } from '../../interface/pagination.interface';
 import { APIResponse, ResponseT } from '../../interface/api.interface';
-import { isError } from '../../utils/isError';
+import { errResponse } from '../../utils/isError';
 
 type ContactFormValues = {
     first_name: string
@@ -29,24 +29,30 @@ export type Contact = BaseEntity & ContactFormValues & ContactBase;
 
 type EditContactValues = { uuid: string } & Partial<ContactFormValues>
 
+
+type FileCSVType = null | File;
+
 interface ContactStore {
     contactFormValues: ContactFormValues;
     contactData: Contact[];
     selectedIds: string[];
     isLoading: boolean;
+    selectedCSVFile: FileCSVType;
     editContactValues: EditContactValues;
     paginationInfo: Omit<PaginatedResponse<Contact>, 'data'>;
     setContactData: (newContactData: Contact[]) => void;
     setContactFormValues: (newFormValues: ContactFormValues) => void;
     setIsLoading: (newIsLoading: boolean) => void;
     setSelectedId: (newSelectedId: string[]) => void;
+    setSelectedCSVFile: (newSelectedFile: FileCSVType) => void;
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<Contact>, 'data'>) => void;
     setEditContactValues: (newEditContactValues: EditContactValues) => void;
     createContact: () => Promise<void>;
     deleteContact: () => Promise<void>;
     editContact: () => Promise<void>;
     getAllContacts: (page?: number, pageSize?: number) => Promise<void>;
-    addContactToGroup: () => Promise<void>
+    addContactToGroup: () => Promise<void>,
+    batchContactUpload: () => Promise<void>
 }
 
 type ContactsAPIResponse = APIResponse<PaginatedResponse<Contact>>;
@@ -76,12 +82,14 @@ const useContactStore = create<ContactStore>((set, get) => ({
         from: '',
         is_subscribed: false
     },
+    selectedCSVFile: null,
     setEditContactValues: (newEditContactValues) => set({ editContactValues: newEditContactValues }),
     setContactData: (newContactData) => set({ contactData: newContactData }),
     setContactFormValues: (newFormValues) => set({ contactFormValues: newFormValues }),
     setSelectedId: (newSelectedId) => set({ selectedIds: newSelectedId }),
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
     setIsLoading: (newIsLoading) => set({ isLoading: newIsLoading }),
+    setSelectedCSVFile: (newSelectedFile) => set({ selectedCSVFile: newSelectedFile }),
 
     createContact: async () => {
         try {
@@ -93,10 +101,12 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
 
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setIsLoading(false)
@@ -113,10 +123,12 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
 
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setSelectedId([])
@@ -133,10 +145,12 @@ const useContactStore = create<ContactStore>((set, get) => ({
                 eventBus.emit('success', "Contact edited successfully")
             }
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         }
     },
@@ -147,14 +161,44 @@ const useContactStore = create<ContactStore>((set, get) => ({
             get().setContactData(data);
             get().setPaginationInfo(paginationInfo);
         } catch (error) {
-            if (isError(error)) {
-                eventBus.emit('error', error.message)
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                console.error("error:", error);
+                console.error("Unknown error:", error);
             }
         }
     },
-    addContactToGroup: async () => { }
+    addContactToGroup: async () => { },
+    batchContactUpload: async () => {
+        try {
+            const { setIsLoading, selectedCSVFile } = get()
+
+            setIsLoading(true)
+
+            let data = new FormData
+
+            data.append('contacts_csv', selectedCSVFile as Blob)
+
+            let response = await axiosInstance.post<ResponseT>('/upload-contact-csv', data)
+
+            if (response.data.status == true) {
+                eventBus.emit('success', "contacts uploaded successfully")
+            }
+
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.message)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        } finally {
+            get().setIsLoading(false)
+        }
+    }
 }));
 
 export default useContactStore;

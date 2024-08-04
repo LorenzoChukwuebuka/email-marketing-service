@@ -15,10 +15,10 @@ type PaginationParams struct {
 
 type PaginatedResult struct {
 	Data        interface{} `json:"data"`
-	TotalCount  int64 `json:"total_count"`
-	TotalPages  int `json:"total_pages"`
-	CurrentPage int `json:"current_page"`
-	PageSize    int `json:"page_size"`
+	TotalCount  int64       `json:"total_count"`
+	TotalPages  int         `json:"total_pages"`
+	CurrentPage int         `json:"current_page"`
+	PageSize    int         `json:"page_size"`
 }
 
 func Paginate(db *gorm.DB, params PaginationParams, result interface{}) (PaginatedResult, error) {

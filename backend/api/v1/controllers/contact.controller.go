@@ -333,3 +333,77 @@ func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Re
 	response.SuccessResponse(w, 201, "group deleted successfully")
 
 }
+
+func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
+
+	page, err := strconv.Atoi(page1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page number")
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
+	result, err := c.ContactService.GetAllContactGroups(userId, page, pageSize)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, result)
+
+}
+
+func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	groupId := vars["groupId"]
+
+	userId := claims["userId"].(string)
+
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
+
+	page, err := strconv.Atoi(page1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page number")
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
+	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId, page, pageSize)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 201, result)
+
+}

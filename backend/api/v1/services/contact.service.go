@@ -292,3 +292,27 @@ func (s *ContactService) DeleteContactGroup(userId string, groupId string) error
 
 	return nil
 }
+
+func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+
+	result, err := s.ContactRepo.GetAllGroups(userId, paginationParams)
+
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
+
+	return result, nil
+}
+
+func (s *ContactService) GetASingleGroupWithContacts(userId string, groupId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+
+	result, err := s.ContactRepo.GetASingleGroupWithContacts(userId, groupId, paginationParams)
+
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
+
+	return result, nil
+}
