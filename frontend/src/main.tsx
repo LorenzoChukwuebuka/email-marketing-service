@@ -7,7 +7,7 @@ import AuthContextProvider from "./context/AuthContext";
 
 const rootElement = document.getElementById("root");
 
-document.title = import.meta.env.VITE_API_NAME || 'Default Title';
+document.title = import.meta.env.VITE_API_NAME || 'Crab Mailer';
 
 if (rootElement) {
     ReactDOM.createRoot(rootElement).render(

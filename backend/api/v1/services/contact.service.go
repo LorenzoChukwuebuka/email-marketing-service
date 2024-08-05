@@ -305,13 +305,12 @@ func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize i
 	return result, nil
 }
 
-func (s *ContactService) GetASingleGroupWithContacts(userId string, groupId string, page int, pageSize int) (repository.PaginatedResult, error) {
-	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+func (s *ContactService) GetASingleGroupWithContacts(userId string, groupId string) (*model.ContactGroupResponse, error) {
 
-	result, err := s.ContactRepo.GetASingleGroupWithContacts(userId, groupId, paginationParams)
+	result, err := s.ContactRepo.GetASingleGroupWithContacts(userId, groupId)
 
 	if err != nil {
-		return repository.PaginatedResult{}, err
+		return nil, err
 	}
 
 	return result, nil

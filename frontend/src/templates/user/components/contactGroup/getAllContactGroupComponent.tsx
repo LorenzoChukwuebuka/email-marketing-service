@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import useContactStore, { Contact } from "../../../../store/userstore/contactStore";
+import { Contact } from "../../../../store/userstore/contactStore";
 import useContactGroupStore, { ContactGroupData } from "../../../../store/userstore/contactGroupStore";
-import { convertToNormalTime } from "../../../../utils/utils";
+import { Link } from "react-router-dom";
 
 const GetAllContactGroups: React.FC = () => {
 
@@ -12,12 +12,10 @@ const GetAllContactGroups: React.FC = () => {
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            const allIds = contactgroupData.map((contact) => contact.uuid);
+            const allIds = (contactgroupData as ContactGroupData[]).map((contact) => contact.uuid);
             setSelectedIds(allIds);
-
         } else {
             setSelectedIds([]);
-
         }
     };
 
@@ -46,7 +44,7 @@ const GetAllContactGroups: React.FC = () => {
                                     type="checkbox"
                                     className="form-checkbox h-4 w-4 text-blue-600"
                                     onChange={handleSelectAll}
-                                    checked={selectedIds.length === (contactgroupData?.length ?? 0)}
+                                    checked={selectedIds.length === ((contactgroupData as ContactGroupData[])?.length ?? 0)}
                                 />
                             </th>
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -67,8 +65,8 @@ const GetAllContactGroups: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 ">
-                        {contactgroupData && contactgroupData.length > 0 ? (
-                            contactgroupData.map((group: ContactGroupData) => (
+                        {contactgroupData && (contactgroupData as ContactGroupData[]).length > 0 ? (
+                            (contactgroupData as ContactGroupData[]).map((group: ContactGroupData) => (
                                 <tr key={group.uuid}>
 
                                     <td className="py-4 px-4">
@@ -81,7 +79,7 @@ const GetAllContactGroups: React.FC = () => {
                                     </td>
                                     <td className="py-4 px-4">{group.group_name}</td>
                                     <td className="py-4 px-4">{group.description}</td>
-                                    <td className="py-4 px-4 text-center"> <i className="bi bi-eye"></i> </td>
+                                    <td className="py-4 px-4 text-center cursor-pointer">    <Link to="/user/dash/view-group" state={{ groupId: group.uuid }}> <i className="bi bi-eye"></i>  </Link> </td>
                                     <td className="py-4 px-4">{
 
                                         new Date(group.created_at).toLocaleString('en-US', {

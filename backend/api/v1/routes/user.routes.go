@@ -75,7 +75,7 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-all-contact-groups", middleware.JWTMiddleware(contactController.GetAllContactGroups)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
 	router.HandleFunc("/add-contact-to-group", middleware.JWTMiddleware(contactController.AddContactToGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/remove-contact-from-group", middleware.JWTMiddleware(contactController.RemoveContactFromGroup)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/get-single-group/{groupId}", middleware.JWTMiddleware(contactController.GetASingleGroupWithContacts)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-single-group/{groupId}", middleware.JWTMiddleware(contactController.GetASingleGroupWithContacts)) 
 	router.HandleFunc("delete-group/{groupId}", middleware.JWTMiddleware(contactController.DeleteContactGroup)).Methods("DELETE", "OPTIONS")
 
 	// SMTP routes

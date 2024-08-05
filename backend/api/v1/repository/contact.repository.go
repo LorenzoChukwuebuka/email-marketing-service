@@ -269,25 +269,21 @@ func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*mod
 	return &groups, nil
 }
 
-func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId string, params PaginationParams) (PaginatedResult, error) {
+func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId string) (*model.ContactGroupResponse, error) {
 	var group model.ContactGroup
-	query := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
-		return db.Select("contacts.*").
-			Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
-			Where("user_contact_groups.user_id = ?", userId)
-	}).Where("contact_groups.uuid = ?", groupId).First(&group)
 
-	paginatedResult, err := Paginate(query, params, &group)
+	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
+		return db.Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
+			Where("user_contact_groups.user_id = ?", userId)
+	}).Where("contact_groups.uuid = ?", groupId).First(&group).Error
 
 	if err != nil {
-		return PaginatedResult{}, fmt.Errorf("failed to paginate contact group: %w", err)
+		return nil, err
 	}
 
 	response := mapToContactGroupResponse(group)
 
-	paginatedResult.Data = response
-
-	return paginatedResult, nil
+	return &response, nil
 }
 
 func (r *ContactRepository) DeleteContactGroup(userId string, groupId string) error {

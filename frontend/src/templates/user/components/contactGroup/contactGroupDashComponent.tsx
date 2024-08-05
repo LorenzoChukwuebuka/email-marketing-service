@@ -1,9 +1,13 @@
+import { useState } from "react";
 import useContactGroupStore from "../../../../store/userstore/contactGroupStore"
 import GetAllContactGroups from "./getAllContactGroupComponent"
+import CreateGroup from "./createGroupComponent";
 
 const ContactGroupDash: React.FC = () => {
 
     const { selectedIds } = useContactGroupStore()
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
     return <>
 
 
@@ -11,7 +15,7 @@ const ContactGroupDash: React.FC = () => {
             <div className="space-x-1  h-auto w-full p-2 px-2 ">
                 <button
                     className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
-
+                    onClick={() => setIsModalOpen(true)}
                 >
                     Create Group
                 </button>
@@ -25,8 +29,6 @@ const ContactGroupDash: React.FC = () => {
                             <span className="text-red-500"> Delete Group </span>
                             <i className="bi bi-trash text-red-500"></i>
                         </button>
-
-
 
                     </>
 
@@ -45,6 +47,8 @@ const ContactGroupDash: React.FC = () => {
         </div>
 
         <GetAllContactGroups />
+
+        <CreateGroup isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
     </>
 }
