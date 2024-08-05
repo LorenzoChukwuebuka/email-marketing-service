@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "../../../../components";
 import useContactGroupStore, { ContactGroupData } from "../../../../store/userstore/contactGroupStore";
 
@@ -8,15 +8,20 @@ interface CGProps {
 }
 
 const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => {
-    const { getAllGroups, setSelectedIds, contactgroupData, addContactToGroup } = useContactGroupStore()
+    const { getAllGroups, setSelectedGroupIds, selectedGroupIds, contactgroupData, addContactToGroup } = useContactGroupStore();
 
     const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
     const handleGroupSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault()
+        e.preventDefault();
+
+        console.log(selectedGroup, 'component state')
+        console.log(selectedGroupIds, 'store state but from the component')
         if (selectedGroup) {
-            setSelectedIds([selectedGroup])
-            addContactToGroup()
+            setSelectedGroupIds([selectedGroup]);
+            addContactToGroup();
+            setSelectedGroup(null);
+            onClose();
         }
     };
 
@@ -60,9 +65,9 @@ const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => 
                         Cancel
                     </button>
                     <button
-                        type="submit"
+                        type="button"
                         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={(e) => handleGroupSubmit(e)}
+                        onClick={handleGroupSubmit}
                         disabled={!selectedGroup}
                     >
                         Submit

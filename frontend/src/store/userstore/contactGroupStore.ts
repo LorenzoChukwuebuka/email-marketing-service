@@ -28,30 +28,33 @@ interface ContactGroupstore {
     isLoading: boolean
     selectedContactIds: string[];
     formValues: FormValues;
-    selectedIds: string[]
+    selectedGroupIds: string[],
+    editValues: EditGroupValues
     paginationInfo: Omit<PaginatedResponse<ContactGroupData>, 'data'>;
     contactgroupData: ContactGroupData[] | ContactGroupData
     setIsLoading: (newIsLoading: boolean) => void;
     setContactGroupData: (newgroupData: ContactGroupData[] | ContactGroupData) => void
     setSelectedContactIds: (newId: string[]) => void
     setFormValues: (newformValue: FormValues) => void
+    setEditValues: (newEditValues: EditGroupValues) => void
     getAllGroups: (page?: number, pageSize?: number) => Promise<void>;
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<ContactGroupData>, 'data'>) => void;
-    setSelectedIds: (newIds: string[]) => void;
+    setSelectedGroupIds: (newIds: string[]) => void;
     addContactToGroup: () => Promise<void>;
     getSingleGroup: (uuid: string) => Promise<void>
     createGroup: () => Promise<void>
     deleteGroup: () => Promise<void>
     updateGroup: () => Promise<void>
+    resetStore: () => void
 }
 
 const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
     isLoading: false,
     contactgroupData: [],
     selectedContactIds: [],
-    selectedIds: [],
+    selectedGroupIds: [],
     formValues: { group_name: '', description: "" },
-
+    editValues: { uuid: "", group_name: "", description: "" },
     paginationInfo: {
         total_count: 0,
         total_pages: 0,
@@ -63,13 +66,16 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
     setContactGroupData: (newgroupData) => set({ contactgroupData: newgroupData }),
     setSelectedContactIds: (newId) => set({ selectedContactIds: newId }),
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
-    setSelectedIds: (newId) => set({ selectedIds: newId }),
+    setSelectedGroupIds: (newIds) => set({ selectedGroupIds: newIds }),
     setFormValues: (newformValue) => set({ formValues: newformValue }),
+    setEditValues: (newEditValues) => set({ editValues: newEditValues }),
 
     getAllGroups: async (page = 1, pageSize = 10): Promise<void> => {
         try {
             const { setContactGroupData, setPaginationInfo } = get()
-            let response = await axiosInstance.get<APIResponse<PaginatedResponse<ContactGroupData>>>(`/get-all-contact-groups?page=${page}&page_size=${pageSize}`)
+            let response = await axiosInstance
+                .get<APIResponse<PaginatedResponse<ContactGroupData>>>
+                (`/get-all-contact-groups?page=${page}&page_size=${pageSize}`)
 
             const { data, ...paginationInfo } = response.data.payload
 
@@ -89,14 +95,16 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
     },
     addContactToGroup: async () => {
         try {
-            const { setIsLoading, selectedContactIds, selectedIds } = get()
+            const { setIsLoading, selectedContactIds, setSelectedGroupIds, selectedGroupIds } = get()
 
             setIsLoading(true)
-
-            if (selectedIds.length > 0) {
+            if (selectedGroupIds.length > 0) {
+                const groupId = selectedGroupIds[0]
+                // Clear selectedGroupIds immediately after using it
+                setSelectedGroupIds([])
                 const promises = selectedContactIds.map(contactId => {
                     const data = {
-                        group_id: selectedIds[0],
+                        group_id: groupId,
                         contact_id: contactId
                     } satisfies AddToGroup
 
@@ -122,11 +130,11 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         } finally {
-            const { setIsLoading, setSelectedIds, setSelectedContactIds } = get()
+            const { setIsLoading, setSelectedGroupIds, setSelectedContactIds } = get()
 
             setIsLoading(false)
             setSelectedContactIds([])
-            setSelectedIds([])
+            setSelectedGroupIds([])
         }
     },
 
@@ -173,8 +181,72 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
         }
     },
 
-    updateGroup: async () => { },
-    deleteGroup: async () => { }
+    updateGroup: async () => {
+        try {
+
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
+    deleteGroup: async () => {
+        try {
+
+            const { setIsLoading, selectedGroupIds } = get()
+            setIsLoading(true)
+
+            if (selectedGroupIds.length > 0) {
+                let promises = selectedGroupIds.map((groupId) => {
+                    return axiosInstance.delete<ResponseT>("/delete-group/" + groupId)
+                })
+
+                const results = await Promise.all(promises)
+
+                const allSuccessful = results.every(response => response.data.status === true)
+
+                if (allSuccessful) {
+                    eventBus.emit('success', "Group(s) deleted successfully")
+                    await get().getAllGroups()
+                } else {
+                    eventBus.emit('error', "Some groups  could not be deleted")
+                }
+            }
+
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        } finally {
+            get().setIsLoading(false)
+            get().setSelectedGroupIds([])
+        }
+    },
+
+    resetStore: () => {
+        set({
+            isLoading: false,
+            contactgroupData: [],
+            selectedContactIds: [],
+            selectedGroupIds: [],
+            formValues: { group_name: '', description: "" },
+            editValues: { uuid: "", group_name: "", description: "" },
+            paginationInfo: {
+                total_count: 0,
+                total_pages: 0,
+                current_page: 1,
+                page_size: 10,
+            },
+        });
+    },
 }))
 
 

@@ -185,7 +185,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             }
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -225,7 +225,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             }
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -245,7 +245,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             console.log(response)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -269,7 +269,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             setForgetPasswordValues({ email: '' })
         } catch (error: any) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -290,7 +290,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             eventBus.emit('success', response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -312,7 +312,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             eventBus.emit('success', response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -346,7 +346,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             })
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -365,7 +365,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             setUserData(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -388,7 +388,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             eventBus.emit('success', response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {

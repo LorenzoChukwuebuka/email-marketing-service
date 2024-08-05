@@ -5,7 +5,7 @@ import CreateGroup from "./createGroupComponent";
 
 const ContactGroupDash: React.FC = () => {
 
-    const { selectedIds } = useContactGroupStore()
+    const { selectedGroupIds, deleteGroup } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     return <>
@@ -21,11 +21,13 @@ const ContactGroupDash: React.FC = () => {
                 </button>
 
 
-                {selectedIds.length > 0 && (
+                {selectedGroupIds.length > 0 && (
                     <>
                         <button
                             className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
+                            onClick={() => deleteGroup()}
                         >
+
                             <span className="text-red-500"> Delete Group </span>
                             <i className="bi bi-trash text-red-500"></i>
                         </button>

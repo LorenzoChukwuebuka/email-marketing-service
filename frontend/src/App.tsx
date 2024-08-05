@@ -10,6 +10,7 @@ import { UserDashRoute } from "./layouts/userDashRoute";
 import { ProtectedRoute } from "./utils/protectedRoute";
 import { AdminAuthRoute } from "./pages/admin";
 import { AdminDashRoute } from "./layouts/adminDashRoute";
+import useTokenExpiration from './hooks/usetokenExpiration';
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
@@ -68,9 +69,12 @@ const App: React.FC = () => {
         };
     }, []);
 
+    useTokenExpiration()
 
     return (
         <>
+
+
             <ToastContainer />
             <Routes>
                 <Route index element={<IndexLandingPage />} />

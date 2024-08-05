@@ -62,7 +62,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             setSmtpKeyData(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -79,7 +79,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             return response.data.payload;
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -95,7 +95,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             get().getSMTPKeys();
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -111,7 +111,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             get().getSMTPKeys();
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
