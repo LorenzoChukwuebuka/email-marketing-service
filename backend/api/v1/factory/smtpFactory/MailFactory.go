@@ -1,0 +1,17 @@
+package smtpfactory
+
+import "fmt"
+
+func MailFactory(mailhost string) (SmtpMethodInterface, error) {
+	var sI SmtpMethodInterface
+	switch mailhost {
+	case "mailtrap":
+		sI = &MailTrapProcessor{}
+		return sI, nil
+	case "Paystack":
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("invalid payment type: %s", mailhost)
+	}
+
+}
