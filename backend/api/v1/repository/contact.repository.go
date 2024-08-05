@@ -2,9 +2,11 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type ContactRepository struct {
@@ -242,7 +244,14 @@ func mapContactsToResponse(contacts []model.Contact) []model.ContactResponse {
 
 func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams) (PaginatedResult, error) {
 	var groups []model.ContactGroup
-	query := r.DB.Where("user_id = ?", userId).Find(&groups)
+
+	query := r.DB.
+		Preload("Contacts", func(db *gorm.DB) *gorm.DB {
+			return db.Select("contacts.*, user_contact_groups.contact_group_id").
+				Joins("LEFT JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id")
+		}).
+		Where("contact_groups.user_id = ?", userId).
+		Order("contact_groups.created_at DESC")
 
 	paginatedResult, err := Paginate(query, params, &groups)
 	if err != nil {
@@ -262,7 +271,7 @@ func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams)
 
 func (r *ContactRepository) GetASingleGroup(userId string, groupId string) (*model.ContactGroup, error) {
 	var groups model.ContactGroup
-	err := r.DB.Where("user_id = ?", userId).Find(&groups).Error
+	err := r.DB.Where("user_id = ? AND uuid = ?", userId, groupId).First(&groups).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch all groups: %w", err)
 	}
@@ -286,22 +295,33 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 	return &response, nil
 }
 
-func (r *ContactRepository) DeleteContactGroup(userId string, groupId string) error {
-	// Start a new transaction
+func (r *ContactRepository) DeleteContactGroup(userId string, groupId int) error {
+
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return fmt.Errorf("failed to start transaction: %w", tx.Error)
 	}
 
-	// Delete associated user contact groups
-	result := tx.Where("group_id = ?", groupId).Delete(&model.UserContactGroup{})
-	if result.Error != nil {
+	// Check if the group exists in user contact groups
+	var userContactGroup model.UserContactGroup
+	exists := tx.Where("contact_group_id = ?", groupId).First(&userContactGroup).Error
+
+	if exists != nil && !errors.Is(exists, gorm.ErrRecordNotFound) {
 		tx.Rollback()
-		return fmt.Errorf("failed to delete user contact groups: %w", result.Error)
+		return fmt.Errorf("failed to check user contact groups: %w", exists)
+	}
+
+	// If the group exists, delete associated user contact groups
+	if exists == nil {
+		result := tx.Where("contact_group_id = ?", groupId).Delete(&model.UserContactGroup{})
+		if result.Error != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to delete user contact groups: %w", result.Error)
+		}
 	}
 
 	// Delete the contact group
-	result = tx.Where("user_id = ? AND uuid = ?", userId, groupId).Delete(&model.ContactGroup{})
+	result := tx.Where("user_id = ? AND id = ?", userId, groupId).Delete(&model.ContactGroup{})
 	if result.Error != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete contact group: %w", result.Error)

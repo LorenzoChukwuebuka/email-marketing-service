@@ -286,7 +286,14 @@ func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO) error {
 }
 
 func (s *ContactService) DeleteContactGroup(userId string, groupId string) error {
-	if err := s.ContactRepo.DeleteContactGroup(userId, groupId); err != nil {
+
+	res, err := s.ContactRepo.GetASingleGroup(userId, groupId)
+
+	if err != nil {
+		return err
+	}
+
+	if err := s.ContactRepo.DeleteContactGroup(userId, int(res.ID)); err != nil {
 		return err
 	}
 

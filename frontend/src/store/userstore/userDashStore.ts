@@ -28,10 +28,9 @@ const useDailyUserMailSentCalc = create<DailyUserMailStore>((set, get) => ({
             let response = await axiosInstance.get<APIResponse<MailData>>('/get-user-current-sub')
             setMailData(response.data.payload)
 
-            console.log(response.data)
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {

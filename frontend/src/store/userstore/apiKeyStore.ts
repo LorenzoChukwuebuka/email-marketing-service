@@ -38,7 +38,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             setAPIKeyData(response.data);
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -54,7 +54,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             return response.data.payload;
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -70,7 +70,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
             eventBus.emit('success', response.data.payload);
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {

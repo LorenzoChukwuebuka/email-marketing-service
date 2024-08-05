@@ -101,7 +101,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -114,11 +114,25 @@ const useContactStore = create<ContactStore>((set, get) => ({
     deleteContact: async () => {
         try {
             const { selectedIds } = get()
-            for (let i = 0; i < selectedIds.length; i++) {
-                let response = await axiosInstance.delete<ResponseT>(
-                    '/delete-contact/' + selectedIds[i]
-                )
-                eventBus.emit('success', response.data.payload)
+
+
+            if (selectedIds.length > 0) {
+                let promises = selectedIds.map((contactId) => {
+                    return axiosInstance.delete<ResponseT>(
+                        '/delete-contact/' + contactId
+                    )
+                })
+
+                const results = await Promise.all(promises)
+
+                const allSuccessful = results.every(response => response.data.status === true)
+
+                if (allSuccessful) {
+                    eventBus.emit('success', "Group(s) deleted successfully")
+                    await get().getAllContacts()
+                } else {
+                    eventBus.emit('error', "Some groups  could not be deleted")
+                }
             }
 
         } catch (error) {
@@ -145,7 +159,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -161,7 +175,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             get().setPaginationInfo(paginationInfo);
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -169,7 +183,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
         }
     },
-  
+
     batchContactUpload: async () => {
         try {
             const { setIsLoading, selectedCSVFile } = get()
@@ -188,7 +202,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
