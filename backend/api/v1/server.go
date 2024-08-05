@@ -34,10 +34,11 @@ var (
 )
 
 func (s *Server) setupRoutes() {
+
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.Route{
 		"admin": routes.NewAdminRoute(s.db),
-		"":  routes.NewUserRoute(s.db),
+		"":      routes.NewUserRoute(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -47,6 +48,7 @@ func (s *Server) setupRoutes() {
 	s.router.Use(recoveryMiddleware)
 	s.router.Use(enableCORS)
 	s.router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+
 }
 
 func (s *Server) Start() {

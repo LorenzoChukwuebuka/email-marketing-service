@@ -36,8 +36,10 @@ const GetAllContacts: React.FC = () => {
     const handleSelect = (uuid: string) => {
         if (selectedIds.includes(uuid)) {
             setSelectedId(selectedIds.filter((id) => id !== uuid));
+            setSelectedContactIds(selectedIds.filter((id) => id !== uuid));
         } else {
             setSelectedId([...selectedIds, uuid]);
+            setSelectedContactIds([...selectedIds, uuid])
         }
     };
 

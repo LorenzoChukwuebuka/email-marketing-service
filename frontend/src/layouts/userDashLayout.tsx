@@ -79,7 +79,7 @@ const UserDashLayout: React.FC = () => {
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
                         <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            Mail Crib
+                            {import.meta.env.VITE_API_NAME}
                         </h2>
                         <ul className="mt-12 w-full">
                             <li className={getLinkClassName("/user/dash")}>

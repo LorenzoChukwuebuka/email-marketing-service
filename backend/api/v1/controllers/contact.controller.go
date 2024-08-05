@@ -381,23 +381,9 @@ func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r
 	groupId := vars["groupId"]
 
 	userId := claims["userId"].(string)
+ 
 
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-
-	page, err := strconv.Atoi(page1)
-	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
-		return
-	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
-	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
-		return
-	}
-
-	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId, page, pageSize)
+	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId )
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

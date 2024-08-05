@@ -3,6 +3,7 @@ import UserDashLayout from "./userDashLayout";
 import UserDashPage from "../pages/userDashboard/userHomeDashPage";
 import { AccountSettingsTemplate, APISettingsDashTemplate, ContactDashTemplate } from "../templates";
 import UserMgtSettingsDashTemplate from "../templates/user/SettingsTemplate/userManagementTemplate";
+import GroupContactList from "../templates/user/components/contactGroup/groupcontactlistComponent";
 
 const UserDashRoute = () => (
     <Routes>
@@ -18,6 +19,7 @@ const UserDashRoute = () => (
                 element={<AccountSettingsTemplate />}
             />
             <Route path="contacts" element={<ContactDashTemplate />} />
+            <Route path="view-group" element={<GroupContactList />} />
         </Route>
 
     </Routes>

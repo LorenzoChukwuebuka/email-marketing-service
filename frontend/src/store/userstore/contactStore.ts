@@ -51,7 +51,6 @@ interface ContactStore {
     deleteContact: () => Promise<void>;
     editContact: () => Promise<void>;
     getAllContacts: (page?: number, pageSize?: number) => Promise<void>;
-    addContactToGroup: () => Promise<void>,
     batchContactUpload: () => Promise<void>
 }
 
@@ -124,7 +123,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.message)
+                eventBus.emit('error', error?.response?.data.payload)
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -170,7 +169,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
         }
     },
-    addContactToGroup: async () => { },
+  
     batchContactUpload: async () => {
         try {
             const { setIsLoading, selectedCSVFile } = get()
