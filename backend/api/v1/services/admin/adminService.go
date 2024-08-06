@@ -63,9 +63,6 @@ func (s *AdminService) AdminLogin(d *dto.AdminLogin) (map[string]interface{}, er
 		return nil, fmt.Errorf("passwords do not match:%w", err)
 	}
 
-
-	fmt.Println(*adminDetails)
-
 	token, err := utils.AdminJWTEncode(adminDetails.ID, adminDetails.UUID, adminDetails.Type, adminDetails.Email)
 
 	if err != nil {

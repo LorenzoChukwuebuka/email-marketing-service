@@ -42,7 +42,7 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-billing/{billingId}", middleware.JWTMiddleware(transactionController.GetSingleBillingRecord)).Methods("GET", "OPTIONS")
-	router.HandleFunc("/get-all-billing", middleware.JWTMiddleware(transactionController.GetAllUserBilling)).Queries("page", "{page}").Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-all-billing", middleware.JWTMiddleware(transactionController.GetAllUserBilling))
 
 	// Plan routes
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
@@ -67,16 +67,17 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	// Contact routes
 	router.HandleFunc("/create-contact", middleware.JWTMiddleware(contactController.CreateContact)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/upload-contact-csv", middleware.JWTMiddleware(contactController.UploadContactViaCSV)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/get-all-contacts", middleware.JWTMiddleware(contactController.GetAllContacts)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-all-contacts", middleware.JWTMiddleware(contactController.GetAllContacts))
 	router.HandleFunc("/update-contact/{contactId}", middleware.JWTMiddleware(contactController.UpdateContact)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-contact/{contactId}", middleware.JWTMiddleware(contactController.DeleteContact)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/create-contact-group", middleware.JWTMiddleware(contactController.CreateGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/add-contact-to-group", middleware.JWTMiddleware(contactController.AddContactToGroup)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/get-all-contact-groups", middleware.JWTMiddleware(contactController.GetAllContactGroups)).Queries("page", "{page}").Queries("page_size", "{page_size}").Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-all-contact-groups", middleware.JWTMiddleware(contactController.GetAllContactGroups))
 	router.HandleFunc("/add-contact-to-group", middleware.JWTMiddleware(contactController.AddContactToGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/remove-contact-from-group", middleware.JWTMiddleware(contactController.RemoveContactFromGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-single-group/{groupId}", middleware.JWTMiddleware(contactController.GetASingleGroupWithContacts))
 	router.HandleFunc("/delete-group/{groupId}", middleware.JWTMiddleware(contactController.DeleteContactGroup)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/edit-group/{groupId}", middleware.JWTMiddleware(contactController.UpdateContactGroup)).Methods("PUT", "OPTIONS")
 
 	// SMTP routes
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")

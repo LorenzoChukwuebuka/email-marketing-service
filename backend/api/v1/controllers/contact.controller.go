@@ -290,19 +290,27 @@ func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *htt
 func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ContactGroupDTO
 
+	vars := mux.Vars(r)
+
+	groupId := vars["groupId"]
+
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
 
-	userId := claims["userId"].(string)
+	userId, ok := claims["userId"].(string)
+	if !ok {
+		response.ErrorResponse(w, "invalid user id in claims")
+		return
+	}
 
 	utils.DecodeRequestBody(r, &reqdata)
 
 	reqdata.UserId = userId
 
-	err := c.ContactService.UpdateContactGroup(reqdata)
+	err := c.ContactService.UpdateContactGroup(reqdata, groupId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -381,9 +389,8 @@ func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r
 	groupId := vars["groupId"]
 
 	userId := claims["userId"].(string)
- 
 
-	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId )
+	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

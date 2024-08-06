@@ -248,9 +248,12 @@ func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams)
 	query := r.DB.
 		Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 			return db.Select("contacts.*, user_contact_groups.contact_group_id").
-				Joins("LEFT JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id")
+				Joins("LEFT JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
+				Where("contacts.deleted_at IS NULL").
+				Where("user_contact_groups.deleted_at IS NULL")
 		}).
 		Where("contact_groups.user_id = ?", userId).
+		Where("contact_groups.deleted_at IS NULL").
 		Order("contact_groups.created_at DESC")
 
 	paginatedResult, err := Paginate(query, params, &groups)
@@ -283,8 +286,13 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 
 	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 		return db.Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
-			Where("user_contact_groups.user_id = ?", userId)
-	}).Where("contact_groups.uuid = ?", groupId).First(&group).Error
+			Where("user_contact_groups.user_id = ?", userId).
+			Where("contacts.deleted_at IS NULL").
+			Where("user_contact_groups.deleted_at IS NULL")
+	}).
+		Where("contact_groups.uuid = ?", groupId).
+		Where("contact_groups.deleted_at IS NULL").
+		First(&group).Error
 
 	if err != nil {
 		return nil, err
@@ -359,15 +367,15 @@ func (r *ContactRepository) UpdateGroup(d *model.ContactGroup) error {
 
 	var existingContactGroup model.ContactGroup
 
-	if err := r.DB.Where("uuid = ? AND user_id", d.UUID, d.UserId).First(&existingContactGroup).Error; err != nil {
-		return fmt.Errorf("failed to find plan for deletion: %w", err)
+	if err := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).First(&existingContactGroup).Error; err != nil {
+		return fmt.Errorf("failed to find group: %w", err)
 	}
 
 	existingContactGroup.GroupName = d.GroupName
 	existingContactGroup.Description = d.Description
 
 	if err := r.DB.Save(&existingContactGroup).Error; err != nil {
-		return fmt.Errorf("failed to update plan: %w", err)
+		return fmt.Errorf("failed to update group: %w", err)
 	}
 
 	return nil

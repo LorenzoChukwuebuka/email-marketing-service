@@ -3,6 +3,7 @@ import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
 import { APIResponse } from '../../interface/api.interface';
 import { BaseEntity } from '../../interface/baseentity.interface';
+import { errResponse } from '../../utils/isError';
 
 
 
@@ -38,9 +39,6 @@ type EditPlanValues = Partial<PlanValues> & {
 export interface PlanData extends BaseEntity, BasePlan {
     features: Feature[];
 }
-
-
-
 
 interface PlanState {
     planValues: PlanValues;
@@ -105,13 +103,12 @@ const usePlanStore = create<PlanState>((set, get) => ({
                 eventBus.emit('success', 'Plan creation was successful')
             }
         } catch (error) {
-            if (error instanceof Error) {
-                eventBus.emit(
-                    'error',
-                    (error as any).response?.data?.payload || 'An unexpected error occurred'
-                )
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                eventBus.emit('error', 'An unexpected error occurred')
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setIsLoading(false)
@@ -125,13 +122,12 @@ const usePlanStore = create<PlanState>((set, get) => ({
             let response = await axiosInstance.get<APIResponse<PlanData[]>>('/admin/get-plans')
             setPlanData(response.data.payload)
         } catch (error) {
-            if (error instanceof Error) {
-                eventBus.emit(
-                    'error',
-                    (error as any).response?.data?.payload || 'An unexpected error occurred'
-                )
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                eventBus.emit('error', 'An unexpected error occurred')
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setIsLoading(false)
@@ -145,7 +141,13 @@ const usePlanStore = create<PlanState>((set, get) => ({
             )
             eventBus.emit('success', response.data.payload)
         } catch (error) {
-            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred')
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
 
@@ -157,11 +159,16 @@ const usePlanStore = create<PlanState>((set, get) => ({
                 let response = await axiosInstance.delete(
                     '/admin/delete-plan/' + selectedId[i]
                 )
-
                 eventBus.emit('success', response.data.payload)
             }
         } catch (error) {
-            eventBus.emit('error', error instanceof Error ? error.message : 'An unexpected error occurred')
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         } finally {
             get().setSelectedId([])
         }
