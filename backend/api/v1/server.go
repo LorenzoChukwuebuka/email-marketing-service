@@ -30,11 +30,9 @@ func NewServer(db *gorm.DB) *Server {
 
 var (
 	response = &utils.ApiResponse{}
-	//logger   = &utils.Logger{}
 )
 
 func (s *Server) setupRoutes() {
-
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.Route{
 		"admin": routes.NewAdminRoute(s.db),
@@ -47,12 +45,21 @@ func (s *Server) setupRoutes() {
 
 	s.router.Use(recoveryMiddleware)
 	s.router.Use(enableCORS)
+	s.router.Use(methodNotAllowedMiddleware)
 	s.router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+}
 
+func (s *Server) setupLogger() {
+	logger, err := utils.NewLogger("app.log", utils.INFO)
+	if err != nil {
+		log.Fatal("logger failed to load")
+	}
+	defer logger.Close()
 }
 
 func (s *Server) Start() {
 	s.setupRoutes()
+	s.setupLogger()
 
 	server := &http.Server{
 		Addr:    ":9000",
@@ -84,30 +91,24 @@ func (s *Server) Start() {
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// If the request method is OPTIONS, just return a 200 status (pre-flight request)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		// Call the actual handler
 		handler.ServeHTTP(w, r)
 	})
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-
-	//fmt.Fprintf(w, "404 Not Found: %s", r.URL.Path)
-
 	res := map[string]string{
-		"response": "404 Not Found",
-		"path":     r.URL.Path,
+		"error":   "Not Found",
+		"message": fmt.Sprintf("The requested resource at %s was not found", r.URL.Path),
 	}
 	response.ErrorResponse(w, res)
 }
@@ -121,15 +122,41 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 				stack = stack[:runtime.Stack(stack, false)]
 				fmt.Printf("Panic Stack Trace:\n%s\n", stack)
 
-				errorStack := map[string]interface{}{
-					"Message": "Internal Server Error",
-				}
-
-				response.ErrorResponse(w, errorStack)
-
+				response.ErrorResponse(w, "internal server error")
 			}
 		}()
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func methodNotAllowedMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wrappedWriter := &responseWriterWrapper{ResponseWriter: w, statusCode: http.StatusOK}
+
+		next.ServeHTTP(wrappedWriter, r)
+
+		if wrappedWriter.statusCode == http.StatusNotFound {
+			var match mux.RouteMatch
+			if mux.NewRouter().Match(r, &match) {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				res := map[string]string{
+					"error":   "Method Not Allowed",
+					"message": fmt.Sprintf("The requested resource exists, but does not support the %s method", r.Method),
+				}
+				response.ErrorResponse(w, res)
+				return
+			}
+		}
+	})
+}
+
+type responseWriterWrapper struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *responseWriterWrapper) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }

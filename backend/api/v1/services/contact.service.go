@@ -270,19 +270,21 @@ func (s *ContactService) RemoveContactFromGroup(d *dto.AddContactsToGroupDTO) er
 	return nil
 }
 
-func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO) error {
+func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO, groupId string) error {
 
-	groupModel := &model.ContactGroup{
+	fmt.Printf("%+v\n",d)
 
-		GroupName:   d.GroupName,
-		Description: d.Description,
-		UserId:      d.UserId,
-	}
+	// groupModel := &model.ContactGroup{
+	// 	UUID:        groupId,
+	// 	GroupName:   d.GroupName,
+	// 	Description: d.Description,
+	// 	UserId:      d.UserId,
+	// }
 
-	if err := s.ContactRepo.UpdateGroup(groupModel); err != nil {
-		return err
-	}
-	return nil
+	// if err := s.ContactRepo.UpdateGroup(groupModel); err != nil {
+	// 	return err
+	// }
+	 return nil
 }
 
 func (s *ContactService) DeleteContactGroup(userId string, groupId string) error {

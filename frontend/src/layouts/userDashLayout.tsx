@@ -81,13 +81,13 @@ const UserDashLayout: React.FC = () => {
                         <h2 className="text-xl font-bold mt-4 text-center mb-4">
                             {import.meta.env.VITE_API_NAME}
                         </h2>
-                        <ul className="mt-12 w-full">
+                        <ul className="mt-8 w-full">
                             <li className={getLinkClassName("/user/dash")}>
                                 <Link
                                     to="/user/dash"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-house mr-2"></i> Dashboard
+                                    <i className="bi bi-house-fill mr-2"></i> Dashboard
                                 </Link>
                             </li>
 
@@ -96,7 +96,7 @@ const UserDashLayout: React.FC = () => {
                                     to=""
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-megaphone"></i> &nbsp; Campaigns
+                                    <i className="bi bi-megaphone-fill"></i> &nbsp; Campaigns
                                 </Link>
                             </li>
 
@@ -105,7 +105,16 @@ const UserDashLayout: React.FC = () => {
                                     to="/user/dash/contacts"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-telephone"></i> &nbsp; Contacts
+                                    <i className="bi bi-person-lines-fill"></i> &nbsp; Contacts
+                                </Link>
+                            </li>
+
+                            <li className={getLinkClassName("/user/dash/templates")}>
+                                <Link
+                                    to="/user/dash/templates"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-stack"></i> &nbsp; Templates
                                 </Link>
                             </li>
 
@@ -114,15 +123,15 @@ const UserDashLayout: React.FC = () => {
                                     to=""
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-bar-chart mr-2"></i> Analytics
+                                    <i className="bi bi-bar-chart-fill mr-2"></i> Analytics
                                 </Link>
                             </li>
-                            <li className={getLinkClassName("/billing")}>
+                            <li className={getLinkClassName("/user/dash/billing")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/billing"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-wallet"></i> &nbsp; Billing
+                                    <i className="bi bi-wallet-fill"></i> &nbsp; Billing
                                 </Link>
                             </li>
                             <li className={getLinkClassName("/support")}>
@@ -139,7 +148,7 @@ const UserDashLayout: React.FC = () => {
                                     className="flex items-center w-full justify-between"
                                 >
                                     <span className="flex font-semibold text-base items-center">
-                                        <i className="bi bi-gear mr-2"></i> Settings
+                                        <i className="bi bi-gear-fill mr-2"></i> Settings
                                     </span>
                                     <i
                                         className={`bi ${settingsDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"

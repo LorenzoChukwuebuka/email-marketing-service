@@ -42,10 +42,11 @@ interface ContactGroupstore {
     setSelectedGroupIds: (newIds: string[]) => void;
     addContactToGroup: () => Promise<void>;
     getSingleGroup: (uuid: string) => Promise<void>
+    removeContactFromGroup: () => Promise<void>
     createGroup: () => Promise<void>
     deleteGroup: () => Promise<void>
     updateGroup: () => Promise<void>
-    resetStore: () => void
+
 }
 
 const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
@@ -183,7 +184,12 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
 
     updateGroup: async () => {
         try {
-
+            const { setIsLoading, editValues } = get()
+            setIsLoading(true)
+            let response = await axiosInstance.put<ResponseT>("/edit-group/" + editValues.uuid, editValues)
+            if (response.data.status == true) {
+                eventBus.emit('success', "group updated successfully")
+            }
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -192,6 +198,9 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
             } else {
                 console.error("Unknown error:", error);
             }
+        } finally {
+            get().setIsLoading(false)
+            get().setEditValues({ uuid: "", group_name: "", description: "" })
         }
     },
     deleteGroup: async () => {
@@ -231,22 +240,51 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
         }
     },
 
-    resetStore: () => {
-        set({
-            isLoading: false,
-            contactgroupData: [],
-            selectedContactIds: [],
-            selectedGroupIds: [],
-            formValues: { group_name: '', description: "" },
-            editValues: { uuid: "", group_name: "", description: "" },
-            paginationInfo: {
-                total_count: 0,
-                total_pages: 0,
-                current_page: 1,
-                page_size: 10,
-            },
-        });
-    },
+    removeContactFromGroup: async () => {
+        try {
+            const { setIsLoading, selectedContactIds, setSelectedGroupIds, selectedGroupIds } = get()
+
+            setIsLoading(true)
+
+            if (selectedGroupIds.length > 0) {
+                const groupId = selectedGroupIds[0]
+                // Clear selectedGroupIds immediately after using it
+                setSelectedGroupIds([])
+                const promises = selectedContactIds.map(contactId => {
+                    const data = {
+                        group_id: groupId,
+                        contact_id: contactId
+                    } satisfies AddToGroup
+
+                    return axiosInstance.post<ResponseT>("/remove-contact-from-group", data)
+                })
+
+                const results = await Promise.all(promises)
+
+                const allSuccessful = results.every(response => response.data.status === true)
+
+                if (allSuccessful) {
+                    eventBus.emit('success', "Contact(s) removed from group successfully")
+                } else {
+                    eventBus.emit('error', "Some contacts could not be added to the group")
+                }
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }finally{
+            get().setIsLoading(false)
+            get().setSelectedContactIds([])
+            get().setSelectedGroupIds([])
+        }
+    }
+
+
 }))
 
 

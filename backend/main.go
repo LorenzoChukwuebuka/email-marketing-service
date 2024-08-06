@@ -28,12 +28,6 @@ func cronJobs(dbConn *gorm.DB) *cron.Cron {
 }
 
 func main() {
-	logger, err := utils.NewLogger("app.log")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer logger.Close()
-
 	dto.InitValidate()
 
 	dbConn, err := database.InitDB()

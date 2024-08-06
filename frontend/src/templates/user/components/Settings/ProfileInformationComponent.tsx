@@ -62,7 +62,7 @@ const ProfileInformationComponent: React.FC = () => {
     }, [userData]);
 
     return (
-        <div className="max-w-2xl ml-5 p-6 ">
+        <div className="max-w-3xl ml-5 p-6 ">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">
                 Profile Information
             </h1>
@@ -131,7 +131,7 @@ const ProfileInformationComponent: React.FC = () => {
                         name="email"
                         value={editFormValues?.email || ""}
                         readOnly
-                        className="w-full bg-gray-100 p-2 rounded-md"
+                        className="w-[20em] bg-gray-100 p-2 rounded-md"
                     />
                 </div>
                 <div>

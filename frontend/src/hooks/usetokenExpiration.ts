@@ -7,6 +7,11 @@ interface DecodedToken {
     exp: number;
 }
 
+interface CookieData {
+    token: string;
+    // Add other properties if needed
+}
+
 const useTokenExpiration = () => {
     const navigate = useNavigate();
 
@@ -14,7 +19,8 @@ const useTokenExpiration = () => {
         const checkTokenExpiration = () => {
             const token = Cookies.get('Cookies');
             if (token) {
-                const decodedToken = jwtDecode<DecodedToken>(token);
+                const cookieData: CookieData = JSON.parse(token)
+                const decodedToken = jwtDecode<DecodedToken>(cookieData.token);
                 const currentTime = Date.now() / 1000;
 
                 if (decodedToken.exp < currentTime) {
