@@ -19,7 +19,6 @@ type Feature = BaseEntity & {
 
 
 type BasePlan = {
-    ID: number;
     planname: string;
     duration: string;
     price: number;

@@ -1,83 +1,23 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Check } from 'lucide-react';
 import useDailyUserMailSentCalc from '../../../../store/userstore/userDashStore';
+import userPlanStore from '../../../../store/userstore/planStore';
+import { PlanData } from '../../../../store/admin/planStore';
 
-
-
-const plansData = [
-    {
-        uuid: "808f0576-25b5-44ba-a027-4ac075dc7b99",
-        planname: "Free",
-        duration: "month",
-        price: 0,
-        number_of_mails_per_day: "100",
-        details: "Perfect for getting started",
-        status: "active",
-        features: [
-            { name: "100 Emails Per Day" },
-            { name: "Basic Analytics" },
-            { name: "5 Templates" },
-            { name: "Email Support" },
-        ],
-    },
-    {
-        uuid: "e7d1cc31-72de-4f3a-b9eb-e74048185ef1",
-        planname: "Premium",
-        duration: "month",
-        price: 30000,
-        number_of_mails_per_day: "1000",
-        details: "For growing businesses",
-        status: "active",
-        features: [
-            { name: "1,000 Emails Per Day" },
-            { name: "Advanced Analytics" },
-            { name: "Unlimited Templates" },
-            { name: "Priority Support" },
-            { name: "Custom Domain" },
-        ],
-    },
-    {
-        uuid: "a1b2c3d4-e5f6-4a5b-9c3d-2e1f0a9b8c7d",
-        planname: "Business",
-        duration: "month",
-        price: 50000,
-        number_of_mails_per_day: "5000",
-        details: "For large scale operations",
-        status: "active",
-        features: [
-            { name: "5,000 Emails Per Day" },
-            { name: "Enterprise Analytics" },
-            { name: "Dedicated Account Manager" },
-            { name: "API Access" },
-            { name: "99.99% Uptime SLA" },
-        ],
-    },
-    {
-        uuid: "9876fedc-ba98-7654-3210-fedcba987654",
-        planname: "Enterprise",
-        duration: "month",
-        price: null,
-        number_of_mails_per_day: "Unlimited",
-        details: "Custom solutions for your business",
-        status: "active",
-        features: [
-            { name: "Unlimited Emails" },
-            { name: "Custom Integration" },
-            { name: "24/7 Phone Support" },
-            { name: "On-Premise Deployment Option" },
-            { name: "Custom Feature Development" },
-        ],
-    }
-];
 
 const PricingPlans = () => {
 
     const { mailData } = useDailyUserMailSentCalc()
+    const { fetchPlans, planData } = userPlanStore()
 
     let currentPlan = mailData?.plan
 
+    useEffect(() => {
+        fetchPlans()
+    }, [fetchPlans])
 
-    const renderPlanCard = (plan: any) => {
+
+    const renderPlanCard = (plan: PlanData) => {
         const isCurrentPlan = currentPlan === plan.planname;
         return (
             <div key={plan.uuid} className={`bg-white rounded-lg p-6  ${isCurrentPlan ? 'border-2 border-blue-500' : ''}`}>
@@ -108,10 +48,10 @@ const PricingPlans = () => {
     return (
         <div className="container mx-auto mt-5 p-4">
 
-            <h1 className='text-2xl font-semibold mb-10 text-center'> Upgrade your Marketing Platform </h1>
+            <h1 className='text-4xl font-semibold mb-10 text-center'> Upgrade your Marketing Plan </h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {plansData.map(renderPlanCard)}
+                {planData.map(renderPlanCard)}
             </div>
         </div>
     );
