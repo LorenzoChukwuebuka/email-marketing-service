@@ -71,10 +71,13 @@ func (r *DailyMailCalcRepository) UpdateDailyMailCalcRepository(d *model.DailyMa
 func (r *DailyMailCalcRepository) GetUserActiveCalculation(subscriptionId int) (*model.DailyMailCalcResponseModel, error) {
 	var record model.DailyMailCalc
 
-	err := r.DB.Where("subscription_id = ?", subscriptionId).First(&record).Error
+	todayStart := time.Now().Truncate(24 * time.Hour)
+	todayEnd := todayStart.Add(24 * time.Hour).Add(-time.Nanosecond)
+
+	err := r.DB.Where("subscription_id = ? AND created_at BETWEEN ? AND ?", subscriptionId, todayStart, todayEnd).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("no record found for subscription ID: %d", subscriptionId)
+			return nil, nil
 		}
 		return nil, err
 	}

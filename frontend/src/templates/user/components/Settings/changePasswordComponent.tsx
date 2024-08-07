@@ -1,6 +1,6 @@
 import React, { useState, FormEvent } from "react";
 import * as Yup from "yup";
-import useAuthStore from "../../../../store/AuthStore";
+import useAuthStore from "../../../../store/userstore/AuthStore";
 
 const ChangePasswordComponent: React.FC = () => {
     const {

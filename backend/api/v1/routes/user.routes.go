@@ -4,6 +4,7 @@ import (
 	"email-marketing-service/api/v1/middleware"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+	
 )
 
 type UserRoute struct {
@@ -93,4 +94,5 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	// Testing API routes
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
 	router.HandleFunc("/test-create-daily-mail-calc", smtpController.CreateRecordDailyMailCalculation).Methods("POST", "OPTIONS")
+	
 }
