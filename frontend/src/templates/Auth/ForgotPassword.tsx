@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import * as Yup from "yup";
-import useAuthStore from "../../store/AuthStore";
+import useAuthStore from "../../store/userstore/AuthStore";
 import { Link } from "react-router-dom";
 
 const ForgotPasswordTemplate: React.FC = () => {

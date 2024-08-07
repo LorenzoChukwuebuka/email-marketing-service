@@ -5,10 +5,10 @@ import (
 	paymentmethodFactory "email-marketing-service/api/v1/factory/paymentFactory"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-	"strconv"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
+	"strconv"
 )
 
 type TransactionController struct {

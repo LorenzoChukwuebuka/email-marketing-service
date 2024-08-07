@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import axiosInstance from '../utils/api'
-import parseUserAgent from '../utils/userAgent'
+import axiosInstance from '../../utils/api'
+import parseUserAgent from '../../utils/userAgent'
 import axios from 'axios'
-import eventBus from '../utils/eventBus'
+import eventBus from '../../utils/eventBus'
 import Cookies from 'js-cookie'
-import { BaseEntity } from '../interface/baseentity.interface'
-import { APIResponse } from '../interface/api.interface'
-import { errResponse } from '../utils/isError'
+import { BaseEntity } from '../../interface/baseentity.interface'
+import { APIResponse } from '../../interface/api.interface'
+import { errResponse } from '../../utils/isError'
 
 type FormValues = {
     fullname: string;

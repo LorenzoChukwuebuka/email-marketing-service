@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import useAuthStore from "../../store/AuthStore";
+import useAuthStore from "../../store/userstore/AuthStore";
 import * as Yup from "yup";
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 

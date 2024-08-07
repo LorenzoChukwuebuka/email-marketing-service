@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -30,6 +31,7 @@ func NewServer(db *gorm.DB) *Server {
 
 var (
 	response = &utils.ApiResponse{}
+	logger   = &utils.Logger{}
 )
 
 func (s *Server) setupRoutes() {
@@ -41,6 +43,28 @@ func (s *Server) setupRoutes() {
 
 	for path, route := range routeMap {
 		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
+	}
+
+	frontendDir := "./../frontend/dist" // Adjust if needed
+	absPath, err := filepath.Abs(frontendDir)
+	if err != nil {
+		log.Printf("Error getting absolute path: %v", err)
+	} else {
+		log.Printf("Attempting to serve frontend from: %s", absPath)
+		if _, err := os.Stat(absPath); os.IsNotExist(err) {
+			logger.Error("Frontend directory does not exist: %s", absPath)
+		} else {
+			fs := http.FileServer(http.Dir(absPath))
+			s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+			s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				indexFile := filepath.Join(absPath, "index.html")
+				http.ServeFile(w, r, indexFile)
+			})
+
+			logger.Info("Frontend serving set up successfully with SPA support")
+
+		}
 	}
 
 	s.router.Use(recoveryMiddleware)
@@ -85,8 +109,8 @@ func (s *Server) Start() {
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown error: %v", err)
 	}
+	logger.Info("Server shut down gracefully")
 
-	fmt.Println("Server shut down gracefully")
 }
 
 func enableCORS(handler http.Handler) http.Handler {
