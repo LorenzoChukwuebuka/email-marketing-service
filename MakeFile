@@ -2,24 +2,43 @@ WIRE_PATH := ./backend/api/v1/routes
 MAIN_PATH := ./backend/api/v1
 ROOT_DIR := ./backend/
 FE_DIR := ./frontend/
+DIST_DIR := $(FE_DIR)dist
+CLIENT_DIR := $(ROOT_DIR)client
 .PHONY: wire build
 
-
 wire:
-		cd $(WIRE_PATH) && wire
+	cd $(WIRE_PATH) && wire
+
 run:
-		cd ${ROOT_DIR} && go run .
+	cd $(ROOT_DIR) && go run .
+
 build:
-		cd ${ROOT_DIR} && go build main.go
+	cd $(ROOT_DIR) && go build main.go
+
 air:
-		cd $(ROOT_DIR) && air
+	cd $(ROOT_DIR) && air
+
 npmi:
-		cd ${FE_DIR} && npm i ${ARGS}
+	cd $(FE_DIR) && npm i $(ARGS)
+
 rundev:
-		cd ${FE_DIR} && npm run dev
+	cd $(FE_DIR) && npm run dev
+
 buildfe:
-		cd && npm run build
+	cd $(FE_DIR) && npm run build
+ifneq (,$(wildcard $(DIST_DIR)))
+	ifeq ($(OS),Windows_NT)
+		- rmdir /s /q $(CLIENT_DIR)
+		- mkdir $(CLIENT_DIR)
+		robocopy $(DIST_DIR) $(CLIENT_DIR) /E
+	else
+		- rm -rf $(CLIENT_DIR)
+		- mkdir $(CLIENT_DIR)
+		cp -r $(DIST_DIR) $(CLIENT_DIR)
+	endif
+endif
+
 git:
-		git add .
-		git commit -m "done"
-		git push
+	git add .
+	git commit -m "done"
+	git push

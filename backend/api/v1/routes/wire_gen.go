@@ -57,9 +57,10 @@ func InitializeUserssionController(db *gorm.DB) (*controllers.UserSessionControl
 func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionController, error) {
 	billingRepository := repository.NewBillingRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository)
-	userRepository := repository.NewUserRepository(db)
+	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
 	planRepository := repository.NewPlanRepository(db)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, dailyMailCalcRepository, planRepository)
+	userRepository := repository.NewUserRepository(db)
 	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository, subscriptionRepository, planRepository)
 	transactionController := controllers.NewTransactionController(billingService)
 	return transactionController, nil
@@ -86,7 +87,9 @@ func InitializeSMTPKeyController(db *gorm.DB) (*controllers.SMTPKeyController, e
 
 func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionController, error) {
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository)
+	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	planRepository := repository.NewPlanRepository(db)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, dailyMailCalcRepository, planRepository)
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 	return subscriptionController, nil
 }

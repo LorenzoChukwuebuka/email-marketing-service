@@ -6,8 +6,6 @@ const ContactDashTemplate: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<"Contact" | "Contact Group">("Contact");
 
-
-    console.log("Active Tab:", activeTab);
     return <>
         <div className="p-6 max-w-full">
           

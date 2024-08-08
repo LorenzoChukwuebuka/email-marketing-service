@@ -24,6 +24,12 @@ func (r *BillingRepository) CreateBilling(d *model.Billing) (*model.Billing, err
 	return d, nil
 }
 
+func (r *BillingRepository) CheckIfRefExists(reference string) (bool, error) {
+	var count int64
+	r.DB.Model(&model.Billing{}).Where("reference = ?", reference).Count(&count)
+	return count > 0, nil
+}
+
 func (r *BillingRepository) createBillingResponse(billing model.Billing) model.BillingResponse {
 	response := &model.BillingResponse{
 		UUID:          billing.UUID,
@@ -96,22 +102,103 @@ func (r *BillingRepository) GetSingleBillingRecord(billingID string, userID int)
 	return &response, nil
 }
 
-func (r *BillingRepository) GetAllPayments(userID int, page int) ([]model.Billing, error) {
-	pageSize := 20
+func mapBillingToResponse(billing model.Billing) model.BillingResponse {
+	return model.BillingResponse{
+		Id:            int(billing.ID),
+		UUID:          billing.UUID,
+		UserId:        billing.UserId,
+		AmountPaid:    billing.AmountPaid,
+		PlanId:        int(billing.PlanId),
+		Duration:      billing.Duration,
+		ExpiryDate:    billing.ExpiryDate.Format(time.RFC3339),
+		Reference:     billing.Reference,
+		TransactionId: billing.TransactionId,
+		PaymentMethod: billing.PaymentMethod,
+		Status:        billing.Status,
+		CreatedAt:     billing.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     billing.UpdatedAt.Format(time.RFC3339),
+		DeletedAt: func() *string {
+			if billing.DeletedAt.Valid {
+				str := billing.DeletedAt.Time.Format(time.RFC3339)
+				return &str
+			}
+			return nil
+		}(),
+		User: func() *model.UserResponse {
+			if billing.User != nil {
+				return &model.UserResponse{
+					ID:          billing.User.ID,
+					UUID:        billing.User.UUID,
+					FullName:    billing.User.FullName,
+					Email:       billing.User.Email,
+					Company:     billing.User.Company,
+					PhoneNumber: billing.User.PhoneNumber,
+					Password:    billing.User.Password,
+					Verified:    billing.User.Verified,
+					Blocked:     billing.User.Blocked,
+					CreatedAt:   billing.User.CreatedAt.Format(time.RFC3339),
 
-	offset := (page - 1) * pageSize
+					UpdatedAt: billing.User.UpdatedAt.Format(time.RFC3339),
+					DeletedAt: func() *string {
+						if billing.User.DeletedAt.Valid {
+							str := billing.User.DeletedAt.Time.Format(time.RFC3339)
+							return &str
+						}
+						return nil
+					}(),
+				}
+			}
+			return nil
+		}(),
+		Plan: func() *model.PlanResponse {
+			if billing.Plan != nil {
+				return &model.PlanResponse{
+					ID:                  billing.Plan.ID,
+					UUID:                billing.Plan.UUID,
+					PlanName:            billing.Plan.PlanName,
+					Duration:            billing.Plan.Duration,
+					Price:               billing.Plan.Price,
+					NumberOfMailsPerDay: billing.Plan.NumberOfMailsPerDay,
+					Details:             billing.Plan.Details,
+					Status:              billing.Plan.Status,
+					Features:            billing.Plan.Features,
+					CreatedAt:           billing.Plan.CreatedAt.Format(time.RFC3339),
+					UpdatedAt:           billing.Plan.UpdatedAt.Format(time.RFC3339),
+					DeletedAt: func() *string {
+						if billing.Plan.DeletedAt.Valid {
+							str := billing.Plan.DeletedAt.Time.Format(time.RFC3339)
+							return &str
+						}
+						return nil
+					}(),
+				}
+			}
+			return nil
+		}(),
+	}
+}
 
+func (r *BillingRepository) GetAllPayments(userID int, params PaginationParams) (PaginatedResult, error) {
 	var billingRecords []model.Billing
-	if err := r.DB.
+	query := r.DB.
 		Preload("User").
 		Preload("Plan").
 		Where("user_id = ?", userID).
+		
 		Order("created_at DESC").
-		Limit(pageSize).
-		Offset(offset).
-		Find(&billingRecords).Error; err != nil {
-		return nil, fmt.Errorf("failed to get billing records: %w", err)
+		Find(&billingRecords)
+
+	paginatedResult, err := Paginate(query, params, &billingRecords)
+	if err != nil {
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
 	}
 
-	return billingRecords, nil
+	var billingResponses []model.BillingResponse
+	for _, billing := range billingRecords {
+		billingResponses = append(billingResponses, mapBillingToResponse(billing))
+	}
+
+	paginatedResult.Data = billingResponses
+
+	return paginatedResult, nil
 }

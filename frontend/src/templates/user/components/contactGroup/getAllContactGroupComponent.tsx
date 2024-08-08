@@ -113,7 +113,7 @@ const GetAllContactGroups: React.FC = () => {
                             (
                                 <tr>
                                     <td colSpan={7} className="py-4 px-4  text-center">
-                                        No contacts available
+                                        No  groups available
                                     </td>
                                 </tr>
                             )

@@ -68,6 +68,7 @@ func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionContr
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
 		repository.NewPlanRepository,
+		repository.NewDailyMailCalcRepository,
 	)
 	return nil, nil
 }
@@ -102,6 +103,8 @@ func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionCon
 		controllers.NewSubscriptionController,
 		services.NewSubscriptionService,
 		repository.NewSubscriptionRepository,
+		repository.NewDailyMailCalcRepository,
+		repository.NewPlanRepository,
 	)
 	return nil, nil
 }

@@ -114,8 +114,6 @@ const useContactStore = create<ContactStore>((set, get) => ({
     deleteContact: async () => {
         try {
             const { selectedIds } = get()
-
-
             if (selectedIds.length > 0) {
                 let promises = selectedIds.map((contactId) => {
                     return axiosInstance.delete<ResponseT>(
