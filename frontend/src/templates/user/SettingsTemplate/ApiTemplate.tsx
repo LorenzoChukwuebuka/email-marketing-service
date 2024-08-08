@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     APIInfo,
     APIKeysComponentTable,
@@ -95,6 +95,24 @@ const APISettingsDashTemplate: React.FC = () => {
             setSmtpFormValues({ key_name: value });
         }
     };
+
+
+    useEffect(() => {
+        const storedActiveTab = localStorage.getItem("activeTab");
+        if (storedActiveTab) {
+          setActiveTab(storedActiveTab as "API Keys" | "SMTP");
+        }
+      }, []);
+    
+      useEffect(() => {
+        localStorage.setItem("activeTab", activeTab);
+      }, [activeTab]);
+    
+      useEffect(() => {
+        return () => {
+          localStorage.removeItem("activeTab");
+        };
+      }, []);
 
     return (
         <div className="p-6 max-w-5xl">

@@ -1,9 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PricingPlans from "../components/billing/planpricecomponent";
 import BillingList from "../components/billing/billinglistComponent";
 
 const BillingDashTemplate: React.FC = () => {
     const [activeTab, setActiveTab] = useState<"Billing" | "Plans">("Plans");
+
+    useEffect(() => {
+        const storedActiveTab = localStorage.getItem("activeTab");
+        if (storedActiveTab) {
+            setActiveTab(storedActiveTab as "Billing" | "Plans");
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("activeTab", activeTab);
+    }, [activeTab]);
+
+    useEffect(() => {
+        return () => {
+            localStorage.removeItem("activeTab");
+        };
+    }, []);
+
+
 
     return <>
         <div className="p-6 max-w-full">
