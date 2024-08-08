@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { ButtonHTMLAttributes, useState } from 'react';
+import useBillingStore from '../../../../store/userstore/billingStore';
 
 const PurchaseSuccess = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -6,8 +7,21 @@ const PurchaseSuccess = () => {
     const amount = JSON.parse(localStorage.getItem("planSubscription") || '{}').price;
     const planSubbed = JSON.parse(localStorage.getItem("planSubscription") || '{}').planname;
     const gateway = "Paystack";
+    const { confirmPayment } = useBillingStore()
 
-    const verifyPayment = () => {
+    const verifyPayment = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault()
+        setIsLoading(true)
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const referenceParam = params.get('reference') as string;
+            await confirmPayment(referenceParam, gateway)
+        } catch (error) {
+            console.log(error)
+        } finally {
+            setIsLoading(false)
+     localStorage.removeItem('planSubscription')
+        }
 
     };
 
@@ -52,7 +66,7 @@ const PurchaseSuccess = () => {
                 </div>
                 <div className="mt-6 flex justify-between">
                     <button
-                        onClick={verifyPayment}
+                        onClick={(e) => verifyPayment(e)}
                         className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600"
                     >
                         {isLoading ? "Please wait ..." : "Done"}

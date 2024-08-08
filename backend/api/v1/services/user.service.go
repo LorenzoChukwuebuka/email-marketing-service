@@ -8,10 +8,11 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+	"strconv"
 	"strings"
 	"time"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -107,8 +108,6 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	if err := s.createAndSendOTP(user, otp); err != nil {
 		return nil, err
 	}
-
-	
 
 	return s.createSuccessResponse(user.UUID), nil
 }
@@ -264,10 +263,14 @@ func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, 
 		PaymentId:     paymentId,
 	}
 
-	err := s.subscriptionRepo.CreateSubscription(subscription)
+	num, err := s.subscriptionRepo.CreateSubscription(subscription)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrCreatingSubscription, err)
 	}
+
+	plansPerDay, _ := strconv.Atoi(plan.NumberOfMailsPerDay)
+
+	s.setDailyMailForUser(int(num), plansPerDay)
 
 	return nil
 }
@@ -446,4 +449,23 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 	}
 
 	return &userDetails, nil
+}
+
+func (s *UserService) setDailyMailForUser(subscriptionId int, num int) error {
+
+	dailyCalcData := &model.DailyMailCalc{
+		UUID:           uuid.New().String(),
+		SubscriptionID: subscriptionId,
+		MailsForADay:   num,
+		MailsSent:      0,
+		RemainingMails: num,
+	}
+
+	err := s.dailyMailCalcRepo.CreateRecordDailyMailCalculation(dailyCalcData)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

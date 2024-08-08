@@ -218,9 +218,7 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 			fmt.Println("Error converting NumberOfMailsPerDay to integer:", err)
 			return err
 		}
-
-		println(num)
-
+		
 		dailyCalcData := &model.DailyMailCalc{
 			UUID:           uuid.New().String(),
 			SubscriptionID: int(activeSub.ID),

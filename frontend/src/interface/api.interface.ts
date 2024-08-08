@@ -7,9 +7,8 @@ type JSONValue =
     | null
     | JSONObject;
 
-interface JSONObject {
-    [key: string]: JSONValue;
-}
+type JSONObject = { [key: string]: JSONValue };
+
 
 
 export type ResponseT = APIResponse<JSONObject>

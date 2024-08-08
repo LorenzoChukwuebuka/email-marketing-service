@@ -4,11 +4,15 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"fmt"
+	"strconv"
 	"time"
+	"github.com/google/uuid"
 )
 
 type SubscriptionService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
+	DailyMailRepo    *repository.DailyMailCalcRepository
+	PlanRepo         *repository.PlanRepository
 }
 
 type CurrentSubscription struct {
@@ -22,16 +26,55 @@ type CurrentSubscription struct {
 	Expired   bool
 }
 
-func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository) *SubscriptionService {
-	return &SubscriptionService{SubscriptionRepo: subscriptionRepo}
+func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, dailyMailCalc *repository.DailyMailCalcRepository, planRepo *repository.PlanRepository) *SubscriptionService {
+	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, DailyMailRepo: dailyMailCalc}
 }
 
 func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.Subscription, error) {
-	//check if the user is running on a free plan and expire it automatically
 
-	if err := s.SubscriptionRepo.CreateSubscription(d); err != nil {
+	tx := s.DailyMailRepo.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	subId, err := s.SubscriptionRepo.CreateSubscription(d)
+
+	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+
+	plan, err := s.PlanRepo.GetPlanById(d.PlanId)
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	plansPerDay, _ := strconv.Atoi(plan.NumberOfMailsPerDay)
+
+	dailyCalcData := &model.DailyMailCalc{
+		UUID:           uuid.New().String(),
+		SubscriptionID: int(subId),
+		MailsForADay:   plansPerDay,
+		MailsSent:      0,
+		RemainingMails: plansPerDay,
+	}
+
+	err = s.DailyMailRepo.CreateRecordDailyMailCalculation(dailyCalcData)
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return d, nil
 }
 

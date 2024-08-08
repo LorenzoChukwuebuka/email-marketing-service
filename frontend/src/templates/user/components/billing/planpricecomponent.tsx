@@ -41,7 +41,8 @@ const PricingPlans = () => {
 
     const renderPlanCard = (plan: PlanData) => {
         const isCurrentPlan = currentPlan === plan.planname;
-        const isLoading = loadingPlanId === plan.uuid; // Check if this specific plan is loading
+        const isLoading = loadingPlanId === plan.uuid;
+        const isFreePlan = plan.planname.toLowerCase() === 'free'; // Check if the plan name is "Free"
 
         return (
             <div key={plan.uuid} className={`bg-white rounded-lg p-6  ${isCurrentPlan ? 'border-2 border-blue-500' : ''}`}>
@@ -52,8 +53,8 @@ const PricingPlans = () => {
                 </p>
                 <p className="text-gray-600 mb-4">{plan.details}</p>
                 <button
-                    className={`w-full py-2 rounded-md mb-4 ${isCurrentPlan ? 'bg-gray-300 text-gray-700' : 'bg-blue-600 text-white'}`}
-                    disabled={isCurrentPlan}
+                    className={`w-full py-2 rounded-md mb-4 ${isCurrentPlan || isFreePlan ? 'bg-gray-300 text-gray-700' : 'bg-blue-600 text-white'}`}
+                    disabled={isCurrentPlan || isFreePlan} // Disable button if the plan is current or if it's free
                     onClick={() => handlePlanSelection(plan)}
                 >
                     {
@@ -61,13 +62,15 @@ const PricingPlans = () => {
                             ? 'Please wait...'
                             : (isCurrentPlan
                                 ? 'Current Plan'
-                                : (plan.price === null
-                                    ? 'Contact Us'
-                                    : 'Choose Plan'
+                                : (isFreePlan
+                                    ? 'Free Plan'
+                                    : (plan.price === null
+                                        ? 'Contact Us'
+                                        : 'Choose Plan'
+                                    )
                                 )
                             )
                     }
-
                 </button>
                 <ul className="space-y-2">
                     {plan.features.map((feature: any, index: any) => (
@@ -81,13 +84,12 @@ const PricingPlans = () => {
         );
     };
 
+
     return (
 
         <>
-            <div className="container mx-auto mt-5 p-4">
-
-                <h1 className='text-4xl font-semibold mb-10 text-center'> Upgrade your Marketing Plan </h1>
-
+            <div className="container mx-auto  p-4">
+                <h1 className='text-4xl font-semibold mb-5 text-center'> Upgrade your Marketing Plan </h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {planData.map(renderPlanCard)}
                 </div>
