@@ -5,6 +5,7 @@ import { AccountSettingsTemplate, APISettingsDashTemplate, ContactDashTemplate }
 import UserMgtSettingsDashTemplate from "../templates/user/SettingsTemplate/userManagementTemplate";
 import GroupContactList from "../templates/user/components/contactGroup/groupcontactlistComponent";
 import BillingDashTemplate from "../templates/user/BillingTemplate/BillingDashTemplate";
+import TemplateBuilderDashComponent from '../templates/user/templateBuilder/templateDashComponent';
 
 const UserDashRoute = () => (
     <Routes>
@@ -22,6 +23,7 @@ const UserDashRoute = () => (
             <Route path="contacts" element={<ContactDashTemplate />} />
             <Route path="view-group" element={<GroupContactList />} />
             <Route path="billing" element={<BillingDashTemplate />} />
+            <Route path="templates" element={<TemplateBuilderDashComponent />} />
         </Route>
 
     </Routes>
