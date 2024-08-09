@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import useAPIKeyStore from "../../../../store/userstore/apiKeyStore";
 import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
 import decryptApiKey from "../../../../utils/decryptEncryption";
+import EmptyState from "../../../../components/emptyStateComponent";
 
 interface APIKey {
     uuid: string;
@@ -34,9 +35,10 @@ const APIKeysTableComponent: React.FC = () => {
 
     if (shouldRenderNoKey()) {
         return (
-            <div className="max-w-4xl text-center text-lg font-semibold mx-auto p-6 bg-white shadow-sm rounded-lg overflow-hidden">
-                You have not generated an API Key yet
-            </div>
+            <> <EmptyState title="You  have not generated any API Key"
+                description="Kindly Generate an API Key to enjoy our services"
+                icon={<i className="bi bi-emoji-frown text-xl"></i>} />
+            </>
         );
     }
 

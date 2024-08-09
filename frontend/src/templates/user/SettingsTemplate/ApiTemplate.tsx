@@ -148,7 +148,7 @@ const APISettingsDashTemplate: React.FC = () => {
             <div className="mb-6">
                 <nav className="flex space-x-4 border-b">
                     <button
-                        className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "SMTP"
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "SMTP"
                             ? "border-blue-500 text-blue-500"
                             : "border-transparent hover:border-gray-300"
                             } transition-colors`}
@@ -157,7 +157,7 @@ const APISettingsDashTemplate: React.FC = () => {
                         SMTP
                     </button>
                     <button
-                        className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "API Keys"
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "API Keys"
                             ? "border-blue-500 text-blue-500"
                             : "border-transparent hover:border-gray-300"
                             } transition-colors`}

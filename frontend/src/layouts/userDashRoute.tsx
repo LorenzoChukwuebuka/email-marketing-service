@@ -6,6 +6,7 @@ import UserMgtSettingsDashTemplate from "../templates/user/SettingsTemplate/user
 import GroupContactList from "../templates/user/components/contactGroup/groupcontactlistComponent";
 import BillingDashTemplate from "../templates/user/BillingTemplate/BillingDashTemplate";
 import TemplateBuilderDashComponent from '../templates/user/templateBuilder/templateDashComponent';
+import CreateMarketingTemplateDashBoard from "../templates/user/templateBuilder/createMarketingTemplateDashboard";
 
 const UserDashRoute = () => (
     <Routes>
@@ -24,6 +25,7 @@ const UserDashRoute = () => (
             <Route path="view-group" element={<GroupContactList />} />
             <Route path="billing" element={<BillingDashTemplate />} />
             <Route path="templates" element={<TemplateBuilderDashComponent />} />
+            <Route path="marketing" element={<CreateMarketingTemplateDashBoard />} />
         </Route>
 
     </Routes>

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import TransactionBuilderComponent from "../../../components/templateBuilder";
-import MarketingTemplateDash from "../components/templates/marketingDash";
+import MarketingTemplateDash from "./marketingDash";
+import TransactionalTemplateDash from './transactionalDash';
 
 
 const TemplateBuilderDashComponent: React.FC = () => {
     const [activeTab, setActiveTab] = useState<"Transactional" | "Marketing">("Transactional");
 
     useEffect(() => {
-        // Load the active tab from localStorage on mount
         const storedActiveTab = localStorage.getItem("activeTab");
         if (storedActiveTab) {
             setActiveTab(storedActiveTab as "Transactional" | "Marketing");
@@ -15,12 +14,10 @@ const TemplateBuilderDashComponent: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // Save the active tab to localStorage whenever it changes
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
     useEffect(() => {
-        // Clear the activeTab from localStorage when the component is unmounted
         return () => {
             localStorage.removeItem("activeTab");
         };
@@ -31,7 +28,7 @@ const TemplateBuilderDashComponent: React.FC = () => {
 
             <nav className="flex space-x-8  border-b">
                 <button
-                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Transactional"
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Transactional"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
@@ -41,7 +38,7 @@ const TemplateBuilderDashComponent: React.FC = () => {
                 </button>
 
                 <button
-                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Marketing"
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Marketing"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
@@ -56,13 +53,13 @@ const TemplateBuilderDashComponent: React.FC = () => {
 
             {activeTab === "Transactional" && (
                 <>
-              
+                    <TransactionalTemplateDash />
                 </>
             )}
 
             {activeTab === "Marketing" && (
                 <>
-                    <MarketingTemplateDash/>
+                    <MarketingTemplateDash />
                 </>
             )}
         </div>

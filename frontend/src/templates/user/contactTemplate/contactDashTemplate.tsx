@@ -27,7 +27,7 @@ const ContactDashTemplate: React.FC = () => {
         <div className="p-6 max-w-full">
             <nav className="flex space-x-8  border-b">
                 <button
-                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Contact"
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
@@ -37,7 +37,7 @@ const ContactDashTemplate: React.FC = () => {
                 </button>
 
                 <button
-                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Contact Group"
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact Group"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
