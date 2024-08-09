@@ -56,25 +56,19 @@ const GetAllContacts: React.FC = () => {
 
     const handleSubscriptionToggle = async (uuid: string) => {
         try {
-            // Find the contact in the contactData array
             const contactIndex = contactData.findIndex(contact => contact.uuid === uuid);
             if (contactIndex === -1) return;
-
-            // Toggle the is_subscribed status
+    
             const updatedContact = {
                 ...contactData[contactIndex],
                 is_subscribed: !contactData[contactIndex].is_subscribed
             };
-
-            // Update the contact in your backend
-            //   await updateContactSubscription(uuid, updatedContact.is_subscribed);
-
-            // Update the state
-            // setContactData(prevData => {
-            //     const newData = [...prevData];
-            //     newData[contactIndex] = updatedContact;
-            //     return newData;
-            // });
+    
+            // Assuming you have an API function to update the subscription status
+            // await updateContactSubscription(uuid, updatedContact.is_subscribed);
+    
+            // Update the local state
+            getAllContacts(); // Refresh the contact list
         } catch (error) {
             console.error('Error toggling subscription:', error);
             // Handle error (e.g., show an error message to the user)

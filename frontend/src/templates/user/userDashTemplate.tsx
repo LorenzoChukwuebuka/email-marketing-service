@@ -1,6 +1,8 @@
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import OverviewStats from "./components/dashboard/overviewStatscomponent";
+import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
 
 interface UserDetails {
     fullname: string;
@@ -40,12 +42,12 @@ const UserDashboardTemplate: React.FC = () => {
 
     return (
         <>
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg  p-6">
                 <h2 className="text-2xl font-bold mb-4">Welcome {userName}</h2>
             </div>
 
             <div className="p-6 bg-gray-100">
-                <div className="flex justify-between mb-8">
+                <div className="flex justify-between mb-5">
                     <ActionCard
                         title="Send Campaign"
                         description="Create a campaign and send marketing mails to your audience easily"
@@ -68,6 +70,10 @@ const UserDashboardTemplate: React.FC = () => {
                     />
                 </div>
             </div>
+
+            <OverviewStats />
+
+            <RecentCampaigns />
         </>
     );
 };

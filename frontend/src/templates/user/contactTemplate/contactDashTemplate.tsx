@@ -3,9 +3,7 @@ import ContactsDashComponent from "../components/contacts/contactDashComponent";
 import ContactGroupDash from "../components/contactGroup/contactGroupDashComponent";
 
 const ContactDashTemplate: React.FC = () => {
-
     const [activeTab, setActiveTab] = useState<"Contact" | "Contact Group">("Contact");
-
 
     useEffect(() => {
         const storedActiveTab = localStorage.getItem("activeTab");
@@ -27,11 +25,9 @@ const ContactDashTemplate: React.FC = () => {
 
     return <>
         <div className="p-6 max-w-full">
-
-            <h1 className="text-2xl font-bold">{activeTab}</h1>
-            <nav className="flex space-x-8 mt-5  border-b">
+            <nav className="flex space-x-8  border-b">
                 <button
-                    className={`py-2 border-b-2 ${activeTab === "Contact"
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Contact"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
@@ -41,7 +37,7 @@ const ContactDashTemplate: React.FC = () => {
                 </button>
 
                 <button
-                    className={`py-2 border-b-2 ${activeTab === "Contact Group"
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Contact Group"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}

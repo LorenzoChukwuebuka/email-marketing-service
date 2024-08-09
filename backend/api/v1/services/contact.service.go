@@ -42,7 +42,7 @@ func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{
 			return "web"
 		}(),
 		UserId:       d.UserId,
-		IsSubscribed: d.IsSubscribed || true,
+		IsSubscribed: d.IsSubscribed,
 	}
 
 	checkIfUserExists, err := s.ContactRepo.CheckIfEmailExists(contactModel)

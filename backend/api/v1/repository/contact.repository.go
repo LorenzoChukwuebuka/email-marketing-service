@@ -101,6 +101,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 		Email:     contact.Email,
 		From:      contact.From,
 		UserId:    contact.UserId,
+		IsSubscribed: contact.IsSubscribed,
 		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: contact.UpdatedAt.Format(time.RFC3339),
 	}

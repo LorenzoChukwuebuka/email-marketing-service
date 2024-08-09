@@ -22,14 +22,12 @@ const BillingDashTemplate: React.FC = () => {
         };
     }, []);
 
-
-
     return <>
         <div className="p-6 max-w-full">
-            <h1 className="text-2xl font-bold">{activeTab}</h1>
-            <nav className="flex space-x-8 mt-5  border-b">
+         
+            <nav className="flex space-x-8 border-b">
                 <button
-                    className={`py-2 border-b-2 ${activeTab === "Plans"
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Plans"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
@@ -39,13 +37,13 @@ const BillingDashTemplate: React.FC = () => {
                 </button>
 
                 <button
-                    className={`py-2 border-b-2 ${activeTab === "Billing"
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Billing"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
                     onClick={() => setActiveTab("Billing")}
                 >
-                    Billing
+                    Billing History
                 </button>
             </nav>
 

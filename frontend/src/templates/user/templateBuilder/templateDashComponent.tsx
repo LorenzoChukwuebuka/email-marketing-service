@@ -1,37 +1,74 @@
-import React, { useRef } from 'react';
-import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
+import { useEffect, useState } from "react";
+import TransactionBuilderComponent from "../../../components/templateBuilder";
+import MarketingTemplateDash from "../components/templates/marketingDash";
+
 
 const TemplateBuilderDashComponent: React.FC = () => {
-    const emailEditorRef = useRef<EditorRef>(null);
+    const [activeTab, setActiveTab] = useState<"Transactional" | "Marketing">("Transactional");
 
-    const exportHtml = () => {
-        const unlayer = emailEditorRef.current?.editor;
-        unlayer?.exportHtml((data) => {
-            const { design, html } = data;
-            console.log('exportHtml', html);
-        });
-    };
+    useEffect(() => {
+        // Load the active tab from localStorage on mount
+        const storedActiveTab = localStorage.getItem("activeTab");
+        if (storedActiveTab) {
+            setActiveTab(storedActiveTab as "Transactional" | "Marketing");
+        }
+    }, []);
 
-    const onReady: EmailEditorProps['onReady'] = (unlayer) => {
-        // Editor is ready
-        // You can load your template here;
-        // The design JSON can be obtained by calling
-        // unlayer.loadDesign(callback) or unlayer.exportHtml(callback)
+    useEffect(() => {
+        // Save the active tab to localStorage whenever it changes
+        localStorage.setItem("activeTab", activeTab);
+    }, [activeTab]);
 
-        // const templateJson = { DESIGN_JSON_GOES_HERE };
-        // unlayer.loadDesign(templateJson);
-    };
+    useEffect(() => {
+        // Clear the activeTab from localStorage when the component is unmounted
+        return () => {
+            localStorage.removeItem("activeTab");
+        };
+    }, []);
+    return <>
 
-    return (
-        <div className="h-screen flex flex-col  p-4">
-            <button className="mb-4" onClick={exportHtml}>
-                Export HTML
-            </button>
-            <div className="flex-grow">
-                <EmailEditor ref={emailEditorRef} onReady={onReady} style={{ height: "100vh" }} />
-            </div>
+        <div className="p-6 max-w-full">
+
+            <nav className="flex space-x-8  border-b">
+                <button
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Transactional"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
+                        } transition-colors`}
+                    onClick={() => setActiveTab("Transactional")}
+                >
+                    Transactional Templates
+                </button>
+
+                <button
+                    className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Marketing"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
+                        } transition-colors`}
+                    onClick={() => setActiveTab("Marketing")}
+                >
+                    Marketing Templates
+                </button>
+
+
+            </nav>
+
+
+            {activeTab === "Transactional" && (
+                <>
+              
+                </>
+            )}
+
+            {activeTab === "Marketing" && (
+                <>
+                    <MarketingTemplateDash/>
+                </>
+            )}
         </div>
-    );
+
+
+    </>
 };
 
 export default TemplateBuilderDashComponent;

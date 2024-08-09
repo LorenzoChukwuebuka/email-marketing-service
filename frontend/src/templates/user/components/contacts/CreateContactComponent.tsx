@@ -18,7 +18,9 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
         first_name: Yup.string()
             .required("first is required"),
         last_name: Yup.string().required("last name is required"),
-        email: Yup.string().required("email is required").email("invalid email format")
+        email: Yup.string().required("email is required").email("invalid email format"),
+        is_subscribed: Yup.boolean()
+            .oneOf([true], "You must agree to subscribe")
     });
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -41,9 +43,13 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
     };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setContactFormValues({ ...contactFormValues, [id]: value });
+        const { id, value, type, checked } = e.target;
+        setContactFormValues({
+            ...contactFormValues,
+            [id]: type === 'checkbox' ? checked : value
+        });
     };
+
 
     return (
         <Modal
@@ -128,6 +134,19 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
                         required
                     />
 
+                </div>
+
+                <div className="mb-4">
+                    <label className="inline-flex items-center">
+                        <input
+                            id="is_subscribed"
+                            type="checkbox"
+                            checked={contactFormValues.is_subscribed}
+                            onChange={handleChange}
+                            className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+                        />
+                        <span className="ml-2">I confirm that this person gave me permission to email them </span>
+                    </label>
                 </div>
 
                 <div className="flex justify-end space-x-2">
