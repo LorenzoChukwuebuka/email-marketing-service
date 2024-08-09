@@ -1,7 +1,12 @@
 import { useState } from "react";
+import EmptyState from "../../../components/emptyStateComponent";
+import { Link, useNavigate } from "react-router-dom";
 
 const MarketingTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+    const navigate = useNavigate()
+    
     return <>
 
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
@@ -10,7 +15,7 @@ const MarketingTemplateDash: React.FC = () => {
                     className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
                     onClick={() => setIsModalOpen(true)}
                 >
-                    Create Marketing Template
+                    <Link to="/user/dash/marketing">  Create Marketing Template </Link>
                 </button>
             </div>
 
@@ -24,6 +29,18 @@ const MarketingTemplateDash: React.FC = () => {
             </div>
 
         </div>
+
+        <div className="mt-4 p-2">
+
+            <EmptyState title="You  have not created any Template"
+                description="Create a easily send marketing email to your audience"
+                icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                buttonText="Create Template"
+                onButtonClick={() =>  navigate("/user/dash/marketing")}
+            />
+
+        </div>
+
 
     </>
 }

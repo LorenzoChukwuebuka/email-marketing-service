@@ -4,3 +4,4 @@ export { default as UserMagtSettingsDashTemplate } from "./SettingsTemplate/user
 export { default as AccountSettingsTemplate } from "./SettingsTemplate/AccountSettingsTemplate"
 export { default as ContactDashTemplate } from "./contactTemplate/contactDashTemplate"
 
+

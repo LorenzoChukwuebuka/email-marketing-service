@@ -78,8 +78,8 @@ const UserDashLayout: React.FC = () => {
             >
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
-                        <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            {import.meta.env.VITE_API_NAME}
+                        <h2 className="text-xl font-bold mt-4 text-center cursor-pointer mb-4">
+                            <Link to="/user/dash"> {import.meta.env.VITE_API_NAME} </Link>
                         </h2>
                         <ul className="mt-8 w-full">
                             <li className={getLinkClassName("/user/dash")}>
@@ -157,7 +157,7 @@ const UserDashLayout: React.FC = () => {
                                 </button>
                                 {settingsDropdownOpen && (
                                     <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
-                                        <li
+                                        {/* <li
                                             className={`py-1 ${getLinkClassName(
                                                 "/user/dash/settings/user-management"
                                             )}`}
@@ -168,7 +168,7 @@ const UserDashLayout: React.FC = () => {
                                             >
                                                 User Management
                                             </Link>
-                                        </li>
+                                        </li> */}
                                         <li
                                             className={`py-1 ${getLinkClassName(
                                                 "/user/dash/settings/api"
