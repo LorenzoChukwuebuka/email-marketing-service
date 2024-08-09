@@ -204,14 +204,14 @@ const UserDashLayout: React.FC = () => {
             {/* Main content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="bg-white h-12 p-4 flex justify-between items-center">
+                <header className="bg-white h-14 p-4 flex justify-between items-center">
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="text-gray-500 hover:text-gray-700"
                     >
                         <span style={{ fontSize: "24px" }}>{sidebarOpen ? "≡" : "☰"}</span>
                     </button>
-                    <h1 className="text-xl font-semibold"> Dashboard </h1>
+                    {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
                     <div className="dropdown dropdown-end">
                         <div tabIndex={0} role="button" className="m-1">

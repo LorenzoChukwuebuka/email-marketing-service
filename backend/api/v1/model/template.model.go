@@ -1,32 +1,31 @@
 package model
 
 import (
-	"time"
+	"encoding/json"
+
+	"gorm.io/gorm"
 )
 
-type EmailTemplate struct {
-    
-    Name         string
-    Description  string
-    HTMLContent  string `gorm:"type:longtext"`
-    TextContent  string `gorm:"type:longtext"`
-  
-    Categories   []TemplateCategoryMapping `gorm:"foreignkey:TemplateID"`
-}
-
-// TemplateCategory represents a category for email templates
-type TemplateCategory struct {
-    ID          uint `gorm:"primary_key"`
-    Name        string
-    Description string
-    CreatedAt   time.Time
-    UpdatedAt   time.Time
-    Templates   []TemplateCategoryMapping `gorm:"foreignkey:CategoryID"`
-}
-
-// TemplateCategoryMapping maps email templates to categories
-type TemplateCategoryMapping struct {
-    ID         uint `gorm:"primary_key"`
-    TemplateID uint
-    CategoryID uint
+type Email struct {
+	gorm.Model
+	TeamID            string          `json:"teamId"`
+	TeamMemberID      string          `json:"teamMemberId"`
+	TemplateID        int             `json:"templateId"`
+	TemplateName      string          `json:"templateName"`
+	CampaignID        *int            `json:"campaignId"`
+	SenderName        *string         `json:"senderName"`
+	FromEmail         *string         `json:"fromEmail"`
+	Subject           *string         `json:"subject"`
+	Type              string          `json:"type"`
+	EmailHtml         string          `json:"emailHtml" gorm:"type:jsonb"`
+	EmailDesign       json.RawMessage `json:"emailDesign"`
+	IsEditable        bool            `json:"isEditable"`
+	IsPublished       bool            `json:"isPublished"`
+	IsPublicTemplate  bool            `json:"isPublicTemplate"`
+	IsGalleryTemplate bool            `json:"isGalleryTemplate"`
+	Tags              string          `json:"tags"`
+	Description       *string         `json:"description"`
+	ImageUrl          *string         `json:"imageUrl"`
+	IsActive          bool            `json:"isActive"`
+	EditorType        *string         `json:"editorType"`
 }
