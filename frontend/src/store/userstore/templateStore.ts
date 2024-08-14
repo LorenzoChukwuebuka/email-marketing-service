@@ -28,13 +28,18 @@ type Template = {
 
 type TemplateStore = {
     formValues: Omit<Template, "user_id">;
+    templateData: (Template & BaseEntity)[]
+    _templateData: (Template & BaseEntity)[]
     setFormValues: (newFormValues: Omit<Template, "user_id">) => void;
-    getAllTemplates: () => Promise<void>;
+    setTemplateData: (newData: (Template & BaseEntity)[]) => void
+    _setTemplateData: (newData: (Template & BaseEntity)[]) => void
+    getAllMarketingTemplates: () => Promise<void>;
+    getAllTransactionalTemplates: () => Promise<void>;
     createTemplate: () => Promise<void>
 };
 
 
-type TemplateResponse = APIResponse<Template & BaseEntity>
+type TemplateResponse = APIResponse<(Template & BaseEntity)[]>
 
 const useTemplateStore = create<TemplateStore>((set, get) => ({
     formValues: {
@@ -57,11 +62,17 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         editorType: null,
     },
 
+    templateData: [],
+    _templateData: [],
+    setTemplateData: (newData) => set({ templateData: newData }),
     setFormValues: (newFormValues) => set({ formValues: newFormValues }),
+    _setTemplateData: (newData) => set({ _templateData: newData }),
 
-    getAllTemplates: async () => {
+    getAllMarketingTemplates: async () => {
         try {
-            const response = await axiosInstance.get<TemplateResponse>('/templates');
+
+            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-marketing-templates');
+            get().setTemplateData(response.data.payload)
 
         } catch (error) {
             errResponse(error);
@@ -72,10 +83,23 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         try {
             const { formValues } = get()
             let response = await axiosInstance.post<ResponseT>("/create-martketing-template", formValues)
-            console.log(response.data.payload)
+            window.location.href = "/editor/1?id=" + response.data.payload.templateId
 
-            window.location.href = "/editor/1?" + response.data.payload.templateId
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
 
+    getAllTransactionalTemplates: async () => {
+        try {
+            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-transactional-templates');
+            get()._setTemplateData(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)

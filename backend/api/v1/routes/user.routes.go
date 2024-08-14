@@ -25,7 +25,7 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	smptKeyController, _ := InitializeSMTPKeyController(ur.db)
 	contactController, _ := InitializeContactController(ur.db)
 	subscriptionController, _ := InitializeSubscriptionController(ur.db)
-	templateController, _ := InitializeTemplateController(ur.db)
+
 
 	// auth routes
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
@@ -83,8 +83,6 @@ func (ur *UserRoute) InitRoutes(router *mux.Router) {
 	// SMTP routes
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
 
-	//templates
-	router.HandleFunc("/create-martketing-template", middleware.JWTMiddleware(templateController.CreateAndUpdateTemplate)).Methods("POST", "OPTIONS")
 
 	// Session routes
 	router.HandleFunc("/create-session", sessionController.CreateSessions).Methods("POST", "OPTIONS")

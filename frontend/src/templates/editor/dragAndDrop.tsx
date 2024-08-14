@@ -1,9 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
 import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
+import { useLocation } from 'react-router-dom';
 
 const DragAndDropEditor: React.FC = () => {
     const emailEditorRef = useRef<EditorRef>(null);
     const [savedDesign, setSavedDesign] = useState<any>(null);
+
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const uuid = queryParams.get('uuid');
 
     useEffect(() => {
         const storedDesign = localStorage.getItem('emailDesign');

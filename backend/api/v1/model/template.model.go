@@ -8,8 +8,8 @@ import (
 type TemplateType string
 
 const (
-	Transactional TemplateType = "Transactional"
-	Marketing     TemplateType = "Marketing"
+	Transactional TemplateType = "transactional"
+	Marketing     TemplateType = "marketing"
 )
 
 type Template struct {

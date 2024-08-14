@@ -36,9 +36,11 @@ var (
 
 func (s *Server) setupRoutes() {
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
-	routeMap := map[string]routes.Route{
-		"admin": routes.NewAdminRoute(s.db),
-		"":      routes.NewUserRoute(s.db),
+	routeMap := map[string]routes.RouteInterface{
+		"":          routes.NewUserRoute(s.db),
+		"admin":     routes.NewAdminRoute(s.db),
+		"templates": routes.NewTemplateRoute(s.db),
+		"contact":   routes.NewContactRoute(s.db),
 	}
 
 	for path, route := range routeMap {

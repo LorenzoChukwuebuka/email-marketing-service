@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EmptyState from "../../../components/emptyStateComponent";
-import TemplateBuilderComponent from "../../../components/templateBuilder";
+import useTemplateStore from "../../../store/userstore/templateStore";
+import { Link } from "react-router-dom";
 
 const TransactionalTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const { getAllTransactionalTemplates, _templateData } = useTemplateStore()
+
+    useEffect(() => {
+        getAllTransactionalTemplates()
+    }, [])
     return <>
 
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
@@ -29,12 +35,54 @@ const TransactionalTemplateDash: React.FC = () => {
 
         <div className="mt-4 p-2">
 
-            <EmptyState title="You  have not created any Template"
-                description="Create a easily send transactional email to your audience"
-                icon={<i className="bi bi-emoji-frown text-xl"></i>}
-                buttonText="Create Template"
-                onButtonClick={() => console.log('Create project')}
-            />
+            {_templateData.length > 0 ? (
+                <>
+                    <div className="space-y-4">
+                        {_templateData.map((template, index) => (
+                            <div key={template.uuid || index} className="bg-white p-4 rounded-lg shadow-sm">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
+                                    <div className="flex-grow">
+                                        <h3 className="text-lg font-semibold text-gray-800">{template.templateName}</h3>
+                                        <p className="text-sm text-gray-600">ID - {index + 1}  {new Date(template.created_at).toLocaleString('en-US', {
+                                            timeZone: 'UTC',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric'
+                                        })}</p>
+                                        <div className="flex space-x-2 mt-2">
+                                            <button className="text-blue-600 cursor-pointer text-sm">Preview</button>
+                                            <Link
+                                                to={`/editor/1?uuid=${template.uuid}`}
+                                                className="text-blue-600 hover:underline text-sm"
+                                            >
+                                                Edit
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded"> Draft </span>
+                                        <button className="text-gray-400 hover:text-gray-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                </>) :
+                (<>  <EmptyState title="You  have not created any Template"
+                    description="Create a easily send marketing email to your audience"
+                    icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                    buttonText="Create Template"
+                // onButtonClick={() => navigate("/user/dash/marketing")}
+                /> </>)}
 
         </div>
 
