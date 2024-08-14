@@ -125,7 +125,32 @@ func (s *TemplateService) GetAllMarketingTemplates(userId string) ([]model.Templ
 	return result, nil
 }
 
-func (s *TemplateService) UpdateTemplate(d *dto.TemplateDTO) error {
+func (s *TemplateService) UpdateTemplate(d *dto.TemplateDTO, templateId string) error {
+
+	templateModel := &model.Template{
+		UUID:              templateId,
+		UserId:            d.UserId,
+		TemplateName:      d.TemplateName,
+		SenderName:        d.SenderName,
+		FromEmail:         d.FromEmail,
+		Subject:           d.Subject,
+		Type:              model.TemplateType(d.Type),
+		EmailHtml:         d.EmailHtml,
+		EmailDesign:       d.EmailDesign,
+		IsEditable:        d.IsEditable,
+		IsPublished:       d.IsPublished,
+		IsPublicTemplate:  d.IsPublicTemplate,
+		IsGalleryTemplate: d.IsGalleryTemplate,
+		Tags:              d.Tags,
+		Description:       d.Description,
+		ImageUrl:          d.ImageUrl,
+		IsActive:          d.IsActive,
+		EditorType:        d.EditorType,
+	}
+
+	if err := s.TemplateRepo.UpdateTemplate(templateModel); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -37,7 +37,7 @@ const MarketingTemplateDash: React.FC = () => {
 
         <div className="mt-4 p-2">
 
-            {templateData.length > 0 ? (
+            {Array.isArray(templateData) && templateData.length > 0 ? (
                 <>
                     <div className="space-y-4">
                         {templateData.map((template, index) => (
@@ -45,7 +45,7 @@ const MarketingTemplateDash: React.FC = () => {
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
                                     <div className="flex-grow">
-                                        <h3 className="text-lg font-semibold text-gray-800">{template.templateName}</h3>
+                                        <h3 className="text-lg font-semibold text-gray-800">{template.template_name}</h3>
                                         <p className="text-sm text-gray-600">ID - {index + 1}  {new Date(template.created_at).toLocaleString('en-US', {
                                             timeZone: 'UTC',
                                             year: 'numeric',
@@ -58,7 +58,7 @@ const MarketingTemplateDash: React.FC = () => {
                                         <div className="flex space-x-2 mt-2">
                                             <button className="text-blue-600 cursor-pointer text-sm">Preview</button>
                                             <Link
-                                                to={`/editor/1?uuid=${template.uuid}`}
+                                                to={`/editor/1?type=m&uuid=${template.uuid}`}
                                                 className="text-blue-600 hover:underline text-sm"
                                             >
                                                 Edit
