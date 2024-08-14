@@ -34,8 +34,13 @@ func (r *TemplateRepository) CheckMarketingNameExists(d *model.Template) (bool, 
 
 func (r *TemplateRepository) GetTransactionalTemplate(userId string, templateId string) (*model.TemplateResponse, error) {
 	var template model.Template
-	if err := r.DB.Where("type = ? AND user_id = ? AND uuid = ?", model.Transactional, userId, templateId).First(&template).Error; err != nil {
-		return nil, fmt.Errorf("failed to get transactional template: %w", err)
+	result := r.DB.Where("type = ? AND user_id = ? AND uuid = ?", model.Transactional, userId, templateId).First(&template)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
 	}
 
 	response := convertToTemplateResponse(&template)
@@ -44,8 +49,13 @@ func (r *TemplateRepository) GetTransactionalTemplate(userId string, templateId 
 
 func (r *TemplateRepository) GetMarketingTemplate(userId string, templateId string) (*model.TemplateResponse, error) {
 	var template model.Template
-	if err := r.DB.Where("type = ? AND user_id = ? AND uuid = ?", model.Marketing, userId, templateId).First(&template).Error; err != nil {
-		return nil, fmt.Errorf("failed to get marketing template: %w", err)
+	result := r.DB.Where("type = ? AND user_id = ? AND uuid = ?", model.Marketing, userId, templateId).First(&template)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
 	}
 
 	response := convertToTemplateResponse(&template)
@@ -53,10 +63,7 @@ func (r *TemplateRepository) GetMarketingTemplate(userId string, templateId stri
 }
 
 func (r *TemplateRepository) UpdateTemplate(d *model.Template) error {
-	if err := r.DB.Save(d).Error; err != nil {
-		return fmt.Errorf("failed to update template: %w", err)
-	}
-	return nil
+	return r.DB.Model(&model.Template{}).Where("uuid = ?", d.UUID).Updates(d).Error
 }
 
 func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {

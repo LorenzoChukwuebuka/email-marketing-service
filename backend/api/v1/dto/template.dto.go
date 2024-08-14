@@ -6,20 +6,20 @@ import (
 
 type TemplateDTO struct {
 	UserId            string           `json:"user_id" validate:"required"`
-	TemplateName      string           `json:"templateName" validate:"required"`
-	SenderName        *string          `json:"senderName"`
-	FromEmail         *string          `json:"fromEmail"`
+	TemplateName      string           `json:"template_name" validate:"required"`
+	SenderName        *string          `json:"sender_name"`
+	FromEmail         *string          `json:"from_email"`
 	Subject           *string          `json:"subject"`
 	Type              string           `json:"type" validate:"required"`
-	EmailHtml         string           `json:"emailHtml"`
-	EmailDesign       *json.RawMessage `json:"emailDesign"`
-	IsEditable        bool             `json:"isEditable"`
-	IsPublished       bool             `json:"isPublished"`
-	IsPublicTemplate  bool             `json:"isPublicTemplate"`
-	IsGalleryTemplate bool             `json:"isGalleryTemplate"`
+	EmailHtml         string           `json:"email_html"`
+	EmailDesign       *json.RawMessage `json:"email_design"`
+	IsEditable        bool             `json:"is_editable"`
+	IsPublished       bool             `json:"is_published"`
+	IsPublicTemplate  bool             `json:"is_public_template"`
+	IsGalleryTemplate bool             `json:"is_gallery_template"`
 	Tags              string           `json:"tags"`
 	Description       *string          `json:"description"`
-	ImageUrl          *string          `json:"imageUrl"`
-	IsActive          bool             `json:"isActive"`
-	EditorType        *string          `json:"editorType"`
+	ImageUrl          *string          `json:"image_Url"`
+	IsActive          bool             `json:"is_active"`
+	EditorType        *string          `json:"editor_type"`
 }

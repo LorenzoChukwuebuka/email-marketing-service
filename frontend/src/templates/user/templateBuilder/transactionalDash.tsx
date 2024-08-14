@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import EmptyState from "../../../components/emptyStateComponent";
-import useTemplateStore from "../../../store/userstore/templateStore";
+import useTemplateStore, { Template } from "../../../store/userstore/templateStore";
 import { Link } from "react-router-dom";
+import { Modal } from "../../../components";
+import { BaseEntity } from "../../../interface/baseentity.interface";
+
 
 const TransactionalTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getAllTransactionalTemplates, _templateData } = useTemplateStore()
+    const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
+
+    const openPreview = (template: (Template & BaseEntity)) => {
+        setPreviewTemplate(template);
+        setIsModalOpen(true);
+    };
 
     useEffect(() => {
         getAllTransactionalTemplates()
@@ -35,7 +44,7 @@ const TransactionalTemplateDash: React.FC = () => {
 
         <div className="mt-4 p-2">
 
-            {_templateData.length > 0 ? (
+            {Array.isArray(_templateData) && _templateData.length > 0 ? (
                 <>
                     <div className="space-y-4">
                         {_templateData.map((template, index) => (
@@ -43,7 +52,7 @@ const TransactionalTemplateDash: React.FC = () => {
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
                                     <div className="flex-grow">
-                                        <h3 className="text-lg font-semibold text-gray-800">{template.templateName}</h3>
+                                        <h3 className="text-lg font-semibold text-gray-800">{template.template_name}</h3>
                                         <p className="text-sm text-gray-600">ID - {index + 1}  {new Date(template.created_at).toLocaleString('en-US', {
                                             timeZone: 'UTC',
                                             year: 'numeric',
@@ -54,10 +63,10 @@ const TransactionalTemplateDash: React.FC = () => {
                                             second: 'numeric'
                                         })}</p>
                                         <div className="flex space-x-2 mt-2">
-                                            <button className="text-blue-600 cursor-pointer text-sm">Preview</button>
+                                            <button className="text-blue-600 cursor-pointer text-sm" onClick={() => openPreview(template)}>Preview</button>
                                             <Link
-                                                to={`/editor/1?uuid=${template.uuid}`}
-                                                className="text-blue-600 hover:underline text-sm"
+                                                to={`/editor/1?type=t&uuid=${template.uuid}`}
+                                                className="text-blue-600 cursor-pointer text-sm"
                                             >
                                                 Edit
                                             </Link>
@@ -85,6 +94,22 @@ const TransactionalTemplateDash: React.FC = () => {
                 /> </>)}
 
         </div>
+
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Preview" >
+            <>
+                {previewTemplate && (
+                    <div className="w-full h-full">
+                        <iframe
+                            srcDoc={previewTemplate.email_html}
+                            title="Template Preview"
+                            className="w-full h-[70vh] border-0"
+                            sandbox="allow-scripts"
+                        />
+                    </div>
+                )}
+
+            </>
+        </Modal>
 
     </>
 }
