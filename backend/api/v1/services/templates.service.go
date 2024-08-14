@@ -112,7 +112,7 @@ func (s *TemplateService) GetAllTransactionalTemplates(userId string) ([]model.T
 }
 
 func (s *TemplateService) GetAllMarketingTemplates(userId string) ([]model.TemplateResponse, error) {
-	result, err := s.TemplateRepo.GetAllTransactionalTemplates(userId)
+	result, err := s.TemplateRepo.GetAllMarketingTemplates(userId)
 
 	if err != nil {
 		return []model.TemplateResponse{}, err
