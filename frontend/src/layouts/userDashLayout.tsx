@@ -21,13 +21,9 @@ const UserDashLayout: React.FC = () => {
             "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
 
         if (path === "/user/dash") {
-            // Exact match for dashboard
-            return `${baseClass} ${location.pathname === path ? activeClass : inactiveClass
-                }`;
+            return `${baseClass} ${location.pathname === path ? activeClass : inactiveClass}`;
         } else {
-            // Starts with for other routes
-            return `${baseClass} ${location.pathname.startsWith(path) ? activeClass : inactiveClass
-                }`;
+            return `${baseClass} ${location.pathname.startsWith(path) ? activeClass : inactiveClass}`;
         }
     };
 

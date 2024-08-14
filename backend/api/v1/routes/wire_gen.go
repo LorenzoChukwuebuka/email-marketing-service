@@ -124,3 +124,10 @@ func InitializeContactController(db *gorm.DB) (*controllers.ContactController, e
 	contactController := controllers.NewContactController(contactService, userRepository, subscriptionRepository)
 	return contactController, nil
 }
+
+func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController, error) {
+	templateRepository := repository.NewTemplateRepository(db)
+	templateService := services.NewTemplateService(templateRepository)
+	templateController := controllers.NewTemplateController(templateService)
+	return templateController, nil
+}

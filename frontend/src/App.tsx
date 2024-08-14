@@ -12,6 +12,7 @@ import { AdminAuthRoute } from "./pages/admin";
 import { AdminDashRoute } from "./layouts/adminDashRoute";
 import useTokenExpiration from './hooks/usetokenExpiration';
 import PaymentSuccessPage from "./pages/userDashboard/paymentSuccesspage";
+import EditorRouter from "./pages/editors/editorRouter";
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
@@ -86,6 +87,7 @@ const App: React.FC = () => {
                     <Route path="/user/*" element={<UserDashRoute />} />
                     <Route path="/zen/*" element={<AdminDashRoute />} />
                     <Route path="/payment" element={<PaymentSuccessPage />} />
+                    <Route path="/editor/:editorType" element={<EditorRouter />} />
                 </Route>
             </Routes>
         </>

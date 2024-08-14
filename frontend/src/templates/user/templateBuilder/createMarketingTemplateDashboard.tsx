@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import EditorSelection from "../../../components/editorSelectorComponent";
+import CreateMarketingTemplate from "../components/templates/createMarketingTemplate";
 
 
-type templateTypes = "Layouts" | "Templates Gallery" | "My Templates" | "Code your own"
+
+type templateTypes = "Templates Gallery" | "My Templates" | "Blank Template" | "Code your own"
 
 const CreateMarketingTemplateDashBoard: React.FC = () => {
 
-    const [activeTab, setActiveTab] = useState<templateTypes>("Layouts");
+    const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
         const storedActiveTab = localStorage.getItem("activeTab");
@@ -31,16 +34,6 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
             <h1 className="text-xl font-semibold mb-5"> Create Marketing Templates </h1>
             <nav className="flex space-x-8  border-b">
                 <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Layouts"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => setActiveTab("Layouts")}
-                >
-                    Layouts
-                </button>
-
-                <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Templates Gallery"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
@@ -48,6 +41,19 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                     onClick={() => setActiveTab("Templates Gallery")}
                 >
                     Templates Gallery
+                </button>
+
+                <button
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Blank Template"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
+                        } transition-colors`}
+                    onClick={() => {
+                        setActiveTab("Blank Template");
+                        setIsModalOpen(true);
+                    }}
+                >
+                    Blank Template
                 </button>
 
                 <button
@@ -59,8 +65,6 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                 >
                     My Templates
                 </button>
-
-
 
                 <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Code your own"
@@ -76,12 +80,6 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
             </nav>
 
 
-            {activeTab === "Layouts" && (
-                <>
-                    layouts
-                </>
-            )}
-
             {activeTab === "Templates Gallery" && (
                 <>
                     kai
@@ -93,6 +91,11 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                     <EditorSelection />
                 </>
             )}
+
+
+            <CreateMarketingTemplate isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+
         </div>
 
     </>

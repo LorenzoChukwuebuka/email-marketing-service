@@ -150,3 +150,14 @@ func InitializeContactController(db *gorm.DB) (*controllers.ContactController, e
 
 	return nil, nil
 }
+
+
+func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,error) {
+	wire.Build(
+		controllers.NewTemplateController,
+		services.NewTemplateService,
+		repository.NewTemplateRepository,
+	)
+
+	return nil, nil
+}

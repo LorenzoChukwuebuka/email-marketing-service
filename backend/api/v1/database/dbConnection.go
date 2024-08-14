@@ -73,6 +73,7 @@ func autoMigrateModels() {
 		&model.ContactGroup{},
 		&model.Contact{},
 		&model.UserContactGroup{},
+		&model.Template{},
 	)
 
 	if err != nil {
