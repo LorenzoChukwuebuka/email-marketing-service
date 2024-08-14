@@ -1,5 +1,6 @@
 import { useState } from "react";
 import EmptyState from "../../../components/emptyStateComponent";
+import TemplateBuilderComponent from "../../../components/templateBuilder";
 
 const TransactionalTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -36,9 +37,6 @@ const TransactionalTemplateDash: React.FC = () => {
             />
 
         </div>
-
-
-        
 
     </>
 }

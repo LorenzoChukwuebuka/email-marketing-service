@@ -4,12 +4,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
 	"io"
 	"log"
 	"strings"
 	"time"
-	"github.com/emersion/go-sasl"
-	"github.com/emersion/go-smtp"
 )
 
 // Debug flag to enable/disable debug logging
