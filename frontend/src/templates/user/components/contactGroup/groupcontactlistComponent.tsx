@@ -33,16 +33,18 @@ const GroupContactList: React.FC = () => {
         const stateData = location.state as { groupId: string };
         setSelectedGroupIds([stateData.groupId])
         await removeContactFromGroup()
+        await fetchGroup()
     }
 
-    useEffect(() => {
-        const fetchGroup = async () => {
-            const stateData = location.state as { groupId: string };
-            if (stateData && stateData.groupId) {
-                await getSingleGroup(stateData.groupId);
-            }
-        };
 
+    const fetchGroup = async () => {
+        const stateData = location.state as { groupId: string };
+        if (stateData && stateData.groupId) {
+            await getSingleGroup(stateData.groupId);
+        }
+    };
+
+    useEffect(() => {
         fetchGroup();
     }, [location.state, getSingleGroup]);
 
