@@ -31,7 +31,7 @@ func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *h
 	userId := claims["userId"].(string)
 	utils.DecodeRequestBody(r, &reqdata)
 	reqdata.UserId = userId
-	result, err := c.TemplateSVC.CreateAndUpdateMarketingTemplate(reqdata)
+	result, err := c.TemplateSVC.CreateTemplate(reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -147,4 +147,29 @@ func (c *TemplateController) UpdateTemplate(w http.ResponseWriter, r *http.Reque
 	}
 
 	response.SuccessResponse(w, 200, "template updated successfully")
+}
+
+func (c *TemplateController) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	vars := mux.Vars(r)
+
+	templateId := vars["templateId"]
+
+	if err := c.TemplateSVC.DeleteTemplate(userId, templateId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "template deleted successfully")
+}
+
+func (c *TemplateController) SendTestMail(w http.ResponseWriter, r *http.Request) {
+
 }

@@ -75,7 +75,7 @@ func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {
 
 func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId).Find(&templates).Error; err != nil {
+	if err := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get transactional templates: %w", err)
 	}
 
@@ -89,7 +89,7 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]mode
 
 func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId).Find(&templates).Error; err != nil {
+	if err := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get marketing templates: %w", err)
 	}
 

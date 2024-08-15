@@ -19,7 +19,7 @@ func NewTemplateService(templateRepo *repository.TemplateRepository) *TemplateSe
 	}
 }
 
-func (s *TemplateService) CreateAndUpdateMarketingTemplate(d *dto.TemplateDTO) (map[string]interface{}, error) {
+func (s *TemplateService) CreateTemplate(d *dto.TemplateDTO) (map[string]interface{}, error) {
 
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid data: %w", err)
@@ -63,8 +63,10 @@ func (s *TemplateService) CreateAndUpdateMarketingTemplate(d *dto.TemplateDTO) (
 	}
 
 	return map[string]interface{}{
-		"templateId": id,
-		"message":    "template created successfully",
+		"templateId":  id,
+		"editor-type": d.EditorType,
+		"type":        d.Type,
+		"message":     "template created successfully",
 	}, nil
 }
 
@@ -154,6 +156,6 @@ func (s *TemplateService) UpdateTemplate(d *dto.TemplateDTO, templateId string) 
 	return nil
 }
 
-func (s *TemplateService) DeleteService(userId string, templateId string) error {
+func (s *TemplateService) DeleteTemplate(userId string, templateId string) error {
 	return nil
 }

@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
 import { useLocation } from 'react-router-dom';
-import useTemplateStore, { Template } from '../../store/userstore/templateStore';
-import { BaseEntity } from '../../interface/baseentity.interface';
+import useTemplateStore from '../../store/userstore/templateStore';
 import { useNavigate } from 'react-router-dom';
 
 const DragAndDropEditor: React.FC = () => {
@@ -83,7 +82,7 @@ const DragAndDropEditor: React.FC = () => {
 
     return (
         <div className="h-screen flex flex-col p-4">
-            <header className="flex items-center justify-between  bg-gray-100 px-4 h-[10em] py-2">
+            <header className="flex items-center justify-between  bg-gray-100 px-4 h-[5em] py-2">
                 <div className="flex items-center">
                     <button className="mr-2 text-gray-600" onClick={() => navigate(-1)}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

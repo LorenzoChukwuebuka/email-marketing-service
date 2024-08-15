@@ -19,7 +19,6 @@ interface ActionCardInterface {
     onClick: () => void;
 }
 
-
 const UserDashboardTemplate: React.FC = () => {
     const [userName, setUserName] = useState<string>("");
     const navigate = useNavigate();
@@ -38,7 +37,7 @@ const UserDashboardTemplate: React.FC = () => {
 
     const handleSendCampaign = () => navigate('/send-campaign');
     const handleCreateContact = () => navigate('/user/dash/contacts');
-    const handleCreateEmailTemplate = () => navigate('/create-email-template');
+    const handleCreateEmailTemplate = () => navigate('/user/dash/templates');
 
     return (
         <>
@@ -77,7 +76,6 @@ const UserDashboardTemplate: React.FC = () => {
         </>
     );
 };
-
 
 
 const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, onClick }) => (

@@ -24,14 +24,12 @@ func (r *UserSessionRepository) createUserSessionResponseModel(session *model.Us
 		Device:    session.Device,
 		IPAddress: session.IPAddress,
 		Browser:   session.Browser,
-		CreatedAt: session.CreatedAt,
+		CreatedAt: session.CreatedAt.String(),
 		UpdatedAt: session.UpdatedAt.String(),
 	}
 
 	return response
 }
-
-
 
 func (r *UserSessionRepository) CreateSession(session *model.UserSession) error {
 	if err := r.DB.Create(&session).Error; err != nil {

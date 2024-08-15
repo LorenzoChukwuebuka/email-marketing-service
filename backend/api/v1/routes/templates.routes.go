@@ -16,7 +16,7 @@ func NewTemplateRoute(db *gorm.DB) *TemplateRoute {
 
 func (ur *TemplateRoute) InitRoutes(router *mux.Router) {
 	templateController, _ := InitializeTemplateController(ur.db)
-	router.HandleFunc("/create-martketing-template", middleware.JWTMiddleware(templateController.CreateAndUpdateTemplate)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/create-marketing-template", middleware.JWTMiddleware(templateController.CreateAndUpdateTemplate)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-all-marketing-templates", middleware.JWTMiddleware(templateController.GetAllMarketingTemplates)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-all-transactional-templates", middleware.JWTMiddleware(templateController.GetAllTransactionalTemplates)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-transactional-template/{templateId}", middleware.JWTMiddleware(templateController.GetTransactionalTemplate)).Methods("GET", "OPTIONS")

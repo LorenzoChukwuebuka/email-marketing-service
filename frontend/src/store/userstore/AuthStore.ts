@@ -78,7 +78,7 @@ type AuthStore = {
     setUserData: (newUserData: any) => void;
     setChangePasswordValues: (newChangePasswordValues: ChangePasswordValues) => void;
 
-    registerUser: () => Promise<{ userId: string; email: string; fullname: string } | undefined>;
+    registerUser: () => Promise<void>;
     createUserSession: (userId: string) => Promise<void>;
     verifyUser: () => Promise<void>;
     resendOTP: (data: any) => Promise<void>;
@@ -157,7 +157,6 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         const {
             setIsLoading,
             setFormValues,
-            setRedirectToOTP,
             createUserSession,
             setUserId
         } = get()
@@ -166,14 +165,14 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             const { formValues } = get()
             let response = await axiosInstance.post('/user-signup', formValues)
             if (response.data.status === true) {
-                setRedirectToOTP(true)
-                await createUserSession(response.data.payload.userId)
+                eventBus.emit(
+                    'success',
+                    'Kindly check your mail for verification'
+                )
+
+                //   await createUserSession(response.data.payload.userId)
                 setUserId(response?.data?.payload?.userId)
-                const registeredData = {
-                    userId: response?.data?.payload?.userId,
-                    email: formValues.email,
-                    fullname: formValues.fullname
-                }
+
                 setFormValues({
                     fullname: '',
                     company: '',
@@ -181,7 +180,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
                     password: '',
                     confirmPassword: ''
                 })
-                return registeredData // Return the necessary data
+
             }
         } catch (error) {
             if (errResponse(error)) {
@@ -326,20 +325,15 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         const { loginValues, setIsLoading, setLoginValues, setIsLoggedIn } = get()
         try {
             setIsLoading(true)
-
             let response = await axiosInstance.post('/user-login', loginValues)
             if (response.data.message === 'success') {
-                //save the user Credentials to a cookie
-
                 Cookies.set('Cookies', JSON.stringify(response.data.payload), {
                     expires: 7,
                     sameSite: 'Strict',
                     secure: true
                 })
-
                 setIsLoggedIn(true)
             }
-
             setLoginValues({
                 email: '',
                 password: ''

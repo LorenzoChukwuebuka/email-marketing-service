@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import CreateMarketingTemplate from "../components/templates/createMarketingTemplate";
+import CreateTransactionalTemplate from "../components/templates/createTransactionalTemplate";
 
-type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML";
+type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML"
 
-const CreateMarketingTemplateDashBoard: React.FC = () => {
+const CreateTransactionalTemplateDashBoard: React.FC = () => {
+
     const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -33,10 +34,10 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
         }, 1000);
     };
 
-    return (
+    return <>
         <div className="p-6 max-w-full">
-            <h1 className="text-xl font-semibold mb-5"> Create Marketing Templates </h1>
-            <nav className="flex space-x-8 border-b">
+            <h1 className="text-xl font-semibold mb-5"> Create Transactional Templates </h1>
+            <nav className="flex space-x-8  border-b">
                 <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Templates Gallery"
                         ? "border-blue-500 text-blue-500"
@@ -65,13 +66,11 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => {
-                        setActiveTab("Custom HTML");
-                        setIsModalOpen(true);
-                    }}
+                    onClick={() => { setActiveTab("Custom HTML"); setIsModalOpen(true) }}
                 >
                     Custom HTML
                 </button>
+
             </nav>
 
             {activeTab === "Templates Gallery" && (
@@ -80,11 +79,13 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                 </>
             )}
 
-            {isLoading && <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div>}
+            {isLoading && <div><span className="loading loading-spinner loading-lg"></span></div>}
 
-            <CreateMarketingTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={activeTab === "Blank Template" ? "drag-and-drop" : "html-editor"} />
+            <CreateTransactionalTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={activeTab === "Blank Template" ? "drag-and-drop" : "html-editor"} />
+
         </div>
-    );
-};
+    </>
+}
 
-export default CreateMarketingTemplateDashBoard;
+
+export default CreateTransactionalTemplateDashBoard

@@ -1,13 +1,12 @@
 import * as Yup from "yup";
 import useAuthStore from "../../store/userstore/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const SignUpTemplate: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const { formValues, isLoading, setFormValues, registerUser } = useAuthStore();
-    const navigate = useNavigate();
 
     const validationSchema = Yup.object().shape({
         fullname: Yup.string()
@@ -29,15 +28,7 @@ const SignUpTemplate: React.FC = () => {
         e.preventDefault();
         try {
             await validationSchema.validate(formValues, { abortEarly: false });
-            const registeredData = await registerUser();
-
-            if (registeredData) {
-                navigate(
-                    `/auth/otp-token?email=${encodeURIComponent(registeredData.email)}
-          &username=${encodeURIComponent(registeredData.fullname)}
-          &userId=${encodeURIComponent(registeredData.userId)}`
-                );
-            }
+            await registerUser();
 
             setErrors({});
         } catch (err) {

@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -49,6 +52,9 @@ func initializeDatabase() {
 
 	autoMigrateModels()
 	fmt.Println("Connected to the database")
+
+
+	seedData(db)
 }
 
 func autoMigrateModels() {
@@ -79,89 +85,89 @@ func autoMigrateModels() {
 	if err != nil {
 		log.Fatalf("Migration Failed: %v", err)
 	}
+
 }
 
-// func seedData(db *gorm.DB) {
-// 	// Check if Plan data already exists
-// 	var planCount int64
-// 	db.Model(&model.Plan{}).Count(&planCount)
-// 	if planCount == 0 {
-// 		// Seed Plan and PlanFeature data
-// 		plan := model.Plan{
-// 			UUID:                uuid.New().String(),
-// 			PlanName:            "Free",
-// 			Duration:            "infinite",
-// 			Price:               00,
-// 			NumberOfMailsPerDay: "100",
-// 			Details:             "Our best plan for power users",
-// 			Status:              PlanStatus("active"),
-// 			Features: []PlanFeature{
-// 				{
-// 					UUID:        uuid.New().String(),
-// 					Name:        "Advanced Analytics",
-// 					Identifier:  "adv_analytics",
-// 					CountLimit:  100,
-// 					SizeLimit:   1000,
-// 					IsActive:    true,
-// 					Description: "Get detailed insights into your email campaigns",
-// 				},
-// 				{
-// 					UUID:        uuid.New().String(),
-// 					Name:        "Custom Templates",
-// 					Identifier:  "custom_templates",
-// 					CountLimit:  50,
-// 					SizeLimit:   500,
-// 					IsActive:    true,
-// 					Description: "Create and save your own email templates",
-// 				},
-// 			},
-// 		}
+func seedData(db *gorm.DB) {
+	// Check if Plan data already exists
+	var planCount int64
+	db.Model(&model.Plan{}).Count(&planCount)
+	if planCount == 0 {
+		// Seed Plan and PlanFeature data
+		plan := model.Plan{
+			UUID:                uuid.New().String(),
+			PlanName:            "Free",
+			Duration:            "infinite",
+			Price:               00,
+			NumberOfMailsPerDay: "100",
+			Details:             "Our best plan for power users",
+			Status:              model.PlanStatus("active"),
+			Features: []model.PlanFeature{
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Advanced Analytics",
+					Identifier:  "adv_analytics",
+					CountLimit:  100,
+					SizeLimit:   1000,
+					IsActive:    true,
+					Description: "Get detailed insights into your email campaigns",
+				},
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Custom Templates",
+					Identifier:  "custom_templates",
+					CountLimit:  50,
+					SizeLimit:   500,
+					IsActive:    true,
+					Description: "Create and save your own email templates",
+				},
+			},
+		}
 
-// 		result := db.Create(&plan)
-// 		if result.Error != nil {
-// 			log.Printf("Failed to seed Plan data: %v", result.Error)
-// 		} else {
-// 			fmt.Println("Plan data seeded successfully")
-// 		}
-// 	} else {
-// 		fmt.Println("Plan data already exists, skipping seed")
-// 	}
+		result := db.Create(&plan)
+		if result.Error != nil {
+			log.Printf("Failed to seed Plan data: %v", result.Error)
+		} else {
+			fmt.Println("Plan data seeded successfully")
+		}
+	} else {
+		fmt.Println("Plan data already exists, skipping seed")
+	}
 
-// 	// Check if Admin data already exists
-// 	var adminCount int64
-// 	db.Model(&adminmodel.Admin{}).Count(&adminCount)
-// 	if adminCount == 0 {
-// 		// Seed Admin data
-// 		firstName := "hello"
-// 		middleName := "wedon't really know"
-// 		lastName := "hello"
-// 		password := "hello123"
+	// Check if Admin data already exists
+	var adminCount int64
+	db.Model(&adminmodel.Admin{}).Count(&adminCount)
+	if adminCount == 0 {
+		// Seed Admin data
+		firstName := "hello"
+		middleName := "wedon't really know"
+		lastName := "hello"
+		password := "hello123"
 
-// 		// Hash the password
-// 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-// 		if err != nil {
-// 			log.Printf("Failed to hash password: %v", err)
-// 			return
-// 		}
+		// Hash the password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Failed to hash password: %v", err)
+			return
+		}
 
-// 		admin := adminmodel.Admin{
+		admin := adminmodel.Admin{
+			UUID:       uuid.New().String(),
+			FirstName:  &firstName,
+			MiddleName: &middleName,
+			LastName:   &lastName,
+			Email:      "admin@admin.com",
+			Password:   hashedPassword,
+			Type:       "admin",
+		}
 
-// 			UUID:       uuid.New().String(),
-// 			FirstName:  &firstName,
-// 			MiddleName: &middleName,
-// 			LastName:   &lastName,
-// 			Email:      "admin@admin.com",
-// 			Password:   hashedPassword,
-// 			Type:       "admin",
-// 		}
-
-// 		result := db.Create(&admin)
-// 		if result.Error != nil {
-// 			log.Printf("Failed to seed Admin data: %v", result.Error)
-// 		} else {
-// 			fmt.Println("Admin data seeded successfully")
-// 		}
-// 	} else {
-// 		fmt.Println("Admin data already exists, skipping seed")
-// 	}
-// }
+		result := db.Create(&admin)
+		if result.Error != nil {
+			log.Printf("Failed to seed Admin data: %v", result.Error)
+		} else {
+			fmt.Println("Admin data seeded successfully")
+		}
+	} else {
+		fmt.Println("Admin data already exists, skipping seed")
+	}
+}
