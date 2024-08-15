@@ -44,7 +44,7 @@ function CodeEditor(): JSX.Element {
     };
 
     const handleEditorValidation: OnValidate = (markers) => {
-        markers.forEach((marker) => console.log('Validation issue:', marker.message));
+        markers.forEach((marker:any) => console.log('Validation issue:', marker.message));
     };
 
     const runCode = (): void => {
@@ -111,7 +111,7 @@ function CodeEditor(): JSX.Element {
             </header>
 
             <Editor
-                style={{ height: "100vh" }}
+               height={"100vh"}
                 defaultLanguage="html"
                 value={code}
                 theme="vs-dark"
