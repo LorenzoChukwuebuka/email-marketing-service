@@ -360,7 +360,7 @@ func (r *ContactRepository) DeleteContactGroup(userId string, groupId int) error
 }
 
 func (r *ContactRepository) RemoveContactFromGroup(groupId int, userId string, contactId int) error {
-	result := r.DB.Where("group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
+	result := r.DB.Where("contact_group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
 		Delete(&model.UserContactGroup{})
 
 	if result.Error != nil {
