@@ -30,7 +30,17 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-        }, 1000);
+        }, 30000);
+    };
+
+    const handleTabChange = (newTab: templateTypes) => {
+        if (isLoading) {
+            setIsLoading(false);
+        }
+        setActiveTab(newTab);
+        if (newTab !== "Templates Gallery") {
+            setIsModalOpen(true);
+        }
     };
 
     return (
@@ -42,7 +52,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => setActiveTab("Templates Gallery")}
+                    onClick={() => handleTabChange("Templates Gallery")}
                 >
                     Templates Gallery
                 </button>
@@ -52,10 +62,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => {
-                        setActiveTab("Blank Template");
-                        setIsModalOpen(true);
-                    }}
+                    onClick={() => handleTabChange("Blank Template")}
                 >
                     Blank Template
                 </button>
@@ -65,10 +72,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => {
-                        setActiveTab("Custom HTML");
-                        setIsModalOpen(true);
-                    }}
+                    onClick={() => handleTabChange("Custom HTML")}
                 >
                     Custom HTML
                 </button>
