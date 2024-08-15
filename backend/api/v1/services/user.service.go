@@ -432,10 +432,24 @@ func (s *UserService) GetUserCurrentRunningSubscriptionWithMailsRemaining(userId
 		return nil, fmt.Errorf("error getting daily mail calculation: %w", err)
 	}
 
+	// Check for nil pointers and provide default values
+	planName := ""
+	mailsPerDay := "0"
+	remainingMails := 0
+
+	if currentSub != nil && currentSub.Plan != nil {
+		planName = currentSub.Plan.PlanName
+		mailsPerDay = currentSub.Plan.NumberOfMailsPerDay
+	}
+
+	if dailyMailCalc != nil {
+		remainingMails = dailyMailCalc.RemainingMails
+	}
+
 	return map[string]interface{}{
-		"plan":           currentSub.Plan.PlanName,
-		"mailsPerDay":    currentSub.Plan.NumberOfMailsPerDay,
-		"remainingMails": dailyMailCalc.RemainingMails,
+		"plan":           planName,
+		"mailsPerDay":    mailsPerDay,
+		"remainingMails": remainingMails,
 	}, nil
 }
 

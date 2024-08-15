@@ -39,7 +39,7 @@ const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => 
                 {/* Search input remains the same */}
 
                 <div className="max-h-60 overflow-y-auto">
-                    {contactgroupData && (contactgroupData as ContactGroupData[]).length > 0 && (
+                    {contactgroupData && (contactgroupData as ContactGroupData[]).length > 0 ? (
                         (contactgroupData as ContactGroupData[]).map((group: ContactGroupData) => (
                             <div key={group.uuid} className="mb-4">
                                 <label className="flex items-center space-x-2">
@@ -55,7 +55,7 @@ const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => 
                                 <p className="text-sm text-gray-500 ml-6">{group.description}</p>
                             </div>
                         ))
-                    )}
+                    ) : (<>< div className="flex item-center justify-center text-lg font-semibold"> No groups found </div>  </>)}
 
                 </div>
 

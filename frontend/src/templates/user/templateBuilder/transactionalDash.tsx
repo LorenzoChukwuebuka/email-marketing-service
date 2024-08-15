@@ -30,7 +30,26 @@ const TransactionalTemplateDash: React.FC = () => {
         getAllTransactionalTemplates()
     }, [])
 
-    
+
+    const handleNavigate = (template: (Template & BaseEntity)) => {
+        const editorType = template.editor_type
+
+        let redirectUrl = "";
+        switch (editorType) {
+            case "html-editor":
+                redirectUrl = `/editor/2?type=t&uuid=${template.uuid}`;
+                break;
+            case "drag-and-drop":
+                redirectUrl = `/editor/1?type=t&uuid=${template.uuid}`;
+                break;
+            default:
+                console.log("Unknown editor type:", editorType);
+                return;
+        }
+
+        window.location.href = redirectUrl;
+    }
+
     return <>
 
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
@@ -74,12 +93,10 @@ const TransactionalTemplateDash: React.FC = () => {
                                         </p>
                                         <div className="flex space-x-2 mt-2">
                                             <button className="text-blue-600 cursor-pointer text-sm" onClick={() => openPreview(template)}>Preview</button>
-                                            <Link
-                                                to={`/editor/1?type=t&uuid=${template.uuid}`}
-                                                className="text-blue-600 cursor-pointer text-sm"
+                                            <button onClick={() => handleNavigate(template)} className="text-blue-600 cursor-pointer text-sm"
                                             >
                                                 Edit
-                                            </Link>
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-2">

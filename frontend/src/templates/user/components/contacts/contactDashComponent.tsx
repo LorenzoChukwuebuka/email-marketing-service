@@ -9,7 +9,7 @@ type ContactsDashTemplateProps = {};
 
 const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const { selectedIds, deleteContact, getAllContacts } = useContactStore();
+    const { selectedIds, deleteContact, getAllContacts, searchContacts } = useContactStore();
     const [importModalOpen, setImportModalOpen] = useState<boolean>(false)
     const [groupModalOpen, setGroupModalOpen] = useState<boolean>(false)
 
@@ -26,6 +26,10 @@ const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
     const importContact = () => {
         setImportModalOpen(true)
     }
+
+    const handleSearch = (query: string) => {
+        searchContacts(query);
+    };
 
     let todo: TODO = "add a contact search bar"
     return (
@@ -74,7 +78,7 @@ const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
                         type="text"
                         placeholder="Search..."
                         className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    // onChange={(e) => handleSearch(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                     />
                 </div>
 
