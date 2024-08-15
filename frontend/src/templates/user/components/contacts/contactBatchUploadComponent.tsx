@@ -51,25 +51,48 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
         fileInputRef.current?.click();
     };
 
-    const submitFile = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const submitFile = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         if (!selectedFile) {
             setError('Please select a valid CSV file.');
             return;
         }
         setSelectedCSVFile(selectedFile);
-        batchContactUpload();
-        getAllContacts();
+        await batchContactUpload();
+        await getAllContacts();
         onClose()
         location.reload()
         setSelectedCSVFile(null)
+    };
+
+    const handleDownload = () => {
+        // Create a blob with the CSV content
+        const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(
+            'First Name,Last Name,Email,From\n' +
+            'John,Doe,john.doe@example.com,Website\n' +
+            'Jane,Smith,jane.smith@example.com,Referral\n' +
+            'Michael,Johnson,michael.johnson@example.com,Trade Show\n' +
+            'Emily,Brown,emily.brown@example.com,Social Media\n' +
+            'David,Wilson,david.wilson@example.com,Newsletter\n' +
+            'Sarah,Taylor,sarah.taylor@example.com,Website\n' +
+            'Robert,Anderson,robert.anderson@example.com,Referral\n' +
+            'Jennifer,Thomas,jennifer.thomas@example.com,Trade Show\n' +
+            'William,Jackson,william.jackson@example.com,Social Media\n' +
+            'Elizabeth,White,elizabeth.white@example.com,Newsletter'
+        );
+        const link = document.createElement('a');
+        link.href = csvContent;
+        link.download = 'sample.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Upload Contact CSV">
             <>
                 <p className="text-lg font-semibold mb-2">Select .csv or .xls file to import</p>
-                <h5 className="text-blue-500 mb-2">How to format your .csv or excel file. Download the sample CSV below.</h5>
+                <h5 className="text-blue-500 cursor-pointer mb-2" onClick={handleDownload}>How to format your .csv or excel file. Download the sample CSV below.</h5>
 
                 {error && <p className="text-red-600">{error}</p>}
 

@@ -154,9 +154,9 @@ func (s *ContactService) UpdateContact(d *dto.EditContactDTO) error {
 	return nil
 }
 
-func (s *ContactService) GetAllContacts(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+func (s *ContactService) GetAllContacts(userId string, page int, pageSize int,searchQuery string) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
-	contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams)
+	contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams,searchQuery)
 	if err != nil {
 		return repository.PaginatedResult{}, err
 	}
@@ -302,10 +302,10 @@ func (s *ContactService) DeleteContactGroup(userId string, groupId string) error
 	return nil
 }
 
-func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize int,searchQuery string) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
 
-	result, err := s.ContactRepo.GetAllGroups(userId, paginationParams)
+	result, err := s.ContactRepo.GetAllGroups(userId, paginationParams,searchQuery)
 
 	if err != nil {
 		return repository.PaginatedResult{}, err

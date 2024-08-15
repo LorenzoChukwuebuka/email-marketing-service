@@ -52,6 +52,7 @@ interface ContactStore {
     editContact: () => Promise<void>;
     getAllContacts: (page?: number, pageSize?: number) => Promise<void>;
     batchContactUpload: () => Promise<void>
+    searchContacts: (query: string) => void;
 }
 
 type ContactsAPIResponse = APIResponse<PaginatedResponse<Contact>>;
@@ -89,6 +90,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
     setIsLoading: (newIsLoading) => set({ isLoading: newIsLoading }),
     setSelectedCSVFile: (newSelectedFile) => set({ selectedCSVFile: newSelectedFile }),
+
 
     createContact: async () => {
         try {
@@ -180,6 +182,23 @@ const useContactStore = create<ContactStore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         }
+    },
+
+    searchContacts: (query: string) => {
+        const { getAllContacts } = get();
+        if (!query) {
+            getAllContacts(); // If query is empty, reset to all contacts
+            return;
+        }
+
+        const filteredContacts = get().contactData.filter(contact =>
+            contact.first_name.toLowerCase().includes(query.toLowerCase()) ||
+            contact.last_name.toLowerCase().includes(query.toLowerCase()) ||
+            contact.email.toLowerCase().includes(query.toLowerCase()) ||
+            contact.from.toLowerCase().includes(query.toLowerCase())
+        );
+
+        set({ contactData: filteredContacts });
     },
 
     batchContactUpload: async () => {

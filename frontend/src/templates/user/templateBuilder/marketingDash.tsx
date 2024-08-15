@@ -6,7 +6,7 @@ import { BaseEntity } from "../../../interface/baseentity.interface";
 
 const MarketingTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [searchTerm, setSearchTerm] = useState<string>(""); 
+    const [searchTerm, setSearchTerm] = useState<string>("");
     const { getAllMarketingTemplates, templateData } = useTemplateStore();
 
     const navigate = useNavigate();
@@ -20,8 +20,27 @@ const MarketingTemplateDash: React.FC = () => {
     );
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value); 
+        setSearchTerm(e.target.value);
     };
+
+    const handleNavigate = (template: (Template & BaseEntity)) => {
+        const editorType = template.editor_type
+
+        let redirectUrl = "";
+        switch (editorType) {
+            case "html-editor":
+                redirectUrl = `/editor/2?type=m&uuid=${template.uuid}`;
+                break;
+            case "drag-and-drop":
+                redirectUrl = `/editor/1?type=m&uuid=${template.uuid}`;
+                break;
+            default:
+                console.log("Unknown editor type:", editorType);
+                return;
+        }
+
+        window.location.href = redirectUrl;
+    }
 
     return (
         <>
@@ -69,12 +88,10 @@ const MarketingTemplateDash: React.FC = () => {
                                             </p>
                                             <div className="flex space-x-2 mt-2">
                                                 <button className="text-blue-600 cursor-pointer text-sm">Preview</button>
-                                                <Link
-                                                    to={`/editor/1?type=m&uuid=${template.uuid}`}
-                                                    className="text-blue-600 hover:underline text-sm"
+                                                <button onClick={() => handleNavigate(template)} className="text-blue-600 cursor-pointer text-sm"
                                                 >
                                                     Edit
-                                                </Link>
+                                                </button>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2">

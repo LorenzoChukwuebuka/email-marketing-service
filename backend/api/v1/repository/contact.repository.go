@@ -70,10 +70,14 @@ func (r *ContactRepository) GetASingleContact(contactId string, userId string) (
 	return contactResponse, nil
 }
 
-func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams) (PaginatedResult, error) {
+func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams,searchQuery string) (PaginatedResult, error) {
 	var contacts []model.Contact
 
 	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
+
+	if searchQuery != "" {
+        query = query.Where("name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%")
+    }
 
 	paginatedResult, err := Paginate(query, params, &contacts)
 	if err != nil {
@@ -94,16 +98,16 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 
 func mapContactToResponse(contact model.Contact) model.ContactResponse {
 	response := model.ContactResponse{
-		ID:        contact.ID,
-		UUID:      contact.UUID,
-		FirstName: contact.FirstName,
-		LastName:  contact.LastName,
-		Email:     contact.Email,
-		From:      contact.From,
-		UserId:    contact.UserId,
+		ID:           contact.ID,
+		UUID:         contact.UUID,
+		FirstName:    contact.FirstName,
+		LastName:     contact.LastName,
+		Email:        contact.Email,
+		From:         contact.From,
+		UserId:       contact.UserId,
 		IsSubscribed: contact.IsSubscribed,
-		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: contact.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:    contact.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    contact.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if contact.DeletedAt.Valid {
@@ -171,6 +175,7 @@ func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	existingContact.LastName = d.LastName
 	existingContact.Email = d.Email
 	existingContact.From = d.From
+	existingContact.IsSubscribed = d.IsSubscribed
 	htime := time.Now().UTC()
 	existingContact.UpdatedAt = htime
 
@@ -243,7 +248,7 @@ func mapContactsToResponse(contacts []model.Contact) []model.ContactResponse {
 	return contactResponses
 }
 
-func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams) (PaginatedResult, error) {
+func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams, searchQuery string) (PaginatedResult, error) {
 	var groups []model.ContactGroup
 
 	query := r.DB.
@@ -254,8 +259,13 @@ func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams)
 				Where("user_contact_groups.deleted_at IS NULL")
 		}).
 		Where("contact_groups.user_id = ?", userId).
-		Where("contact_groups.deleted_at IS NULL").
-		Order("contact_groups.created_at DESC")
+		Where("contact_groups.deleted_at IS NULL")
+
+	if searchQuery != "" {
+		query = query.Where("contact_groups.name LIKE ?", "%"+searchQuery+"%")
+	}
+
+	query = query.Order("contact_groups.created_at DESC")
 
 	paginatedResult, err := Paginate(query, params, &groups)
 	if err != nil {

@@ -57,6 +57,7 @@ const DragAndDropEditor: React.FC = () => {
                     email_design: design,
                     email_html: html
                 };
+                new Promise(resolve => setTimeout(resolve, 3000));
                 await updateTemplate(uuid, updatedTemplate);
                 setAutoSaved(true);
                 console.log("Design saved to database!");
@@ -80,11 +81,20 @@ const DragAndDropEditor: React.FC = () => {
         return <div>Loading template...</div>;
     }
 
+
+    const handleNavigate = () => {
+        if (_type === "t") {
+            navigate("/user/dash/templates")
+        } else {
+            navigate("/user/dash/marketing")
+        }
+    }
+
     return (
         <div className="h-screen flex flex-col p-4">
             <header className="flex items-center justify-between  bg-gray-100 px-4 h-[5em] py-2">
                 <div className="flex items-center">
-                    <button className="mr-2 text-gray-600" onClick={() => navigate(-1)}>
+                    <button className="mr-2 text-gray-600" onClick={() => navigate("/user/dash/templates")}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -101,8 +111,8 @@ const DragAndDropEditor: React.FC = () => {
                     <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2">
                         Send Test
                     </button>
-                    <button className="bg-navy-900 text-black border-black cursor-pointer px-3 py-1 rounded" onClick={() => saveDesign()}>
-                        Save
+                    <button className="bg-navy-900 text-black border-black text-md cursor-pointer font-semibold px-3 py-1 rounded" onClick={() => { saveDesign(); handleNavigate() }}>
+                        Save and exit
                     </button>
                 </div>
             </header>
