@@ -22,25 +22,5 @@ const EditorCard: React.FC<EditorCardProps> = ({ icon, title, description, butto
     </div>
 );
 
-const EditorSelection: React.FC = () => {
-    return (
-        <div className="flex mt-8 items-center justify-center space-x-6">
-            <EditorCard
-                icon={<span role="img" aria-label="document">📄</span>}
-                title="Rich Text Editor"
-                description="Use the rich text editor to create simple emails"
-                buttonText="Use Rich Text Editor"
-                onClick={() => console.log("Rich Text Editor clicked")}
-            />
-            <EditorCard
-                icon={<span role="img" aria-label="code">&#60;&#47;&#62;</span>}
-                title="HTML Editor"
-                description="Copy and paste your HTML code."
-                buttonText="Use HTML Editor"
-                onClick={() => console.log("HTML Editor clicked")}
-            />
-        </div>
-    );
-};
 
-export default EditorSelection;
+export default EditorCard;

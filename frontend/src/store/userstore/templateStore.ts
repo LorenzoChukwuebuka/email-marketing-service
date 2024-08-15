@@ -41,6 +41,7 @@ type TemplateStore = {
     getSingleTransactionalTemplate: (uuid: string) => Promise<void>
     getSingleMarketingTemplate: (uuid: string) => Promise<void>
     updateTemplate: (uuid: string, updatedTemplate: Template & BaseEntity) => Promise<void>
+    resetForm: () => void
 };
 
 
@@ -77,7 +78,6 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
 
     getAllMarketingTemplates: async () => {
         try {
-
             const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-marketing-templates');
             get().setTemplateData(response.data.payload)
 
@@ -89,9 +89,28 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
     createTemplate: async () => {
         try {
             const { formValues } = get()
-            let response = await axiosInstance.post<ResponseT>("/create-martketing-template", formValues)
-            window.location.href = "/editor/1?id=" + response.data.payload.templateId
+            let response = await axiosInstance.post<ResponseT>("/templates/create-marketing-template", formValues)
 
+            const editorType = response.data.payload["editor-type"];
+            const templateType = response.data.payload.type;
+            const templateId = response.data.payload.templateId;
+
+            let redirectUrl = "";
+            const typeParam = templateType === "marketing" ? "m" : "t";
+
+            switch (editorType) {
+                case "html-editor":
+                    redirectUrl = `/editor/2?type=${typeParam}&uuid=${templateId}`;
+                    break;
+                case "drag-and-drop":
+                    redirectUrl = `/editor/1?type=${typeParam}&uuid=${templateId}`;
+                    break;
+                default:
+                    console.log("Unknown editor type:", editorType);
+                    return;  
+            }
+            window.location.href = redirectUrl;
+         
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -100,6 +119,8 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             } else {
                 console.error("Unknown error:", error);
             }
+        } finally {
+            get().resetForm()
         }
     },
 
@@ -117,6 +138,7 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             }
         }
     },
+
     getSingleTransactionalTemplate: async (uuid: string) => {
         try {
             const response = await axiosInstance.get<TemplateResponse>("/templates/get-transactional-template/" + uuid)
@@ -131,6 +153,7 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             }
         }
     },
+
     getSingleMarketingTemplate: async (uuid: string) => {
         try {
             const response = await axiosInstance.get<TemplateResponse>("/templates/get-marketing-template/" + uuid)
@@ -145,11 +168,9 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             }
         }
     },
+
     updateTemplate: async (uuid: string, updatedTemplate: Template & BaseEntity) => {
         try {
-
-            console.log("you got here shaa")
-
             const response = await axiosInstance.put<ResponseT>("/templates/update-template/" + uuid, updatedTemplate)
             console.log(response.data)
         } catch (error) {
@@ -161,7 +182,29 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         }
-    }
+    },
+
+    resetForm: () => set({
+        formValues: {
+            template_name: '',
+            campaignId: null,
+            sender_name: null,
+            from_email: null,
+            subject: null,
+            type: '',
+            email_html: '',
+            email_design: null,
+            is_editable: false,
+            is_published: false,
+            is_public_template: false,
+            is_gallery_template: false,
+            tags: '',
+            description: null,
+            image_Url: null,
+            is_active: true,
+            editor_type: null,
+        }
+    }),
 }));
 
 export default useTemplateStore;

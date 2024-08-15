@@ -38,6 +38,7 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
             try {
                 await fileValidationSchema.validate({ file });
                 setSelectedFile(file);
+                getAllContacts()
                 setError(null);
             } catch (validationError: any) {
                 setError(validationError.message);

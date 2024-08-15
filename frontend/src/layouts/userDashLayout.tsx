@@ -233,7 +233,7 @@ const UserDashLayout: React.FC = () => {
                                     />
                                     {userName}
                                     <span className="text-blue-500">
-                                        <Link to="/user/setting/profile"> My Profile </Link>
+                                        <Link to="/user/dash/settings/account-management"> My Profile </Link>
                                     </span>
                                     <a onClick={Logout}>Logout</a>
                                 </div>

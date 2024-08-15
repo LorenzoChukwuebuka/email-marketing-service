@@ -8,11 +8,11 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -105,6 +105,7 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	}
 
 	otp := utils.GenerateOTP(otpLength)
+
 	if err := s.createAndSendOTP(user, otp); err != nil {
 		return nil, err
 	}

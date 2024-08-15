@@ -9,7 +9,7 @@ interface Props {
     editorType: "drag-and-drop" | "html-editor";
 }
 
-const CreateMarketingTemplate: React.FC<Props> = ({ isOpen, onClose, editorType }) => {
+const CreateTransactionalTemplate: React.FC<Props> = ({ isOpen, onClose, editorType }) => {
 
     const { setFormValues, formValues, createTemplate } = useTemplateStore()
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -34,7 +34,7 @@ const CreateMarketingTemplate: React.FC<Props> = ({ isOpen, onClose, editorType 
             await validationSchema.validate(formValues, { abortEarly: false });
             setFormValues({
                 ...formValues,
-                type: "marketing",
+                type: "transactional",
                 editor_type: editorType,
                 is_editable: true,
                 is_gallery_template: false,
@@ -55,7 +55,7 @@ const CreateMarketingTemplate: React.FC<Props> = ({ isOpen, onClose, editorType 
     }
     return <>
 
-        <Modal isOpen={isOpen} onClose={onClose} title="Create Template">
+        <Modal isOpen={isOpen} onClose={onClose} title="Create  Template">
             <>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
@@ -127,4 +127,4 @@ const CreateMarketingTemplate: React.FC<Props> = ({ isOpen, onClose, editorType 
 }
 
 
-export default CreateMarketingTemplate
+export default CreateTransactionalTemplate

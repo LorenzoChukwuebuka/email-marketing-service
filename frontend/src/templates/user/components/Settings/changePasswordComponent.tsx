@@ -40,7 +40,7 @@ const ChangePasswordComponent: React.FC = () => {
     };
 
     return (
-        <div className="mt-8 mb-5">
+        <div className="mt-8 p-4 mb-5">
             <form className="w-full max-w-xs space-y-4" onSubmit={handleSubmit}>
                 <label className="block">
                     <span className="text-medium font-medium">Current Password</span>
