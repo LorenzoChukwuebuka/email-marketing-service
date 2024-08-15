@@ -4,7 +4,6 @@ import CreateTransactionalTemplate from "../components/templates/createTransacti
 type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML"
 
 const CreateTransactionalTemplateDashBoard: React.FC = () => {
-
     const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -31,19 +30,29 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-        }, 1000);
+        }, 30000);
     };
 
-    return <>
+    const handleTabChange = (newTab: templateTypes) => {
+        if (isLoading) {
+            setIsLoading(false);
+        }
+        setActiveTab(newTab);
+        if (newTab !== "Templates Gallery") {
+            setIsModalOpen(true);
+        }
+    };
+
+    return (
         <div className="p-6 max-w-full">
             <h1 className="text-xl font-semibold mb-5"> Create Transactional Templates </h1>
-            <nav className="flex space-x-8  border-b">
+            <nav className="flex space-x-8 border-b">
                 <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Templates Gallery"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => setActiveTab("Templates Gallery")}
+                    onClick={() => handleTabChange("Templates Gallery")}
                 >
                     Templates Gallery
                 </button>
@@ -53,10 +62,7 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => {
-                        setActiveTab("Blank Template");
-                        setIsModalOpen(true);
-                    }}
+                    onClick={() => handleTabChange("Blank Template")}
                 >
                     Blank Template
                 </button>
@@ -66,11 +72,10 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => { setActiveTab("Custom HTML"); setIsModalOpen(true) }}
+                    onClick={() => handleTabChange("Custom HTML")}
                 >
                     Custom HTML
                 </button>
-
             </nav>
 
             {activeTab === "Templates Gallery" && (
@@ -79,13 +84,11 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
                 </>
             )}
 
-            {isLoading && <div><span className="loading loading-spinner loading-lg"></span></div>}
+            {isLoading && <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div>}
 
             <CreateTransactionalTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={activeTab === "Blank Template" ? "drag-and-drop" : "html-editor"} />
-
         </div>
-    </>
+    );
 }
 
-
-export default CreateTransactionalTemplateDashBoard
+export default CreateTransactionalTemplateDashBoard;
