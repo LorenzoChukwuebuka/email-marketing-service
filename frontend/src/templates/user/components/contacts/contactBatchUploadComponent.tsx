@@ -38,7 +38,7 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
             try {
                 await fileValidationSchema.validate({ file });
                 setSelectedFile(file);
-                getAllContacts()
+
                 setError(null);
             } catch (validationError: any) {
                 setError(validationError.message);
@@ -57,11 +57,11 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
             setError('Please select a valid CSV file.');
             return;
         }
-
         setSelectedCSVFile(selectedFile);
         batchContactUpload();
         getAllContacts();
         onClose()
+        location.reload()
         setSelectedCSVFile(null)
     };
 
