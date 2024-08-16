@@ -171,5 +171,13 @@ func (c *TemplateController) DeleteTemplate(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *TemplateController) SendTestMail(w http.ResponseWriter, r *http.Request) {
+	// claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	// if !ok {
+	// 	http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// userId := claims["userId"].(string)
+
 
 }

@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import EmptyState from "../../../components/emptyStateComponent";
 import { Link, useNavigate } from "react-router-dom";
 import useTemplateStore, { Template } from "../../../store/userstore/templateStore";
 import { BaseEntity } from "../../../interface/baseentity.interface";
+import { Modal } from "../../../components";
 
 const MarketingTemplateDash: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<number | boolean | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const { getAllMarketingTemplates, templateData } = useTemplateStore();
+    const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
+    const modalRef = useRef<HTMLDivElement>(null)
 
     const navigate = useNavigate();
 
@@ -18,6 +21,12 @@ const MarketingTemplateDash: React.FC = () => {
     const filteredTemplates = (templateData as (Template & BaseEntity)[]).filter((template) =>
         template.template_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const openPreview = (template: (Template & BaseEntity)) => {
+        setPreviewTemplate(template);
+        setIsModalOpen(true);
+    };
+
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -41,6 +50,19 @@ const MarketingTemplateDash: React.FC = () => {
 
         window.location.href = redirectUrl;
     }
+
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                setIsModalOpen(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <>
@@ -87,7 +109,7 @@ const MarketingTemplateDash: React.FC = () => {
                                                 })}
                                             </p>
                                             <div className="flex space-x-2 mt-2">
-                                                <button className="text-blue-600 cursor-pointer text-sm">Preview</button>
+                                                <button className="text-blue-600 cursor-pointer text-sm" onClick={() => openPreview(template)}>Preview</button>
                                                 <button onClick={() => handleNavigate(template)} className="text-blue-600 cursor-pointer text-sm"
                                                 >
                                                     Edit
@@ -98,11 +120,23 @@ const MarketingTemplateDash: React.FC = () => {
                                             <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded">
                                                 Draft
                                             </span>
-                                            <button className="text-gray-400 hover:text-gray-600">
+                                            <button className="text-gray-400 hover:text-gray-600" onClick={() => setIsModalOpen(isModalOpen === index ? null : index)}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                     <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
                                                 </svg>
                                             </button>
+
+                                            {isModalOpen === index && (
+                                                <div
+                                                    ref={modalRef}
+                                                    className="absolute right-[2em] mt-[10em] w-28 bg-white  border border-gray-300 rounded-md shadow-lg z-10"
+                                                >
+                                                    <button className="block w-full px-4 py-2 text-  text-sm text-red-700 hover:bg-gray-100">
+                                                        Delete
+                                                    </button>
+
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -121,6 +155,21 @@ const MarketingTemplateDash: React.FC = () => {
                     </>
                 )}
             </div>
+
+            <Modal isOpen={isModalOpen as boolean} onClose={() => setIsModalOpen(false)} title="Preview Template" >
+                <>
+                    {previewTemplate && (
+                        <div className="w-full h-full">
+                            <iframe
+                                srcDoc={previewTemplate.email_html}
+                                title="Template Preview"
+                                className="w-full h-[70vh] border-0"
+                                sandbox="allow-scripts"
+                            />
+                        </div>
+                    )}
+                </>
+            </Modal>
         </>
     );
 };

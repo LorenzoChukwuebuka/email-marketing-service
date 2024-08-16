@@ -159,3 +159,8 @@ func (s *TemplateService) UpdateTemplate(d *dto.TemplateDTO, templateId string) 
 func (s *TemplateService) DeleteTemplate(userId string, templateId string) error {
 	return nil
 }
+
+
+func (s *TemplateService) SendTestMail(userId string, templateId string) error {
+	return nil 
+}

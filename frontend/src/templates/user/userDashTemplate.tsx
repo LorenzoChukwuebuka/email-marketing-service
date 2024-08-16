@@ -79,7 +79,10 @@ const UserDashboardTemplate: React.FC = () => {
 
 
 const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, onClick }) => (
-    <div className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4" onClick={onClick}>
+    <div
+        className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 hover:shadow-lg hover:bg-gray-50"
+        onClick={onClick}
+    >
         <div className="flex items-center mb-2">
             <span className="text-2xl mr-2">{icon}</span>
             <h3 className="font-semibold">{title}</h3>
@@ -87,5 +90,6 @@ const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, o
         <p className="text-sm text-gray-600">{description}</p>
     </div>
 );
+
 
 export default UserDashboardTemplate;
