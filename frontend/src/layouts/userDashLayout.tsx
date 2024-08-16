@@ -14,6 +14,18 @@ const UserDashLayout: React.FC = () => {
 
     const { mailData, getUserMailData } = useDailyUserMailSentCalc();
 
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    const closeDropdown = () => {
+        setIsDropdownOpen(false);
+    };
+
+
     const getLinkClassName = (path: string): string => {
         const baseClass = "mb-4 text-center text-lg font-semibold";
         const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
@@ -210,35 +222,43 @@ const UserDashLayout: React.FC = () => {
                     {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
                     <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="m-1">
-                            {userName}
-                        </div>
-                        <ul
+                        <div
                             tabIndex={0}
-                            className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                            role="button"
+                            className="m-1"
+                            onClick={toggleDropdown}
                         >
-                            <li>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-base-300 border-b-2 border-black mb-4">
-                                        Emails sent: {mailData?.remainingMails}/
-                                        {mailData?.mailsPerDay}
-                                    </span>
-                                    <span className="text-black bg-gray-300 rounded-md">
-                                        Plan: {mailData?.plan}
-                                    </span>
-                                    <img
-                                        className="h-8 w-8 rounded-full"
-                                        src={reactSVG}
-                                        alt="User avatar"
-                                    />
-                                    {userName}
-                                    <span className="text-blue-500">
-                                        <Link to="/user/dash/settings/account-management"> My Profile </Link>
-                                    </span>
-                                    <a onClick={Logout}>Logout</a>
-                                </div>
-                            </li>
-                        </ul>
+                            {userName}{' '}
+                            <i className={`bi ${isDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                        </div>
+                        {isDropdownOpen && (
+                            <ul
+                                tabIndex={0}
+                                className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                            >
+                                <li>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-base-300 border-b-2 border-black mb-4">
+                                            Emails sent: {mailData?.remainingMails}/
+                                            {mailData?.mailsPerDay}
+                                        </span>
+                                        <span className="text-black bg-gray-300 rounded-md">
+                                            Plan: {mailData?.plan}
+                                        </span>
+                                        <img
+                                            className="h-8 w-8 rounded-full"
+                                            src={reactSVG}
+                                            alt="User avatar"
+                                        />
+                                        {userName}
+                                        <span className="text-blue-500">
+                                            <Link to="/user/dash/settings/account-management">My Profile</Link>
+                                        </span>
+                                        <a onClick={() => { Logout(); closeDropdown(); }}>Logout</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        )}
                     </div>
                 </header>
 
