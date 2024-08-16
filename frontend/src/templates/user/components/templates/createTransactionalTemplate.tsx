@@ -6,7 +6,7 @@ import * as Yup from "yup";
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    editorType: "drag-and-drop" | "html-editor";
+    editorType: "drag-and-drop" | "html-editor" | "rich-text";
 }
 
 const CreateTransactionalTemplate: React.FC<Props> = ({ isOpen, onClose, editorType }) => {

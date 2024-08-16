@@ -1,16 +1,8 @@
-# Stage 1: Build the React frontend
-FROM node:18 as frontend-builder
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
-RUN npm run build
-
-# Stage 2: Build the Go backend
+# Stage 1: Build the Go backend
 FROM golang:1.21 as backend-builder
 WORKDIR /app/backend
 COPY backend/ ./
-COPY --from=frontend-builder /app/frontend/dist ./client
+RUN make buildfe
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Final Stage: Production image
@@ -37,4 +29,3 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /heal
 
 # Start the application and load the environment variables
 CMD ["sh", "-c", "set -o allexport; source .env; set +o allexport; ./main"]
-

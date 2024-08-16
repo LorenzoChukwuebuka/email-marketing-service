@@ -41,6 +41,7 @@ type TemplateStore = {
     getSingleTransactionalTemplate: (uuid: string) => Promise<void>
     getSingleMarketingTemplate: (uuid: string) => Promise<void>
     updateTemplate: (uuid: string, updatedTemplate: Template & BaseEntity) => Promise<void>
+    deleteTemplate: (uuid: string) => Promise<void>
     resetForm: () => void
 };
 
@@ -107,10 +108,10 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
                     break;
                 default:
                     console.log("Unknown editor type:", editorType);
-                    return;  
+                    return;
             }
             window.location.href = redirectUrl;
-         
+
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -182,6 +183,10 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         }
+    },
+
+    deleteTemplate: async (uuid: string) => {
+
     },
 
     resetForm: () => set({

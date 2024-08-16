@@ -24,7 +24,7 @@ const BillingDashTemplate: React.FC = () => {
 
     return <>
         <div className="p-6 max-w-full">
-         
+
             <nav className="flex space-x-8 border-b">
                 <button
                     className={`py-2 border-b-2 text-xl font-semibold ${activeTab === "Plans"

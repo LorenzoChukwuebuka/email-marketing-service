@@ -75,7 +75,7 @@ const BillingList: React.FC = () => {
                         ) : (
                             <tr>
                                 <td colSpan={10} className="py-4 px-4 text-center">
-                                    No contacts available
+                                   No Billing Data Available
                                 </td>
                             </tr>
                         )}

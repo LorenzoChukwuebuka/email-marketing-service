@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import CreateMarketingTemplate from "../components/templates/createMarketingTemplate";
 
-type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML";
+type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML" | "Rich Text";
 
 const CreateMarketingTemplateDashBoard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
@@ -76,6 +76,16 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                 >
                     Custom HTML
                 </button>
+
+                {/* <button
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Rich Text"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
+                        } transition-colors`}
+                    onClick={() => handleTabChange("Rich Text")}
+                >
+                    Text Editor
+                </button> */}
             </nav>
 
             {activeTab === "Templates Gallery" && (

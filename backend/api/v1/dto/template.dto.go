@@ -23,3 +23,9 @@ type TemplateDTO struct {
 	IsActive          bool             `json:"is_active"`
 	EditorType        *string          `json:"editor_type"`
 }
+
+type SendTestMailDTO struct {
+	UserId       string `json:"user_id" validate:"required"`
+	EmailAddress string `json:"email_address" validate:"required"`
+	TemplateId   string `json:"template_id" validate:"required"`
+}

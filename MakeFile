@@ -26,16 +26,14 @@ rundev:
 
 buildfe:
 	cd $(FE_DIR) && npm run build
-ifneq (,$(wildcard $(DIST_DIR)))
-	ifeq ($(OS),Windows_NT)
-		- rmdir /s /q $(CLIENT_DIR)
-		- mkdir $(CLIENT_DIR)
-		robocopy $(DIST_DIR) $(CLIENT_DIR) /E
-	else
-		- rm -rf $(CLIENT_DIR)
-		- mkdir $(CLIENT_DIR)
-		cp -r $(DIST_DIR) $(CLIENT_DIR)
-	endif
+ifeq ($(OS),Windows_NT)
+	if exist $(subst /,\,$(CLIENT_DIR)) rmdir /s /q $(subst /,\,$(CLIENT_DIR))
+	mkdir $(subst /,\,$(CLIENT_DIR))
+	xcopy $(subst /,\,$(DIST_DIR)) $(subst /,\,$(CLIENT_DIR)) /E /I /Y
+else
+	rm -rf $(CLIENT_DIR)
+	mkdir -p $(CLIENT_DIR)
+	cp -r $(DIST_DIR)/* $(CLIENT_DIR)/
 endif
 
 git:
