@@ -68,24 +68,7 @@ func (s *APIKeyService) GetAPIKey(userId string) ([]model.APIKeyResponseModel, e
 		return nil, nil
 	}
 
-	encryptedKeys := make([]model.APIKeyResponseModel, len(userApiKeys))
-	for i, apiKey := range userApiKeys {
-		encryptedKey, err := utils.EncryptKey(apiKey.APIKey)
-		if err != nil {
-			fmt.Println("Error encrypting:", err)
-			continue // skip this API key and continue with others
-		}
-		encryptedKeys[i] = model.APIKeyResponseModel{
-			UUID:      apiKey.UUID,
-			UserId:    apiKey.UserId,
-			Name:      apiKey.Name,
-			APIKey:    encryptedKey,
-			CreatedAt: apiKey.CreatedAt,
-			UpdatedAt: apiKey.UpdatedAt,
-		}
-	}
-
-	return encryptedKeys, nil
+	return userApiKeys, nil
 }
 
 func (s *APIKeyService) DeleteAPIKey(apiKeyId string) error {

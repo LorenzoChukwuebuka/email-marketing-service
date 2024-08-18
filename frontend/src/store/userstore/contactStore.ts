@@ -27,6 +27,8 @@ type ContactBase = {
 
 export type Contact = BaseEntity & ContactFormValues & ContactBase;
 
+type ContactCount = { recent: number; total: number }
+
 type EditContactValues = { uuid: string } & Partial<ContactFormValues>
 
 
@@ -37,10 +39,12 @@ interface ContactStore {
     contactData: Contact[];
     selectedIds: string[];
     isLoading: boolean;
+    contactCount: ContactCount
     selectedCSVFile: FileCSVType;
     editContactValues: EditContactValues;
     paginationInfo: Omit<PaginatedResponse<Contact>, 'data'>;
     setContactData: (newContactData: Contact[]) => void;
+    setContactCount: (newData: ContactCount) => void;
     setContactFormValues: (newFormValues: ContactFormValues) => void;
     setIsLoading: (newIsLoading: boolean) => void;
     setSelectedId: (newSelectedId: string[]) => void;
@@ -53,6 +57,7 @@ interface ContactStore {
     getAllContacts: (page?: number, pageSize?: number) => Promise<void>;
     batchContactUpload: () => Promise<void>
     searchContacts: (query: string) => void;
+    getContactCount: () => Promise<void>
 }
 
 type ContactsAPIResponse = APIResponse<PaginatedResponse<Contact>>;
@@ -65,6 +70,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
         from: '',
         is_subscribed: false
     },
+    contactCount: { recent: 0, total: 0 },
     contactData: [],
     selectedIds: [],
     paginationInfo: {
@@ -90,6 +96,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
     setIsLoading: (newIsLoading) => set({ isLoading: newIsLoading }),
     setSelectedCSVFile: (newSelectedFile) => set({ selectedCSVFile: newSelectedFile }),
+    setContactCount: (newData) => set({ contactCount: newData }),
 
 
     createContact: async () => {
@@ -227,6 +234,21 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
         } finally {
             get().setIsLoading(false)
+        }
+    },
+
+    getContactCount: async () => {
+        try {
+            let response = await axiosInstance.get("/get-contact-count")
+            get().setContactCount(response.data.payload)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     }
 }));

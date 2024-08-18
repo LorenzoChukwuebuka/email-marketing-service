@@ -22,4 +22,5 @@ func (ur *TemplateRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-transactional-template/{templateId}", middleware.JWTMiddleware(templateController.GetTransactionalTemplate)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-marketing-template/{templateId}", middleware.JWTMiddleware(templateController.GetMarketingTemplate)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/update-template/{templateId}", middleware.JWTMiddleware(templateController.UpdateTemplate)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/send-test-mails", middleware.JWTMiddleware(templateController.SendTestMail)).Methods("POST", "OPTIONS")
 }

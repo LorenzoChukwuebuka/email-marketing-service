@@ -80,6 +80,7 @@ func autoMigrateModels() {
 		&model.Contact{},
 		&model.UserContactGroup{},
 		&model.Template{},
+		&model.MonthlyMailCalc{},
 	)
 
 	if err != nil {
@@ -97,7 +98,7 @@ func seedData(db *gorm.DB) {
 		plan := model.Plan{
 			UUID:                uuid.New().String(),
 			PlanName:            "Free",
-			Duration:            "infinite",
+			Duration:            "month",
 			Price:               00,
 			NumberOfMailsPerDay: "100",
 			Details:             "Our best plan for power users",

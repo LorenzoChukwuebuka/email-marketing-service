@@ -157,6 +157,9 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 		controllers.NewTemplateController,
 		services.NewTemplateService,
 		repository.NewTemplateRepository,
+		repository.NewDailyMailCalcRepository,
+		repository.NewSubscriptionRepository,
+		repository.NewUserRepository,
 	)
 
 	return nil, nil

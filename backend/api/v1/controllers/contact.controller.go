@@ -339,7 +339,7 @@ func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	response.SuccessResponse(w, 201, "group deleted successfully")
+	response.SuccessResponse(w, 200, "group deleted successfully")
 
 }
 
@@ -375,7 +375,7 @@ func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	response.SuccessResponse(w, 201, result)
+	response.SuccessResponse(w, 200, result)
 
 }
 
@@ -399,6 +399,29 @@ func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r
 		return
 	}
 
-	response.SuccessResponse(w, 201, result)
+	response.SuccessResponse(w, 200, result)
+
+}
+
+
+func (c *ContactController) GetContactCount(w http.ResponseWriter, r *http.Request){
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result,err := c.ContactService.GetContactCount(userId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+
 
 }

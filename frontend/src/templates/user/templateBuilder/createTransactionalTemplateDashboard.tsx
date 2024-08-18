@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import CreateTransactionalTemplate from "../components/templates/createTransactionalTemplate";
 
-type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML"
+type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML" | "Rich Text"
 
 const CreateTransactionalTemplateDashBoard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
@@ -76,6 +76,16 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
                 >
                     Custom HTML
                 </button>
+
+                <button
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Rich Text"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
+                        } transition-colors`}
+                    onClick={() => handleTabChange("Rich Text")}
+                >
+                    Text Editor
+                </button>
             </nav>
 
             {activeTab === "Templates Gallery" && (
@@ -86,7 +96,13 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
 
             {isLoading && <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div>}
 
-            <CreateTransactionalTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={activeTab === "Blank Template" ? "drag-and-drop" : "html-editor"} />
+            <CreateTransactionalTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={
+                activeTab === "Blank Template"
+                    ? "drag-and-drop"
+                    : activeTab === "Custom HTML"
+                        ? "html-editor"
+                        : "rich-text"
+            } />
         </div>
     );
 }

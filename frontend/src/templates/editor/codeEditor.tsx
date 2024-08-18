@@ -3,6 +3,7 @@ import Editor, { OnMount, OnChange, OnValidate } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import useTemplateStore from '../../store/userstore/templateStore';
 import { useNavigate, useLocation } from 'react-router-dom';
+import SendTestEmail from '../user/components/templates/sendTestEmail';
 
 function CodeEditor(): JSX.Element {
     const defaultTemplate = `
@@ -20,11 +21,13 @@ function CodeEditor(): JSX.Element {
     <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
     </head>
     <body>
-<!-- paste or write your code here -->
-</body>`
+    <!-- paste or write your code here -->
+    </body>
+    `
     const [code, setCode] = useState<string>(defaultTemplate);
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getSingleMarketingTemplate, getSingleTransactionalTemplate, currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore()
 
     const navigate = useNavigate();
@@ -106,6 +109,10 @@ function CodeEditor(): JSX.Element {
         return <div>Loading template...</div>;
     }
 
+    const testDesign = () => {
+        setIsModalOpen(true)
+    }
+
     const handleNavigate = () => {
         if (_type === "t") {
             navigate("/user/dash/templates")
@@ -131,7 +138,7 @@ function CodeEditor(): JSX.Element {
                     {autoSaved && (
                         <span className="text-green-600 mr-2">Auto Saved!</span>
                     )}
-                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2">
+                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2" onClick={testDesign}>
                         Send Test
                     </button>
                     <button className="bg-navy-900 text-black border-black cursor-pointer text-sm font-semibold px-3 py-1 rounded" onClick={() => { saveCode(); handleNavigate() }}>
@@ -150,6 +157,9 @@ function CodeEditor(): JSX.Element {
                 onChange={handleEditorChange}
                 onValidate={handleEditorValidation}
             />
+
+            <SendTestEmail isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} template_id={uuid as string} />
+                
         </div>
     );
 }

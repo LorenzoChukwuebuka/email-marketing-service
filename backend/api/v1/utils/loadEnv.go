@@ -23,6 +23,7 @@ type Config struct {
 	ENC_KEY               string `env:"ENC_KEY"`
 	SMTP_SERVER           string `env:"SMTP_SERVER"`
 	SMTP_PORT             string `env:"SMTP_PORT"`
+	MAIL_PROCESSOR   string `env:"MAIL_PROCESSOR"`
 }
 
 var LoadEnv = func() *Config {
@@ -48,6 +49,7 @@ var LoadEnv = func() *Config {
 		ENC_KEY:               os.Getenv("ENC_KEY"),
 		SMTP_SERVER:           os.Getenv("SMTP_SERVER"),
 		SMTP_PORT:             os.Getenv("SMTP_PORT"),
+		MAIL_PROCESSOR:   os.Getenv("MAIL_PROCESSOR"),
 	}
 
 	return config

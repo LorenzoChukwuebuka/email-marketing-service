@@ -101,6 +101,20 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.Te
 	return templateResponses, nil
 }
 
+func (r *TemplateRepository) GetSingleTemplate(templateId string) (*model.TemplateResponse, error) {
+	var template model.Template
+	result := r.DB.Where("  uuid = ?", templateId).First(&template)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	response := convertToTemplateResponse(&template)
+	return response, nil
+}
+
 func convertToTemplateResponse(t *model.Template) *model.TemplateResponse {
 	var deletedAt *string
 	if t.DeletedAt.Valid {

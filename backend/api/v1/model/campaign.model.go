@@ -46,3 +46,15 @@ type CampaignGroup struct {
 	Campaign     Campaign     `json:"-" gorm:"foreignKey:CampaignId"`
 	ContactGroup ContactGroup `json:"-" gorm:"foreignKey:GroupId"`
 }
+
+
+type EmailCampaignResult struct {
+	gorm.Model
+	UserID      string    `gorm:"index"`
+	CampaignID  string    `gorm:"index"`
+	Version     string    `gorm:"size:1"`
+	SentAt      time.Time
+	OpenedAt    *time.Time
+	ClickedAt   *time.Time
+	ConversionAt *time.Time
+}

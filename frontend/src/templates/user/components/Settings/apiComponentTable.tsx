@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import useAPIKeyStore from "../../../../store/userstore/apiKeyStore";
 import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
-import decryptApiKey from "../../../../utils/decryptEncryption";
 import EmptyState from "../../../../components/emptyStateComponent";
 
 interface APIKey {
@@ -76,7 +75,7 @@ const APIKeysTableComponent: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <span className="text-sm text-gray-500 mr-2">
-                                            {maskAPIKey(decryptApiKey(key.api_key))}
+                                            {maskAPIKey(key.api_key)}
                                         </span>
                                     </div>
                                 </td>

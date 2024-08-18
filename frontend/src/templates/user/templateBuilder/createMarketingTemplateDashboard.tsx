@@ -77,7 +77,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                     Custom HTML
                 </button>
 
-                {/* <button
+                <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Rich Text"
                         ? "border-blue-500 text-blue-500"
                         : "border-transparent hover:border-gray-300"
@@ -85,7 +85,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
                     onClick={() => handleTabChange("Rich Text")}
                 >
                     Text Editor
-                </button> */}
+                </button>
             </nav>
 
             {activeTab === "Templates Gallery" && (
@@ -96,7 +96,13 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
 
             {isLoading && <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div>}
 
-            <CreateMarketingTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={activeTab === "Blank Template" ? "drag-and-drop" : "html-editor"} />
+            <CreateMarketingTemplate isOpen={isModalOpen} onClose={handleCloseModal} editorType={
+                activeTab === "Blank Template"
+                    ? "drag-and-drop"
+                    : activeTab === "Custom HTML"
+                        ? "html-editor"
+                        : "rich-text"
+            } />
         </div>
     );
 };

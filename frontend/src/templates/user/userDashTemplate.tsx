@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import OverviewStats from "./components/dashboard/overviewStatscomponent";
 import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
+import ContactsDashboard from "./components/dashboard/contactsComponent";
 
 interface UserDetails {
     fullname: string;
@@ -73,6 +74,8 @@ const UserDashboardTemplate: React.FC = () => {
             <OverviewStats />
 
             <RecentCampaigns />
+
+            <ContactsDashboard/>
         </>
     );
 };

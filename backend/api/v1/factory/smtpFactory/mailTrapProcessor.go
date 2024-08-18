@@ -2,7 +2,6 @@ package smtpfactory
 
 import (
 	"email-marketing-service/api/v1/dto"
-	//"email-marketing-service/api/observers"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 )

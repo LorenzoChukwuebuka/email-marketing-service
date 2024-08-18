@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -70,14 +69,14 @@ func (r *ContactRepository) GetASingleContact(contactId string, userId string) (
 	return contactResponse, nil
 }
 
-func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams,searchQuery string) (PaginatedResult, error) {
+func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams, searchQuery string) (PaginatedResult, error) {
 	var contacts []model.Contact
 
 	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
 
 	if searchQuery != "" {
-        query = query.Where("name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%")
-    }
+		query = query.Where("name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%")
+	}
 
 	paginatedResult, err := Paginate(query, params, &contacts)
 	if err != nil {
@@ -402,4 +401,25 @@ func (r *ContactRepository) CheckIfGroupNameExists(d *model.ContactGroup) (bool,
 	}
 	return true, nil
 
+}
+
+func (r *ContactRepository) GetContactCount(userId string) (map[string]int64, error) {
+	contactCounts := make(map[string]int64)
+	var totalCount int64
+	var recentCount int64
+
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Count(&totalCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count total contacts: %w", err)
+	}
+
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND created_at >= ?", userId, thirtyDaysAgo).Count(&recentCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count recent contacts: %w", err)
+	}
+
+	contactCounts["total"] = totalCount
+	contactCounts["recent"] = recentCount
+
+	return contactCounts, nil
 }
