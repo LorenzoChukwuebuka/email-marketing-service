@@ -1,13 +1,15 @@
-import  { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useTemplateStore from '../../store/userstore/templateStore';
 import 'react-quill/dist/quill.snow.css';
+import SendTestEmail from '../user/components/templates/sendTestEmail';
 
 const RichTextEditor = () => {
     const quillRef = useRef<ReactQuill>(null);
     const [autoSaved, setAutoSaved] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getSingleMarketingTemplate, getSingleTransactionalTemplate, currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore();
     const navigate = useNavigate();
     const location = useLocation();
@@ -72,6 +74,10 @@ const RichTextEditor = () => {
         saveDesign();
     };
 
+    const testDesign = () => {
+        setIsModalOpen(true)
+    }
+
     if (!currentTemplate) {
         return <div>Loading template...</div>;
     }
@@ -101,7 +107,7 @@ const RichTextEditor = () => {
                     {autoSaved && (
                         <span className="text-green-600 mr-2">Auto Saved!</span>
                     )}
-                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2">
+                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2" onClick={testDesign}>
                         Send Test
                     </button>
                     <button className="bg-navy-900 text-black border-black text-md cursor-pointer font-semibold px-3 py-1 rounded" onClick={() => { saveDesign(); handleNavigate(); }}>
@@ -139,6 +145,8 @@ const RichTextEditor = () => {
                     style={{ height: 'calc(100vh - 5em)', overflowY: 'auto' }}
                 />
             </div>
+
+            <SendTestEmail isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} template_id={uuid as string} />
         </div>
     );
 };

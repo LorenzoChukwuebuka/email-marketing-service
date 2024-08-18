@@ -44,6 +44,9 @@ const TransactionalTemplateDash: React.FC = () => {
             case "drag-and-drop":
                 redirectUrl = `/editor/1?type=t&uuid=${template.uuid}`;
                 break;
+            case "rich-text":
+                redirectUrl = `/editor/3?type=t&uuid=${template.uuid}`;
+                break;
             default:
                 console.log("Unknown editor type:", editorType);
                 return;

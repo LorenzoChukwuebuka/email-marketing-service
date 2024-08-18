@@ -6,3 +6,7 @@ type CampaignService struct {}
 func NewCampaignService () *CampaignService {
 	return &CampaignService{}
 }
+
+
+func (s *CampaignService) CreateCampaign(){}
+

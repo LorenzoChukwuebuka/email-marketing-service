@@ -8,6 +8,7 @@ import BillingDashTemplate from "../templates/user/BillingTemplate/BillingDashTe
 import TemplateBuilderDashComponent from '../templates/user/templateBuilder/templateDashComponent';
 import CreateMarketingTemplateDashBoard from "../templates/user/templateBuilder/createMarketingTemplateDashboard";
 import CreateTransactionalTemplateDashBoard from "../templates/user/templateBuilder/createTransactionalTemplateDashboard";
+import CampaignDashTemplate from "../templates/user/campaign/campaignDashTemplate";
 
 const UserDashRoute = () => (
     <Routes>
@@ -28,6 +29,7 @@ const UserDashRoute = () => (
             <Route path="templates" element={<TemplateBuilderDashComponent />} />
             <Route path="marketing" element={<CreateMarketingTemplateDashBoard />} />
             <Route path="transactional" element={<CreateTransactionalTemplateDashBoard />} />
+            <Route path="campaign" element={<CampaignDashTemplate />} />
         </Route>
 
     </Routes>

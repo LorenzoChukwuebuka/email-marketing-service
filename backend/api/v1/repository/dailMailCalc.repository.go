@@ -44,7 +44,7 @@ func (r *DailyMailCalcRepository) GetDailyMailRecordForToday(subscriptionId int)
 		UpdatedAt:      record.UpdatedAt.String(),
 	}
 
-	fmt.Printf("Record: %+v\n", record)
+	// fmt.Printf("Record: %+v\n", record)
 
 	return response, nil
 }

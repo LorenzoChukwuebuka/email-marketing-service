@@ -99,9 +99,9 @@ const UserDashLayout: React.FC = () => {
                                 </Link>
                             </li>
 
-                            <li className={getLinkClassName("/campaigns")}>
+                            <li className={getLinkClassName("/user/dash/campaign")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/campaign"
                                     className="flex font-semibold text-base items-center"
                                 >
                                     <i className="bi bi-megaphone-fill"></i> &nbsp; Campaigns
@@ -221,7 +221,10 @@ const UserDashLayout: React.FC = () => {
                     </button>
                     {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
+                  <div className="space-x-4 "> 
+                  <i className="bi bi-bell font-bold"></i>
                     <div className="dropdown dropdown-end">
+                   
                         <div
                             tabIndex={0}
                             role="button"
@@ -259,6 +262,7 @@ const UserDashLayout: React.FC = () => {
                                 </li>
                             </ul>
                         )}
+                    </div>
                     </div>
                 </header>
 

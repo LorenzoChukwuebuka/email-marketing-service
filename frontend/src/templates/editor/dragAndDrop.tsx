@@ -3,10 +3,12 @@ import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
 import { useLocation } from 'react-router-dom';
 import useTemplateStore from '../../store/userstore/templateStore';
 import { useNavigate } from 'react-router-dom';
+import SendTestEmail from '../user/components/templates/sendTestEmail';
 
 const DragAndDropEditor: React.FC = () => {
     const emailEditorRef = useRef<EditorRef>(null);
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getSingleMarketingTemplate, getSingleTransactionalTemplate, currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore()
 
     const navigate = useNavigate()
@@ -81,6 +83,10 @@ const DragAndDropEditor: React.FC = () => {
         return <div>Loading template...</div>;
     }
 
+    const testDesign = () => {
+        setIsModalOpen(true)
+    }
+
 
     const handleNavigate = () => {
         if (_type === "t") {
@@ -108,7 +114,7 @@ const DragAndDropEditor: React.FC = () => {
                     {autoSaved && (
                         <span className="text-green-600 mr-2">Auto Saved!</span>
                     )}
-                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2">
+                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2" onClick={testDesign}>
                         Send Test
                     </button>
                     <button className="bg-navy-900 text-black border-black text-md cursor-pointer font-semibold px-3 py-1 rounded" onClick={() => { saveDesign(); handleNavigate() }}>
@@ -120,6 +126,8 @@ const DragAndDropEditor: React.FC = () => {
             <div className="flex-grow">
                 <EmailEditor ref={emailEditorRef} onReady={onReady} style={{ height: "100vh" }} />
             </div>
+
+            <SendTestEmail isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} template_id={uuid as string} />
         </div>
     );
 };

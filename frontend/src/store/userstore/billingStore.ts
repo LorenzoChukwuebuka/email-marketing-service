@@ -132,15 +132,12 @@ const useBillingStore = create<BillingStore>((set, get) => ({
     fetchBillingData: async (page = 1, pageSize = 10) => {
         try {
             const { setBillingData, setPaginationInfo,setIsLoading } = get()
-
             setIsLoading(true)
-            console.log('Fetching billing data...')
-
             let response = await axiosInstance.get<BillingAPIResponse>(`/get-all-billing?page=${page}&page_size=${pageSize}`)
             const { data, ...paginationInfo } = response.data.payload;
             setPaginationInfo(paginationInfo);
             setBillingData(data)
-            console.log('Billing data fetched:', data)
+            
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -150,8 +147,6 @@ const useBillingStore = create<BillingStore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         }finally{
-            console.log('Setting isLoading to false')
-
             get().setIsLoading(false)
         }
     }

@@ -2,7 +2,7 @@
 FROM golang:1.21 as backend-builder
 WORKDIR /app/backend
 COPY backend/ ./
-RUN make buildfe
+#RUN make buildfe
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Final Stage: Production image

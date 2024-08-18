@@ -26,12 +26,21 @@ export type Template = {
     editor_type: string | null;
 };
 
+
+export type SendTestMailValues = {
+    template_id: string
+    email_address: string
+    subject: string
+}
+
 type TemplateStore = {
     formValues: Omit<Template, "user_id">;
+    sendEmailTestValues: SendTestMailValues
     templateData: (Template & BaseEntity)[] | (Template & BaseEntity)
     _templateData: (Template & BaseEntity)[] | (Template & BaseEntity)
     setTemplateData: (newData: (Template & BaseEntity)[] | (Template & BaseEntity)) => void
     _setTemplateData: (newData: (Template & BaseEntity)[] | (Template & BaseEntity)) => void
+    setEmailTestValues: (newData: SendTestMailValues) => void
     currentTemplate: (Template & BaseEntity) | null;
     setCurrentTemplate: (template: (Template & BaseEntity) | null) => void;
     setFormValues: (newFormValues: Omit<Template, "user_id">) => void;
@@ -43,8 +52,8 @@ type TemplateStore = {
     updateTemplate: (uuid: string, updatedTemplate: Template & BaseEntity) => Promise<void>
     deleteTemplate: (uuid: string) => Promise<void>
     resetForm: () => void
+    sendTestMail: () => Promise<void>
 };
-
 
 type TemplateResponse = APIResponse<(Template & BaseEntity)[] | (Template & BaseEntity)>
 
@@ -69,6 +78,12 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         editor_type: null,
     },
 
+    sendEmailTestValues: {
+        email_address: "",
+        template_id: "",
+        subject: ""
+    },
+
     templateData: [],
     _templateData: [],
     currentTemplate: null,
@@ -76,6 +91,7 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
     setFormValues: (newFormValues) => set({ formValues: newFormValues }),
     _setTemplateData: (newData) => set({ _templateData: newData }),
     setCurrentTemplate: (template) => set({ currentTemplate: template }),
+    setEmailTestValues: (newData) => set({ sendEmailTestValues: newData }),
 
     getAllMarketingTemplates: async () => {
         try {
@@ -105,6 +121,9 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
                     break;
                 case "drag-and-drop":
                     redirectUrl = `/editor/1?type=${typeParam}&uuid=${templateId}`;
+                    break;
+                case "rich-text":
+                    redirectUrl = `/editor/3?type=${typeParam}&uuid=${templateId}`
                     break;
                 default:
                     console.log("Unknown editor type:", editorType);
@@ -187,6 +206,33 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
 
     deleteTemplate: async (uuid: string) => {
 
+    },
+
+
+    sendTestMail: async () => {
+        try {
+            const { sendEmailTestValues } = get()
+            let address = sendEmailTestValues.email_address
+            let str = address.split(",")
+            if (str.length > 10) {
+                eventBus.emit('error', "You exceeded the number email of addresses")
+                return
+            }
+            let response = await axiosInstance.post<ResponseT>("/templates/send-test-mails", sendEmailTestValues)
+            if (response.data.status === true) {
+                eventBus.emit('success', "Test mails sent successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        } finally {
+            get().setEmailTestValues({ template_id: "", email_address: "", subject: "" })
+        }
     },
 
     resetForm: () => set({
