@@ -4,14 +4,12 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"fmt"
-	"strconv"
 	"time"
-	"github.com/google/uuid"
 )
 
 type SubscriptionService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
-	DailyMailRepo    *repository.DailyMailCalcRepository
+	MailUsageRepo    *repository.MailUsageRepository
 	PlanRepo         *repository.PlanRepository
 }
 
@@ -26,13 +24,13 @@ type CurrentSubscription struct {
 	Expired   bool
 }
 
-func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, dailyMailCalc *repository.DailyMailCalcRepository, planRepo *repository.PlanRepository) *SubscriptionService {
-	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, DailyMailRepo: dailyMailCalc}
+func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, mailUsageRepo *repository.MailUsageRepository, planRepo *repository.PlanRepository) *SubscriptionService {
+	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, MailUsageRepo: mailUsageRepo}
 }
 
 func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.Subscription, error) {
 
-	tx := s.DailyMailRepo.DB.Begin()
+	tx := s.MailUsageRepo.DB.Begin()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -54,21 +52,10 @@ func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.
 		return nil, err
 	}
 
-	plansPerDay, _ := strconv.Atoi(plan.NumberOfMailsPerDay)
-
-	dailyCalcData := &model.DailyMailCalc{
-		UUID:           uuid.New().String(),
-		SubscriptionID: int(subId),
-		MailsForADay:   plansPerDay,
-		MailsSent:      0,
-		RemainingMails: plansPerDay,
-	}
-
-	err = s.DailyMailRepo.CreateRecordDailyMailCalculation(dailyCalcData)
-
+	_, err = s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(subId), plan.MailingLimit.LimitAmount, false)
 	if err != nil {
 		tx.Rollback()
-		return nil, err
+		return nil, fmt.Errorf("failed to create mail usage record: %w", err)
 	}
 
 	if err := tx.Commit().Error; err != nil {

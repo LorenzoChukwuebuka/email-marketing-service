@@ -3,6 +3,7 @@ package repository
 import (
 	"email-marketing-service/api/v1/model"
 	"fmt"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 
 func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse {
 	response := model.PlanResponse{
-		ID: plan.ID,
+		ID:                  plan.ID,
 		UUID:                plan.UUID,
 		PlanName:            plan.PlanName,
 		Duration:            plan.Duration,
@@ -29,6 +30,7 @@ func (r *PlanRepository) createPlanResponse(plan model.Plan) model.PlanResponse 
 		Details:             plan.Details,
 		Status:              plan.Status,
 		Features:            plan.Features,
+		MailingLimit:        plan.MailingLimit,
 		CreatedAt:           plan.CreatedAt.String(),
 		UpdatedAt:           plan.UpdatedAt.String(),
 	}
@@ -48,7 +50,27 @@ func (r *PlanRepository) CreatePlan(plan *model.Plan, features []model.PlanFeatu
 			return fmt.Errorf("failed to insert plan: %w", err)
 		}
 
-		// Now that we have the plan ID, set it for each feature and create the features
+		limitAmount, err := strconv.Atoi(plan.NumberOfMailsPerDay)
+		if err != nil {
+			return fmt.Errorf("failed to parse NumberOfMailsPerDay: %w", err)
+		}
+
+		mailingLimit := model.MailingLimit{
+			PlanID:      plan.ID,
+			LimitAmount: limitAmount,
+			LimitPeriod: func() string {
+				if plan.PlanName == "free" {
+					return "day"
+				}
+				return "month"
+			}(),
+		}
+
+		if err := tx.Create(&mailingLimit).Error; err != nil {
+			return fmt.Errorf("failed to insert mailing limit: %w", err)
+		}
+
+		// Create features (existing code)
 		for i := range features {
 			features[i].PlanID = plan.ID
 			if err := tx.Create(&features[i]).Error; err != nil {
@@ -58,6 +80,7 @@ func (r *PlanRepository) CreatePlan(plan *model.Plan, features []model.PlanFeatu
 
 		// Set the features on the plan
 		plan.Features = features
+		plan.MailingLimit = mailingLimit
 
 		return nil
 	})
@@ -67,6 +90,7 @@ func (r *PlanRepository) CreatePlan(plan *model.Plan, features []model.PlanFeatu
 	}
 
 	return plan, nil
+
 }
 
 func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
@@ -80,7 +104,7 @@ func (r *PlanRepository) PlanExistsByName(planname string) (bool, error) {
 
 func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 	var plans []model.Plan
-	if err := r.DB.Model(&model.Plan{}).Preload("Features").Find(&plans).Error; err != nil {
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Preload("MailingLimit").Find(&plans).Error; err != nil {
 		return nil, err
 	}
 
@@ -94,7 +118,7 @@ func (r *PlanRepository) GetAllPlans() ([]model.PlanResponse, error) {
 
 func (r *PlanRepository) GetSinglePlan(uuid string) (model.PlanResponse, error) {
 	var plan model.Plan
-	if err := r.DB.Model(&model.Plan{}).Preload("Features").Where("uuid = ?", uuid).First(&plan).Error; err != nil {
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Preload("MailingLimit").Where("uuid = ?", uuid).First(&plan).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return model.PlanResponse{}, gorm.ErrRecordNotFound
 		}
@@ -103,10 +127,18 @@ func (r *PlanRepository) GetSinglePlan(uuid string) (model.PlanResponse, error) 
 	return r.createPlanResponse(plan), nil
 }
 
+func (r *PlanRepository) GetPlanById(id uint) (model.PlanResponse, error) {
+	var plan model.Plan
+	if err := r.DB.Model(&model.Plan{}).Preload("Features").Preload("MailingLimit").Where("id = ?", id).First(&plan).Error; err != nil {
+		return model.PlanResponse{}, err
+	}
+	return r.createPlanResponse(plan), nil
+}
+
 func (r *PlanRepository) EditPlan(data *model.Plan) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		existingPlan := model.Plan{}
-		if err := tx.Preload("Features").Where("uuid = ?", data.UUID).First(&existingPlan).Error; err != nil {
+		if err := tx.Preload("Features").Preload("MailingLimit").Where("uuid = ?", data.UUID).First(&existingPlan).Error; err != nil {
 			return fmt.Errorf("failed to find plan for editing: %w", err)
 		}
 
@@ -118,12 +150,22 @@ func (r *PlanRepository) EditPlan(data *model.Plan) error {
 		existingPlan.Details = data.Details
 		existingPlan.Status = data.Status
 
-		// Delete existing features
+		limitAmount, err := strconv.Atoi(data.NumberOfMailsPerDay)
+		if err != nil {
+			return fmt.Errorf("failed to parse NumberOfMailsPerDay: %w", err)
+		}
+
+		// Update MailingLimit
+		existingPlan.MailingLimit.LimitAmount = limitAmount
+		if err := tx.Save(&existingPlan.MailingLimit).Error; err != nil {
+			return fmt.Errorf("failed to update mailing limit: %w", err)
+		}
+
+		// Update features (existing code)
 		if err := tx.Where("plan_id = ?", existingPlan.ID).Delete(&model.PlanFeature{}).Error; err != nil {
 			return fmt.Errorf("failed to delete existing features: %w", err)
 		}
 
-		// Add new features
 		existingPlan.Features = data.Features
 		for i := range existingPlan.Features {
 			existingPlan.Features[i].PlanID = existingPlan.ID
@@ -150,6 +192,11 @@ func (r *PlanRepository) DeletePlan(id string) error {
 			return fmt.Errorf("failed to delete associated features: %w", err)
 		}
 
+		// Delete associated MailingLimit
+		if err := tx.Where("plan_id = ?", existingPlan.ID).Delete(&model.MailingLimit{}).Error; err != nil {
+			return fmt.Errorf("failed to delete associated mailing limit: %w", err)
+		}
+
 		// Soft delete the plan
 		if err := tx.Delete(&existingPlan).Error; err != nil {
 			return fmt.Errorf("failed to delete plan: %w", err)
@@ -157,12 +204,4 @@ func (r *PlanRepository) DeletePlan(id string) error {
 
 		return nil
 	})
-}
-
-func (r *PlanRepository) GetPlanById(id uint) (model.PlanResponse, error) {
-	var plan model.Plan
-	if err := r.DB.Model(&model.Plan{}).Preload("Features").Where("id = ?", id).First(&plan).Error; err != nil {
-		return model.PlanResponse{}, err
-	}
-	return r.createPlanResponse(plan), nil
 }

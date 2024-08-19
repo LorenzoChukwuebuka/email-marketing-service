@@ -61,7 +61,6 @@ func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) (uint
 	return d.ID, nil
 }
 
-
 func (r *SubscriptionRepository) GetUserCurrentRunningSubscription(userId uint) (*model.Subscription, error) {
 	var subscription model.Subscription
 

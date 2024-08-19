@@ -11,7 +11,7 @@ func MailFactory(mailhost string) (SmtpMethodInterface, error) {
 	case "Paystack":
 		return nil, nil
 	default:
-		return nil, fmt.Errorf("invalid payment type: %s", mailhost)
+		return nil, fmt.Errorf("invalid mail processor: %s", mailhost)
 	}
 
 }

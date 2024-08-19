@@ -5,18 +5,18 @@ import (
 	adminmodel "email-marketing-service/api/v1/model/admin"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"log"
-	"sync"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
+	"sync"
 )
 
 var (
-	db   *gorm.DB
-	once sync.Once
+	db     *gorm.DB
+	once   sync.Once
+	config = utils.LoadEnv()
 )
 
 func GetDB() *gorm.DB {
@@ -53,7 +53,6 @@ func initializeDatabase() {
 	autoMigrateModels()
 	fmt.Println("Connected to the database")
 
-
 	seedData(db)
 }
 
@@ -65,7 +64,7 @@ func autoMigrateModels() {
 		&model.Plan{},
 		&model.PlanFeature{},
 		&model.APIKey{},
-		&model.DailyMailCalc{},
+		&model.MailUsage{},
 		&model.Subscription{},
 		&model.Billing{},
 		&adminmodel.Admin{},
@@ -80,7 +79,7 @@ func autoMigrateModels() {
 		&model.Contact{},
 		&model.UserContactGroup{},
 		&model.Template{},
-		&model.MonthlyMailCalc{},
+		&model.MailingLimit{},
 	)
 
 	if err != nil {
@@ -94,15 +93,15 @@ func seedData(db *gorm.DB) {
 	var planCount int64
 	db.Model(&model.Plan{}).Count(&planCount)
 	if planCount == 0 {
-		// Seed Plan and PlanFeature data
+		// Create the Plan first
 		plan := model.Plan{
-			UUID:                uuid.New().String(),
-			PlanName:            "Free",
-			Duration:            "month",
-			Price:               00,
-			NumberOfMailsPerDay: "100",
-			Details:             "Our best plan for power users",
-			Status:              model.PlanStatus("active"),
+			UUID:     uuid.New().String(),
+			PlanName: "Free",
+			Duration: "month",
+			Price:    0,
+			Details:  "Our best plan for power users",
+			Status:   model.PlanStatus(model.StatusActive),
+			IsPaid:   false,
 			Features: []model.PlanFeature{
 				{
 					UUID:        uuid.New().String(),
@@ -125,12 +124,25 @@ func seedData(db *gorm.DB) {
 			},
 		}
 
-		result := db.Create(&plan)
-		if result.Error != nil {
-			log.Printf("Failed to seed Plan data: %v", result.Error)
-		} else {
-			fmt.Println("Plan data seeded successfully")
+		// Create the Plan
+		if err := db.Create(&plan).Error; err != nil {
+			log.Printf("Failed to seed Plan data: %v", err)
+			return
 		}
+
+		// Now create the MailingLimit with the correct PlanID
+		mailingLimit := model.MailingLimit{
+			PlanID:      plan.ID,
+			LimitAmount: 100,
+			LimitPeriod: "day",
+		}
+
+		if err := db.Create(&mailingLimit).Error; err != nil {
+			log.Printf("Failed to seed MailingLimit data: %v", err)
+			return
+		}
+
+		fmt.Println("Plan and MailingLimit data seeded successfully")
 	} else {
 		fmt.Println("Plan data already exists, skipping seed")
 	}
@@ -139,13 +151,12 @@ func seedData(db *gorm.DB) {
 	var adminCount int64
 	db.Model(&adminmodel.Admin{}).Count(&adminCount)
 	if adminCount == 0 {
-		// Seed Admin data
+
 		firstName := "hello"
 		middleName := "wedon't really know"
 		lastName := "hello"
-		password := "hello123"
+		password := config.ADMIN_PASSWORD
 
-		// Hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			log.Printf("Failed to hash password: %v", err)
@@ -157,8 +168,8 @@ func seedData(db *gorm.DB) {
 			FirstName:  &firstName,
 			MiddleName: &middleName,
 			LastName:   &lastName,
-			Email:      "admin@admin.com",
-			Password:   hashedPassword,
+			Email:      config.ADMIN_EMAIL,
+			Password:   string(hashedPassword),
 			Type:       "admin",
 		}
 

@@ -25,9 +25,9 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	planRepository := repository.NewPlanRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	billingRepository := repository.NewBillingRepository(db)
-	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
 	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
-	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, dailyMailCalcRepository, smtpKeyRepository)
+	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository)
 	userController := controllers.NewUserController(userService)
 	return userController, nil
 }
@@ -57,9 +57,9 @@ func InitializeUserssionController(db *gorm.DB) (*controllers.UserSessionControl
 func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionController, error) {
 	billingRepository := repository.NewBillingRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository, dailyMailCalcRepository, planRepository)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository)
 	userRepository := repository.NewUserRepository(db)
 	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository, subscriptionRepository, planRepository)
 	transactionController := controllers.NewTransactionController(billingService)
@@ -70,10 +70,11 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 	apiKeyRepository := repository.NewAPIkeyRepository(db)
 	apiKeyService := services.NewAPIKeyService(apiKeyRepository)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	mailStatusRepository := repository.NewMailStatusRepository(db)
-	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, dailyMailCalcRepository, userRepository, mailStatusRepository)
+	planRepository := repository.NewPlanRepository(db)
+	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, mailUsageRepository, userRepository, mailStatusRepository, planRepository)
 	smtpMailController := controllers.NewSMTPMailController(apiKeyService, smtpMailService)
 	return smtpMailController, nil
 }
@@ -87,9 +88,9 @@ func InitializeSMTPKeyController(db *gorm.DB) (*controllers.SMTPKeyController, e
 
 func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionController, error) {
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository, dailyMailCalcRepository, planRepository)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository)
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 	return subscriptionController, nil
 }
@@ -128,9 +129,10 @@ func InitializeContactController(db *gorm.DB) (*controllers.ContactController, e
 func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController, error) {
 	templateRepository := repository.NewTemplateRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
-	dailyMailCalcRepository := repository.NewDailyMailCalcRepository(db)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
 	userRepository := repository.NewUserRepository(db)
-	templateService := services.NewTemplateService(templateRepository, subscriptionRepository, dailyMailCalcRepository, userRepository)
+	planRepository := repository.NewPlanRepository(db)
+	templateService := services.NewTemplateService(templateRepository, subscriptionRepository, mailUsageRepository, userRepository, planRepository)
 	templateController := controllers.NewTemplateController(templateService)
 	return templateController, nil
 }

@@ -11,14 +11,12 @@ type Admin struct {
 	MiddleName *string   `json:"middlename"`
 	LastName   *string   `json:"lastname"`
 	Email      string    `json:"email"`
-	Password   []byte    `json:"password"`
+	Password   string    `json:"password"`
 	Type       string    `json:"type"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
 	DeletedAt  time.Time `json:"deleted_at" gorm:"type:TIMESTAMP;null;default:null"`
 }
-
- 
 
 type AdminResponse struct {
 	ID         int     `json:"-"`
@@ -27,7 +25,7 @@ type AdminResponse struct {
 	MiddleName *string `json:"middlename"`
 	LastName   *string `json:"lastname"`
 	Email      string  `json:"email"`
-	Password   []byte  `json:"password"`
+	Password   string  `json:"password"`
 	Type       string  `jsosn:"type"`
 }
 

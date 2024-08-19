@@ -19,7 +19,7 @@ func (m *Mail) SignUpMail(email string, username string, userId string, otp stri
 	<body style="font-family: Arial, sans-serif;">
 		<h2>Hi .Username ,</h2>
 		<p>Thank you for registering with our service. Please use the link to verify your email address and complete your account setup:</p>
-	   <p><a href="http://localhost:5174/auth/account-verification?email=.Email&token=.Token&userId=.UserId" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Account </a></p>
+	   <p><a href="http://localhost:5054/auth/account-verification?email=.Email&token=.Token&userId=.UserId" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Account </a></p>
 		<p>If you did not attempt to register with our service, please ignore this email.</p>
 		<br>
 		<p>Regards,<br> .AppName </p>

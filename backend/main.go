@@ -16,7 +16,7 @@ import (
 func cronJobs(dbConn *gorm.DB) *cron.Cron {
 	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
 	planRepo := repository.NewPlanRepository(dbConn)
-	dailyRepo := repository.NewDailyMailCalcRepository(dbConn)
+	dailyRepo := repository.NewMailUsageRepository(dbConn)
 	subscriptionService := services.NewSubscriptionService(subscriptionRepo, dailyRepo, planRepo)
 
 	// Create a new cron scheduler
