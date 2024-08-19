@@ -3,6 +3,8 @@ package custom
 import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/utils"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,74 +16,61 @@ var (
 )
 
 func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
-	mailTemplate := `
-	<html>
-	<body style="font-family: Arial, sans-serif;">
-		<h2>Hi .Username ,</h2>
-		<p>Thank you for registering with our service. Please use the link to verify your email address and complete your account setup:</p>
-	   <p><a href="http://localhost:5054/auth/account-verification?email=.Email&token=.Token&userId=.UserId" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Account </a></p>
-		<p>If you did not attempt to register with our service, please ignore this email.</p>
-		<br>
-		<p>Regards,<br> .AppName </p>
-	</body>
-</html>
-`
-	//replace placeholders
-
-	replacements := map[string]string{
-		".Username": username,
-		".Token":    otp,
-		".AppName":  config.APPName,
-		".UserId":   userId,
-		".Email":    email,
+	// Read the template file
+	templatePath := filepath.Join("api", "v1", "templates", "verifyuser.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
 	}
 
-	formattedMail := mailTemplate
+	replacements := map[string]string{
+		"{{Link}}":     "http://localhost:5054/auth/account-verification",
+		"{{Username}}": username,
+		"{{Token}}":    otp,
+		"{{AppName}}":  config.APPName,
+		"{{UserId}}":   userId,
+		"{{Email}}":    email,
+	}
+
+	formattedMail := string(mailTemplate)
 
 	for placeholder, value := range replacements {
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Email Verification", email, formattedMail)
+	err = utils.SendMail("Email Verification", email, formattedMail)
 
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 func (m *Mail) ResetPasswordMail(email string, username string, otp string) error {
 
-	mailTemplate :=
-		`<html>
-    <body style="font-family: Arial, sans-serif;">
-        <h2>Hello .Username,</h2>
-       <p>  
-         We’ve received a request to change your password. If it was you, please confirm the password change. </p>
-        <p>Click the link below to reset your password:</p>
-        <p><a href="http://localhost:5174/auth/reset-password?email=.Email&token=.Token" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
-        <p>If you did not attempt to reset your password, please ignore this email.</p>
-		<br>
-        <p>Regards,<br>.AppName</p>
-    </body>
-</html>
-`
-	replacements := map[string]string{
-		".Username": username,
-		".Token":    otp,
-		".Email":    email,
-		".AppName":  config.APPName,
+	// Read the template file
+	templatePath := filepath.Join("api", "v1", "templates", "resetpassword.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
 	}
 
-	formattedMail := mailTemplate
+	replacements := map[string]string{
+		"{{Link}}":     "http://localhost:5054/auth/reset-password",
+		"{{Username}}": username,
+		"{{Token}}":    otp,
+		"{{Email}}":    email,
+		"{{AppName}}":  config.APPName,
+	}
+
+	formattedMail := string(mailTemplate)
 
 	for placeholder, value := range replacements {
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Password Reset", email, formattedMail)
+	err = utils.SendMail("Password Reset", email, formattedMail)
 
 	if err != nil {
 		return err
