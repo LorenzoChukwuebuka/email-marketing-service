@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import * as Yup from "yup";
-import useAuthStore from "../../store/AuthStore";
+import useAuthStore from "../../store/userstore/AuthStore";
 
 
 const ResetPasswordTemplate: React.FC = () => {

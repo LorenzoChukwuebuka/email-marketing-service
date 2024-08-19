@@ -54,11 +54,11 @@ func (r *SubscriptionRepository) createSubscriptionResponse(s model.Subscription
 
 }
 
-func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) error {
+func (r *SubscriptionRepository) CreateSubscription(d *model.Subscription) (uint, error) {
 	if err := r.DB.Create(&d).Error; err != nil {
-		return fmt.Errorf("failed to insert plan: %w", err)
+		return 0, fmt.Errorf("failed to insert subscription: %w", err)
 	}
-	return nil
+	return d.ID, nil
 }
 
 func (r *SubscriptionRepository) GetUserCurrentRunningSubscription(userId uint) (*model.Subscription, error) {

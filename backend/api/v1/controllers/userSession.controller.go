@@ -19,8 +19,6 @@ func NewUserSessionController(usersessionSvc *services.UserSessionService) *User
 	}
 }
 
- 
-
 func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.UserSession
 

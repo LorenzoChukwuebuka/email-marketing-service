@@ -5,6 +5,8 @@ import (
 	adminmodel "email-marketing-service/api/v1/model/admin"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -12,8 +14,9 @@ import (
 )
 
 var (
-	db   *gorm.DB
-	once sync.Once
+	db     *gorm.DB
+	once   sync.Once
+	config = utils.LoadEnv()
 )
 
 func GetDB() *gorm.DB {
@@ -49,6 +52,8 @@ func initializeDatabase() {
 
 	autoMigrateModels()
 	fmt.Println("Connected to the database")
+
+	seedData(db)
 }
 
 func autoMigrateModels() {
@@ -59,7 +64,7 @@ func autoMigrateModels() {
 		&model.Plan{},
 		&model.PlanFeature{},
 		&model.APIKey{},
-		&model.DailyMailCalc{},
+		&model.MailUsage{},
 		&model.Subscription{},
 		&model.Billing{},
 		&adminmodel.Admin{},
@@ -73,9 +78,111 @@ func autoMigrateModels() {
 		&model.ContactGroup{},
 		&model.Contact{},
 		&model.UserContactGroup{},
+		&model.Template{},
+		&model.MailingLimit{},
+		&model.Campaign{},
+		&model.CampaignGroup{},
+		&model.EmailCampaignResult{},
 	)
 
 	if err != nil {
 		log.Fatalf("Migration Failed: %v", err)
+	}
+
+}
+
+func seedData(db *gorm.DB) {
+	// Check if Plan data already exists
+	var planCount int64
+	db.Model(&model.Plan{}).Count(&planCount)
+	if planCount == 0 {
+		// Create the Plan first
+		plan := model.Plan{
+			UUID:     uuid.New().String(),
+			PlanName: "Free",
+			Duration: "month",
+			Price:    0,
+			Details:  "Our best plan for power users",
+			Status:   model.PlanStatus(model.StatusActive),
+			IsPaid:   false,
+			Features: []model.PlanFeature{
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Advanced Analytics",
+					Identifier:  "adv_analytics",
+					CountLimit:  100,
+					SizeLimit:   1000,
+					IsActive:    true,
+					Description: "Get detailed insights into your email campaigns",
+				},
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Custom Templates",
+					Identifier:  "custom_templates",
+					CountLimit:  50,
+					SizeLimit:   500,
+					IsActive:    true,
+					Description: "Create and save your own email templates",
+				},
+			},
+		}
+
+		// Create the Plan
+		if err := db.Create(&plan).Error; err != nil {
+			log.Printf("Failed to seed Plan data: %v", err)
+			return
+		}
+
+		// Now create the MailingLimit with the correct PlanID
+		mailingLimit := model.MailingLimit{
+			PlanID:      plan.ID,
+			LimitAmount: 100,
+			LimitPeriod: "day",
+		}
+
+		if err := db.Create(&mailingLimit).Error; err != nil {
+			log.Printf("Failed to seed MailingLimit data: %v", err)
+			return
+		}
+
+		fmt.Println("Plan and MailingLimit data seeded successfully")
+	} else {
+		fmt.Println("Plan data already exists, skipping seed")
+	}
+
+	// Check if Admin data already exists
+	var adminCount int64
+	db.Model(&adminmodel.Admin{}).Count(&adminCount)
+	if adminCount == 0 {
+
+		firstName := "hello"
+		middleName := "wedon't really know"
+		lastName := "hello"
+		password := config.ADMIN_PASSWORD
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Failed to hash password: %v", err)
+			return
+		}
+
+		admin := adminmodel.Admin{
+			UUID:       uuid.New().String(),
+			FirstName:  &firstName,
+			MiddleName: &middleName,
+			LastName:   &lastName,
+			Email:      config.ADMIN_EMAIL,
+			Password:   string(hashedPassword),
+			Type:       "admin",
+		}
+
+		result := db.Create(&admin)
+		if result.Error != nil {
+			log.Printf("Failed to seed Admin data: %v", result.Error)
+		} else {
+			fmt.Println("Admin data seeded successfully")
+		}
+	} else {
+		fmt.Println("Admin data already exists, skipping seed")
 	}
 }

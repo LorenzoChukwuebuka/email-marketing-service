@@ -1,13 +1,12 @@
 import * as Yup from "yup";
-import useAuthStore from "../../store/AuthStore";
+import useAuthStore from "../../store/userstore/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const SignUpTemplate: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const { formValues, isLoading, setFormValues, registerUser } = useAuthStore();
-    const navigate = useNavigate();
 
     const validationSchema = Yup.object().shape({
         fullname: Yup.string()
@@ -29,15 +28,7 @@ const SignUpTemplate: React.FC = () => {
         e.preventDefault();
         try {
             await validationSchema.validate(formValues, { abortEarly: false });
-            const registeredData = await registerUser();
-
-            if (registeredData) {
-                navigate(
-                    `/auth/otp-token?email=${encodeURIComponent(registeredData.email)}
-          &username=${encodeURIComponent(registeredData.fullname)}
-          &userId=${encodeURIComponent(registeredData.userId)}`
-                );
-            }
+            await registerUser();
 
             setErrors({});
         } catch (err) {
@@ -81,9 +72,7 @@ const SignUpTemplate: React.FC = () => {
                                         fullname: event.target.value,
                                     })
                                 }
-                                className="mt-1 block w-full border-2  h-10 rounded-md
-                 border-gray-300 shadow-sm focus:border-indigo-300
-                  focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                className="block w-full p-2 border border-gray-300 rounded-md"
                             />
                             {errors.fullname && (
                                 <div style={{ color: "red" }}>{errors.fullname}</div>
@@ -101,9 +90,7 @@ const SignUpTemplate: React.FC = () => {
                                         email: event.target.value,
                                     })
                                 }
-                                className="mt-1 block w-full border-2  h-10 rounded-md
-                                border-gray-300 shadow-sm focus:border-indigo-300
-                                focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                className="block w-full p-2 border border-gray-300 rounded-md"
                             />
                             {errors.email && (
                                 <div style={{ color: "red" }}>{errors.email}</div>
@@ -121,9 +108,7 @@ const SignUpTemplate: React.FC = () => {
                                         company: event.target.value,
                                     })
                                 }
-                                className="mt-1 block w-full border-2  h-10 rounded-md
-                                border-gray-300 shadow-sm focus:border-indigo-300
-                                focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                className="block w-full p-2 border border-gray-300 rounded-md"
                             />
                             {errors.company && (
                                 <div style={{ color: "red" }}>{errors.company}</div>
@@ -141,10 +126,7 @@ const SignUpTemplate: React.FC = () => {
                                         password: event.target.value,
                                     })
                                 }
-                                className="mt-1 block w-full rounded-md border-2 
-                 h-10 border-gray-300 shadow-sm
-                 focus:border-indigo-300 focus:ring
-                  focus:ring-indigo-200 focus:ring-opacity-50"
+                                className="block w-full p-2 border border-gray-300 rounded-md"
                             />
                             {errors.password && (
                                 <div style={{ color: "red" }}>{errors.password}</div>
@@ -162,9 +144,7 @@ const SignUpTemplate: React.FC = () => {
                                         confirmPassword: event.target.value,
                                     })
                                 }
-                                className="mt-1 block w-full rounded-md border-2  h-10 border-gray-300
-                 shadow-sm focus:border-indigo-300 focus:ring
-                  focus:ring-indigo-200 focus:ring-opacity-50"
+                                className="block w-full p-2 border border-gray-300 rounded-md"
                             />
                             {errors.confirmPassword && (
                                 <div style={{ color: "red" }}>{errors.confirmPassword}</div>
@@ -175,13 +155,13 @@ const SignUpTemplate: React.FC = () => {
                             {!isLoading ? (
                                 <button
                                     type="submit"
-                                    className="rounded-full pt-1 bg-red-500 text-white p-2"
+                                    className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
                                 >
                                     Create Account
                                 </button>
                             ) : (
                                 <button
-                                    className="rounded-full pt-1 bg-red-500 text-white p-2"
+                                    className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
                                     disabled
                                 >
                                     <span className="flex flex-row items-center">
@@ -193,7 +173,7 @@ const SignUpTemplate: React.FC = () => {
 
                             <button
                                 type="button"
-                                className="rounded-full pt-1 bg-gray-500 text-white p-2"
+                                className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
                             >
                                 <Link to="/auth/login"> Login </Link>
                             </button>

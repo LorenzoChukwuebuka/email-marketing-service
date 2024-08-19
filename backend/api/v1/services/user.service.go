@@ -44,13 +44,13 @@ var (
 )
 
 type UserService struct {
-	userRepo          *repository.UserRepository
-	otpService        *OTPService
-	planRepo          *repository.PlanRepository
-	subscriptionRepo  *repository.SubscriptionRepository
-	billingRepo       *repository.BillingRepository
-	dailyMailCalcRepo *repository.DailyMailCalcRepository
-	smtpKeyRepo       *repository.SMTPKeyRepository
+	userRepo         *repository.UserRepository
+	otpService       *OTPService
+	planRepo         *repository.PlanRepository
+	subscriptionRepo *repository.SubscriptionRepository
+	billingRepo      *repository.BillingRepository
+	MailUsageRepo    *repository.MailUsageRepository
+	smtpKeyRepo      *repository.SMTPKeyRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -58,17 +58,17 @@ func NewUserService(userRepo *repository.UserRepository,
 	planRepo *repository.PlanRepository,
 	subscriptionRepo *repository.SubscriptionRepository,
 	billingRepo *repository.BillingRepository,
-	dailyMailCalcRepo *repository.DailyMailCalcRepository,
+	mailUsageRepo *repository.MailUsageRepository,
 	smtpKeyRepo *repository.SMTPKeyRepository,
 ) *UserService {
 	return &UserService{
-		userRepo:          userRepo,
-		otpService:        otpSvc,
-		planRepo:          planRepo,
-		subscriptionRepo:  subscriptionRepo,
-		billingRepo:       billingRepo,
-		dailyMailCalcRepo: dailyMailCalcRepo,
-		smtpKeyRepo:       smtpKeyRepo,
+		userRepo:         userRepo,
+		otpService:       otpSvc,
+		planRepo:         planRepo,
+		subscriptionRepo: subscriptionRepo,
+		billingRepo:      billingRepo,
+		MailUsageRepo:    mailUsageRepo,
+		smtpKeyRepo:      smtpKeyRepo,
 	}
 }
 
@@ -104,11 +104,10 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	}
 
 	otp := utils.GenerateOTP(otpLength)
+
 	if err := s.createAndSendOTP(user, otp); err != nil {
 		return nil, err
 	}
-
-	
 
 	return s.createSuccessResponse(user.UUID), nil
 }
@@ -256,17 +255,22 @@ func (s *UserService) createBilling(userId uint, plan *model.PlanResponse, trans
 
 func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, transactionId string, paymentId int) error {
 	subscription := &model.Subscription{
+		UUID:          uuid.New().String(),
 		UserId:        userId,
-		PlanId:        plan.ID,
-		StartDate:     time.Now().UTC(),
-		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
-		TransactionId: transactionId,
+		PlanId:        uint(plan.ID),
 		PaymentId:     paymentId,
+		TransactionId: transactionId,
 	}
 
-	err := s.subscriptionRepo.CreateSubscription(subscription)
+	sub, err := s.subscriptionRepo.CreateSubscription(subscription)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrCreatingSubscription, err)
+	}
+
+	isPeriodDaily := strings.ToLower(plan.PlanName) == freePlanName
+	_, err = s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(sub), plan.MailingLimit.LimitAmount, isPeriodDaily)
+	if err != nil {
+		return fmt.Errorf("failed to create mail usage record: %w", err)
 	}
 
 	return nil
@@ -423,15 +427,30 @@ func (s *UserService) GetUserCurrentRunningSubscriptionWithMailsRemaining(userId
 		return nil, fmt.Errorf("error getting current subscription: %w", err)
 	}
 
-	dailyMailCalc, err := s.dailyMailCalcRepo.GetUserActiveCalculation(currentSub.Id)
+	dailyMailCalc, err := s.MailUsageRepo.GetCurrentMailUsageRecord(currentSub.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting daily mail calculation: %w", err)
 	}
 
+	// Check for nil pointers and provide default values
+	planName := ""
+	mailsPerDay := 0
+	remainingMails := 0
+
+	if currentSub != nil && currentSub.Plan != nil {
+		planName = currentSub.Plan.PlanName
+
+	}
+
+	if dailyMailCalc != nil {
+		remainingMails = dailyMailCalc.RemainingMails
+		mailsPerDay = dailyMailCalc.LimitAmount
+	}
+
 	return map[string]interface{}{
-		"plan":           currentSub.Plan.PlanName,
-		"mailsPerDay":    currentSub.Plan.NumberOfMailsPerDay,
-		"remainingMails": dailyMailCalc.RemainingMails,
+		"plan":           planName,
+		"mailsPerDay":    mailsPerDay,
+		"remainingMails": remainingMails,
 	}, nil
 }
 

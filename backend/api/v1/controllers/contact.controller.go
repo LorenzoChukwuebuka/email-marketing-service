@@ -53,6 +53,9 @@ func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, result)
 }
 
+
+//will have to revisit this again
+
 func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
@@ -127,6 +130,7 @@ func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Reques
 
 	page1 := r.URL.Query().Get("page")
 	pageSize1 := r.URL.Query().Get("page_size")
+	searchQuery := r.URL.Query().Get("search")
 
 	page, err := strconv.Atoi(page1)
 	if err != nil {
@@ -146,7 +150,7 @@ func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	result, err := c.ContactService.GetAllContacts(userId, page, pageSize)
+	result, err := c.ContactService.GetAllContacts(userId, page, pageSize, searchQuery)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -290,19 +294,27 @@ func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *htt
 func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ContactGroupDTO
 
+	vars := mux.Vars(r)
+
+	groupId := vars["groupId"]
+
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
 
-	userId := claims["userId"].(string)
+	userId, ok := claims["userId"].(string)
+	if !ok {
+		response.ErrorResponse(w, "invalid user id in claims")
+		return
+	}
 
 	utils.DecodeRequestBody(r, &reqdata)
 
 	reqdata.UserId = userId
 
-	err := c.ContactService.UpdateContactGroup(reqdata)
+	err := c.ContactService.UpdateContactGroup(reqdata, groupId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -330,7 +342,7 @@ func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	response.SuccessResponse(w, 201, "group deleted successfully")
+	response.SuccessResponse(w, 200, "group deleted successfully")
 
 }
 
@@ -345,6 +357,7 @@ func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.R
 
 	page1 := r.URL.Query().Get("page")
 	pageSize1 := r.URL.Query().Get("page_size")
+	searchQuery := r.URL.Query().Get("search")
 
 	page, err := strconv.Atoi(page1)
 	if err != nil {
@@ -358,14 +371,14 @@ func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	result, err := c.ContactService.GetAllContactGroups(userId, page, pageSize)
+	result, err := c.ContactService.GetAllContactGroups(userId, page, pageSize, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	response.SuccessResponse(w, 201, result)
+	response.SuccessResponse(w, 200, result)
 
 }
 
@@ -381,15 +394,37 @@ func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r
 	groupId := vars["groupId"]
 
 	userId := claims["userId"].(string)
- 
 
-	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId )
+	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
-	response.SuccessResponse(w, 201, result)
+	response.SuccessResponse(w, 200, result)
+
+}
+
+
+func (c *ContactController) GetContactCount(w http.ResponseWriter, r *http.Request){
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result,err := c.ContactService.GetContactCount(userId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+
 
 }

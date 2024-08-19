@@ -42,7 +42,7 @@ func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{
 			return "web"
 		}(),
 		UserId:       d.UserId,
-		IsSubscribed: d.IsSubscribed || true,
+		IsSubscribed: d.IsSubscribed,
 	}
 
 	checkIfUserExists, err := s.ContactRepo.CheckIfEmailExists(contactModel)
@@ -154,9 +154,9 @@ func (s *ContactService) UpdateContact(d *dto.EditContactDTO) error {
 	return nil
 }
 
-func (s *ContactService) GetAllContacts(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+func (s *ContactService) GetAllContacts(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
-	contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams)
+	contacts, err := s.ContactRepo.GetAllContacts(userId, paginationParams, searchQuery)
 	if err != nil {
 		return repository.PaginatedResult{}, err
 	}
@@ -270,10 +270,10 @@ func (s *ContactService) RemoveContactFromGroup(d *dto.AddContactsToGroupDTO) er
 	return nil
 }
 
-func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO) error {
+func (s *ContactService) UpdateContactGroup(d *dto.ContactGroupDTO, groupId string) error {
 
 	groupModel := &model.ContactGroup{
-
+		UUID:        groupId,
 		GroupName:   d.GroupName,
 		Description: d.Description,
 		UserId:      d.UserId,
@@ -300,10 +300,10 @@ func (s *ContactService) DeleteContactGroup(userId string, groupId string) error
 	return nil
 }
 
-func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+func (s *ContactService) GetAllContactGroups(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
 
-	result, err := s.ContactRepo.GetAllGroups(userId, paginationParams)
+	result, err := s.ContactRepo.GetAllGroups(userId, paginationParams, searchQuery)
 
 	if err != nil {
 		return repository.PaginatedResult{}, err
@@ -320,5 +320,13 @@ func (s *ContactService) GetASingleGroupWithContacts(userId string, groupId stri
 		return nil, err
 	}
 
+	return result, nil
+}
+
+func (s *ContactService) GetContactCount(userId string) (map[string]int64, error) {
+	result, err := s.ContactRepo.GetContactCount(userId)
+	if err != nil {
+		return nil, err
+	}
 	return result, nil
 }

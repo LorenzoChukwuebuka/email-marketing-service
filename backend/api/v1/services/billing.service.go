@@ -37,9 +37,15 @@ func NewBillingService(
 }
 
 func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) (map[string]interface{}, error) {
+	tx := s.BillingRepo.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	paymenservice, err := paymentmethodFactory.PaymentFactory(paymentmethod)
-
 	if err != nil {
+		tx.Rollback()
 		return nil, fmt.Errorf("error instantiating factory: %s", err)
 	}
 
@@ -51,14 +57,25 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	data, err := paymenservice.ProcessDeposit(params)
 
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
-	//get the planId
-
-	planR, err := s.PlanRepo.GetSinglePlan(data.PlanID)
+	checkIfRefExists, err := s.BillingRepo.CheckIfRefExists(reference)
 
 	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if checkIfRefExists {
+		return nil, fmt.Errorf("this payment has been confirmed")
+	}
+
+	//get the planId
+	planR, err := s.PlanRepo.GetSinglePlan(data.PlanID)
+	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
@@ -68,12 +85,14 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	userId, err := s.UserRepo.FindUserById(userUUID)
 
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	err = s.cancelFreePlan(userId.ID)
 
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
@@ -96,6 +115,7 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	billingRepo, err := s.BillingRepo.CreateBilling(billingServiceData)
 
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
@@ -113,11 +133,17 @@ func (s *BillingService) ConfirmPayment(paymentmethod string, reference string) 
 	_, err = s.SubscriptionSVC.CreateSubscription(subscription)
 
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
-	fmt.Print(billingRepo)
-	return nil, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return map[string]interface{}{
+		"data": "payment  successful",
+	}, nil
 }
 
 func calculateExpiryDate(duration string) time.Time {
@@ -141,24 +167,18 @@ func calculateExpiryDate(duration string) time.Time {
 
 func (s *BillingService) cancelFreePlan(userId uint) error {
 	getUserCurrentSub, err := s.SubscriptionSVC.GetUsersCurrentSubscription(userId)
-
 	if err != nil {
 		return nil
 	}
+	planName := getUserCurrentSub.Plan.PlanName
 
-	fmt.Printf("%+v\n", getUserCurrentSub)
-
-	if getUserCurrentSub.Plan.PlanName == "free" {
+	if strings.ToLower(planName) == "free" {
 		err := s.SubscriptionRepo.UpdateExpiredSubscription(getUserCurrentSub.Id)
-
 		if err != nil {
 			return nil
 		}
-
 	}
-
 	return nil
-
 }
 
 func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*model.BillingResponse, error) {
@@ -175,13 +195,39 @@ func (s *BillingService) GetSingleBillingRecord(biilingId string, userId int) (*
 	return billing, nil
 }
 
-func (s *BillingService) GetAllBillingForAUser(userId int, page int) ([]model.Billing, error) {
-	billing, err := s.BillingRepo.GetAllPayments(userId, page)
+func (s *BillingService) GetAllBillingForAUser(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+
+	usermodel := &model.User{UUID: userId}
+
+	user, err := s.UserRepo.FindUserById(usermodel)
 	if err != nil {
-		return nil, err
+		return repository.PaginatedResult{}, err
 	}
-	if billing == nil {
-		return nil, fmt.Errorf("no record found: %w", err)
+
+	billing, err := s.BillingRepo.GetAllPayments(int(user.ID), paginationParams)
+	if err != nil {
+		return repository.PaginatedResult{}, err
 	}
+
+	// Filter out the billing records where the plan name is "free"
+	var filteredBilling []model.BillingResponse
+	originalLength := len(billing.Data.([]model.BillingResponse))
+	for _, b := range billing.Data.([]model.BillingResponse) {
+		if strings.ToLower(b.Plan.PlanName) != "free" {
+			filteredBilling = append(filteredBilling, b)
+		}
+	}
+
+	billing.Data = filteredBilling
+
+	if len(filteredBilling) == 0 {
+		return repository.PaginatedResult{}, nil
+	}
+
+	removedItems := originalLength - len(filteredBilling)
+
+	billing.TotalCount = billing.TotalCount - int64(removedItems)
+
 	return billing, nil
 }

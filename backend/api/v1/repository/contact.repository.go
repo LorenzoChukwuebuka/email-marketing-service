@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -70,10 +69,14 @@ func (r *ContactRepository) GetASingleContact(contactId string, userId string) (
 	return contactResponse, nil
 }
 
-func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams) (PaginatedResult, error) {
+func (r *ContactRepository) GetAllContacts(userId string, params PaginationParams, searchQuery string) (PaginatedResult, error) {
 	var contacts []model.Contact
 
 	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
+
+	if searchQuery != "" {
+		query = query.Where("name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%")
+	}
 
 	paginatedResult, err := Paginate(query, params, &contacts)
 	if err != nil {
@@ -94,15 +97,16 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 
 func mapContactToResponse(contact model.Contact) model.ContactResponse {
 	response := model.ContactResponse{
-		ID:        contact.ID,
-		UUID:      contact.UUID,
-		FirstName: contact.FirstName,
-		LastName:  contact.LastName,
-		Email:     contact.Email,
-		From:      contact.From,
-		UserId:    contact.UserId,
-		CreatedAt: contact.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: contact.UpdatedAt.Format(time.RFC3339),
+		ID:           contact.ID,
+		UUID:         contact.UUID,
+		FirstName:    contact.FirstName,
+		LastName:     contact.LastName,
+		Email:        contact.Email,
+		From:         contact.From,
+		UserId:       contact.UserId,
+		IsSubscribed: contact.IsSubscribed,
+		CreatedAt:    contact.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    contact.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if contact.DeletedAt.Valid {
@@ -170,6 +174,7 @@ func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	existingContact.LastName = d.LastName
 	existingContact.Email = d.Email
 	existingContact.From = d.From
+	existingContact.IsSubscribed = d.IsSubscribed
 	htime := time.Now().UTC()
 	existingContact.UpdatedAt = htime
 
@@ -242,16 +247,24 @@ func mapContactsToResponse(contacts []model.Contact) []model.ContactResponse {
 	return contactResponses
 }
 
-func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams) (PaginatedResult, error) {
+func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams, searchQuery string) (PaginatedResult, error) {
 	var groups []model.ContactGroup
 
 	query := r.DB.
 		Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 			return db.Select("contacts.*, user_contact_groups.contact_group_id").
-				Joins("LEFT JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id")
+				Joins("LEFT JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
+				Where("contacts.deleted_at IS NULL").
+				Where("user_contact_groups.deleted_at IS NULL")
 		}).
 		Where("contact_groups.user_id = ?", userId).
-		Order("contact_groups.created_at DESC")
+		Where("contact_groups.deleted_at IS NULL")
+
+	if searchQuery != "" {
+		query = query.Where("contact_groups.name LIKE ?", "%"+searchQuery+"%")
+	}
+
+	query = query.Order("contact_groups.created_at DESC")
 
 	paginatedResult, err := Paginate(query, params, &groups)
 	if err != nil {
@@ -283,8 +296,13 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 
 	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
 		return db.Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
-			Where("user_contact_groups.user_id = ?", userId)
-	}).Where("contact_groups.uuid = ?", groupId).First(&group).Error
+			Where("user_contact_groups.user_id = ?", userId).
+			Where("contacts.deleted_at IS NULL").
+			Where("user_contact_groups.deleted_at IS NULL")
+	}).
+		Where("contact_groups.uuid = ?", groupId).
+		Where("contact_groups.deleted_at IS NULL").
+		First(&group).Error
 
 	if err != nil {
 		return nil, err
@@ -341,7 +359,7 @@ func (r *ContactRepository) DeleteContactGroup(userId string, groupId int) error
 }
 
 func (r *ContactRepository) RemoveContactFromGroup(groupId int, userId string, contactId int) error {
-	result := r.DB.Where("group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
+	result := r.DB.Where("contact_group_id = ? AND user_id = ? AND contact_id = ?", groupId, userId, contactId).
 		Delete(&model.UserContactGroup{})
 
 	if result.Error != nil {
@@ -359,15 +377,15 @@ func (r *ContactRepository) UpdateGroup(d *model.ContactGroup) error {
 
 	var existingContactGroup model.ContactGroup
 
-	if err := r.DB.Where("uuid = ? AND user_id", d.UUID, d.UserId).First(&existingContactGroup).Error; err != nil {
-		return fmt.Errorf("failed to find plan for deletion: %w", err)
+	if err := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).First(&existingContactGroup).Error; err != nil {
+		return fmt.Errorf("failed to find group: %w", err)
 	}
 
 	existingContactGroup.GroupName = d.GroupName
 	existingContactGroup.Description = d.Description
 
 	if err := r.DB.Save(&existingContactGroup).Error; err != nil {
-		return fmt.Errorf("failed to update plan: %w", err)
+		return fmt.Errorf("failed to update group: %w", err)
 	}
 
 	return nil
@@ -383,4 +401,25 @@ func (r *ContactRepository) CheckIfGroupNameExists(d *model.ContactGroup) (bool,
 	}
 	return true, nil
 
+}
+
+func (r *ContactRepository) GetContactCount(userId string) (map[string]int64, error) {
+	contactCounts := make(map[string]int64)
+	var totalCount int64
+	var recentCount int64
+
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Count(&totalCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count total contacts: %w", err)
+	}
+
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND created_at >= ?", userId, thirtyDaysAgo).Count(&recentCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count recent contacts: %w", err)
+	}
+
+	contactCounts["total"] = totalCount
+	contactCounts["recent"] = recentCount
+
+	return contactCounts, nil
 }

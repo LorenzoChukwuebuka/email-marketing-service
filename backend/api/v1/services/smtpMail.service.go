@@ -6,29 +6,32 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
-	"strconv"
 )
 
 type SMTPMailService struct {
 	APIKeySVC        *APIKeyService
 	SubscriptionRepo *repository.SubscriptionRepository
-	DailyCalcRepo    *repository.DailyMailCalcRepository
+	MailUsageRepo    *repository.MailUsageRepository
 	UserRepo         *repository.UserRepository
 	MailStatusRepo   *repository.MailStatusRepository
+	PlanRepo         *repository.PlanRepository
 	//mu               sync.Mutex
 }
 
 func NewSMTPMailService(apikeyservice *APIKeyService,
 	subscriptionRepository *repository.SubscriptionRepository,
-	dailyCalc *repository.DailyMailCalcRepository,
-	userRepo *repository.UserRepository, mailStatusRepo *repository.MailStatusRepository) *SMTPMailService {
+	mailUsageRepo *repository.MailUsageRepository,
+	userRepo *repository.UserRepository, mailStatusRepo *repository.MailStatusRepository, planRepo *repository.PlanRepository) *SMTPMailService {
 	return &SMTPMailService{
 		APIKeySVC:        apikeyservice,
 		SubscriptionRepo: subscriptionRepository,
-		DailyCalcRepo:    dailyCalc,
+		MailUsageRepo:    mailUsageRepo,
 		UserRepo:         userRepo,
 		MailStatusRepo:   mailStatusRepo,
+		PlanRepo:         planRepo,
 	}
 }
 
@@ -51,10 +54,10 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 		return nil, fmt.Errorf("error fetching subscription record")
 	}
 
-	// Get the daily mail calculator
-	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(int(subscription.ID))
+	// Get the user's mail usage for today
+	mailUsageRepo, err := s.MailUsageRepo.GetCurrentMailUsageRecord(int(subscription.ID))
 	if err != nil {
-		return nil, fmt.Errorf("error fetching record")
+		return nil, fmt.Errorf("error fetching mail usage record")
 	}
 
 	// Check type of d.To and convert it to a slice of Recipient if necessary
@@ -84,7 +87,7 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 		batch := recipients[start:end]
 
 		// Check remaining mails
-		if mailCalcRepo.RemainingMails == 0 {
+		if mailUsageRepo.RemainingMails == 0 {
 			return nil, fmt.Errorf("you have exceeded your daily plan")
 		}
 
@@ -103,13 +106,13 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 			}, userId.ID)
 		}()
 
-		updateCalcData := &model.DailyMailCalc{
-			UUID:           mailCalcRepo.UUID,
-			RemainingMails: mailCalcRepo.RemainingMails - len(batch),
-			MailsSent:      mailCalcRepo.MailsSent + len(batch),
+		updateUsageData := &model.MailUsage{
+			UUID:           mailUsageRepo.UUID,
+			RemainingMails: mailUsageRepo.RemainingMails - len(batch),
+			MailsSent:      mailUsageRepo.MailsSent + len(batch),
 		}
 
-		err = s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData)
+		err = s.MailUsageRepo.UpdateMailUsageRecord(updateUsageData)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +149,7 @@ func (s *SMTPMailService) handleSendMail(emailRequest *dto.EmailRequest, userId 
 		}
 	}
 
-	mailS, err := smtpfactory.MailFactory("mailtrap")
+	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
 	if err != nil {
 		// Update the status to "failed" for the existing records
 		for _, recipient := range recipients {
@@ -213,26 +216,36 @@ func (s *SMTPMailService) CreateRecordForDailyMailCalculation() error {
 	}
 
 	for _, activeSub := range activeSubs {
-		num, err := strconv.Atoi(activeSub.Plan.NumberOfMailsPerDay)
+		// Fetch the plan's mailing limit
+		plan, err := s.PlanRepo.GetPlanById(activeSub.PlanId)
 		if err != nil {
-			fmt.Println("Error converting NumberOfMailsPerDay to integer:", err)
-			return err
+			fmt.Printf("Error fetching plan for subscription %d: %v\n", activeSub.ID, err)
+			continue
 		}
 
-		println(num)
+		// Only create records for plans with daily limits
+		if plan.MailingLimit.LimitPeriod != "day" {
+			continue
+		}
 
-		dailyCalcData := &model.DailyMailCalc{
+		// Create a new mail usage record
+		now := time.Now()
+		periodStart := now.Truncate(24 * time.Hour)                    // Start of the day (12:00 AM)
+		periodEnd := periodStart.Add(24 * time.Hour).Add(-time.Second) // End of the day (11:59:59 PM)
+
+		mailUsageData := &model.MailUsage{
 			UUID:           uuid.New().String(),
 			SubscriptionID: int(activeSub.ID),
-			MailsForADay:   num,
+			PeriodStart:    periodStart,
+			PeriodEnd:      periodEnd,
+			LimitAmount:    plan.MailingLimit.LimitAmount,
 			MailsSent:      0,
-			RemainingMails: num,
 		}
 
-		err = s.DailyCalcRepo.CreateRecordDailyMailCalculation(dailyCalcData)
+		err = s.MailUsageRepo.CreateMailUsageRecord(mailUsageData)
 		if err != nil {
-			fmt.Println("Error creating daily mail calculation record:", err)
-			return err
+			fmt.Printf("Error creating mail usage record for subscription %d: %v\n", activeSub.ID, err)
+			continue
 		}
 	}
 

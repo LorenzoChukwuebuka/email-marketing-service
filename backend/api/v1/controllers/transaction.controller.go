@@ -5,10 +5,10 @@ import (
 	paymentmethodFactory "email-marketing-service/api/v1/factory/paymentFactory"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-	"strconv"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
+	"strconv"
 )
 
 type TransactionController struct {
@@ -110,17 +110,24 @@ func (c *TransactionController) GetAllUserBilling(w http.ResponseWriter, r *http
 		return
 	}
 
-	userId := claims["userId"].(float64)
+	userId := claims["userId"].(string)
 
-	pageParam := r.URL.Query().Get("page")
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
 
-	page, err := strconv.Atoi(pageParam)
-
+	page, err := strconv.Atoi(page1)
 	if err != nil {
-		response.ErrorResponse(w, err.Error())
+		response.ErrorResponse(w, "Invalid page number")
+		return
 	}
 
-	result, err := c.BillingSVC.GetAllBillingForAUser(int(userId), page)
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
+	result, err := c.BillingSVC.GetAllBillingForAUser(userId, page, pageSize)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

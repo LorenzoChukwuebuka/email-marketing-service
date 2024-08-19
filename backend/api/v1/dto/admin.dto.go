@@ -13,5 +13,5 @@ type Admin struct {
 
 type AdminLogin struct {
 	Email    string `json:"email" validate:"required"`
-	Password []byte `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }

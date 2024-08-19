@@ -8,7 +8,7 @@ interface EditContactProps {
     group: ContactGroupData | null
 }
 const EditGroupComponent: React.FC<EditContactProps> = ({ isOpen, onClose, group }) => {
-    const { setEditValues, editValues, isLoading } = useContactGroupStore()
+    const { setEditValues, editValues, isLoading, updateGroup } = useContactGroupStore()
     const iniEdit = () => {
         setEditValues({
             uuid: group?.uuid as string,
@@ -23,8 +23,10 @@ const EditGroupComponent: React.FC<EditContactProps> = ({ isOpen, onClose, group
     };
 
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
+        await updateGroup()
+        onClose()
     }
 
     useEffect(() => {

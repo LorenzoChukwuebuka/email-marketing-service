@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import axiosInstance from '../../utils/api'
 import eventBus from '../../utils/eventBus'
 import Cookies from 'js-cookie'
+import { errResponse } from '../../utils/isError';
 
 interface LoginValues {
     email: string;
@@ -51,13 +52,12 @@ const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
                 password: ''
             })
         } catch (error) {
-            if (error instanceof Error) {
-                eventBus.emit(
-                    'error',
-                    (error as any).response?.data?.payload || 'An unexpected error occurred'
-                )
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
             } else {
-                eventBus.emit('error', 'An unexpected error occurred')
+                console.error("Unknown error:", error);
             }
         } finally {
             get().setIsLoading(false)
