@@ -174,6 +174,12 @@ func (s *TemplateService) UpdateTemplate(d *dto.TemplateDTO, templateId string) 
 }
 
 func (s *TemplateService) DeleteTemplate(userId string, templateId string) error {
+
+	templateModel := &model.Template{UserId: userId, UUID: templateId}
+
+	if err := s.TemplateRepo.DeleteTemplate(templateModel); err != nil {
+		return err
+	}
 	return nil
 }
 

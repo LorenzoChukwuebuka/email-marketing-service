@@ -136,3 +136,10 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 	templateController := controllers.NewTemplateController(templateService)
 	return templateController, nil
 }
+
+func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, error) {
+	campaignRepository := repository.NewCampaignRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository)
+	campaignController := controllers.NewCampaignController(campaignService)
+	return campaignController, nil
+}
