@@ -19,15 +19,16 @@ type Campaign struct {
 	gorm.Model
 	UUID           string          `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
 	Name           string          `json:"name"`
-	Subject        *string         `json:"subject" gorm:"type:text;default:null"`
+	Subject        *string         `json:"subject" gorm:"type:text"`
 	PreviewText    *string         `json:"preview_text"`
 	SenderId       *string         `json:"sender_id"`
+	UserId         string          `json:"user_id"`
 	SenderFromName *string         `json:"senderFromName"`
 	TemplateId     *string         `json:"templateId"`
 	SentTemplateId *string         `json:"sentTemplateId"`
 	RecipientInfo  *string         `json:"recipientInfo"`
 	IsPublished    bool            `json:"isPublished"`
-	Status         string          `json:"status"`
+	Status         CampaignStatus  `json:"status" gorm:"type:varchar(20);default:'draft';index"`
 	TrackType      string          `json:"trackType"`
 	IsArchived     bool            `json:"isArchived"`
 	SentAt         *time.Time      `json:"sentAt"`
