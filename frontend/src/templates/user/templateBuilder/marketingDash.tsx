@@ -8,7 +8,7 @@ import { Modal } from "../../../components";
 const MarketingTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<number | boolean | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
-    const { getAllMarketingTemplates, templateData } = useTemplateStore();
+    const { getAllMarketingTemplates, templateData, deleteTemplate } = useTemplateStore();
     const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
     const modalRef = useRef<HTMLDivElement>(null)
 
@@ -53,6 +53,11 @@ const MarketingTemplateDash: React.FC = () => {
         }
 
         window.location.href = redirectUrl;
+    }
+
+    const deleteTempl = async (template: (Template & BaseEntity)) => {
+        await deleteTemplate(template.uuid)
+        await getAllMarketingTemplates()
     }
 
 
@@ -135,7 +140,7 @@ const MarketingTemplateDash: React.FC = () => {
                                                     ref={modalRef}
                                                     className="absolute right-[2em] mt-[10em] w-28 bg-white  border border-gray-300 rounded-md shadow-lg z-10"
                                                 >
-                                                    <button className="block w-full px-4 py-2 text-  text-sm text-red-700 hover:bg-gray-100">
+                                                    <button className="block w-full px-4 py-2 text-  text-sm text-red-700 hover:bg-gray-100" onClick={() => deleteTempl(template)}>
                                                         Delete
                                                     </button>
 

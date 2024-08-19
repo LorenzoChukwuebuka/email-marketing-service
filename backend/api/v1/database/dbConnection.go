@@ -80,6 +80,9 @@ func autoMigrateModels() {
 		&model.UserContactGroup{},
 		&model.Template{},
 		&model.MailingLimit{},
+		&model.Campaign{},
+		&model.CampaignGroup{},
+		&model.EmailCampaignResult{},
 	)
 
 	if err != nil {

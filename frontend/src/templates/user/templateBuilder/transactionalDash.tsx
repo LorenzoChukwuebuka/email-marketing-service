@@ -7,13 +7,19 @@ import { BaseEntity } from "../../../interface/baseentity.interface";
 
 const TransactionalTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<number | boolean | null>(null);
-    const { getAllTransactionalTemplates, _templateData } = useTemplateStore()
+    const { getAllTransactionalTemplates, _templateData, deleteTemplate } = useTemplateStore()
     const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const modalRef = useRef<HTMLDivElement>(null)
 
 
     const navigate = useNavigate()
+
+
+    useEffect(() => {
+        getAllTransactionalTemplates()
+    }, [])
+
 
     const openPreview = (template: (Template & BaseEntity)) => {
         setPreviewTemplate(template);
@@ -27,11 +33,6 @@ const TransactionalTemplateDash: React.FC = () => {
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
     };
-
-    useEffect(() => {
-        getAllTransactionalTemplates()
-    }, [])
-
 
     const handleNavigate = (template: (Template & BaseEntity)) => {
         const editorType = template.editor_type
@@ -53,6 +54,11 @@ const TransactionalTemplateDash: React.FC = () => {
         }
 
         window.location.href = redirectUrl;
+    }
+
+    const deleteTempl = async (template: (Template & BaseEntity)) => {
+        await deleteTemplate(template.uuid)
+        await getAllTransactionalTemplates()
     }
 
     return <>
@@ -116,7 +122,7 @@ const TransactionalTemplateDash: React.FC = () => {
                                                 ref={modalRef}
                                                 className="absolute right-[2em] mt-[10em] w-28 bg-white  border border-gray-300 rounded-md shadow-lg z-10"
                                             >
-                                                <button className="block w-full px-4 py-2 text-  text-sm text-red-700 hover:bg-gray-100">
+                                                <button className="block w-full px-4 py-2 text-  text-sm text-red-700 hover:bg-gray-100" onClick={() => deleteTempl(template)}>
                                                     Delete
                                                 </button>
 

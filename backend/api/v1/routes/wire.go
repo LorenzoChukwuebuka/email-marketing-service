@@ -165,3 +165,12 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 
 	return nil, nil
 }
+
+func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, error) {
+	wire.Build(
+		controllers.NewCampaignController,
+		services.NewCampaignService,
+		repository.NewCampaignRepository,
+	)
+	return nil, nil
+}

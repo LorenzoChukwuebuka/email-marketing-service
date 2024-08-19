@@ -43,6 +43,7 @@ func (s *Server) setupRoutes() {
 		"contact":   routes.NewContactRoute(s.db),
 		"smtpkey":   routes.NewSMTPKeyRoute(s.db),
 		"apikey":    routes.NewAPIKeyRoute(s.db),
+		"campaigns": routes.NewCampaignRoute(s.db),
 	}
 
 	for path, route := range routeMap {
