@@ -45,10 +45,7 @@ const ContactDashTemplate: React.FC = () => {
                 >
                     Contact Group
                 </button>
-
-
             </nav>
-
 
             {activeTab === "Contact" && (
                 <>
@@ -62,8 +59,6 @@ const ContactDashTemplate: React.FC = () => {
                 </>
             )}
         </div>
-
-
     </>
 }
 

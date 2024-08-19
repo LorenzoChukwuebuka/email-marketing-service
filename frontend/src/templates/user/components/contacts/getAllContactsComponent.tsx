@@ -104,7 +104,7 @@ const GetAllContacts: React.FC = () => {
                             </th>
 
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created At
+                                Created On
                             </th>
 
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -112,7 +112,7 @@ const GetAllContacts: React.FC = () => {
                             </th>
 
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Toggle subscription
+                                subscription
                             </th>
 
                             <th className="py-3 px-4"></th>

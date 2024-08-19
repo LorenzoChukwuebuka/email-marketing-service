@@ -103,7 +103,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
         try {
             const { setIsLoading, contactFormValues } = get()
             setIsLoading(true)
-            const response = await axiosInstance.post<ResponseT>('/create-contact', contactFormValues)
+            const response = await axiosInstance.post<ResponseT>('/contact/create-contact', contactFormValues)
             if (response.data.message == "success") {
                 eventBus.emit('success', "Contact created successfully")
             }
@@ -126,7 +126,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             if (selectedIds.length > 0) {
                 let promises = selectedIds.map((contactId) => {
                     return axiosInstance.delete<ResponseT>(
-                        '/delete-contact/' + contactId
+                        '/contact/delete-contact/' + contactId
                     )
                 })
 
@@ -160,7 +160,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             const { editContactValues } = get()
 
             console.log(editContactValues)
-            let response = await axiosInstance.put<ResponseT>("/update-contact/" + editContactValues.uuid, editContactValues)
+            let response = await axiosInstance.put<ResponseT>("/contact/update-contact/" + editContactValues.uuid, editContactValues)
             if (response.data.status == true) {
                 eventBus.emit('success', "Contact edited successfully")
             }
@@ -176,7 +176,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     },
     getAllContacts: async (page = 1, pageSize = 10) => {
         try {
-            const response = await axiosInstance.get<ContactsAPIResponse>(`/get-all-contacts?page=${page}&page_size=${pageSize}`);
+            const response = await axiosInstance.get<ContactsAPIResponse>(`/contact/get-all-contacts?page=${page}&page_size=${pageSize}`);
             const { data, ...paginationInfo } = response.data.payload;
             get().setContactData(data);
             get().setPaginationInfo(paginationInfo);
@@ -218,7 +218,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
             data.append('contacts_csv', selectedCSVFile as Blob)
 
-            let response = await axiosInstance.post<ResponseT>('/upload-contact-csv', data)
+            let response = await axiosInstance.post<ResponseT>('/contact/upload-contact-csv', data)
 
             if (response.data.status == true) {
                 eventBus.emit('success', "contacts uploaded successfully")
@@ -239,7 +239,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
     getContactCount: async () => {
         try {
-            let response = await axiosInstance.get("/get-contact-count")
+            let response = await axiosInstance.get("/contact/get-contact-count")
             get().setContactCount(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
