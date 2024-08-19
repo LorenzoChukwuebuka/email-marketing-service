@@ -16,6 +16,8 @@ const RichTextEditor = () => {
     const queryParams = new URLSearchParams(location.search);
     const uuid = queryParams.get('uuid');
     const _type = queryParams.get('type');
+    const [editorContent, setEditorContent] = useState(currentTemplate?.email_html || '');
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -45,34 +47,36 @@ const RichTextEditor = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            saveDesign();
+        }, 1000); // Adjust this delay as needed
+
+        return () => clearTimeout(debounce);
+    }, [editorContent]);
+
+
     const saveDesign = async () => {
         console.log("saveDesign function called");
-
-        if (!quillRef.current) {
-            console.error("Quill editor reference is not available");
-            return;
-        }
-
-        const quillContent = quillRef.current.getEditor().root.innerHTML;
 
         if (uuid && currentTemplate) {
             const updatedTemplate = {
                 ...currentTemplate,
-                email_html: quillContent
+                email_html: editorContent
             };
             await updateTemplate(uuid, updatedTemplate)
             setAutoSaved(true);
             console.log("Design saved to database!");
             setTimeout(() => setAutoSaved(false), 3000);
-
         } else {
             console.log("UUID or template is missing", { uuid, currentTemplate });
         }
     };
 
-    const handleChange = () => {
-        saveDesign();
+    const handleChange = (content: string) => {
+        setEditorContent(content);
     };
+
 
     const testDesign = () => {
         setIsModalOpen(true)
@@ -119,7 +123,7 @@ const RichTextEditor = () => {
             <div className="flex-grow">
                 <ReactQuill
                     ref={quillRef}
-                    value={currentTemplate.email_html || ''}
+                    value={editorContent}
                     onChange={handleChange}
                     modules={{
                         toolbar: [
