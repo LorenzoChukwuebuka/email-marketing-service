@@ -15,19 +15,26 @@ import (
 type TemplateService struct {
 	TemplateRepo     *repository.TemplateRepository
 	SubscriptionRepo *repository.SubscriptionRepository
-	DailyCalcRepo    *repository.DailyMailCalcRepository
+	MailUsageRepo    *repository.MailUsageRepository
 	UserRepo         *repository.UserRepository
+	PlanRepo         *repository.PlanRepository
 }
 
 func NewTemplateService(templateRepo *repository.TemplateRepository, subscriptionRepository *repository.SubscriptionRepository,
-	dailyCalc *repository.DailyMailCalcRepository, userRepo *repository.UserRepository) *TemplateService {
+	mailUsageRepo *repository.MailUsageRepository, userRepo *repository.UserRepository, planRepo *repository.PlanRepository) *TemplateService {
 	return &TemplateService{
 		TemplateRepo:     templateRepo,
 		SubscriptionRepo: subscriptionRepository,
-		DailyCalcRepo:    dailyCalc,
+		MailUsageRepo:    mailUsageRepo,
 		UserRepo:         userRepo,
+		PlanRepo:         planRepo,
 	}
 }
+
+const (
+	PeriodDaily   = "daily"
+	PeriodMonthly = "monthly"
+)
 
 func (s *TemplateService) CreateTemplate(d *dto.TemplateDTO) (map[string]interface{}, error) {
 
@@ -188,9 +195,20 @@ func (s *TemplateService) SendTestMail(d *dto.SendTestMailDTO) error {
 		return fmt.Errorf("error fetching subscription record: %w", err)
 	}
 
-	mailCalcRepo, err := s.DailyCalcRepo.GetDailyMailRecordForToday(int(subscription.ID))
+	plan, err := s.PlanRepo.GetPlanById(subscription.PlanId)
 	if err != nil {
-		return fmt.Errorf("error fetching mail calc: %w", err)
+		return fmt.Errorf("error fetching plan: %w", err)
+	}
+
+	isPeriodDaily := plan.MailingLimit.LimitPeriod == PeriodDaily
+
+	mailUsageRecord, err := s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(subscription.ID), plan.MailingLimit.LimitAmount, isPeriodDaily)
+	if err != nil {
+		return fmt.Errorf("error fetching or creating mail usage record: %w", err)
+	}
+
+	if mailUsageRecord.RemainingMails == 0 {
+		return fmt.Errorf("you have exceeded your plan limit")
 	}
 
 	template, err := s.TemplateRepo.GetSingleTemplate(d.TemplateId)
@@ -204,7 +222,6 @@ func (s *TemplateService) SendTestMail(d *dto.SendTestMailDTO) error {
 	for _, email := range emails {
 		wg.Add(1)
 		go func(email string) {
-
 			defer wg.Done()
 
 			defer func() {
@@ -219,15 +236,15 @@ func (s *TemplateService) SendTestMail(d *dto.SendTestMailDTO) error {
 				return
 			}
 
-			// Update the mail calculator record
-			updateCalcData := &model.DailyMailCalc{
-				UUID:           mailCalcRepo.UUID,
-				RemainingMails: mailCalcRepo.RemainingMails - 1,
-				MailsSent:      mailCalcRepo.MailsSent + 1,
+			// Update the mail usage record
+			updateMailUsage := &model.MailUsage{
+				UUID:           mailUsageRecord.UUID,
+				MailsSent:      mailUsageRecord.MailsSent + 1,
+				RemainingMails: mailUsageRecord.LimitAmount - mailUsageRecord.MailsSent,
 			}
 
-			if err := s.DailyCalcRepo.UpdateDailyMailCalcRepository(updateCalcData); err != nil {
-				errChan <- fmt.Errorf("error updating mail calc for email %s: %w", email, err)
+			if err := s.MailUsageRepo.UpdateMailUsageRecord(updateMailUsage); err != nil {
+				errChan <- fmt.Errorf("error updating mail usage for email %s: %w", email, err)
 			}
 		}(email)
 	}
@@ -261,6 +278,8 @@ func (s *TemplateService) proccessEmail(design string, subject string, email str
 		Subject:     subject,
 		HtmlContent: &design,
 	}
+
+	println(config.MAIL_PROCESSOR)
 
 	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,19 +24,18 @@ func (s *AdminService) CreateAdmin(d *dto.Admin) (*adminmodel.Admin, error) {
 		return nil, err
 	}
 
-	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), 14)
+	password, _ := bcrypt.GenerateFromPassword([]byte(d.Password), bcrypt.DefaultCost)
 
 	adminModel := &adminmodel.Admin{
-		UUID:  uuid.New().String(),
-		FirstName: d.FirstName,
+		UUID:       uuid.New().String(),
+		FirstName:  d.FirstName,
 		MiddleName: d.MiddleName,
-		LastName: d.LastName,
-		Email: d.Email,
-		Type: "admin",
-		Password: password,
+		LastName:   d.LastName,
+		Email:      d.Email,
+		Type:       "admin",
+		Password:   string(password),
 	}
 
-	
 	adminUser, err := s.AdminRepo.CreateAdmin(adminModel)
 
 	if err != nil {
@@ -59,7 +57,7 @@ func (s *AdminService) AdminLogin(d *dto.AdminLogin) (map[string]interface{}, er
 	}
 
 	//compare password
-	if err = bcrypt.CompareHashAndPassword(adminDetails.Password, []byte(d.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(adminDetails.Password), []byte(d.Password)); err != nil {
 		return nil, fmt.Errorf("passwords do not match:%w", err)
 	}
 
