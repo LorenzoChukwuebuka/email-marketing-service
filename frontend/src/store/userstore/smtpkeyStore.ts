@@ -58,7 +58,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
     getSMTPKeys: async () => {
         try {
             const { setSmtpKeyData } = get()
-            let response = await axiosInstance.get('/get-smtp-keys')
+            let response = await axiosInstance.get('/smtpkey/get-smtp-keys')
             setSmtpKeyData(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
@@ -74,7 +74,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
     createSMTPKey: async () => {
         try {
             const { smtpformValues } = get();
-            const response = await axiosInstance.post('/create-smtp-key', smtpformValues);
+            const response = await axiosInstance.post('/smtpkey/create-smtp-key', smtpformValues);
             eventBus.emit('success', 'SMTP key generated successfully');
             return response.data.payload;
         } catch (error) {
@@ -90,7 +90,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
 
     deleteSMTPKey: async (smtpKeyId: string) => {
         try {
-            await axiosInstance.delete(`/delete-smtp-key/${smtpKeyId}`);
+            await axiosInstance.delete(`/smtpkey/delete-smtp-key/${smtpKeyId}`);
             eventBus.emit('success', 'SMTP key deleted successfully');
             get().getSMTPKeys();
         } catch (error) {
@@ -106,7 +106,7 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
 
     generateSMTPKey: async () => {
         try {
-            const response = await axiosInstance.put('/generate-new-smtp-master-password');
+            const response = await axiosInstance.put('/smtpkey/generate-new-smtp-master-password');
             eventBus.emit('success', 'SMTP credentials changed successfully');
             get().getSMTPKeys();
         } catch (error) {

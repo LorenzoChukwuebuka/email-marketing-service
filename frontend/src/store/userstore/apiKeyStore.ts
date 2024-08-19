@@ -34,7 +34,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
         try {
             const { setAPIKeyData } = get();
 
-            let response = await axiosInstance.get('/get-apikey');
+            let response = await axiosInstance.get('/apikey/get-apikey');
             setAPIKeyData(response.data);
         } catch (error) {
             if (errResponse(error)) {
@@ -50,7 +50,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
         const { setIsLoading, formValues } = get();
         try {
             setIsLoading(true);
-            let response = await axiosInstance.post('/generate-apikey', formValues);
+            let response = await axiosInstance.post('/apikey/generate-apikey', formValues);
             return response.data.payload;
         } catch (error) {
             if (errResponse(error)) {
@@ -66,7 +66,7 @@ const useAPIKeyStore = create<APIKeyState>((set, get) => ({
     },
     deleteAPIKey: async (apiId: string) => {
         try {
-            let response = await axiosInstance.delete('/delete-apikey/' + apiId);
+            let response = await axiosInstance.delete('/apikey/delete-apikey/' + apiId);
             eventBus.emit('success', response.data.payload);
         } catch (error) {
             if (errResponse(error)) {

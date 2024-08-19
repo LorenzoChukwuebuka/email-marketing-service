@@ -76,7 +76,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
             const { setContactGroupData, setPaginationInfo } = get()
             let response = await axiosInstance
                 .get<APIResponse<PaginatedResponse<ContactGroupData>>>
-                (`/get-all-contact-groups?page=${page}&page_size=${pageSize}`)
+                (`/contact/get-all-contact-groups?page=${page}&page_size=${pageSize}`)
 
             const { data, ...paginationInfo } = response.data.payload
 
@@ -109,7 +109,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
                         contact_id: contactId
                     } satisfies AddToGroup
 
-                    return axiosInstance.post<ResponseT>("/add-contact-to-group", data)
+                    return axiosInstance.post<ResponseT>("/contact/add-contact-to-group", data)
                 })
 
                 const results = await Promise.all(promises)
@@ -143,7 +143,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
         try {
             const { setIsLoading, setContactGroupData } = get()
             setIsLoading(true)
-            let response = await axiosInstance.get<APIResponse<ContactGroupData>>('/get-single-group/' + uuid)
+            let response = await axiosInstance.get<APIResponse<ContactGroupData>>('/contact/get-single-group/' + uuid)
             const groupData = response.data.payload
             setContactGroupData(Array.isArray(groupData) ? groupData : [groupData].filter(Boolean))
 
@@ -164,7 +164,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
         try {
             const { formValues, setIsLoading } = get()
             setIsLoading(true)
-            let response = await axiosInstance.post<ResponseT>("/create-contact-group", formValues)
+            let response = await axiosInstance.post<ResponseT>("/contact/create-contact-group", formValues)
             if (response.data.status === true) {
                 eventBus.emit('success', "Group created successfully")
             }
@@ -186,7 +186,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
         try {
             const { setIsLoading, editValues } = get()
             setIsLoading(true)
-            let response = await axiosInstance.put<ResponseT>("/edit-group/" + editValues.uuid, editValues)
+            let response = await axiosInstance.put<ResponseT>("/contact/edit-group/" + editValues.uuid, editValues)
             if (response.data.status == true) {
                 eventBus.emit('success', "group updated successfully")
             }
@@ -211,7 +211,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
 
             if (selectedGroupIds.length > 0) {
                 let promises = selectedGroupIds.map((groupId) => {
-                    return axiosInstance.delete<ResponseT>("/delete-group/" + groupId)
+                    return axiosInstance.delete<ResponseT>("/contact/delete-group/" + groupId)
                 })
 
                 const results = await Promise.all(promises)
@@ -256,7 +256,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
                         contact_id: contactId
                     } satisfies AddToGroup
 
-                    return axiosInstance.post<ResponseT>("/remove-contact-from-group", data)
+                    return axiosInstance.post<ResponseT>("/contact/remove-contact-from-group", data)
                 })
 
                 const results = await Promise.all(promises)
@@ -277,7 +277,7 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
             } else {
                 console.error("Unknown error:", error);
             }
-        }finally{
+        } finally {
             get().setIsLoading(false)
             get().setSelectedContactIds([])
             get().setSelectedGroupIds([])
