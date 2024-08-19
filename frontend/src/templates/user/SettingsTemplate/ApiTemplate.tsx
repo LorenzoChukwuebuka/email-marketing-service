@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     APIInfo,
     APIKeysComponentTable,
@@ -96,10 +96,28 @@ const APISettingsDashTemplate: React.FC = () => {
         }
     };
 
+
+    useEffect(() => {
+        const storedActiveTab = localStorage.getItem("activeTab");
+        if (storedActiveTab) {
+            setActiveTab(storedActiveTab as "API Keys" | "SMTP");
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("activeTab", activeTab);
+    }, [activeTab]);
+
+    useEffect(() => {
+        return () => {
+            localStorage.removeItem("activeTab");
+        };
+    }, []);
+
     return (
         <div className="p-6 max-w-5xl">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">SMTP & API</h1>
+
                 <div>
                     {activeTab === "API Keys" && (
                         <button
@@ -130,7 +148,7 @@ const APISettingsDashTemplate: React.FC = () => {
             <div className="mb-6">
                 <nav className="flex space-x-4 border-b">
                     <button
-                        className={`py-2 border-b-2 ${activeTab === "SMTP"
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "SMTP"
                             ? "border-blue-500 text-blue-500"
                             : "border-transparent hover:border-gray-300"
                             } transition-colors`}
@@ -139,7 +157,7 @@ const APISettingsDashTemplate: React.FC = () => {
                         SMTP
                     </button>
                     <button
-                        className={`py-2 border-b-2 ${activeTab === "API Keys"
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "API Keys"
                             ? "border-blue-500 text-blue-500"
                             : "border-transparent hover:border-gray-300"
                             } transition-colors`}

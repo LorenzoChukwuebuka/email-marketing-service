@@ -14,6 +14,18 @@ const UserDashLayout: React.FC = () => {
 
     const { mailData, getUserMailData } = useDailyUserMailSentCalc();
 
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    const closeDropdown = () => {
+        setIsDropdownOpen(false);
+    };
+
+
     const getLinkClassName = (path: string): string => {
         const baseClass = "mb-4 text-center text-lg font-semibold";
         const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
@@ -21,13 +33,9 @@ const UserDashLayout: React.FC = () => {
             "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
 
         if (path === "/user/dash") {
-            // Exact match for dashboard
-            return `${baseClass} ${location.pathname === path ? activeClass : inactiveClass
-                }`;
+            return `${baseClass} ${location.pathname === path ? activeClass : inactiveClass}`;
         } else {
-            // Starts with for other routes
-            return `${baseClass} ${location.pathname.startsWith(path) ? activeClass : inactiveClass
-                }`;
+            return `${baseClass} ${location.pathname.startsWith(path) ? activeClass : inactiveClass}`;
         }
     };
 
@@ -78,25 +86,25 @@ const UserDashLayout: React.FC = () => {
             >
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
-                        <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            {import.meta.env.VITE_API_NAME}
+                        <h2 className="text-xl font-bold mt-4 text-center cursor-pointer mb-4">
+                            <Link to="/user/dash"> {import.meta.env.VITE_API_NAME} </Link>
                         </h2>
-                        <ul className="mt-12 w-full">
+                        <ul className="mt-8 w-full">
                             <li className={getLinkClassName("/user/dash")}>
                                 <Link
                                     to="/user/dash"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-house mr-2"></i> Dashboard
+                                    <i className="bi bi-house-fill mr-2"></i> Dashboard
                                 </Link>
                             </li>
 
-                            <li className={getLinkClassName("/campaigns")}>
+                            <li className={getLinkClassName("/user/dash/campaign")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/campaign"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-megaphone"></i> &nbsp; Campaigns
+                                    <i className="bi bi-megaphone-fill"></i> &nbsp; Campaigns
                                 </Link>
                             </li>
 
@@ -105,7 +113,16 @@ const UserDashLayout: React.FC = () => {
                                     to="/user/dash/contacts"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-telephone"></i> &nbsp; Contacts
+                                    <i className="bi bi-person-lines-fill"></i> &nbsp; Contacts
+                                </Link>
+                            </li>
+
+                            <li className={getLinkClassName("/user/dash/templates")}>
+                                <Link
+                                    to="/user/dash/templates"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-stack"></i> &nbsp; Templates
                                 </Link>
                             </li>
 
@@ -114,15 +131,15 @@ const UserDashLayout: React.FC = () => {
                                     to=""
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-bar-chart mr-2"></i> Analytics
+                                    <i className="bi bi-bar-chart-fill mr-2"></i> Analytics
                                 </Link>
                             </li>
-                            <li className={getLinkClassName("/billing")}>
+                            <li className={getLinkClassName("/user/dash/billing")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/billing"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-wallet"></i> &nbsp; Billing
+                                    <i className="bi bi-wallet-fill"></i> &nbsp; Billing
                                 </Link>
                             </li>
                             <li className={getLinkClassName("/support")}>
@@ -139,7 +156,7 @@ const UserDashLayout: React.FC = () => {
                                     className="flex items-center w-full justify-between"
                                 >
                                     <span className="flex font-semibold text-base items-center">
-                                        <i className="bi bi-gear mr-2"></i> Settings
+                                        <i className="bi bi-gear-fill mr-2"></i> Settings
                                     </span>
                                     <i
                                         className={`bi ${settingsDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
@@ -148,7 +165,7 @@ const UserDashLayout: React.FC = () => {
                                 </button>
                                 {settingsDropdownOpen && (
                                     <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
-                                        <li
+                                        {/* <li
                                             className={`py-1 ${getLinkClassName(
                                                 "/user/dash/settings/user-management"
                                             )}`}
@@ -159,7 +176,7 @@ const UserDashLayout: React.FC = () => {
                                             >
                                                 User Management
                                             </Link>
-                                        </li>
+                                        </li> */}
                                         <li
                                             className={`py-1 ${getLinkClassName(
                                                 "/user/dash/settings/api"
@@ -195,45 +212,57 @@ const UserDashLayout: React.FC = () => {
             {/* Main content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="bg-white h-12 p-4 flex justify-between items-center">
+                <header className="bg-white h-14 p-4 flex justify-between items-center">
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="text-gray-500 hover:text-gray-700"
                     >
                         <span style={{ fontSize: "24px" }}>{sidebarOpen ? "≡" : "☰"}</span>
                     </button>
-                    <h1 className="text-xl font-semibold"> Dashboard </h1>
+                    {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
+                  <div className="space-x-4 "> 
+                  <i className="bi bi-bell font-bold"></i>
                     <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="m-1">
-                            {userName}
-                        </div>
-                        <ul
+                   
+                        <div
                             tabIndex={0}
-                            className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                            role="button"
+                            className="m-1"
+                            onClick={toggleDropdown}
                         >
-                            <li>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-base-300 border-b-2 border-black mb-4">
-                                        Emails sent: {mailData?.remainingMails}/
-                                        {mailData?.mailsPerDay}
-                                    </span>
-                                    <span className="text-black bg-gray-300 rounded-md">
-                                        Plan: {mailData?.plan}
-                                    </span>
-                                    <img
-                                        className="h-8 w-8 rounded-full"
-                                        src={reactSVG}
-                                        alt="User avatar"
-                                    />
-                                    {userName}
-                                    <span className="text-blue-500">
-                                        <Link to="/user/setting/profile"> My Profile </Link>
-                                    </span>
-                                    <a onClick={Logout}>Logout</a>
-                                </div>
-                            </li>
-                        </ul>
+                            {userName}{' '}
+                            <i className={`bi ${isDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                        </div>
+                        {isDropdownOpen && (
+                            <ul
+                                tabIndex={0}
+                                className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                            >
+                                <li>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-base-300 border-b-2 border-black mb-4">
+                                            Emails sent: {mailData?.remainingMails}/
+                                            {mailData?.mailsPerDay}
+                                        </span>
+                                        <span className="text-black bg-gray-300 rounded-md">
+                                            Plan: {mailData?.plan}
+                                        </span>
+                                        <img
+                                            className="h-8 w-8 rounded-full"
+                                            src={reactSVG}
+                                            alt="User avatar"
+                                        />
+                                        {userName}
+                                        <span className="text-blue-500">
+                                            <Link to="/user/dash/settings/account-management">My Profile</Link>
+                                        </span>
+                                        <a onClick={() => { Logout(); closeDropdown(); }}>Logout</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        )}
+                    </div>
                     </div>
                 </header>
 

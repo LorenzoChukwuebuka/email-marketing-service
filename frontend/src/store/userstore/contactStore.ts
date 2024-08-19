@@ -27,6 +27,8 @@ type ContactBase = {
 
 export type Contact = BaseEntity & ContactFormValues & ContactBase;
 
+type ContactCount = { recent: number; total: number }
+
 type EditContactValues = { uuid: string } & Partial<ContactFormValues>
 
 
@@ -37,10 +39,12 @@ interface ContactStore {
     contactData: Contact[];
     selectedIds: string[];
     isLoading: boolean;
+    contactCount: ContactCount
     selectedCSVFile: FileCSVType;
     editContactValues: EditContactValues;
     paginationInfo: Omit<PaginatedResponse<Contact>, 'data'>;
     setContactData: (newContactData: Contact[]) => void;
+    setContactCount: (newData: ContactCount) => void;
     setContactFormValues: (newFormValues: ContactFormValues) => void;
     setIsLoading: (newIsLoading: boolean) => void;
     setSelectedId: (newSelectedId: string[]) => void;
@@ -52,6 +56,8 @@ interface ContactStore {
     editContact: () => Promise<void>;
     getAllContacts: (page?: number, pageSize?: number) => Promise<void>;
     batchContactUpload: () => Promise<void>
+    searchContacts: (query: string) => void;
+    getContactCount: () => Promise<void>
 }
 
 type ContactsAPIResponse = APIResponse<PaginatedResponse<Contact>>;
@@ -64,6 +70,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
         from: '',
         is_subscribed: false
     },
+    contactCount: { recent: 0, total: 0 },
     contactData: [],
     selectedIds: [],
     paginationInfo: {
@@ -89,12 +96,14 @@ const useContactStore = create<ContactStore>((set, get) => ({
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
     setIsLoading: (newIsLoading) => set({ isLoading: newIsLoading }),
     setSelectedCSVFile: (newSelectedFile) => set({ selectedCSVFile: newSelectedFile }),
+    setContactCount: (newData) => set({ contactCount: newData }),
+
 
     createContact: async () => {
         try {
             const { setIsLoading, contactFormValues } = get()
             setIsLoading(true)
-            const response = await axiosInstance.post<ResponseT>('/create-contact', contactFormValues)
+            const response = await axiosInstance.post<ResponseT>('/contact/create-contact', contactFormValues)
             if (response.data.message == "success") {
                 eventBus.emit('success', "Contact created successfully")
             }
@@ -114,12 +123,10 @@ const useContactStore = create<ContactStore>((set, get) => ({
     deleteContact: async () => {
         try {
             const { selectedIds } = get()
-
-
             if (selectedIds.length > 0) {
                 let promises = selectedIds.map((contactId) => {
                     return axiosInstance.delete<ResponseT>(
-                        '/delete-contact/' + contactId
+                        '/contact/delete-contact/' + contactId
                     )
                 })
 
@@ -153,7 +160,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
             const { editContactValues } = get()
 
             console.log(editContactValues)
-            let response = await axiosInstance.put<ResponseT>("/update-contact/" + editContactValues.uuid, editContactValues)
+            let response = await axiosInstance.put<ResponseT>("/contact/update-contact/" + editContactValues.uuid, editContactValues)
             if (response.data.status == true) {
                 eventBus.emit('success', "Contact edited successfully")
             }
@@ -169,7 +176,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     },
     getAllContacts: async (page = 1, pageSize = 10) => {
         try {
-            const response = await axiosInstance.get<ContactsAPIResponse>(`/get-all-contacts?page=${page}&page_size=${pageSize}`);
+            const response = await axiosInstance.get<ContactsAPIResponse>(`/contact/get-all-contacts?page=${page}&page_size=${pageSize}`);
             const { data, ...paginationInfo } = response.data.payload;
             get().setContactData(data);
             get().setPaginationInfo(paginationInfo);
@@ -184,6 +191,23 @@ const useContactStore = create<ContactStore>((set, get) => ({
         }
     },
 
+    searchContacts: (query: string) => {
+        const { getAllContacts } = get();
+        if (!query) {
+            getAllContacts(); // If query is empty, reset to all contacts
+            return;
+        }
+
+        const filteredContacts = get().contactData.filter(contact =>
+            contact.first_name.toLowerCase().includes(query.toLowerCase()) ||
+            contact.last_name.toLowerCase().includes(query.toLowerCase()) ||
+            contact.email.toLowerCase().includes(query.toLowerCase()) ||
+            contact.from.toLowerCase().includes(query.toLowerCase())
+        );
+
+        set({ contactData: filteredContacts });
+    },
+
     batchContactUpload: async () => {
         try {
             const { setIsLoading, selectedCSVFile } = get()
@@ -194,7 +218,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
             data.append('contacts_csv', selectedCSVFile as Blob)
 
-            let response = await axiosInstance.post<ResponseT>('/upload-contact-csv', data)
+            let response = await axiosInstance.post<ResponseT>('/contact/upload-contact-csv', data)
 
             if (response.data.status == true) {
                 eventBus.emit('success', "contacts uploaded successfully")
@@ -210,6 +234,21 @@ const useContactStore = create<ContactStore>((set, get) => ({
             }
         } finally {
             get().setIsLoading(false)
+        }
+    },
+
+    getContactCount: async () => {
+        try {
+            let response = await axiosInstance.get("/contact/get-contact-count")
+            get().setContactCount(response.data.payload)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     }
 }));

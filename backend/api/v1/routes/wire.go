@@ -24,7 +24,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		repository.NewPlanRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewBillingRepository,
-		repository.NewDailyMailCalcRepository,
+		repository.NewMailUsageRepository,
 		repository.NewSMTPkeyRepository,
 	)
 
@@ -68,6 +68,7 @@ func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionContr
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
 		repository.NewPlanRepository,
+		repository.NewMailUsageRepository,
 	)
 	return nil, nil
 }
@@ -79,9 +80,10 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 		repository.NewAPIkeyRepository,
 		repository.NewSubscriptionRepository,
 		services.NewSMTPMailService,
-		repository.NewDailyMailCalcRepository,
+		repository.NewMailUsageRepository,
 		repository.NewUserRepository,
 		repository.NewMailStatusRepository,
+		repository.NewPlanRepository,
 	)
 
 	return nil, nil
@@ -102,6 +104,8 @@ func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionCon
 		controllers.NewSubscriptionController,
 		services.NewSubscriptionService,
 		repository.NewSubscriptionRepository,
+		repository.NewMailUsageRepository,
+		repository.NewPlanRepository,
 	)
 	return nil, nil
 }
@@ -145,5 +149,28 @@ func InitializeContactController(db *gorm.DB) (*controllers.ContactController, e
 		repository.NewSubscriptionRepository,
 	)
 
+	return nil, nil
+}
+
+func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController, error) {
+	wire.Build(
+		controllers.NewTemplateController,
+		services.NewTemplateService,
+		repository.NewTemplateRepository,
+		repository.NewMailUsageRepository,
+		repository.NewSubscriptionRepository,
+		repository.NewUserRepository,
+		repository.NewPlanRepository,
+	)
+
+	return nil, nil
+}
+
+func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, error) {
+	wire.Build(
+		controllers.NewCampaignController,
+		services.NewCampaignService,
+		repository.NewCampaignRepository,
+	)
 	return nil, nil
 }

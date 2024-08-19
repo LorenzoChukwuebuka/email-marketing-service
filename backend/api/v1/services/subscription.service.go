@@ -9,6 +9,8 @@ import (
 
 type SubscriptionService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
+	MailUsageRepo    *repository.MailUsageRepository
+	PlanRepo         *repository.PlanRepository
 }
 
 type CurrentSubscription struct {
@@ -22,16 +24,44 @@ type CurrentSubscription struct {
 	Expired   bool
 }
 
-func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository) *SubscriptionService {
-	return &SubscriptionService{SubscriptionRepo: subscriptionRepo}
+func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, mailUsageRepo *repository.MailUsageRepository, planRepo *repository.PlanRepository) *SubscriptionService {
+	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, MailUsageRepo: mailUsageRepo}
 }
 
 func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.Subscription, error) {
-	//check if the user is running on a free plan and expire it automatically
 
-	if err := s.SubscriptionRepo.CreateSubscription(d); err != nil {
+	tx := s.MailUsageRepo.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	subId, err := s.SubscriptionRepo.CreateSubscription(d)
+
+	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+
+	plan, err := s.PlanRepo.GetPlanById(d.PlanId)
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	_, err = s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(subId), plan.MailingLimit.LimitAmount, false)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create mail usage record: %w", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return d, nil
 }
 

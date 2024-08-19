@@ -1,6 +1,9 @@
 import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import OverviewStats from "./components/dashboard/overviewStatscomponent";
+import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
+import ContactsDashboard from "./components/dashboard/contactsComponent";
 
 interface UserDetails {
     fullname: string;
@@ -16,7 +19,6 @@ interface ActionCardInterface {
     icon: string;
     onClick: () => void;
 }
-
 
 const UserDashboardTemplate: React.FC = () => {
     const [userName, setUserName] = useState<string>("");
@@ -36,16 +38,16 @@ const UserDashboardTemplate: React.FC = () => {
 
     const handleSendCampaign = () => navigate('/send-campaign');
     const handleCreateContact = () => navigate('/user/dash/contacts');
-    const handleCreateEmailTemplate = () => navigate('/create-email-template');
+    const handleCreateEmailTemplate = () => navigate('/user/dash/templates');
 
     return (
         <>
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg  p-6">
                 <h2 className="text-2xl font-bold mb-4">Welcome {userName}</h2>
             </div>
 
             <div className="p-6 bg-gray-100">
-                <div className="flex justify-between mb-8">
+                <div className="flex justify-between mb-5">
                     <ActionCard
                         title="Send Campaign"
                         description="Create a campaign and send marketing mails to your audience easily"
@@ -68,14 +70,22 @@ const UserDashboardTemplate: React.FC = () => {
                     />
                 </div>
             </div>
+
+            <OverviewStats />
+
+            <RecentCampaigns />
+
+            <ContactsDashboard/>
         </>
     );
 };
 
 
-
 const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, onClick }) => (
-    <div className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4" onClick={onClick}>
+    <div
+        className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 hover:shadow-lg hover:bg-gray-50"
+        onClick={onClick}
+    >
         <div className="flex items-center mb-2">
             <span className="text-2xl mr-2">{icon}</span>
             <h3 className="font-semibold">{title}</h3>
@@ -83,5 +93,6 @@ const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, o
         <p className="text-sm text-gray-600">{description}</p>
     </div>
 );
+
 
 export default UserDashboardTemplate;
