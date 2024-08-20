@@ -79,22 +79,12 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 }
 
 func (m *Mail) DeviceVerificationMail(username string, email string, d *model.UserSession, code string) error {
-	mailTemplate := `
-	<html>
-	<body style="font-family: Arial, sans-serif;">
-		<h2>Hi .Username ,</h2>
-		<p>Device: .Device </p>
-		<p>Browser: .Browser </p>
-		<p>IP Address: .IP </p>
-		<p>Use the code below to verify your device:</p>
-		<h3>Code: .Token </h3>
-		<p>Please note that this code can only be used once and is valid for a limited time.</p>
-		
-		<br>
-		<p>Regards,<br> .AppName </p>
-	</body>
-</html>
-`
+
+	templatePath := filepath.Join("api", "v1", "templates", "planexpiry.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
 	//replace placeholders
 
 	replacements := map[string]string{
@@ -106,13 +96,13 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 		".AppName":    config.APPName,
 	}
 
-	formattedMail := mailTemplate
+	formattedMail := string(mailTemplate)
 
 	for placeholder, value := range replacements {
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Email Verification", email, formattedMail)
+	err = utils.SendMail("Email Verification", email, formattedMail)
 
 	if err != nil {
 		return err
@@ -126,16 +116,16 @@ func (m *Mail) SubscriptionExpiryMail(username string, email string, planName st
 		`<html>
 		<body style="font-family: Arial, sans-serif;">
 			<h2>Hi .Username ,</h2>
-			<p>Please note that your .PlanName has expired</p>
+			<p>Please note that your .PlanName plan has expired</p>
 			
 			<p>Regards,<br>  .Appname </p>
 		</body>
 		</html>
        `
 	replacements := map[string]string{
-		".Username": username,
-		".PlanName": planName,
-		".AppName":  config.APPName,
+		"{{Username}}": username,
+		"{{PlanName}}": planName,
+		"{{AppName}}":  config.APPName,
 	}
 
 	formattedMail := mailTemplate

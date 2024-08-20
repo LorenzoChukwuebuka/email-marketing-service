@@ -260,6 +260,8 @@ func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, 
 		PlanId:        uint(plan.ID),
 		PaymentId:     paymentId,
 		TransactionId: transactionId,
+		StartDate:     time.Now(),
+		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 	}
 
 	sub, err := s.subscriptionRepo.CreateSubscription(subscription)

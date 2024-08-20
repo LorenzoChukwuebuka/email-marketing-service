@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import GetAllCampaignComponent from "../components/campaign/getAllCampaignsComponent";
+import GetDraftCampaignComponent from "../components/campaign/getDraftCampaignsComponent";
 
 
 const CampaignDashTemplate: React.FC = () => {
@@ -48,13 +50,13 @@ const CampaignDashTemplate: React.FC = () => {
 
             {activeTab === "Campaign" && (
                 <>
-                    hello
+                    <GetAllCampaignComponent />
                 </>
             )}
 
             {activeTab === "Drafts" && (
                 <>
-                    hi
+                    <GetDraftCampaignComponent />
                 </>
             )}
         </div>

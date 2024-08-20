@@ -67,6 +67,11 @@ const UserDashLayout: React.FC = () => {
         }
     };
 
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
+
+
     useEffect(() => {
         let cookie = Cookies.get("Cookies");
         let user = cookie ? JSON.parse(cookie)?.details?.fullname : "";
@@ -86,10 +91,11 @@ const UserDashLayout: React.FC = () => {
             >
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
-                        <h2 className="text-xl font-bold mt-4 text-center cursor-pointer mb-4">
-                            <Link to="/user/dash"> {import.meta.env.VITE_API_NAME} </Link>
+                        <h2 className="text-xl p-4 font-bold mt-0  cursor-pointer mb-2">
+                            <Link to="/user/dash">   <span>{firstFourLetters}</span>
+                                <span className="text-blue-500">{remainingLetters}</span> <i className="bi bi-mailbox2-flag text-blue-500"></i> </Link>
                         </h2>
-                        <ul className="mt-8 w-full">
+                        <ul className="mt-5 w-full">
                             <li className={getLinkClassName("/user/dash")}>
                                 <Link
                                     to="/user/dash"
@@ -134,6 +140,9 @@ const UserDashLayout: React.FC = () => {
                                     <i className="bi bi-bar-chart-fill mr-2"></i> Analytics
                                 </Link>
                             </li>
+
+                            <li className="bg-white h-[1px] mt-3 mb-3"></li>
+
                             <li className={getLinkClassName("/user/dash/billing")}>
                                 <Link
                                     to="/user/dash/billing"
@@ -221,48 +230,48 @@ const UserDashLayout: React.FC = () => {
                     </button>
                     {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
-                  <div className="space-x-4 "> 
-                  <i className="bi bi-bell font-bold"></i>
-                    <div className="dropdown dropdown-end">
-                   
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className="m-1"
-                            onClick={toggleDropdown}
-                        >
-                            {userName}{' '}
-                            <i className={`bi ${isDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
-                        </div>
-                        {isDropdownOpen && (
-                            <ul
+                    <div className="space-x-4 ">
+                        <i className="bi bi-bell font-bold"></i>
+                        <div className="dropdown dropdown-end">
+
+                            <div
                                 tabIndex={0}
-                                className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                                role="button"
+                                className="m-1"
+                                onClick={toggleDropdown}
                             >
-                                <li>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-base-300 border-b-2 border-black mb-4">
-                                            Emails sent: {mailData?.remainingMails}/
-                                            {mailData?.mailsPerDay}
-                                        </span>
-                                        <span className="text-black bg-gray-300 rounded-md">
-                                            Plan: {mailData?.plan}
-                                        </span>
-                                        <img
-                                            className="h-8 w-8 rounded-full"
-                                            src={reactSVG}
-                                            alt="User avatar"
-                                        />
-                                        {userName}
-                                        <span className="text-blue-500">
-                                            <Link to="/user/dash/settings/account-management">My Profile</Link>
-                                        </span>
-                                        <a onClick={() => { Logout(); closeDropdown(); }}>Logout</a>
-                                    </div>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
+                                {userName}{' '}
+                                <i className={`bi ${isDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                            </div>
+                            {isDropdownOpen && (
+                                <ul
+                                    tabIndex={0}
+                                    className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                                >
+                                    <li>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-base-300 border-b-2 border-black mb-4">
+                                                Emails sent: {mailData?.remainingMails}/
+                                                {mailData?.mailsPerDay}
+                                            </span>
+                                            <span className="text-black bg-gray-300 rounded-md">
+                                                Plan: {mailData?.plan}
+                                            </span>
+                                            <img
+                                                className="h-8 w-8 rounded-full"
+                                                src={reactSVG}
+                                                alt="User avatar"
+                                            />
+                                            {userName}
+                                            <span className="text-blue-500">
+                                                <Link to="/user/dash/settings/account-management">My Profile</Link>
+                                            </span>
+                                            <a onClick={() => { Logout(); closeDropdown(); }}>Logout</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            )}
+                        </div>
                     </div>
                 </header>
 

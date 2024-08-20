@@ -18,4 +18,5 @@ func NewCampaignRoute(db *gorm.DB) *CampaignRoute {
 func (ur *CampaignRoute) InitRoutes(router *mux.Router) {
 	campaignController, _ := InitalizeCampaignController(ur.db)
 	router.HandleFunc("/create-campaign", middleware.JWTMiddleware(campaignController.CreateCampaign)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-all-campaigns", middleware.JWTMiddleware(campaignController.GetAllCampaigns)).Methods("GET", "OPTIONS")
 }

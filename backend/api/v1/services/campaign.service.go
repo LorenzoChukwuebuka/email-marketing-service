@@ -59,8 +59,41 @@ func (s *CampaignService) GetAllCampaigns(userId string, page int, pageSize int)
 	return campaignRepo, nil
 }
 
-func (s *CampaignService) GetScheduledCampaigns() error { return nil }
+func (s *CampaignService) GetScheduledCampaigns(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	campaignRepo, err := s.CampaignRepo.GetAllCampaigns(userId, paginationParams)
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
 
-func (s *CampaignService) GetDraftCampaigns() error { return nil }
+	if campaignRepo.TotalCount == 0 {
+		return repository.PaginatedResult{}, nil
+	}
+	return campaignRepo, nil
+}
 
-func (s *CampaignService) GetSentCampaigns() error { return nil }
+func (s *CampaignService) GetDraftCampaigns(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	campaignRepo, err := s.CampaignRepo.GetDraftCampaigns(userId, paginationParams)
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
+
+	if campaignRepo.TotalCount == 0 {
+		return repository.PaginatedResult{}, nil
+	}
+	return campaignRepo, nil
+}
+
+func (s *CampaignService) GetSentCampaigns(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	campaignRepo, err := s.CampaignRepo.GetSentCampaigns(userId, paginationParams)
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
+
+	if campaignRepo.TotalCount == 0 {
+		return repository.PaginatedResult{}, nil
+	}
+	return campaignRepo, nil
+}
