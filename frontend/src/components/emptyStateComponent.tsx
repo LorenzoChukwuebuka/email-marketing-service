@@ -24,7 +24,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             <p className="text-gray-600 mb-6">{description}</p>
             {buttonText && onButtonClick && (
                 <button
-                    className="bg-black text-white font-medium py-2 px-6 rounded-full hover:bg-indigo-800 transition duration-300"
+                    className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-indigo-800 transition duration-300"
                     onClick={onButtonClick}
                 >
                     {buttonText}

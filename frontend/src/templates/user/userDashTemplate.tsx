@@ -42,7 +42,7 @@ const UserDashboardTemplate: React.FC = () => {
 
     return (
         <>
-            <div className="bg-white rounded-lg  p-6">
+            <div className=" mt-5 p-6">
                 <h2 className="text-2xl font-bold mb-4">Welcome {userName}</h2>
             </div>
 
@@ -75,7 +75,7 @@ const UserDashboardTemplate: React.FC = () => {
 
             <RecentCampaigns />
 
-            <ContactsDashboard/>
+            <ContactsDashboard />
         </>
     );
 };

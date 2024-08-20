@@ -42,8 +42,8 @@ type StatProps = {
 
 const StatCard = ({ title, value }: StatProps) => (
     <div className="bg-white p-4 rounded-lg shadow transition-transform transform hover:scale-105 hover:shadow-lg hover:bg-gray-50">
-        <h3 className="text-sm text-gray-500 mb-2">{title}</h3>
         <p className="text-3xl font-bold text-gray-800">{value}</p>
+        <h3 className="text-sm text-gray-500 mb-2">{title}</h3>
     </div>
 );
 
