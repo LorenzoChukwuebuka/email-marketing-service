@@ -6,8 +6,8 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"net/http"
 	"strconv"
-
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
 
 type CampaignController struct {
@@ -79,8 +79,99 @@ func (c *CampaignController) GetAllCampaigns(w http.ResponseWriter, r *http.Requ
 	response.SuccessResponse(w, 200, result)
 }
 
-func (c *CampaignController) GetSingleCampaign() {}
+func (c *CampaignController) GetAllScheduledCampaigns(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
 
-func (c *CampaignController) EditCampaign() {}
+	userId := claims["userId"].(string)
+
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
+
+	page, err := strconv.Atoi(page1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page number")
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
+	result, err := c.CampaignSVC.GetScheduledCampaigns(userId, page, pageSize)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetSingleCampaign(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.CampaignSVC.GetSingleCampaign(userId, campaignId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
+func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.CampaignDTO
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+	utils.DecodeRequestBody(r, &reqdata)
+	reqdata.UserId = userId
+	reqdata.UUID = campaignId
+
+	if err := c.CampaignSVC.UpdateCampaign(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "campaign edited successfully")
+}
+
+
+func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *http.Request){
+	var reqdata *dto.CampaignGroupDTO
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+	utils.DecodeRequestBody(r, &reqdata)
+	reqdata.UserId = userId
+}
 
 func (c *CampaignController) DeleteCampaign() {}

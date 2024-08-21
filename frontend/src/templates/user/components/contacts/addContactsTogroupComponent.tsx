@@ -38,7 +38,8 @@ const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => 
             <>
                 {/* Search input remains the same */}
 
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto"> 
+                    <h1 className="mt-4 mb-4"> You can only select one group </h1>
                     {contactgroupData && (contactgroupData as ContactGroupData[]).length > 0 ? (
                         (contactgroupData as ContactGroupData[]).map((group: ContactGroupData) => (
                             <div key={group.uuid} className="mb-4">
@@ -50,7 +51,7 @@ const AddContactsToGroupComponent: React.FC<CGProps> = ({ isOpen, onClose }) => 
                                         checked={selectedGroup === group.uuid}
                                         onChange={() => handleGroupSelect(group.uuid)}
                                     />
-                                    <span className="font-semibold">{group.group_name} ({group.contacts ? group.contacts.length : 0})</span>
+                                    <span className="font-semibold space-x-5">{group.group_name} ({group.contacts ? group.contacts.length : 0}) contacts</span>
                                 </label>
                                 <p className="text-sm text-gray-500 ml-6">{group.description}</p>
                             </div>

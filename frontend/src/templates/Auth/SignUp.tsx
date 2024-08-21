@@ -42,11 +42,17 @@ const SignUpTemplate: React.FC = () => {
         }
     };
 
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
+
+
     return (
         <main className="min-h-screen">
             <div className="bg-[rgb(4,22,43)] h-[15em] pt-2">
                 <h1 className="text-center text-2xl font-semibold text-white mt-8">
-                    {import.meta.env.VITE_API_NAME}
+                <span>{firstFourLetters}</span>
+                <span className="text-blue-500">{remainingLetters}</span> <i className="bi bi-mailbox2-flag text-blue-500"></i>
                 </h1>
             </div>
 

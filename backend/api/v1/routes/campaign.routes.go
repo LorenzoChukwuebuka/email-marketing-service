@@ -19,4 +19,8 @@ func (ur *CampaignRoute) InitRoutes(router *mux.Router) {
 	campaignController, _ := InitalizeCampaignController(ur.db)
 	router.HandleFunc("/create-campaign", middleware.JWTMiddleware(campaignController.CreateCampaign)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-all-campaigns", middleware.JWTMiddleware(campaignController.GetAllCampaigns)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-scheduled-campaigns", middleware.JWTMiddleware(campaignController.GetAllScheduledCampaigns)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-campaign/{campaignId}", middleware.JWTMiddleware(campaignController.GetSingleCampaign)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/update-campaign/{campaignId}", middleware.JWTMiddleware(campaignController.EditCampaign)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/add-campaign-group", middleware.JWTMiddleware(campaignController.AddOrEditCampaignGroup)).Methods("POST", "OPTIONS")
 }

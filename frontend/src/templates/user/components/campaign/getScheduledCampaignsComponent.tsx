@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CreateCampaignComponent from "./createCampaignComponent";
 
-const GetDraftCampaignComponent: React.FC = () => {
+const GetScheduledCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     return <>
@@ -28,4 +28,4 @@ const GetDraftCampaignComponent: React.FC = () => {
     </>
 }
 
-export default GetDraftCampaignComponent
+export default GetScheduledCampaignComponent

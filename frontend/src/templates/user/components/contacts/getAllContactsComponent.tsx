@@ -79,9 +79,9 @@ const GetAllContacts: React.FC = () => {
     return (
         <>
             <div className="overflow-x-auto mt-8">
-                <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
+                <table className="md:min-w-5xl min-w-full w-full rounded-sm  bg-white">
                     <thead className="bg-gray-50">
-                        <tr>
+                        <tr >
                             <th className="py-3 px-4 text-left">
                                 <input
                                     type="checkbox"
@@ -111,9 +111,9 @@ const GetAllContacts: React.FC = () => {
                                 Edit
                             </th>
 
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 subscription
-                            </th>
+                            </th> */}
 
                             <th className="py-3 px-4"></th>
                         </tr>
@@ -121,7 +121,7 @@ const GetAllContacts: React.FC = () => {
                     <tbody className="divide-y divide-gray-200 ">
                         {contactData && contactData.length > 0 ? (
                             contactData.map((contact: any) => (
-                                <tr key={contact.uuid}>
+                                <tr key={contact.uuid} className="hover:bg-slate-100" >
                                     <td className="py-4 px-4">
                                         <input
                                             type="checkbox"
@@ -154,14 +154,14 @@ const GetAllContacts: React.FC = () => {
                                             ✏️
                                         </button>
                                     </td>
-                                    <td className="py-4 px-4">
+                                    {/* <td className="py-4 px-4">
                                         <input
                                             type="checkbox"
                                             className="form-checkbox h-4 w-4 text-blue-600"
                                             checked={contact.is_subscribed}
                                             onChange={() => handleSubscriptionToggle(contact.uuid)}
                                         />
-                                    </td>
+                                    </td> */}
                                 </tr>
                             ))
                         ) : (
