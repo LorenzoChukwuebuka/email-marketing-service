@@ -11,7 +11,7 @@ const CreateCampaignComponent: React.FC<Props> = ({ isOpen, onClose }) => {
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-    const { createCampaignValues, createCampaign, setCreateCampaignValues } = useCampaignStore()
+    const { createCampaignValues, createCampaign,getAllCampaigns, setCreateCampaignValues } = useCampaignStore()
 
     const validationSchema = Yup.object().shape({
         name: Yup.string()
@@ -23,6 +23,8 @@ const CreateCampaignComponent: React.FC<Props> = ({ isOpen, onClose }) => {
         try {
             await validationSchema.validate(createCampaignValues, { abortEarly: false });
             await createCampaign()
+            await getAllCampaigns()
+            onClose()
         } catch (err) {
             const validationErrors: { [key: string]: string } = {};
             if (err instanceof Yup.ValidationError) {

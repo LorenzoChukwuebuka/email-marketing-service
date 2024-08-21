@@ -86,3 +86,13 @@ export function copyToClipboard(text: string): void {
             console.error('Failed to copy text: ', err);
         });
 }
+
+
+export const parseDate = (dateString:string) => {
+    // Remove the timezone abbreviation (WAT)
+    dateString = dateString.replace(' WAT', '');
+
+    // If the time zone is already handled in the string (+0100), leave it as is
+    return new Date(dateString);
+};
+

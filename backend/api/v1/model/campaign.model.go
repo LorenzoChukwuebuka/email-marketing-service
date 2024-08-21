@@ -1,11 +1,13 @@
 package model
 
 import (
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type CampaignStatus string
+
+type CampaignTrackType string
 
 const (
 	Draft     CampaignStatus = "draft"
@@ -14,29 +16,31 @@ const (
 	Sent      CampaignStatus = "sent"
 )
 
+const (
+	Track CampaignTrackType = "track"
+)
+
 type Campaign struct {
 	gorm.Model
-	UUID           string          `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	Name           string          `json:"name"`
-	Subject        *string         `json:"subject" gorm:"type:text"`
-	PreviewText    *string         `json:"preview_text"`
-	SenderId       *string         `json:"sender_id"`
-	UserId         string          `json:"user_id"`
-	SenderFromName *string         `json:"senderFromName"`
-	TemplateId     *string         `json:"templateId"`
-	SentTemplateId *string         `json:"sentTemplateId"`
-	RecipientInfo  *string         `json:"recipientInfo"`
-	IsPublished    bool            `json:"isPublished"`
-	Status         CampaignStatus  `json:"status" gorm:"type:varchar(20);default:'draft';index"`
-	TrackType      string          `json:"trackType"`
-	IsArchived     bool            `json:"isArchived"`
-	SentAt         *time.Time      `json:"sentAt"`
-	CreatedBy      string          `json:"createdBy"`
-	LastEditedBy   string          `json:"lastEditedBy"`
-	Template       *string         `json:"template"`
-	Sender         *string         `json:"sender"`
-	ScheduledAt    *time.Time      `json:"scheduled_at" gorm:"index"`
-	CampaignGroups []CampaignGroup `json:"campaign_groups" gorm:"foreignKey:CampaignId"`
+	UUID           string            `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	Name           string            `json:"name"`
+	Subject        *string           `json:"subject" gorm:"type:text"`
+	PreviewText    *string           `json:"preview_text"`
+	UserId         string            `json:"user_id"`
+	SenderFromName *string           `json:"sender_from_name"`
+	TemplateId     *string           `json:"template_id"`
+	SentTemplateId *string           `json:"sent_template_id"`
+	RecipientInfo  *string           `json:"recipient_info"`
+	IsPublished    bool              `json:"is_published"`
+	Status         CampaignStatus    `json:"status" gorm:"type:varchar(20);default:'draft';index"`
+	TrackType      CampaignTrackType `json:"trackType"`
+	IsArchived     bool              `json:"isArchived"`
+	SentAt         *time.Time        `json:"sentAt"`
+	Template       *string           `json:"template"`
+	Sender         *string           `json:"sender"`
+	ScheduledAt    *time.Time        `json:"scheduled_at" gorm:"index"`
+	HasCustomLogo  bool              `json:"has_custom_logo"`
+	CampaignGroups []CampaignGroup   `json:"campaign_groups" gorm:"foreignKey:CampaignId"`
 }
 
 type CampaignGroup struct {
@@ -65,7 +69,6 @@ type CampaignResponse struct {
 	Name           string                  `json:"name"`
 	Subject        *string                 `json:"subject"`
 	PreviewText    *string                 `json:"preview_text"`
-	SenderId       *string                 `json:"sender_id"`
 	UserId         string                  `json:"user_id"`
 	SenderFromName *string                 `json:"sender_from_name"`
 	TemplateId     *string                 `json:"template_id"`

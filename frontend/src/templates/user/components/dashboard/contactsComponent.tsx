@@ -3,7 +3,7 @@ import useContactStore from '../../../../store/userstore/contactStore';
 
 const ContactsDashboard: React.FC = () => {
 
-    const { getContactCount,contactCount } = useContactStore()
+    const { getContactCount, contactCount } = useContactStore()
 
     useEffect(() => {
         const fetchCount = async () => {
@@ -20,7 +20,7 @@ const ContactsDashboard: React.FC = () => {
 
             </div>
 
-            <div className="flex bg-white rounded-lg shadow overflow-hidden">
+            <div className="flex  rounded-md shadow overflow-hidden">
                 <div className="flex-1 p-6 border-r">
                     <div className="flex items-center mb-2">
                         <span className="text-4xl font-bold">{contactCount.total}</span>

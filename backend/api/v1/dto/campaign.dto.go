@@ -14,22 +14,27 @@ const (
 )
 
 type CampaignDTO struct {
+	UUID           string         `json:"uuid"`
 	Name           string         `json:"name" validate:"required"`
 	Subject        *string        `json:"subject" `
 	PreviewText    *string        `json:"preview_text"`
-	SenderId       *string        `json:"sender_id"`
 	UserId         string         `json:"user_id" validate:"required"`
-	SenderFromName *string        `json:"senderFromName"`
-	TemplateId     *string        `json:"templateId"`
-	SentTemplateId *string        `json:"sentTemplateId"`
-	RecipientInfo  *string        `json:"recipientInfo"`
-	IsPublished    bool           `json:"isPublished"`
+	SenderFromName *string        `json:"sender_from_name"`
+	TemplateId     *string        `json:"template_id"`
+	SentTemplateId *string        `json:"sent_template_id"`
+	RecipientInfo  *string        `json:"recipient_info"`
+	IsPublished    bool           `json:"is_published"`
 	Status         CampaignStatus `json:"status" `
-	TrackType      string         `json:"trackType"`
-	IsArchived     bool           `json:"isArchived"`
-	SentAt         *time.Time     `json:"sentAt"`
-	CreatedBy      string         `json:"createdBy"`
-	LastEditedBy   string         `json:"lastEditedBy"`
+	TrackType      string         `json:"track_type"`
+	IsArchived     bool           `json:"is_archived"`
+	SentAt         *time.Time     `json:"sent_at"`
+	ScheduledAt    *time.Time     `json:"scheduled_at"`
+	HasCustomLogo  bool           `json:"has_custom_logo"`
 	Template       *string        `json:"template"`
-	Sender         *string        `json:"sender"`
+}
+
+type CampaignGroupDTO struct {
+	CampaignId string `json:"campaign_id" validate:"required"`
+	GroupId    string `json:"group_id" validate:"required"`
+	UserId     string `json:"user_id"`
 }

@@ -4,8 +4,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"errors"
 	"fmt"
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type ContactRepository struct {
@@ -166,24 +166,32 @@ func (r *ContactRepository) ToggleSubscription() error {
 
 func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	var existingContact model.Contact
-	if err := r.DB.Where("uuid = ? AND user_id =?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
-		return fmt.Errorf("failed to find plan for deletion: %w", err)
+
+	if err := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to find contact for update: %w", err)
 	}
 
-	existingContact.FirstName = d.FirstName
-	existingContact.LastName = d.LastName
-	existingContact.Email = d.Email
-	existingContact.From = d.From
+	if d.FirstName != "" {
+		existingContact.FirstName = d.FirstName
+	}
+	if d.LastName != "" {
+		existingContact.LastName = d.LastName
+	}
+	if d.Email != "" {
+		existingContact.Email = d.Email
+	}
+	if d.From != "" {
+		existingContact.From = d.From
+	}
+
 	existingContact.IsSubscribed = d.IsSubscribed
-	htime := time.Now().UTC()
-	existingContact.UpdatedAt = htime
+	existingContact.UpdatedAt = time.Now().UTC()
 
 	if err := r.DB.Save(&existingContact).Error; err != nil {
-		return fmt.Errorf("failed to update plan: %w", err)
+		return fmt.Errorf("failed to update contact: %w", err)
 	}
 
 	return nil
-
 }
 
 func (r *ContactRepository) CreateGroup(d *model.ContactGroup) error {
