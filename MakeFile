@@ -4,6 +4,7 @@ ROOT_DIR := ./backend/
 FE_DIR := ./frontend/
 DIST_DIR := $(FE_DIR)dist
 CLIENT_DIR := $(ROOT_DIR)client
+SMTP_DIR := ./smtp/
 .PHONY: wire build
 
 wire:

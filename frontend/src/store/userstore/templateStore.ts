@@ -205,7 +205,20 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
     },
 
     deleteTemplate: async (uuid: string) => {
-
+        try {
+            const response = await axiosInstance.delete<ResponseT>("/templates/delete-template/" + uuid)
+            if (response.data.status === true) {
+                eventBus.emit("success", "template deleted successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
     },
 
 

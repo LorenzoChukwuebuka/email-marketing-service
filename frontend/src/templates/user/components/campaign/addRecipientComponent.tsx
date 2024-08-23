@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../../../../components";
 import { BaseEntity } from "../../../../interface/baseentity.interface";
-import { Campaign } from "../../../../store/userstore/campaignStore";
-import useContactGroupStore from "../../../../store/userstore/contactGroupStore";
-import { ContactGroupData } from '../../../../store/userstore/contactGroupStore';
+import { Campaign, CampaignGroup } from "../../../../store/userstore/campaignStore";
+import useCampaignStore from "../../../../store/userstore/campaignStore";
+import useContactGroupStore, { ContactGroupData } from "../../../../store/userstore/contactGroupStore";
 
 interface Props {
     isOpen: boolean;
@@ -13,6 +13,7 @@ interface Props {
 
 const AddCampaignRecipients: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
     const { getAllGroups, contactgroupData } = useContactGroupStore();
+    const { selectedGroupIds, setSelectedGroupIds, createCampaignGroup } = useCampaignStore();
     const [selectedGroups, setSelectedGroups] = useState<ContactGroupData[]>([]);
 
     useEffect(() => {
@@ -23,24 +24,60 @@ const AddCampaignRecipients: React.FC<Props> = ({ isOpen, onClose, campaign }) =
         fetchGroup();
     }, [getAllGroups]);
 
+    useEffect(() => {
+        if (contactgroupData && selectedGroupIds) {
+            setSelectedGroups(
+                (contactgroupData as ContactGroupData[])?.filter(group => selectedGroupIds.includes(group.uuid))
+            );
+        }
+    }, [selectedGroupIds, contactgroupData]);
+
+
+    useEffect(() => {
+        if (contactgroupData && campaign && campaign.campaign_groups) {
+            setSelectedGroups((contactgroupData as ContactGroupData[]).filter(group => {
+                // Check if the campaign has any associated groups
+                if (campaign.campaign_groups.length > 0) {
+                    // Filter the contactgroupData to include only the groups associated with the campaign
+                    return campaign.campaign_groups.some(cg => cg.group_id === group.id);
+                }
+                // If the campaign has no associated groups, don't select any groups
+                return false;
+            }));
+        } else {
+            setSelectedGroups([]); // Clear selected groups if there are no campaign groups
+        }
+    }, [contactgroupData, campaign]);
+
+
     const handleGroupSelect = (group: ContactGroupData) => {
         setSelectedGroups((prevSelected) => {
-            if (prevSelected.find(g => g.uuid === group.uuid)) {
-                return prevSelected.filter((g) => g.uuid !== group.uuid);
-            } else {
-                return [...prevSelected, group];
-            }
+            const isSelected = prevSelected.find(g => g.uuid === group.uuid);
+            return isSelected
+                ? prevSelected.filter((g) => g.uuid !== group.uuid)
+                : [...prevSelected, group];
         });
     };
 
     const handleRemoveGroup = (uuid: string) => {
-        setSelectedGroups((prevSelected) => prevSelected.filter((g) => g.uuid !== uuid));
+        setSelectedGroups((prevSelected) => {
+            const updatedGroups = prevSelected.filter((g) => g.uuid !== uuid);
+            setSelectedGroupIds(updatedGroups.map(g => g.uuid));
+            return updatedGroups;
+        });
     };
 
-    const handleGroupSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleGroupSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        // Handle submission logic with selectedGroups array
-        console.log("Selected Groups:", selectedGroups);
+
+        // Assuming selectedGroups is your local state in the component
+        const groupIds = selectedGroups.map(group => group.uuid);
+
+        if (campaign?.uuid) {
+            await createCampaignGroup(campaign.uuid, groupIds);
+        } else {
+            console.error("Campaign UUID is not available");
+        }
     };
 
     return (

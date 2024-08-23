@@ -23,7 +23,6 @@ const CreateCampaignComponent: React.FC<Props> = ({ isOpen, onClose }) => {
         try {
             await validationSchema.validate(createCampaignValues, { abortEarly: false });
             await createCampaign()
-            await getAllCampaigns()
             onClose()
         } catch (err) {
             const validationErrors: { [key: string]: string } = {};

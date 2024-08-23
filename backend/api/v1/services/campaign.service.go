@@ -99,14 +99,12 @@ func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
 		UserId:         d.UserId,
 		SenderFromName: d.SenderFromName,
 		TemplateId:     d.TemplateId,
-		SentTemplateId: d.SentTemplateId,
 		RecipientInfo:  d.RecipientInfo,
 		IsPublished:    d.IsPublished,
 		Status:         model.CampaignStatus(d.Status),
 		TrackType:      model.Track,
 		IsArchived:     d.IsArchived,
 		SentAt:         d.SentAt,
-		Template:       d.Template,
 		ScheduledAt:    d.ScheduledAt,
 		HasCustomLogo:  d.HasCustomLogo,
 	}
@@ -132,6 +130,10 @@ func (s *CampaignService) AddOrEditCampaignGroup(d *dto.CampaignGroupDTO) error 
 	if err != nil {
 		return err
 	}
+
+	println(getCampaign.ID, "campaign ID")
+
+	println(getContactGroup.ID, "contact Group ID")
 
 	cgpModel := &model.CampaignGroup{CampaignId: getCampaign.ID, GroupId: getContactGroup.ID}
 

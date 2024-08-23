@@ -26,26 +26,34 @@ export type Campaign = {
     last_edited_by: string;
     template?: string;
     sender?: string;
-    campaign_groups: CampaignGroup[] | CampaignGroup
+    campaign_groups: CampaignGroup[]
 };
 
-type CampaignGroup = { campaign_id: number; group_id: number } & BaseEntity
+export type CampaignGroup = { campaign_id: number; group_id: number } & BaseEntity
 
 type CreateCampaignValues = Partial<Campaign>
 
 type CampaignResponse = APIResponse<PaginatedResponse<Campaign & BaseEntity>>
 
+type CampaignGroupValues = { campaign_id: string; group_id: string }
+
+
 type CampaignStore = {
     createCampaignValues: CreateCampaignValues
+    selectedCampaign: Campaign[]
+    selectedGroupIds: string[]
     paginationInfo: Omit<PaginatedResponse<Campaign>, 'data'>;
     setCreateCampaignValues: (newData: CreateCampaignValues) => void
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<Campaign>, 'data'>) => void;
-    campaignData: (Campaign & BaseEntity)[] | Campaign & BaseEntity
+    campaignData: (Campaign & BaseEntity)[] | Campaign & BaseEntity | null
     createCampaign: () => Promise<void>
     getAllCampaigns: (page?: number, pageSize?: number) => Promise<void>
     setCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
     getSingleCampaign: (uuid: string) => Promise<void>
     updateCampaign: (uuid: string) => Promise<void>
+    setSelectedGroupIds: (newData: string[]) => void
+    createCampaignGroup: (uuid: string,groupIds:string[]) => Promise<void>
+    resetCampaignData: () => void;
 }
 
 const useCampaignStore = create<CampaignStore>((set, get) => ({
@@ -72,10 +80,13 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
         current_page: 1,
         page_size: 10,
     },
+    selectedCampaign: [],
+    selectedGroupIds: [] as string[],
 
     setCampaignData: (newData) => set({ campaignData: newData }),
     setCreateCampaignValues: (newData) => set({ createCampaignValues: newData }),
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
+    setSelectedGroupIds: (groupIds: string[]) => set({ selectedGroupIds: groupIds }),
 
     createCampaign: async () => {
         try {
@@ -85,10 +96,11 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
             let user = JSON.parse(cookie)?.details?.company;
             const updatedCampaignValues = { ...createCampaignValues, sender_from_name: user };
             let response = await axiosInstance.post<ResponseT>("/campaigns/create-campaign", updatedCampaignValues)
+
             if (response.data.status == true) {
                 eventBus.emit("success", "Campaign created successfully")
 
-                window.location.href = "/user/dash/campaign/edit/" + response.data.payload.templateId
+                window.location.href = "/user/dash/campaign/edit/" + response.data.payload.campaignId
             }
         } catch (error) {
             if (errResponse(error)) {
@@ -155,8 +167,47 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
             } else {
                 console.error("Unknown error:", error);
             }
-        } 
-    }
+        }
+    },
+
+    createCampaignGroup: async (uuid: string, groupIds: string[]) => {
+        try {
+            console.log("uuid", uuid)
+            console.log("groupIds", groupIds)
+    
+            if (groupIds.length > 0) {
+                const promises = groupIds.map(groupId => {
+                    const data = {
+                        group_id: groupId,
+                        campaign_id: uuid
+                    } satisfies CampaignGroupValues
+    
+                    return axiosInstance.post<ResponseT>("/campaigns/add-campaign-group", data)
+                })
+    
+                const results = await Promise.all(promises)
+    
+                const allSuccessful = results.every(response => response.data.status === true)
+    
+                if (allSuccessful) {
+                    eventBus.emit('success', "Recipients added successfully")
+                } else {
+                    eventBus.emit('error', "Some recipients could not be created")
+                }
+            } else {
+                eventBus.emit('error', "No groups selected")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
+    resetCampaignData: () => set({ campaignData: null }),
 }))
 
 

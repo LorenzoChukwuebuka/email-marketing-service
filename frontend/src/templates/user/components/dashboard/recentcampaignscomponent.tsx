@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import EmptyState from '../../../../components/emptyStateComponent';
 import { useNavigate } from 'react-router-dom';
-import useCampaignStore from '../../../../store/userstore/campaignStore';
+import useCampaignStore, { Campaign } from '../../../../store/userstore/campaignStore';
 import { parseDate } from '../../../../utils/utils';
+import { BaseEntity } from '../../../../interface/baseentity.interface';
 
 const RecentCampaigns = () => {
     const navigate = useNavigate()
@@ -25,9 +26,9 @@ const RecentCampaigns = () => {
                 </div>
             </div>
             <div className="border rounded-lg">
-                {campaignData && campaignData.length > 0 ? (<>
+                {campaignData && (campaignData as (Campaign & BaseEntity)[]).length > 0 ? (<>
 
-                    {campaignData.slice(0, 3).map((campaign, index) => (
+                    {(campaignData as (Campaign & BaseEntity)[]).slice(0, 3).map((campaign, index) => (
                         <div key={campaign.uuid} className="border-b-2 last:border-b-2 p-4">
                             <div className="flex justify-between items-center">
                                 <span className="font-medium">

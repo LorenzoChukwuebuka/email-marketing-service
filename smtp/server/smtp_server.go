@@ -1,15 +1,16 @@
-package smtpserver
+package server 
 
-import (
+ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/emersion/go-sasl"
-	"github.com/emersion/go-smtp"
 	"io"
 	"log"
 	"strings"
-	"time"
+ 
+
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
 )
 
 // Debug flag to enable/disable debug logging
@@ -146,26 +147,6 @@ func (s *Session) Command(cmd string, args []string) (string, error) {
 		return "535 5.7.8 Authentication credentials invalid", nil
 	default:
 		return "", nil
-	}
-}
-
-func main() {
-	be := &Backend{}
-
-	s := smtp.NewServer(be)
-
-	// Configure server settings
-	s.Addr = "localhost:1025"
-	s.Domain = "localhost"
-	s.WriteTimeout = 600 * time.Second
-	s.ReadTimeout = 600 * time.Second
-	s.MaxMessageBytes = 1024 * 1024
-	s.MaxRecipients = 50
-	s.AllowInsecureAuth = true
-
-	log.Println("Starting server at", s.Addr)
-	if err := s.ListenAndServe(); err != nil {
-		log.Fatal(err)
 	}
 }
 
