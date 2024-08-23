@@ -4,10 +4,10 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-	"strconv"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
+	"strconv"
 )
 
 type CampaignController struct {
@@ -87,7 +87,6 @@ func (c *CampaignController) GetAllScheduledCampaigns(w http.ResponseWriter, r *
 	}
 
 	userId := claims["userId"].(string)
-
 	page1 := r.URL.Query().Get("page")
 	pageSize1 := r.URL.Query().Get("page_size")
 
@@ -160,8 +159,7 @@ func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, "campaign edited successfully")
 }
 
-
-func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *http.Request){
+func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.CampaignGroupDTO
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
 	if !ok {
@@ -172,6 +170,13 @@ func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *ht
 	userId := claims["userId"].(string)
 	utils.DecodeRequestBody(r, &reqdata)
 	reqdata.UserId = userId
+
+	if err := c.CampaignSVC.AddOrEditCampaignGroup(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "campaign group successfully")
 }
 
 func (c *CampaignController) DeleteCampaign() {}

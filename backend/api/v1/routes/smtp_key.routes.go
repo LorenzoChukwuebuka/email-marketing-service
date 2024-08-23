@@ -2,7 +2,6 @@ package routes
 
 import (
 	"email-marketing-service/api/v1/middleware"
-
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )

@@ -12,14 +12,11 @@ const TransactionalTemplateDash: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const modalRef = useRef<HTMLDivElement>(null)
 
-
     const navigate = useNavigate()
-
 
     useEffect(() => {
         getAllTransactionalTemplates()
     }, [])
-
 
     const openPreview = (template: (Template & BaseEntity)) => {
         setPreviewTemplate(template);
@@ -112,11 +109,18 @@ const TransactionalTemplateDash: React.FC = () => {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded"> Draft </span>
-                                        <button className="text-gray-400 hover:text-gray-600" onClick={() => setIsModalOpen(isModalOpen === index ? null : index)}>
+                                        <button
+                                            className="text-gray-400 hover:text-gray-600"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); 
+                                                setIsModalOpen(isModalOpen === index ? null : index);
+                                            }}
+                                        >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
                                             </svg>
                                         </button>
+
                                         {isModalOpen === index && (
                                             <div
                                                 ref={modalRef}

@@ -124,6 +124,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 
 func mapGroupToResponse(group model.ContactGroup) model.ContactGroupResponse {
 	groupResponse := model.ContactGroupResponse{
+		ID: group.ID,
 		UUID:        group.UUID,
 		GroupName:   group.GroupName,
 		UserId:      group.UserId,

@@ -1,8 +1,11 @@
 # Stage 1: Build the Go backend
 FROM golang:1.21 as backend-builder
-WORKDIR /app/backend
-COPY backend/ ./
-#RUN make buildfe
+WORKDIR /app
+
+# Copy the backend source code
+COPY . ./
+
+# Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Final Stage: Production image
@@ -11,15 +14,20 @@ RUN apk --no-cache add ca-certificates wget bash
 
 WORKDIR /root/
 
-# Copy the Go binary
-COPY --from=backend-builder /app/backend/main .
+# Copy the Go binary from the build stage
+COPY --from=backend-builder /app/main .
 
-# Copy .env file
-COPY backend/.env .env
+# Copy .env file from the current directory in the build context
+COPY .env .env
+
+
+RUN cat .env
 
 # Copy healthcheck script
-COPY healthcheck.sh /healthcheck.sh
+COPY ../healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
+
+RUN ls -l /healthcheck.sh
 
 # Expose the Go application port
 EXPOSE 9000
@@ -28,4 +36,4 @@ EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh
 
 # Start the application and load the environment variables
-CMD ["sh", "-c", "set -o allexport; source .env; set +o allexport; ./main"]
+CMD ["sh", "-c", ". .env; ./main"]

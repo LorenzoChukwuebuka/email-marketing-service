@@ -39,3 +39,28 @@ Regular Reports: Generate and review regular reports to evaluate the success of 
 10. Compliance and Privacy
 GDPR/CCPA Compliance: Ensure that your tracking methods comply with data protection regulations. Obtain user consent where necessary and provide options for users to opt-out of tracking.
 By implementing these analytics methods, you'll be able to effectively monitor and optimize your email campaigns, leading to better engagement and higher conversion rates.
+
+
+
+
+// frontendDir := "./../frontend/dist" // Adjust if needed
+	// absPath, err := filepath.Abs(frontendDir)
+	// if err != nil {
+	// 	log.Printf("Error getting absolute path: %v", err)
+	// } else {
+	// 	log.Printf("Attempting to serve frontend from: %s", absPath)
+	// 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+	// 		logger.Error("Frontend directory does not exist: %s", absPath)
+	// 	} else {
+	// 		fs := http.FileServer(http.Dir(absPath))
+	// 		s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	// 		s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 			indexFile := filepath.Join(absPath, "index.html")
+	// 			http.ServeFile(w, r, indexFile)
+	// 		})
+
+	// 		logger.Info("Frontend serving set up successfully with SPA support")
+
+	// 	}
+	// }

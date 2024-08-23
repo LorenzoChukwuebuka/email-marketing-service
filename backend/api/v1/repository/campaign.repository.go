@@ -147,7 +147,7 @@ func (r *CampaignRepository) GetScheduledCampaigns(userId string, params Paginat
 func (r *CampaignRepository) GetSingleCampaign(userId string, campaignId string) (*model.CampaignResponse, error) {
 	var campaigns model.Campaign
 
-	result := r.DB.Model(&campaigns).Where("user_id = ?", userId).Preload("CampaignGroups").First(&campaigns)
+	result := r.DB.Model(&campaigns).Where("uuid= ? AND user_id = ?", campaignId, userId).Preload("CampaignGroups").First(&campaigns)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {

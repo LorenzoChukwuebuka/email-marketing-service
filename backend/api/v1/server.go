@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	//"path/filepath"
+//	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -35,6 +35,7 @@ var (
 )
 
 func (s *Server) setupRoutes() {
+
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.RouteInterface{
 		"":          routes.NewAuthRoute(s.db),
@@ -50,27 +51,24 @@ func (s *Server) setupRoutes() {
 		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
 	}
 
-	// frontendDir := "./../frontend/dist" // Adjust if needed
-	// absPath, err := filepath.Abs(frontendDir)
-	// if err != nil {
-	// 	log.Printf("Error getting absolute path: %v", err)
-	// } else {
-	// 	log.Printf("Attempting to serve frontend from: %s", absPath)
-	// 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-	// 		logger.Error("Frontend directory does not exist: %s", absPath)
-	// 	} else {
-	// 		fs := http.FileServer(http.Dir(absPath))
-	// 		s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	// staticDir := "./client"
 
-	// 		s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 			indexFile := filepath.Join(absPath, "index.html")
-	// 			http.ServeFile(w, r, indexFile)
-	// 		})
+	// // Handle static files using Gorilla Mux
+	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
-	// 		logger.Info("Frontend serving set up successfully with SPA support")
+	// // Handle all other routes by serving index.html for the SPA
+	// s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	path := filepath.Join(staticDir, r.URL.Path)
 
+	// 	// If the requested file exists, serve it
+	// 	if _, err := os.Stat(path); err == nil {
+	// 		http.ServeFile(w, r, path)
+	// 		return
 	// 	}
-	// }
+
+	// 	// Otherwise, serve index.html
+	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+	// })
 
 	s.router.Use(recoveryMiddleware)
 	s.router.Use(enableCORS)

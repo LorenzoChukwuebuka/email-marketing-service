@@ -67,8 +67,12 @@ func (r *TemplateRepository) UpdateTemplate(d *model.Template) error {
 }
 
 func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {
-	if err := r.DB.Delete(d).Error; err != nil {
-		return fmt.Errorf("failed to delete template: %w", err)
+	result := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).Delete(&model.Template{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete template: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no template found with UUID: %s", d.UUID)
 	}
 	return nil
 }
@@ -147,5 +151,3 @@ func convertToTemplateResponse(t *model.Template) *model.TemplateResponse {
 		EditorType:        t.EditorType,
 	}
 }
-
-

@@ -17,10 +17,11 @@ const GetAllCampaignComponent: React.FC = () => {
         fetchCampaign()
     }, [])
 
-
+    const deleteCampaign = async (uuid: string) => {
+        console.log(uuid)
+    }
 
     return <>
-
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
             <div className="space-x-1  h-auto w-full p-2 px-2 ">
                 <button
@@ -40,7 +41,6 @@ const GetAllCampaignComponent: React.FC = () => {
                 />
             </div>
         </div>
-
 
         <div className="overflow-x-auto mt-8">
             <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
@@ -67,34 +67,43 @@ const GetAllCampaignComponent: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                     {campaignData && (campaignData as (BaseEntity & Campaign)[]).length > 0 ? (
-                        (campaignData as (BaseEntity & Campaign)[]).map((campaign: any) => (
-                            <tr key={campaign.uuid} className="hover:bg-gray-100">
+                        (campaignData as (BaseEntity & Campaign)[]).map((campaign: any) => {
+                            return (
+                                <tr key={campaign.uuid} className="hover:bg-gray-100">
+                                    <td className="py-4 px-4">{campaign.name}</td>
+                                    <td className="py-4 px-4"> {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</td>
+                                    <td className="py-4 px-4">
+                                        {parseDate(campaign.created_at).toLocaleString('en-US', {
+                                            timeZone: 'UTC',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric'
+                                        })}
+                                    </td>
 
-                                <td className="py-4 px-4">{campaign.name}</td>
-                                <td className="py-4 px-4"> {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</td>
-                                <td className="py-4 px-4">
-                                    {parseDate(campaign.created_at).toLocaleString('en-US', {
-                                        timeZone: 'UTC',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric'
-                                    })}
-                                </td>
+                                    <td className="py-4 px-4">
+                                        <button
+                                            className="text-gray-400 hover:text-gray-600"
+                                            onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                        >
+                                            ✏️
+                                        </button>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <button
+                                            className="text-gray-400 hover:text-gray-600"
+                                            onClick={() => deleteCampaign(campaign.uuid)}
+                                        >
+                                            <i className="bi bi-trash text-red-500"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })
 
-                                <td className="py-4 px-4">
-                                    <button
-                                        className="text-gray-400 hover:text-gray-600"
-                                        onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
-                                    >
-                                        ✏️
-                                    </button>
-                                </td>
-
-                            </tr>
-                        ))
                     ) : (
                         <tr>
                             <td colSpan={7} className="py-4 px-4  text-center">
