@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import useCampaignStore, { Campaign } from '../../../../store/userstore/campaignStore';
-import { BaseEntity } from '../../../../interface/baseentity.interface';
+import { useNavigate, useParams } from 'react-router-dom';
+import useCampaignStore, { CampaignData } from '../../../../store/userstore/campaignStore';
 import AddCampaignSubjectComponent from './addSubjectComponent';
 import AddCampaignRecipients from './addRecipientComponent';
 import AddSenderComponent from './addSenderComponent';
 
 const EditCampaignForm: React.FC = () => {
     const { id } = useParams<{ id: string }>() as { id: string };
-    const { getSingleCampaign, campaignData, resetCampaignData } = useCampaignStore()
+    const { getSingleCampaign, campaignData, resetCampaignData, setCurrentCampaignId,  sendCampaign } = useCampaignStore();
+    const navigate = useNavigate();
 
     const [isSubjectModalOpen, setIsSubjectModalOpen] = useState<boolean>(false);
     const [isRecipientModalOpen, setIsRecipientModalOpen] = useState<boolean>(false);
     const [isSenderModalOpen, setIsSenderModalOpen] = useState<boolean>(false);
+    const [campaign, setCampaign] = useState<CampaignData | null>(null);
+    const [templatePreview, setTemplatePreview] = useState<string | null>(null);
 
     useEffect(() => {
-        // Reset campaign data before fetching the new one
         resetCampaignData();
 
         const fetchData = async () => {
@@ -25,15 +26,24 @@ const EditCampaignForm: React.FC = () => {
         fetchData();
     }, [id, getSingleCampaign, resetCampaignData]);
 
-    const campaign = campaignData as BaseEntity & Campaign;
+    useEffect(() => {
+        if (campaignData) {
+            setCampaign(campaignData as CampaignData);
+            //@ts-ignore
+            setTemplatePreview(campaignData?.template?.email_html || null);
+        }
+    }, [campaignData]);
 
+
+  
     const handleButtonClick = (item: string) => {
         switch (item) {
             case "Subject":
                 setIsSubjectModalOpen(true);
                 break;
             case "Design":
-                console.log("hello");
+                setCurrentCampaignId(campaign?.uuid as string);
+                navigate("/user/dash/templates");
                 break;
             case "Recipients":
                 setIsRecipientModalOpen(true);
@@ -43,9 +53,19 @@ const EditCampaignForm: React.FC = () => {
         }
     };
 
+
+    const sendCampgn = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault()
+        try {
+            await sendCampaign(campaign?.uuid as string)
+        } catch (error) {
+
+        }
+    }
+
     return (
-        <main className='p-4'>
-            {/* The rest of your JSX code remains unchanged */}
+        <main className="p-4">
+            {/* Header section */}
             <div className="flex items-center mb-5">
                 <button className="text-blue-600 mr-2" onClick={() => window.history.back()}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -55,8 +75,8 @@ const EditCampaignForm: React.FC = () => {
                 <h1 className="text-xl font-semibold mt-2 mb-2">{campaign?.name}</h1>
                 <span className="ml-2 text-gray-500 text-sm">Draft</span>
                 <div className="ml-auto">
-                    <button className="bg-white text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-md shadow-sm mr-2">
-                       Send
+                    <button className="bg-white text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-md shadow-sm mr-2" onClick={(e) => sendCampgn(e)}>
+                        Send
                     </button>
                     <button className="bg-black text-white font-semibold py-2 px-4 rounded-md">
                         Schedule
@@ -64,8 +84,9 @@ const EditCampaignForm: React.FC = () => {
                 </div>
             </div>
 
-            {/* Your other components and JSX here */}
+            {/* Main content */}
             <div className="space-y-4">
+                {/* Sender section */}
                 <div className="border rounded-md p-4">
                     <div className="flex items-center justify-between">
                         <div>
@@ -74,7 +95,7 @@ const EditCampaignForm: React.FC = () => {
                                 <h2 className="text-lg font-semibold">Sender</h2>
                             </div>
                             <div className="mt-1">
-                                <span className="font-medium">My Company</span>
+                                <span className="font-medium">{campaign?.sender_from_name ?? "My Company"}</span>
                                 <span className="text-blue-600 ml-2 text-sm">Review your sender status</span>
                             </div>
                         </div>
@@ -84,6 +105,7 @@ const EditCampaignForm: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Other sections */}
                 {['Recipients', 'Subject', 'Design'].map((item, index) => (
                     <div key={index} className="border rounded-md p-4">
                         <div className="flex items-center justify-between">
@@ -104,17 +126,19 @@ const EditCampaignForm: React.FC = () => {
                                 {item === 'Design' && 'Start designing'}
                             </button>
                         </div>
+
+                        {/* Conditionally render the template preview */}
+                        {item === 'Design' && templatePreview && (
+                            <div className="mt-4">
+                                <h3 className="text-lg font-semibold">Template Preview</h3>
+                                <div className="border p-4 mt-2" dangerouslySetInnerHTML={{ __html: templatePreview }} />
+                            </div>
+                        )}
                     </div>
                 ))}
-
-                {/* <div className="flex items-center justify-between mt-4">
-                    <h2 className="text-lg font-semibold">Additional settings</h2>
-                    <button className="bg-white text-gray-700 font-semibold py-1 px-3 border border-gray-300 rounded-md text-sm">
-                        Edit settings
-                    </button>
-                </div> */}
             </div>
 
+            {/* Modals */}
             <AddCampaignSubjectComponent campaign={campaign} isOpen={isSubjectModalOpen} onClose={() => setIsSubjectModalOpen(false)} />
             <AddCampaignRecipients campaign={campaign} isOpen={isRecipientModalOpen} onClose={() => setIsRecipientModalOpen(false)} />
             <AddSenderComponent campaign={campaign} isOpen={isSenderModalOpen} onClose={() => setIsSenderModalOpen(false)} />

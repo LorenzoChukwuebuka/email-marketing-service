@@ -4,10 +4,11 @@ import useCampaignStore, { Campaign } from "../../../../store/userstore/campaign
 import { parseDate } from "../../../../utils/utils";
 import { useNavigate } from "react-router-dom";
 import { BaseEntity } from "../../../../interface/baseentity.interface";
+import Pagination from '../../../../components/Pagination';
 
 const GetAllCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const { getAllCampaigns, campaignData } = useCampaignStore()
+    const { getAllCampaigns, campaignData, paginationInfo } = useCampaignStore()
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -20,6 +21,11 @@ const GetAllCampaignComponent: React.FC = () => {
     const deleteCampaign = async (uuid: string) => {
         console.log(uuid)
     }
+
+    const handlePageChange = (newPage: number) => {
+        getAllCampaigns(newPage, paginationInfo.page_size);
+    };
+
 
     return <>
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
@@ -113,6 +119,10 @@ const GetAllCampaignComponent: React.FC = () => {
                     )}
                 </tbody>
             </table>
+
+            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Campaigns" />
+
+
         </div>
         <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>

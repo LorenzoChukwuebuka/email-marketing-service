@@ -140,7 +140,8 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, error) {
 	campaignRepository := repository.NewCampaignRepository(db)
 	contactRepository := repository.NewContactRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository)
+	templateRepository := repository.NewTemplateRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository)
 	campaignController := controllers.NewCampaignController(campaignService)
 	return campaignController, nil
 }

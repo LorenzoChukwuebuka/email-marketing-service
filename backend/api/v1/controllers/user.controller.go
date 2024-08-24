@@ -41,7 +41,10 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.User
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	userCreateService, err := c.userService.CreateUser(reqdata)
 
 	if err != nil {
@@ -55,7 +58,10 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.OTP
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	err := c.userService.VerifyUser(reqdata)
 
@@ -69,7 +75,10 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.Login
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	result, err := c.userService.Login(reqdata)
 
@@ -84,7 +93,10 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ResendOTP
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ResendOTP(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -97,7 +109,10 @@ func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ForgetPassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ForgetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -110,7 +125,10 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ResetPassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ResetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -131,7 +149,10 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 
 	var reqdata *dto.ChangePassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	err := c.userService.ChangePassword(userId, reqdata)
 	if err != nil {
@@ -152,7 +173,10 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	var reqdata *model.User
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	reqdata.UUID = userId
 

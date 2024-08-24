@@ -21,7 +21,10 @@ func NewPlanController(planService *services.PlanService) *PlanController {
 func (c *PlanController) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.Plan
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	result, err := c.PlanService.CreatePlan(reqdata)
 
@@ -62,7 +65,10 @@ func (c *PlanController) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 
 	var reqdata *dto.EditPlan
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UUID = id
 

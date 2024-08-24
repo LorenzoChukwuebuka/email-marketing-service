@@ -172,6 +172,7 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		services.NewCampaignService,
 		repository.NewCampaignRepository,
 		repository.NewContactRepository,
+		repository.NewTemplateRepository,
 	)
 	return nil, nil
 }

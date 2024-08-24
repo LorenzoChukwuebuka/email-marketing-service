@@ -30,7 +30,10 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 
 	var reqdata *dto.BasePaymentModelData
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	userId := claims["userId"].(string)
 	email := claims["email"].(string)

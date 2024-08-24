@@ -11,12 +11,14 @@ import (
 type CampaignService struct {
 	CampaignRepo *repository.CampaignRepository
 	ContactRepo  *repository.ContactRepository
+	TemplateRepo *repository.TemplateRepository
 }
 
-func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo *repository.ContactRepository) *CampaignService {
+func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo *repository.ContactRepository, templateRepo *repository.TemplateRepository) *CampaignService {
 	return &CampaignService{
 		CampaignRepo: campaignRepo,
 		ContactRepo:  contactRepo,
+		TemplateRepo: templateRepo,
 	}
 }
 
@@ -63,7 +65,7 @@ func (s *CampaignService) GetAllCampaigns(userId string, page int, pageSize int)
 
 func (s *CampaignService) GetScheduledCampaigns(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
-	campaignRepo, err := s.CampaignRepo.GetAllCampaigns(userId, paginationParams)
+	campaignRepo, err := s.CampaignRepo.GetScheduledCampaigns(userId, paginationParams)
 	if err != nil {
 		return repository.PaginatedResult{}, err
 	}
@@ -90,6 +92,18 @@ func (s *CampaignService) GetSingleCampaign(userId string, campaignId string) (*
 }
 
 func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
+	var template *model.TemplateResponse
+	var err error
+
+	if d.TemplateId != nil {
+		template, err = s.TemplateRepo.GetSingleTemplate(*d.TemplateId)
+		if err != nil {
+			return err
+		}
+		if template == nil {
+			return fmt.Errorf("template with id %s not found", *d.TemplateId)
+		}
+	}
 
 	campaignModel := &model.Campaign{
 		UUID:           d.UUID,
@@ -98,7 +112,6 @@ func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
 		PreviewText:    d.PreviewText,
 		UserId:         d.UserId,
 		SenderFromName: d.SenderFromName,
-		TemplateId:     d.TemplateId,
 		RecipientInfo:  d.RecipientInfo,
 		IsPublished:    d.IsPublished,
 		Status:         model.CampaignStatus(d.Status),
@@ -107,6 +120,10 @@ func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
 		SentAt:         d.SentAt,
 		ScheduledAt:    d.ScheduledAt,
 		HasCustomLogo:  d.HasCustomLogo,
+	}
+
+	if template != nil {
+		*campaignModel.TemplateId = template.ID
 	}
 
 	if err := s.CampaignRepo.UpdateCampaign(campaignModel); err != nil {
@@ -131,10 +148,6 @@ func (s *CampaignService) AddOrEditCampaignGroup(d *dto.CampaignGroupDTO) error 
 		return err
 	}
 
-	println(getCampaign.ID, "campaign ID")
-
-	println(getContactGroup.ID, "contact Group ID")
-
 	cgpModel := &model.CampaignGroup{CampaignId: getCampaign.ID, GroupId: getContactGroup.ID}
 
 	if err := s.CampaignRepo.AddOrEditCampaignGroup(cgpModel); err != nil {
@@ -142,4 +155,15 @@ func (s *CampaignService) AddOrEditCampaignGroup(d *dto.CampaignGroupDTO) error 
 	}
 
 	return nil
+}
+
+func (s *CampaignService) DeleteCampaign(campaignId string, userId string) error {
+	if err := s.CampaignRepo.DeleteCampaign(campaignId, userId); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *CampaignService) SendCampaign(campaignId string, userId string) {
+
 }

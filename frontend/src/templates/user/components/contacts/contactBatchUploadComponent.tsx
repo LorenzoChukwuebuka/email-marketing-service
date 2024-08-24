@@ -3,8 +3,6 @@ import { Modal } from "../../../../components";
 import useContactStore from "../../../../store/userstore/contactStore";
 import * as Yup from 'yup';
 
-
-
 // Yup schema for file validation
 const fileValidationSchema = Yup.object().shape({
     file: Yup.mixed()
@@ -59,6 +57,7 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
         }
         setSelectedCSVFile(selectedFile);
         await batchContactUpload();
+        new Promise((resolve) => setTimeout(resolve, 1000));
         await getAllContacts();
         onClose()
         location.reload()

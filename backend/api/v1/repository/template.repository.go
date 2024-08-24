@@ -107,11 +107,10 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.Te
 
 func (r *TemplateRepository) GetSingleTemplate(templateId string) (*model.TemplateResponse, error) {
 	var template model.Template
-	result := r.DB.Where("  uuid = ?", templateId).First(&template)
-
+	result := r.DB.Where("uuid = ?", templateId).First(&template)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, fmt.Errorf("template with id %s not found", templateId)
 		}
 		return nil, result.Error
 	}
