@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import useTemplateStore from '../../store/userstore/templateStore';
 import 'react-quill/dist/quill.snow.css';
 import SendTestEmail from '../user/components/templates/sendTestEmail';
+import useCampaignStore from '../../store/userstore/campaignStore';
 
 const RichTextEditor = () => {
     const quillRef = useRef<ReactQuill>(null);
@@ -17,7 +18,8 @@ const RichTextEditor = () => {
     const uuid = queryParams.get('uuid');
     const _type = queryParams.get('type');
     const [editorContent, setEditorContent] = useState(currentTemplate?.email_html || '');
-
+    const { updateCampaign, setCreateCampaignValues,currentCampaignId, clearCurrentCampaignId  } = useCampaignStore()
+     
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,9 +39,7 @@ const RichTextEditor = () => {
         }
     }, [uuid, _type]);
 
-    useEffect(() => {
-        console.log("Current template updated:", currentTemplate);
-    }, [currentTemplate]);
+    
 
     useEffect(() => {
         return () => {
@@ -50,14 +50,16 @@ const RichTextEditor = () => {
     useEffect(() => {
         const debounce = setTimeout(() => {
             saveDesign();
-        }, 1000); // Adjust this delay as needed
-
+        }, 1000);  
         return () => clearTimeout(debounce);
     }, [editorContent]);
 
-
+ 
     const saveDesign = async () => {
-        console.log("saveDesign function called");
+        if (currentCampaignId) {
+            setCreateCampaignValues({ template_id: uuid as string })
+            updateCampaign(currentCampaignId)
+        }
 
         if (uuid && currentTemplate) {
             const updatedTemplate = {
@@ -71,6 +73,8 @@ const RichTextEditor = () => {
         } else {
             console.log("UUID or template is missing", { uuid, currentTemplate });
         }
+
+
     };
 
     const handleChange = (content: string) => {
@@ -87,11 +91,17 @@ const RichTextEditor = () => {
     }
 
     const handleNavigate = () => {
-        if (_type === "t") {
-            navigate("/user/dash/templates");
+        if (currentCampaignId) {
+            clearCurrentCampaignId();
+            navigate("/user/dash/campaign/edit/" + currentCampaignId);
         } else {
-            navigate("/user/dash/marketing");
+            if (_type === "t") {
+                navigate("/user/dash/templates");
+            } else {
+                navigate("/user/dash/marketing");
+            }
         }
+
     };
 
     return (

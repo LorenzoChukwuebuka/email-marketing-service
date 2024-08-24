@@ -28,6 +28,7 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
         try {
             await validationSchema.validate(contactFormValues, { abortEarly: false });
             await createContact();
+            new Promise((resolve) => setTimeout(resolve, 1000));
             await getAllContacts();
             onClose();
             setErrors({})

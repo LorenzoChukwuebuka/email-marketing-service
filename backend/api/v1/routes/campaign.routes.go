@@ -23,4 +23,5 @@ func (ur *CampaignRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-campaign/{campaignId}", middleware.JWTMiddleware(campaignController.GetSingleCampaign)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/update-campaign/{campaignId}", middleware.JWTMiddleware(campaignController.EditCampaign)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/add-campaign-group", middleware.JWTMiddleware(campaignController.AddOrEditCampaignGroup)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/send-campaign", middleware.JWTMiddleware(campaignController.SendCampaign)).Methods("POST", "OPTIONS")
 }

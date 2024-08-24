@@ -44,3 +44,6 @@ git:
 
 docker:
 	docker-compose up --build
+
+vet:
+	cd $(ROOT_DIR) && go vet

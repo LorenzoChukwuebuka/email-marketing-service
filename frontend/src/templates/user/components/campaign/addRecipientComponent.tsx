@@ -78,6 +78,8 @@ const AddCampaignRecipients: React.FC<Props> = ({ isOpen, onClose, campaign }) =
         } else {
             console.error("Campaign UUID is not available");
         }
+
+        onClose()
     };
 
     return (

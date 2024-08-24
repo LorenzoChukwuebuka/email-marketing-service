@@ -38,3 +38,8 @@ type CampaignGroupDTO struct {
 	GroupId    string `json:"group_id" validate:"required"`
 	UserId     string `json:"user_id"`
 }
+
+type SendCampaignDTO struct {
+	CampaignId string `json:"campaign_id" validate:"required"`
+	UserId     string `json:"user_id"`
+}

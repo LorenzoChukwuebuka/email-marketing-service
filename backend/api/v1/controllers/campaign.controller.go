@@ -31,7 +31,10 @@ func (c *CampaignController) CreateCampaign(w http.ResponseWriter, r *http.Reque
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	reqdata.UserId = userId
 
@@ -147,7 +150,11 @@ func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request
 	}
 
 	userId := claims["userId"].(string)
-	utils.DecodeRequestBody(r, &reqdata)
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	reqdata.UserId = userId
 	reqdata.UUID = campaignId
 
@@ -168,7 +175,12 @@ func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *ht
 	}
 
 	userId := claims["userId"].(string)
-	utils.DecodeRequestBody(r, &reqdata)
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
+
 	reqdata.UserId = userId
 
 	if err := c.CampaignSVC.AddOrEditCampaignGroup(reqdata); err != nil {
@@ -177,6 +189,28 @@ func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *ht
 	}
 
 	response.SuccessResponse(w, 200, "campaign group successfully")
+}
+
+func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.SendCampaignDTO
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
+
+	reqdata.UserId = userId
+
+	
+
 }
 
 func (c *CampaignController) DeleteCampaign() {}

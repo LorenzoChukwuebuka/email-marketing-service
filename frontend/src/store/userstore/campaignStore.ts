@@ -6,6 +6,8 @@ import { APIResponse, ResponseT } from '../../interface/api.interface';
 import { PaginatedResponse } from '../../interface/pagination.interface';
 import { BaseEntity } from '../../interface/baseentity.interface';
 import Cookies from 'js-cookie'
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { Template } from './templateStore';
 
 export type Campaign = {
     name: string;
@@ -24,7 +26,7 @@ export type Campaign = {
     sent_at?: Date;
     created_by: string;
     last_edited_by: string;
-    template?: string;
+    template?: Template;
     sender?: string;
     campaign_groups: CampaignGroup[]
 };
@@ -37,6 +39,8 @@ type CampaignResponse = APIResponse<PaginatedResponse<Campaign & BaseEntity>>
 
 type CampaignGroupValues = { campaign_id: string; group_id: string }
 
+export type CampaignData = BaseEntity & Campaign
+
 
 type CampaignStore = {
     createCampaignValues: CreateCampaignValues
@@ -45,18 +49,26 @@ type CampaignStore = {
     paginationInfo: Omit<PaginatedResponse<Campaign>, 'data'>;
     setCreateCampaignValues: (newData: CreateCampaignValues) => void
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<Campaign>, 'data'>) => void;
-    campaignData: (Campaign & BaseEntity)[] | Campaign & BaseEntity | null
+    campaignData: CampaignData[] | CampaignData | null
+    scheduledCampaignData: (Campaign & BaseEntity)[] | Campaign & BaseEntity | null
+    currentCampaignId: string | null;
+    setCurrentCampaignId: (id: string | null) => void;
+    clearCurrentCampaignId: () => void;
     createCampaign: () => Promise<void>
     getAllCampaigns: (page?: number, pageSize?: number) => Promise<void>
     setCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
-    getSingleCampaign: (uuid: string) => Promise<void>
+    setScheduledCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
+    getSingleCampaign: (uuid: string) => Promise<CampaignData | null>
     updateCampaign: (uuid: string) => Promise<void>
     setSelectedGroupIds: (newData: string[]) => void
-    createCampaignGroup: (uuid: string,groupIds:string[]) => Promise<void>
+    createCampaignGroup: (uuid: string, groupIds: string[]) => Promise<void>
     resetCampaignData: () => void;
+    getScheduledCampaign: (page?: number, pageSize?: number) => Promise<void>
+    sendCampaign: (campaignId: string) => Promise<void>
 }
 
-const useCampaignStore = create<CampaignStore>((set, get) => ({
+const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
+
     createCampaignValues: {
         name: "",
         subject: "",
@@ -74,6 +86,7 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
         last_edited_by: "",
     },
     campaignData: [],
+    scheduledCampaignData: [],
     paginationInfo: {
         total_count: 0,
         total_pages: 0,
@@ -82,11 +95,14 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
     },
     selectedCampaign: [],
     selectedGroupIds: [] as string[],
-
+    currentCampaignId: null,
+    setCurrentCampaignId: (id) => set({ currentCampaignId: id }),
+    clearCurrentCampaignId: () => set({ currentCampaignId: null }),
     setCampaignData: (newData) => set({ campaignData: newData }),
     setCreateCampaignValues: (newData) => set({ createCampaignValues: newData }),
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
     setSelectedGroupIds: (groupIds: string[]) => set({ selectedGroupIds: groupIds }),
+    setScheduledCampaignData: (newData) => set({ scheduledCampaignData: newData }),
 
     createCampaign: async () => {
         try {
@@ -132,7 +148,7 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
             }
         }
     },
-    getSingleCampaign: async (uuid: string) => {
+    getSingleCampaign: async (uuid: string): Promise<CampaignData | null> => {
         try {
             const { setCampaignData } = get()
             let response = await axiosInstance.get<APIResponse<(BaseEntity & Campaign)>>("/campaigns/get-campaign/" + uuid)
@@ -140,6 +156,7 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
                 const campaign: Campaign & BaseEntity = response.data.payload as Campaign & BaseEntity;
                 setCampaignData(campaign);
             }
+            return response.data.payload
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -149,6 +166,8 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
                 console.error("Unknown error:", error);
             }
         }
+
+        return get().campaignData as CampaignData
     },
 
     updateCampaign: async (uuid: string) => {
@@ -157,7 +176,7 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
             const { createCampaignValues } = get()
             let response = await axiosInstance.put<ResponseT>("/campaigns/update-campaign/" + uuid, createCampaignValues)
             if (response.data.status === true) {
-                eventBus.emit('success', "campaign updated successfully")
+                console.log("successful")
             }
         } catch (error) {
             if (errResponse(error)) {
@@ -174,21 +193,21 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
         try {
             console.log("uuid", uuid)
             console.log("groupIds", groupIds)
-    
+
             if (groupIds.length > 0) {
                 const promises = groupIds.map(groupId => {
                     const data = {
                         group_id: groupId,
                         campaign_id: uuid
                     } satisfies CampaignGroupValues
-    
+
                     return axiosInstance.post<ResponseT>("/campaigns/add-campaign-group", data)
                 })
-    
+
                 const results = await Promise.all(promises)
-    
+
                 const allSuccessful = results.every(response => response.data.status === true)
-    
+
                 if (allSuccessful) {
                     eventBus.emit('success', "Recipients added successfully")
                 } else {
@@ -207,8 +226,80 @@ const useCampaignStore = create<CampaignStore>((set, get) => ({
             }
         }
     },
+    getScheduledCampaign: async (page = 1, pageSize = 10) => {
+        try {
+            const { setScheduledCampaignData, setPaginationInfo } = get()
+            let response = await axiosInstance.get<CampaignResponse>(`/campaigns/get-scheduled-campaigns?page=${page}&page_size=${pageSize}`)
+            const { data, ...paginationInfo } = response.data.payload;
+            setScheduledCampaignData(data)
+            setPaginationInfo(paginationInfo)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
+    sendCampaign: async (campaignId: string) => {
+        try {
+            const { getSingleCampaign } = get();
+            const campaign = await getSingleCampaign(campaignId) as CampaignData || null
+
+            // Check if campaign is defined and has the necessary properties
+            if (!campaign) {
+                eventBus.emit('success', 'You must fill all the neccessary fields')
+                return
+            }
+
+            // Check if template exists and has content
+            if (!campaign?.template || !campaign?.template.email_html) {
+                eventBus.emit('success', 'You haven`t created a template yet')
+                return
+            }
+
+            // Check if subject exists
+            if (!campaign?.subject) {
+                eventBus.emit('success', 'You have not created a subject yet')
+                return
+            }
+
+            // Check if campaign_groups exist and have recipients
+            if (!campaign?.campaign_groups || campaign?.campaign_groups.length === 0) {
+                eventBus.emit('success', 'You have not created a recipient yet')
+                return
+            }
+
+            // If all checks pass, proceed with sending the campaign
+            // let response = await axiosInstance.post<ResponseT>(`/campaigns/send/${campaignId}`);
+
+            // if (response.data.status === true) {
+            //     eventBus.emit('success', "Campaign sent successfully");
+            // } else {
+            //     throw new Error("Failed to send campaign");
+            // }
+
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload);
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+
+        }
+    },
     resetCampaignData: () => set({ campaignData: null }),
-}))
+}),
+
+    {
+        name: 'campaign-store',
+        storage: createJSONStorage(() => localStorage),
+    }
+))
 
 
 export default useCampaignStore

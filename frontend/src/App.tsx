@@ -75,8 +75,6 @@ const App: React.FC = () => {
 
     return (
         <>
-
-
             <ToastContainer />
             <Routes>
                 <Route index element={<IndexLandingPage />} />

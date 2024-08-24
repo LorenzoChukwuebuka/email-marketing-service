@@ -4,6 +4,7 @@ import * as monaco from 'monaco-editor';
 import useTemplateStore from '../../store/userstore/templateStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SendTestEmail from '../user/components/templates/sendTestEmail';
+import useCampaignStore from '../../store/userstore/campaignStore';
 
 function CodeEditor(): JSX.Element {
     const defaultTemplate = `
@@ -29,12 +30,13 @@ function CodeEditor(): JSX.Element {
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getSingleMarketingTemplate, getSingleTransactionalTemplate, currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore()
-
+    const { updateCampaign, setCreateCampaignValues, currentCampaignId, clearCurrentCampaignId } = useCampaignStore()
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const uuid = queryParams.get('uuid');
     const _type = queryParams.get('type');
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -80,6 +82,12 @@ function CodeEditor(): JSX.Element {
     };
 
     const saveCode = async (): Promise<void> => {
+
+        if (currentCampaignId) {
+            setCreateCampaignValues({ template_id: uuid as string })
+            updateCampaign(currentCampaignId)
+        }
+
         if (uuid && currentTemplate) {
             const updatedTemplate = {
                 ...currentTemplate,
@@ -88,12 +96,13 @@ function CodeEditor(): JSX.Element {
             new Promise(resolve => setTimeout(resolve, 3000));
             await updateTemplate(uuid, updatedTemplate);
             setAutoSaved(true);
-            console.log("Code saved to database!");
-
+            
             setTimeout(() => setAutoSaved(false), 3000);
         } else {
             console.log("UUID or template is missing", { uuid, currentTemplate });
         }
+
+
     };
 
     const options: monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -114,11 +123,17 @@ function CodeEditor(): JSX.Element {
     }
 
     const handleNavigate = () => {
-        if (_type === "t") {
-            navigate("/user/dash/templates")
+        if (currentCampaignId) {
+            clearCurrentCampaignId();
+            navigate("/user/dash/campaign/edit/" + currentCampaignId);
         } else {
-            navigate("/user/dash/marketing")
+            if (_type === "t") {
+                navigate("/user/dash/templates");
+            } else {
+                navigate("/user/dash/marketing");
+            }
         }
+
     }
 
     return (
@@ -159,7 +174,7 @@ function CodeEditor(): JSX.Element {
             />
 
             <SendTestEmail isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} template_id={uuid as string} />
-                
+
         </div>
     );
 }

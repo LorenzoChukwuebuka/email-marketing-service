@@ -27,9 +27,11 @@ func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *h
 		http.Error(w, "Invalid claims", http.StatusInternalServerError)
 		return
 	}
-
 	userId := claims["userId"].(string)
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	reqdata.UserId = userId
 	result, err := c.TemplateSVC.CreateTemplate(reqdata)
 	if err != nil {
@@ -138,7 +140,10 @@ func (c *TemplateController) UpdateTemplate(w http.ResponseWriter, r *http.Reque
 
 	templateId := vars["templateId"]
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	reqdata.UserId = userId
 
 	if err := c.TemplateSVC.UpdateTemplate(reqdata, templateId); err != nil {
@@ -179,7 +184,10 @@ func (c *TemplateController) SendTestMail(w http.ResponseWriter, r *http.Request
 	}
 
 	userId := claims["userId"].(string)
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	reqdata.UserId = userId
 
 	if err := c.TemplateSVC.SendTestMail(reqdata); err != nil {
@@ -190,8 +198,3 @@ func (c *TemplateController) SendTestMail(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, "mails sent successfully")
 
 }
-
-
-
-
-

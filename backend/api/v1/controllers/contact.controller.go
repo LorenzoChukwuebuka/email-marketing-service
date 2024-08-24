@@ -39,7 +39,10 @@ func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 
@@ -175,7 +178,10 @@ func (c *ContactController) UpdateContact(w http.ResponseWriter, r *http.Request
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 	reqdata.ContactId = contactId
@@ -223,7 +229,10 @@ func (c *ContactController) CreateGroup(w http.ResponseWriter, r *http.Request) 
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 
@@ -250,7 +259,10 @@ func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Req
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 
@@ -276,7 +288,10 @@ func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *htt
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 
@@ -310,7 +325,10 @@ func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	utils.DecodeRequestBody(r, &reqdata)
+if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 

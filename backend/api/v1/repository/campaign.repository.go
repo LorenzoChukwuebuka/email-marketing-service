@@ -26,9 +26,9 @@ func (r *CampaignRepository) createCampaignMapping(data model.Campaign) *model.C
 		PreviewText:    data.PreviewText,
 		UserId:         data.UserId,
 		SenderFromName: data.SenderFromName,
-		TemplateId:     data.TemplateId,
 		SentTemplateId: data.SentTemplateId,
 		RecipientInfo:  data.RecipientInfo,
+		TemplateId:     data.TemplateId,
 		IsPublished:    data.IsPublished,
 		Status:         string(data.Status), // Convert CampaignStatus to string
 		TrackType:      string(data.TrackType),
@@ -145,9 +145,16 @@ func (r *CampaignRepository) GetScheduledCampaigns(userId string, params Paginat
 }
 
 func (r *CampaignRepository) GetSingleCampaign(userId string, campaignId string) (*model.CampaignResponse, error) {
-	var campaigns model.Campaign
+	var campaign model.Campaign
 
-	result := r.DB.Model(&campaigns).Where("uuid= ? AND user_id = ?", campaignId, userId).Preload("CampaignGroups").First(&campaigns)
+	result := r.DB.Model(&campaign).
+		Where("uuid = ? AND user_id = ?", campaignId, userId).
+		Preload("CampaignGroups").
+		Preload("Template", func(db *gorm.DB) *gorm.DB {
+			return db.Where("uuid = templates.uuid").
+				Select("id, uuid, template_name, sender_name, from_email, subject, type, email_html, email_design, is_editable, is_published, is_public_template, is_gallery_template, tags, description, image_url, is_active, editor_type")
+		}).
+		First(&campaign)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -156,7 +163,7 @@ func (r *CampaignRepository) GetSingleCampaign(userId string, campaignId string)
 		return nil, result.Error
 	}
 
-	response := r.createCampaignMapping(campaigns)
+	response := r.createCampaignMapping(campaign)
 
 	return response, nil
 }
@@ -164,7 +171,7 @@ func (r *CampaignRepository) GetSingleCampaign(userId string, campaignId string)
 func (r *CampaignRepository) UpdateCampaign(d *model.Campaign) error {
 	var existingCampaign model.Campaign
 
-	if err := r.DB.Where("uuid = ?", d.UUID).First(&existingCampaign).Error; err != nil {
+	if err := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).First(&existingCampaign).Error; err != nil {
 		return fmt.Errorf("failed to find campaign for update: %w", err)
 	}
 
@@ -219,8 +226,8 @@ func (r *CampaignRepository) UpdateCampaign(d *model.Campaign) error {
 	return nil
 }
 
-func (r *CampaignRepository) DeleteCampaign(d *model.Campaign) error {
-	result := r.DB.Where("uuid = ? AND user_id = ?  ", d.UUID, d.UserId).
+func (r *CampaignRepository) DeleteCampaign(campaignId string, userId string) error {
+	result := r.DB.Where("uuid = ? AND user_id = ?  ", campaignId, userId).
 		Delete(&model.Campaign{})
 
 	if result.Error != nil {
