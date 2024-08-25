@@ -74,10 +74,21 @@ const GetAllCampaignComponent: React.FC = () => {
                 <tbody className="divide-y divide-gray-200">
                     {campaignData && (campaignData as (BaseEntity & Campaign)[]).length > 0 ? (
                         (campaignData as (BaseEntity & Campaign)[]).map((campaign: any) => {
+                            const isSent = campaign.sent_at !== "";
                             return (
                                 <tr key={campaign.uuid} className="hover:bg-gray-100">
                                     <td className="py-4 px-4">{campaign.name}</td>
-                                    <td className="py-4 px-4"> {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</td>
+                                    <td className="py-4 px-4">
+                                        <span className={`px-2 py-1 rounded-full text-sm font-medium ${campaign.status === 'draft' ? 'bg-gray-200 text-gray-800' :
+                                            campaign.status === 'Failed' ? 'bg-red-200 text-red-800' :
+                                                campaign.status === 'Sent' ? 'bg-green-200 text-green-800' :
+                                                    campaign.status === 'Processing' ? 'bg-yellow-200 text-yellow-800' :
+                                                        ''
+                                            }`}>
+                                          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                                        </span>
+                                    </td>
+
                                     <td className="py-4 px-4">
                                         {parseDate(campaign.created_at).toLocaleString('en-US', {
                                             timeZone: 'UTC',
@@ -90,22 +101,23 @@ const GetAllCampaignComponent: React.FC = () => {
                                         })}
                                     </td>
 
-                                    <td className="py-4 px-4">
+                                    {isSent ? (
                                         <button
-                                            className="text-gray-400 hover:text-gray-600"
-                                            onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                            className="text-blue-500 py-4 px-4 hover:text-blue-700"
+                                            onClick={() => navigate(`/user/dash/campaign/report/${campaign.uuid}`)}
                                         >
-                                            ✏️
+                                            View Report
                                         </button>
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <button
-                                            className="text-gray-400 hover:text-gray-600"
-                                            onClick={() => deleteCampaign(campaign.uuid)}
-                                        >
-                                            <i className="bi bi-trash text-red-500"></i>
-                                        </button>
-                                    </td>
+                                    ) : (
+                                        <>
+                                            <button
+                                                className="text-gray-400 hover:text-gray-600"
+                                                onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                            >
+                                                ✏️
+                                            </button>
+                                        </>
+                                    )}
                                 </tr>
                             );
                         })

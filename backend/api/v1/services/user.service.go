@@ -434,6 +434,8 @@ func (s *UserService) GetUserCurrentRunningSubscriptionWithMailsRemaining(userId
 		return nil, fmt.Errorf("error getting daily mail calculation: %w", err)
 	}
 
+	fmt.Printf("%+v\n", dailyMailCalc)
+
 	// Check for nil pointers and provide default values
 	planName := ""
 	mailsPerDay := 0

@@ -57,7 +57,7 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
         }
         setSelectedCSVFile(selectedFile);
         await batchContactUpload();
-        new Promise((resolve) => setTimeout(resolve, 1000));
+        new Promise((resolve) => setTimeout(resolve, 3000));
         await getAllContacts();
         onClose()
         location.reload()

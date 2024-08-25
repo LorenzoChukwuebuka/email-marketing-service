@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import MarketingTemplateDash from "./marketingDash";
 import TransactionalTemplateDash from './transactionalDash';
 
+type Tabtype = 'Transactional' | 'Marketing'
 
 const TemplateBuilderDashComponent: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<"Transactional" | "Marketing">("Transactional");
+    const [activeTab, setActiveTab] = useState<Tabtype>(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "Transactional" || storedTab === "Marketing") ? storedTab : "Transactional";
+    });
 
     useEffect(() => {
         const storedActiveTab = localStorage.getItem("activeTab");
@@ -17,11 +21,7 @@ const TemplateBuilderDashComponent: React.FC = () => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
+  
     return <>
 
         <div className="p-6 max-w-full">

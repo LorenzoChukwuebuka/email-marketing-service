@@ -160,7 +160,7 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 		repository.NewMailUsageRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
-		repository.NewPlanRepository,
+		
 	)
 
 	return nil, nil
@@ -173,6 +173,13 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		repository.NewCampaignRepository,
 		repository.NewContactRepository,
 		repository.NewTemplateRepository,
+		repository.NewMailUsageRepository,
+		repository.NewSubscriptionRepository,
+		repository.NewUserRepository,
+		
 	)
 	return nil, nil
 }
+
+
+ 

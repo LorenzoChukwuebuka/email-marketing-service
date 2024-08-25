@@ -17,17 +17,17 @@ type TemplateService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	MailUsageRepo    *repository.MailUsageRepository
 	UserRepo         *repository.UserRepository
-	PlanRepo         *repository.PlanRepository
+	
 }
 
 func NewTemplateService(templateRepo *repository.TemplateRepository, subscriptionRepository *repository.SubscriptionRepository,
-	mailUsageRepo *repository.MailUsageRepository, userRepo *repository.UserRepository, planRepo *repository.PlanRepository) *TemplateService {
+	mailUsageRepo *repository.MailUsageRepository, userRepo *repository.UserRepository) *TemplateService {
 	return &TemplateService{
 		TemplateRepo:     templateRepo,
 		SubscriptionRepo: subscriptionRepository,
 		MailUsageRepo:    mailUsageRepo,
 		UserRepo:         userRepo,
-		PlanRepo:         planRepo,
+		
 	}
 }
 
@@ -201,14 +201,9 @@ func (s *TemplateService) SendTestMail(d *dto.SendTestMailDTO) error {
 		return fmt.Errorf("error fetching subscription record: %w", err)
 	}
 
-	plan, err := s.PlanRepo.GetPlanById(subscription.PlanId)
-	if err != nil {
-		return fmt.Errorf("error fetching plan: %w", err)
-	}
+	
 
-	isPeriodDaily := plan.MailingLimit.LimitPeriod == PeriodDaily
-
-	mailUsageRecord, err := s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(subscription.ID), plan.MailingLimit.LimitAmount, isPeriodDaily)
+	mailUsageRecord, err := s.MailUsageRepo.GetCurrentMailUsageRecord(int(subscription.ID))
 	if err != nil {
 		return fmt.Errorf("error fetching or creating mail usage record: %w", err)
 	}

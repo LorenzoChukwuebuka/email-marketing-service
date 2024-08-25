@@ -131,8 +131,7 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	mailUsageRepository := repository.NewMailUsageRepository(db)
 	userRepository := repository.NewUserRepository(db)
-	planRepository := repository.NewPlanRepository(db)
-	templateService := services.NewTemplateService(templateRepository, subscriptionRepository, mailUsageRepository, userRepository, planRepository)
+	templateService := services.NewTemplateService(templateRepository, subscriptionRepository, mailUsageRepository, userRepository)
 	templateController := controllers.NewTemplateController(templateService)
 	return templateController, nil
 }
@@ -141,7 +140,10 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 	campaignRepository := repository.NewCampaignRepository(db)
 	contactRepository := repository.NewContactRepository(db)
 	templateRepository := repository.NewTemplateRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository)
+	mailUsageRepository := repository.NewMailUsageRepository(db)
+	subscriptionRepository := repository.NewSubscriptionRepository(db)
+	userRepository := repository.NewUserRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository)
 	campaignController := controllers.NewCampaignController(campaignService)
 	return campaignController, nil
 }

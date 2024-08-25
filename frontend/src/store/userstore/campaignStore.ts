@@ -27,6 +27,7 @@ export type Campaign = {
     created_by: string;
     last_edited_by: string;
     template?: Template;
+    scheduled_at?: string
     sender?: string;
     campaign_groups: CampaignGroup[]
 };
@@ -171,16 +172,62 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
     },
 
     updateCampaign: async (uuid: string) => {
-
         try {
-            const { createCampaignValues } = get()
-            let response = await axiosInstance.put<ResponseT>("/campaigns/update-campaign/" + uuid, createCampaignValues)
-            if (response.data.status === true) {
-                console.log("successful")
+            const { createCampaignValues, getSingleCampaign } = get();
+
+            let successMessage = ""
+
+            if (createCampaignValues.scheduled_at) {
+                successMessage = "Your campaign has been scheduled successfully";
+            } else if (createCampaignValues.subject) {
+                successMessage = "Subject was added successfully";
+            } else if (createCampaignValues.template_id) {
+                successMessage = "Template added successfully";
+            } else {
+                console.error("No recognizable field was found");
+            }
+
+
+            let updatedValues = {}
+            if (createCampaignValues.scheduled_at) {
+                const campaign = await getSingleCampaign(uuid) as CampaignData || null;
+
+                if (!campaign) {
+                    eventBus.emit('success', 'You must fill all the necessary fields');
+                    return;
+                }
+
+                const { template, subject, campaign_groups } = campaign;
+
+                if (!template?.email_html) {
+                    eventBus.emit('success', 'You haven`t created a template yet');
+                    return;
+                }
+
+                if (!subject) {
+                    eventBus.emit('success', 'You have not created a subject yet');
+                    return;
+                }
+
+                if (!campaign_groups?.length) {
+                    eventBus.emit('success', 'You have not created a recipient yet');
+                    return;
+                }
+
+                updatedValues = { ...createCampaignValues, status: "scheduled" }
+            }
+
+            const response = await axiosInstance.put<ResponseT>(
+                `/campaigns/update-campaign/${uuid}`,
+                updatedValues
+            );
+
+            if (response.data.status) {
+                eventBus.emit('success', successMessage)
             }
         } catch (error) {
             if (errResponse(error)) {
-                eventBus.emit('error', error?.response?.data.payload)
+                eventBus.emit('error', error?.response?.data.payload);
             } else if (error instanceof Error) {
                 eventBus.emit('error', error.message);
             } else {
@@ -272,14 +319,16 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
                 return
             }
 
-            // If all checks pass, proceed with sending the campaign
-            // let response = await axiosInstance.post<ResponseT>(`/campaigns/send/${campaignId}`);
+            let value = { campaign_id: campaignId }
 
-            // if (response.data.status === true) {
-            //     eventBus.emit('success', "Campaign sent successfully");
-            // } else {
-            //     throw new Error("Failed to send campaign");
-            // }
+            //  If all checks pass, proceed with sending the campaign
+            let response = await axiosInstance.post<ResponseT>(`/campaigns/send-campaign`, value);
+
+            if (response.data.status === true) {
+                eventBus.emit('success', "Campaign sent successfully");
+            } else {
+                throw new Error("Failed to send campaign");
+            }
 
         } catch (error) {
             if (errResponse(error)) {

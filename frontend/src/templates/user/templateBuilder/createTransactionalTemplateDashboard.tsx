@@ -4,7 +4,10 @@ import CreateTransactionalTemplate from "../components/templates/createTransacti
 type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML" | "Rich Text"
 
 const CreateTransactionalTemplateDashBoard: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<templateTypes>("Templates Gallery");
+    const [activeTab, setActiveTab] = useState<templateTypes>(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "Templates Gallery" || storedTab === "Blank Template" || storedTab === "Custom HTML" || storedTab === "Rich Text") ? storedTab : "Templates Gallery";
+    });
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -19,11 +22,7 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
+
 
     const handleCloseModal = () => {
         setIsModalOpen(false);

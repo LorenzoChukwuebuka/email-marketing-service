@@ -1,20 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import useCampaignStore, { CampaignData } from '../../../../store/userstore/campaignStore';
 import AddCampaignSubjectComponent from './addSubjectComponent';
 import AddCampaignRecipients from './addRecipientComponent';
 import AddSenderComponent from './addSenderComponent';
+import { Modal } from '../../../../components';
 
 const EditCampaignForm: React.FC = () => {
     const { id } = useParams<{ id: string }>() as { id: string };
-    const { getSingleCampaign, campaignData, resetCampaignData, setCurrentCampaignId,  sendCampaign } = useCampaignStore();
+    const { getSingleCampaign, campaignData, resetCampaignData, setCurrentCampaignId, setCreateCampaignValues, sendCampaign, updateCampaign } = useCampaignStore();
     const navigate = useNavigate();
 
     const [isSubjectModalOpen, setIsSubjectModalOpen] = useState<boolean>(false);
     const [isRecipientModalOpen, setIsRecipientModalOpen] = useState<boolean>(false);
     const [isSenderModalOpen, setIsSenderModalOpen] = useState<boolean>(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
     const [campaign, setCampaign] = useState<CampaignData | null>(null);
     const [templatePreview, setTemplatePreview] = useState<string | null>(null);
+    const [scheduledDate, setScheduledDate] = useState< Date | null>(null);
 
     useEffect(() => {
         resetCampaignData();
@@ -31,11 +36,14 @@ const EditCampaignForm: React.FC = () => {
             setCampaign(campaignData as CampaignData);
             //@ts-ignore
             setTemplatePreview(campaignData?.template?.email_html || null);
+            //@ts-ignore
+            setScheduledDate(campaignData?.scheduled_at || null)
         }
     }, [campaignData]);
 
 
-  
+    
+
     const handleButtonClick = (item: string) => {
         switch (item) {
             case "Subject":
@@ -53,15 +61,23 @@ const EditCampaignForm: React.FC = () => {
         }
     };
 
+    const scheduleCampaign = async () => {
+        if (scheduledDate) {
+            setCreateCampaignValues({ scheduled_at: scheduledDate.toISOString() });
+            setIsCalendarOpen(false);
+
+            await updateCampaign(campaign?.uuid as string)
+        }
+    };
 
     const sendCampgn = async (event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault()
+        event.preventDefault();
         try {
-            await sendCampaign(campaign?.uuid as string)
+            await sendCampaign(campaign?.uuid as string);
         } catch (error) {
-
+            console.error(error);
         }
-    }
+    };
 
     return (
         <main className="p-4">
@@ -78,7 +94,10 @@ const EditCampaignForm: React.FC = () => {
                     <button className="bg-white text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-md shadow-sm mr-2" onClick={(e) => sendCampgn(e)}>
                         Send
                     </button>
-                    <button className="bg-black text-white font-semibold py-2 px-4 rounded-md">
+                    <button
+                        className="bg-black text-white font-semibold py-2 px-4 rounded-md"
+                        onClick={() => setIsCalendarOpen(true)}
+                    >
                         Schedule
                     </button>
                 </div>
@@ -120,7 +139,7 @@ const EditCampaignForm: React.FC = () => {
                                     {item === 'Design' && 'Create your email content.'}
                                 </p>
                             </div>
-                            <button className="bg-white text-gray-700 font-semibold py-1 px-3  border border-gray-300 rounded-md text-sm" onClick={() => handleButtonClick(item)}>
+                            <button className="bg-white text-gray-700 font-semibold py-1 px-3 border border-gray-300 rounded-md text-sm" onClick={() => handleButtonClick(item)}>
                                 {item === 'Recipients' && 'Add recipients'}
                                 {item === 'Subject' && 'Add subject'}
                                 {item === 'Design' && 'Start designing'}
@@ -137,6 +156,33 @@ const EditCampaignForm: React.FC = () => {
                     </div>
                 ))}
             </div>
+
+            {isCalendarOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white p-4 rounded-md shadow-md">
+                        <h3 className="text-lg font-semibold mb-4">Select Date and Time</h3>
+                        <DatePicker
+                            selected={scheduledDate}
+                            onChange={(date: Date | null, event: React.SyntheticEvent<any> | undefined) => {
+                                if (date) setScheduledDate(date);
+                            }}
+                            showTimeSelect
+                            dateFormat="Pp"
+                            className="border rounded-md p-2 w-full"
+                        />
+                        <div className="mt-4 flex justify-end">
+                            <button className="bg-gray-300 text-gray-700 py-1 px-3 rounded-md mr-2" onClick={() => setIsCalendarOpen(false)}>
+                                Cancel
+                            </button>
+                            <button className="bg-blue-600 text-white py-1 px-3 rounded-md" onClick={scheduleCampaign}>
+                                Schedule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
 
             {/* Modals */}
             <AddCampaignSubjectComponent campaign={campaign} isOpen={isSubjectModalOpen} onClose={() => setIsSubjectModalOpen(false)} />
