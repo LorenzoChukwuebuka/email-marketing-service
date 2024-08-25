@@ -209,7 +209,12 @@ func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request
 
 	reqdata.UserId = userId
 
-	
+	if err := c.CampaignSVC.SendCampaign(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "campaign sent successfully")
 
 }
 

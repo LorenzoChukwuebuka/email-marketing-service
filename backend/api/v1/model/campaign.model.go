@@ -10,10 +10,12 @@ type CampaignStatus string
 type CampaignTrackType string
 
 const (
-	Draft     CampaignStatus = "draft"
-	Saved     CampaignStatus = "saved"
-	Scheduled CampaignStatus = "scheduled"
-	Sent      CampaignStatus = "sent"
+	Draft       CampaignStatus = "draft"
+	Saved       CampaignStatus = "saved"
+	Scheduled   CampaignStatus = "scheduled"
+	Sent        CampaignStatus = "sent"
+	FailedC     CampaignStatus = "failed"
+	Proccessing CampaignStatus = "proccessing"
 )
 
 const (
@@ -28,7 +30,7 @@ type Campaign struct {
 	PreviewText    *string           `json:"preview_text"`
 	UserId         string            `json:"user_id"`
 	SenderFromName *string           `json:"sender_from_name"`
-	TemplateId     *uint              `json:"template_id"`
+	TemplateId     *uint             `json:"template_id"`
 	Template       *Template         `json:"template"`
 	SentTemplateId *string           `json:"sent_template_id"`
 	RecipientInfo  *string           `json:"recipient_info"`
@@ -71,7 +73,7 @@ type CampaignResponse struct {
 	PreviewText    *string                 `json:"preview_text"`
 	UserId         string                  `json:"user_id"`
 	SenderFromName *string                 `json:"sender_from_name"`
-	TemplateId     *uint                `json:"template_id"`
+	TemplateId     *uint                   `json:"template_id"`
 	SentTemplateId *string                 `json:"sent_template_id"`
 	RecipientInfo  *string                 `json:"recipient_info"`
 	IsPublished    bool                    `json:"is_published"`

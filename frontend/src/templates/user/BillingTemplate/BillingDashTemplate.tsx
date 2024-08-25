@@ -16,11 +16,6 @@ const BillingDashTemplate: React.FC = () => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
 
     return <>
         <div className="p-6 max-w-full">

@@ -124,7 +124,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 
 func mapGroupToResponse(group model.ContactGroup) model.ContactGroupResponse {
 	groupResponse := model.ContactGroupResponse{
-		ID: group.ID,
+		ID:          group.ID,
 		UUID:        group.UUID,
 		GroupName:   group.GroupName,
 		UserId:      group.UserId,
@@ -310,6 +310,27 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 			Where("user_contact_groups.deleted_at IS NULL")
 	}).
 		Where("contact_groups.uuid = ?", groupId).
+		Where("contact_groups.deleted_at IS NULL").
+		First(&group).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := mapToContactGroupResponse(group)
+
+	return &response, nil
+}
+
+func (r *ContactRepository) GetGroupById(userId string, groupId int) (*model.ContactGroupResponse, error) {
+	var group model.ContactGroup
+	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
+		return db.Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
+			Where("user_contact_groups.user_id = ?", userId).
+			Where("contacts.deleted_at IS NULL").
+			Where("user_contact_groups.deleted_at IS NULL")
+	}).
+		Where("contact_groups.id = ?", groupId).
 		Where("contact_groups.deleted_at IS NULL").
 		First(&group).Error
 
