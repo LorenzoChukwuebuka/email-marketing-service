@@ -74,7 +74,7 @@ const GetAllCampaignComponent: React.FC = () => {
                 <tbody className="divide-y divide-gray-200">
                     {campaignData && (campaignData as (BaseEntity & Campaign)[]).length > 0 ? (
                         (campaignData as (BaseEntity & Campaign)[]).map((campaign: any) => {
-                            const isSent = campaign.sent_at !== "";
+                            const isSent = campaign.sent_at !== null;
                             return (
                                 <tr key={campaign.uuid} className="hover:bg-gray-100">
                                     <td className="py-4 px-4">{campaign.name}</td>
@@ -85,7 +85,7 @@ const GetAllCampaignComponent: React.FC = () => {
                                                     campaign.status === 'Processing' ? 'bg-yellow-200 text-yellow-800' :
                                                         ''
                                             }`}>
-                                          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                                            {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                                         </span>
                                     </td>
 
@@ -101,23 +101,40 @@ const GetAllCampaignComponent: React.FC = () => {
                                         })}
                                     </td>
 
-                                    {isSent ? (
+                                    <td className="py-4 px-4"> {isSent ? (
                                         <button
-                                            className="text-blue-500 py-4 px-4 hover:text-blue-700"
+                                            className="text-gray-800   hover:text-blue-700"
                                             onClick={() => navigate(`/user/dash/campaign/report/${campaign.uuid}`)}
                                         >
-                                            View Report
+                                            <span className="bg-gray-300 rounded-md p-1">  View Report </span>
                                         </button>
                                     ) : (
+
                                         <>
-                                            <button
-                                                className="text-gray-400 hover:text-gray-600"
+                                            <span className="space-x-5"> 
+                                                
+                                                 <button
+                                                className="text-gray-400 hover:text-gray-600  "
                                                 onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
                                             >
                                                 ✏️
                                             </button>
+
+                                                <button
+                                                    className="text-gray-400 hover:text-gray-600  "
+                                                    onClick={() => deleteCampaign(campaign.uuid)}
+                                                >
+                                                    <i className="bi bi-trash text-red-600"></i>
+                                                </button> 
+                                                
+                                                </span>
+
+
+
                                         </>
                                     )}
+                                    </td>
+
                                 </tr>
                             );
                         })

@@ -66,6 +66,7 @@ type CampaignStore = {
     resetCampaignData: () => void;
     getScheduledCampaign: (page?: number, pageSize?: number) => Promise<void>
     sendCampaign: (campaignId: string) => Promise<void>
+    deleteCampaign: (campaignId: string) => Promise<void>
 }
 
 const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
@@ -341,6 +342,25 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
         }
     },
+
+    deleteCampaign: async (campaignId: string) => {
+        try {
+            let response = await axiosInstance.delete<ResponseT>("/campaigns/delete-campaign/" + campaignId)
+
+            if (response.data.status == true) {
+                eventBus.emit("success", "Campaign deleted successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload);
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
+
     resetCampaignData: () => set({ campaignData: null }),
 }),
 

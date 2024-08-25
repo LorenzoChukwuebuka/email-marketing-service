@@ -24,8 +24,8 @@ const CampaignDashTemplate: React.FC = () => {
             <nav className="flex space-x-8 border-b">
                 <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Campaign"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
                         } transition-colors`}
                     onClick={() => handleTabChange("Campaign")}
                 >
@@ -33,8 +33,8 @@ const CampaignDashTemplate: React.FC = () => {
                 </button>
                 <button
                     className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Scheduled"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
+                        ? "border-blue-500 text-blue-500"
+                        : "border-transparent hover:border-gray-300"
                         } transition-colors`}
                     onClick={() => handleTabChange("Scheduled")}
                 >
