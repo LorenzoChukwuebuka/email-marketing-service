@@ -5,8 +5,13 @@ import CreateGroup from "./createGroupComponent";
 
 const ContactGroupDash: React.FC = () => {
 
-    const { selectedGroupIds, deleteGroup } = useContactGroupStore()
+    const { selectedGroupIds, deleteGroup, searchGroup } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+    const handleSearch = (query: string) => {
+        searchGroup(query);
+    };
+
 
     return <>
 
@@ -42,7 +47,7 @@ const ContactGroupDash: React.FC = () => {
                     type="text"
                     placeholder="Search..."
                     className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                // onChange={(e) => handleSearch(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                 />
             </div>
 

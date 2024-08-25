@@ -46,6 +46,7 @@ interface ContactGroupstore {
     createGroup: () => Promise<void>
     deleteGroup: () => Promise<void>
     updateGroup: () => Promise<void>
+    searchGroup: (query: string) => void
 
 }
 
@@ -282,7 +283,24 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
             get().setSelectedContactIds([])
             get().setSelectedGroupIds([])
         }
-    }
+    },
+
+    searchGroup: (query: string) => {
+        const { getAllGroups, contactgroupData } = get();
+
+        if (!query) {
+            getAllGroups(); // If query is empty, reset to all groups
+            return;
+        }
+
+        const filteredGroup: ContactGroupData[] = (Array.isArray(contactgroupData) ? contactgroupData : [contactgroupData]).filter(group =>
+            group.group_name.toLowerCase().includes(query.toLowerCase()) ||
+            group.description.toLowerCase().includes(query.toLowerCase())
+        );
+
+        set({ contactgroupData: filteredGroup });
+    },
+
 
 
 }))

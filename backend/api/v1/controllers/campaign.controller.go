@@ -218,4 +218,21 @@ func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request
 
 }
 
-func (c *CampaignController) DeleteCampaign() {}
+func (c *CampaignController) DeleteCampaign(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	if err := c.CampaignSVC.DeleteCampaign(campaignId, userId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+	response.SuccessResponse(w, 200, "campaign deleted successfully")
+}

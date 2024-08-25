@@ -54,28 +54,7 @@ const GetAllContacts: React.FC = () => {
     };
 
 
-    const handleSubscriptionToggle = async (uuid: string) => {
-        try {
-            const contactIndex = contactData.findIndex(contact => contact.uuid === uuid);
-            if (contactIndex === -1) return;
 
-            const contact = contactData[contactIndex];
-            const updatedSubscriptionStatus = !contact.is_subscribed;
-
-            setEditContactValues({
-                uuid: contact.uuid,
-                is_subscribed: updatedSubscriptionStatus,
-                first_name: contact.first_name,
-                last_name: contact.last_name,
-                email: contact.email,
-                from: contact.from,
-            });
-            await editContact();
-            await getAllContacts()
-        } catch (error) {
-            console.error('Error toggling subscription:', error);
-        }
-    };
     return (
         <>
             <div className="overflow-x-auto mt-8">
@@ -111,9 +90,7 @@ const GetAllContacts: React.FC = () => {
                                 Edit
                             </th>
 
-                            {/* <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                subscription
-                            </th> */}
+
 
                             <th className="py-3 px-4"></th>
                         </tr>
@@ -154,14 +131,7 @@ const GetAllContacts: React.FC = () => {
                                             ✏️
                                         </button>
                                     </td>
-                                    {/* <td className="py-4 px-4">
-                                        <input
-                                            type="checkbox"
-                                            className="form-checkbox h-4 w-4 text-blue-600"
-                                            checked={contact.is_subscribed}
-                                            onChange={() => handleSubscriptionToggle(contact.uuid)}
-                                        />
-                                    </td> */}
+
                                 </tr>
                             ))
                         ) : (

@@ -31,7 +31,7 @@ const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
         searchContacts(query);
     };
 
-    let todo: TODO = "add a contact search bar"
+   
     return (
         <>
 

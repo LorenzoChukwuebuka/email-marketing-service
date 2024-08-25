@@ -12,6 +12,7 @@ type EmailRequest struct {
 	Subject     string      `json:"subject"`
 	HtmlContent *string     `json:"htmlContent"`
 	Text        *string     `json:"text"`
+	PreviewText *string `json:"preview_text"`
 }
 
 type Sender struct {
