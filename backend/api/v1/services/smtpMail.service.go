@@ -7,7 +7,6 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"fmt"
 	"time"
-
 	"github.com/google/uuid"
 )
 

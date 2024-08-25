@@ -314,8 +314,6 @@ func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string,
 
 		mailUsageRecord.RemainingMails = mailUsageRecord.LimitAmount - mailUsageRecord.MailsSent
 
-		print(mailUsageRecord.RemainingMails)
-
 		// Prepare the updated mail usage record
 		updateMailUsage := &model.MailUsage{
 			UUID:           mailUsageRecord.UUID,
@@ -351,6 +349,7 @@ func (s *CampaignService) sendEmail(recipient string, emailContent string, subje
 		To:          receiver,
 		Subject:     subject,
 		HtmlContent: &emailContent,
+		PreviewText: &previewText,
 	}
 
 	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
