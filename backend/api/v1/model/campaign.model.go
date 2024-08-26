@@ -56,13 +56,21 @@ type CampaignGroup struct {
 
 type EmailCampaignResult struct {
 	gorm.Model
-	UserID       string `gorm:"index"`
-	CampaignID   string `gorm:"index"`
-	Version      string `gorm:"size:1"`
-	SentAt       time.Time
-	OpenedAt     *time.Time
-	ClickedAt    *time.Time
-	ConversionAt *time.Time
+	CampaignID      string     `json:"campaign_id" gorm:"index"`                           // Campaign identifier
+	RecipientEmail  string     `json:"recipient_email" gorm:"size:255;index"`              // Email of the recipient
+	RecipientName   *string    `json:"recipient_name" gorm:"size:255;default:null"`        // Name of the recipient
+	Version         string     `json:"version" gorm:"size:10"`                             // Version of the campaign (e.g., A/B testing)
+	SentAt          time.Time  `json:"sent_at" gorm:"type:TIMESTAMP;default:null"`         // Timestamp when the email was sent
+	OpenedAt        *time.Time `json:"opened_at" gorm:"type:TIMESTAMP;default:null"`       // Timestamp when the email was opened
+	ClickedAt       *time.Time `json:"clicked_at" gorm:"type:TIMESTAMP;default:null"`      // Timestamp when a link in the email was clicked
+	ConversionAt    *time.Time `json:"conversion_at" gorm:"type:TIMESTAMP;default:null"`   // Timestamp when a conversion occurred (e.g., purchase)
+	BounceStatus    string     `gorm:"size:20"`                                            // Status if the email bounced (e.g., "soft", "hard")
+	UnsubscribeAt   *time.Time `json:"unsubscribed_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when the recipient unsubscribed
+	ComplaintStatus bool       `json:"complaint_status"`                                   // Whether the recipient marked the email as spam
+	DeviceType      string     `gorm:"size:50"`                                            // Type of device used to open the email
+	Location        string     `gorm:"size:100"`                                           // Geographic location of the recipient (if tracked)
+	RetryCount      int        `json:"retry_count"`                                        // Number of retry attempts for sending the email
+	Notes           string     `gorm:"type:text"`                                          // Additional notes or metadata
 }
 
 type CampaignResponse struct {

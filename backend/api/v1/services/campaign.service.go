@@ -199,7 +199,11 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 			return err
 		}
 		for _, contact := range getContactsFromGroup.Contacts {
-			contacts = append(contacts, contact.Email)
+
+			if !contact.IsSubscribed {
+				contacts = append(contacts, contact.Email)
+			}
+
 		}
 	}
 
@@ -306,6 +310,12 @@ func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string,
 			return fmt.Errorf("error sending email to recipient %s: %w", recipient, err)
 		}
 
+		// Create the EmailCampaignResult for tracking
+		err = s.createEmailCampaignResult(campaignId, recipient)
+		if err != nil {
+			return fmt.Errorf("error creating email campaign result for recipient %s: %w", recipient, err)
+		}
+
 		// Lock the mutex before updating mail usage
 		mu.Lock()
 
@@ -378,17 +388,32 @@ func (s *CampaignService) updateCampaignStatus(campaignId string, status string,
 	return nil
 }
 
+func (s *CampaignService) createEmailCampaignResult(campaignId, recipientEmail string) error {
+	emailCampaignResult := &model.EmailCampaignResult{
+		CampaignID:     campaignId,
+		Version:        "1",
+		RecipientEmail: recipientEmail,
+		SentAt:         time.Now(),
+	}
+
+	if err := s.CampaignRepo.CreateEmailCampaignResult(emailCampaignResult); err != nil {
+		return fmt.Errorf("error creating email campaign result: %w", err)
+	}
+
+	return nil
+}
+
 func (s *CampaignService) addTrackingToTemplate(template string, campaignId string, recipientEmail string) (string, error) {
 	if template == "" {
 		return "", fmt.Errorf("empty template provided")
 	}
 
 	// Create tracking pixel and unsubscribe link
-	trackingPixel := fmt.Sprintf(`<img src="https://yourserver.com/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`,
+	trackingPixel := fmt.Sprintf(`<img src="%s/campaigns/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, config.SERVER_URL,
 		campaignId, url.QueryEscape(recipientEmail))
 	unsubscribeLink := fmt.Sprintf(`<div style="margin-top: 20px; font-size: 12px; color: #666666; text-align: center;">
-        <a href="https://yourserver.com/unsubscribe?email=%s&campaign=%s" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
-    </div>`, url.QueryEscape(recipientEmail), url.QueryEscape(campaignId))
+        <a href="%s/campaigns/unsubscribe?email=%s&campaign=%s" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
+    </div>`, config.SERVER_URL, url.QueryEscape(recipientEmail), url.QueryEscape(campaignId))
 
 	// Inject tracking pixel and unsubscribe link at the end of the body or document
 	if strings.Contains(template, "</body>") {
@@ -409,7 +434,7 @@ func (s *CampaignService) addTrackingToTemplate(template string, campaignId stri
 			for i, a := range n.Attr {
 				if a.Key == "href" && !strings.Contains(a.Val, "unsubscribe") {
 					originalURL := a.Val
-					trackingURL := fmt.Sprintf("https://yourserver.com/track/click/%s?url=%s", campaignId, url.QueryEscape(originalURL))
+					trackingURL := fmt.Sprintf("%s/campaigns/track/click/%s?email=%s&url=%s", config.SERVER_URL, campaignId, recipientEmail, url.QueryEscape(originalURL))
 					n.Attr[i].Val = trackingURL
 					break
 				}
@@ -428,4 +453,62 @@ func (s *CampaignService) addTrackingToTemplate(template string, campaignId stri
 	}
 
 	return buf.String(), nil
+}
+
+func (s *CampaignService) TrackOpenCampaignEmails(campaignId string, email string) error {
+
+	htime := time.Now().UTC()
+
+	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, OpenedAt: &htime}
+
+	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *CampaignService) UnsubscribeFromCampaign(campaignId string, email string) error {
+
+	tx := s.CampaignRepo.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	htime := time.Now().UTC()
+
+	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, UnsubscribeAt: &htime}
+
+	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	//update the subscription status on the contacts repo
+
+	if err := s.ContactRepo.UpdateSubscriptionStatus(email); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *CampaignService) TrackClickedCampaignsEmails(campaignId string, email string) error {
+	htime := time.Now().UTC()
+
+	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, ClickedAt: &htime}
+
+	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
+		return err
+	}
+
+	return nil
 }

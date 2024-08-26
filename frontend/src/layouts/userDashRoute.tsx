@@ -10,6 +10,7 @@ import CreateMarketingTemplateDashBoard from "../templates/user/templateBuilder/
 import CreateTransactionalTemplateDashBoard from "../templates/user/templateBuilder/createTransactionalTemplateDashboard";
 import CampaignDashTemplate from "../templates/user/campaign/campaignDashTemplate";
 import EditCampaignForm from "../templates/user/components/campaign/editCampaignComponent";
+import CampaignReport from "../templates/user/components/campaign/campaignReportComponent";
 
 const UserDashRoute = () => (
     <Routes>
@@ -31,7 +32,8 @@ const UserDashRoute = () => (
             <Route path="marketing" element={<CreateMarketingTemplateDashBoard />} />
             <Route path="transactional" element={<CreateTransactionalTemplateDashBoard />} />
             <Route path="campaign" element={<CampaignDashTemplate />} />
-            <Route path="campaign/edit/:id" element={ <EditCampaignForm/> } />
+            <Route path="campaign/edit/:id" element={<EditCampaignForm />} />
+            <Route path="campaign/report/:id" element={<CampaignReport />} />
         </Route>
 
     </Routes>

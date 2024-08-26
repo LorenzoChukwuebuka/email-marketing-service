@@ -236,3 +236,34 @@ func (c *CampaignController) DeleteCampaign(w http.ResponseWriter, r *http.Reque
 	}
 	response.SuccessResponse(w, 200, "campaign deleted successfully")
 }
+
+func (c *CampaignController) TrackOpenCampaignEmails(w http.ResponseWriter, r *http.Request) {
+	contactMail := r.URL.Query().Get("email")
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	if err := c.CampaignSVC.TrackOpenCampaignEmails(campaignId, contactMail); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "campaign tracked successfully")
+}
+
+func (c *CampaignController) TrackClickedCampaignsEmails(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+	contactMail := r.URL.Query().Get("email")
+	if err := c.CampaignSVC.TrackClickedCampaignsEmails(campaignId, contactMail); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+	response.SuccessResponse(w, 200, "campaign tracked successfully")
+}
+
+func (c *CampaignController) UnsubscribeFromCampaign(w http.ResponseWriter, r *http.Request) {
+	contactMail := r.URL.Query().Get("email")
+	camapignId := r.URL.Query().Get("campaignId")
+
+	println(camapignId, contactMail)
+}

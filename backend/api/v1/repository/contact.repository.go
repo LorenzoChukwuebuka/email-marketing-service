@@ -195,6 +195,23 @@ func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	return nil
 }
 
+func (r *ContactRepository) UpdateSubscriptionStatus(email string) error {
+	var existingContact model.Contact
+
+	if err := r.DB.Where("email = ?", email).First(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to find contact for update: %w", err)
+	}
+
+	existingContact.IsSubscribed = false
+
+	if err := r.DB.Save(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to update contact: %w", err)
+	}
+
+	return nil
+
+}
+
 func (r *ContactRepository) CreateGroup(d *model.ContactGroup) error {
 
 	if err := r.DB.Create(&d).Error; err != nil {
