@@ -16,7 +16,7 @@ const GetAllCampaignComponent: React.FC = () => {
             await getAllCampaigns()
         }
         fetchCampaign()
-    }, [])
+    }, [getAllCampaigns])
 
     const deleteCampaign = async (uuid: string) => {
         console.log(uuid)
@@ -128,9 +128,6 @@ const GetAllCampaignComponent: React.FC = () => {
                                                 </button> 
                                                 
                                                 </span>
-
-
-
                                         </>
                                     )}
                                     </td>

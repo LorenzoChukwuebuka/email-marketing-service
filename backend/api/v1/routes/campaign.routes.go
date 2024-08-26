@@ -25,4 +25,7 @@ func (ur *CampaignRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/add-campaign-group", middleware.JWTMiddleware(campaignController.AddOrEditCampaignGroup)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/send-campaign", middleware.JWTMiddleware(campaignController.SendCampaign)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/delete-campaign/{campaignId}", middleware.JWTMiddleware(campaignController.DeleteCampaign)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/track/open/{campaignId}", campaignController.TrackOpenCampaignEmails).Methods("GET", "OPTIONS")
+	router.HandleFunc("/track/click/{campaignId}", campaignController.TrackClickedCampaignsEmails).Methods("GET", "OPTIONS")
+	router.HandleFunc("/unsubscribe", campaignController.UnsubscribeFromCampaign).Methods("GET", "OPTIONS")
 }

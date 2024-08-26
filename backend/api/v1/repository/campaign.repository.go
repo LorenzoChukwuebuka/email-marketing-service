@@ -263,9 +263,61 @@ func (r *CampaignRepository) AddOrEditCampaignGroup(d *model.CampaignGroup) erro
 	return nil
 }
 
-func (r *CampaignRepository) CampaignResults(d *model.EmailCampaignResult) error {
+func (r *CampaignRepository) CreateEmailCampaignResult(d *model.EmailCampaignResult) error {
 	if err := r.DB.Create(&d).Error; err != nil {
 		return fmt.Errorf("failed to insert campaign result: %w", err)
 	}
+	return nil
+}
+
+func (r *CampaignRepository) UpdateEmailCampaignResult(d *model.EmailCampaignResult) error {
+	var existingCampaign model.EmailCampaignResult
+
+	if err := r.DB.Where("campaign_id = ? AND recipient_email = ?", d.CampaignID, d.RecipientEmail).First(&existingCampaign).Error; err != nil {
+		return fmt.Errorf("failed to find campaign for update: %w", err)
+	}
+
+	// Update fields only if they are not nil
+	if d.RecipientName != nil {
+		existingCampaign.RecipientName = d.RecipientName
+	}
+	if d.OpenedAt != nil {
+		existingCampaign.OpenedAt = d.OpenedAt
+	}
+	if d.ClickedAt != nil {
+		existingCampaign.ClickedAt = d.ClickedAt
+	}
+	if d.ConversionAt != nil {
+		existingCampaign.ConversionAt = d.ConversionAt
+	}
+	if d.UnsubscribeAt != nil {
+		existingCampaign.UnsubscribeAt = d.UnsubscribeAt
+	}
+	if d.BounceStatus != "" {
+		existingCampaign.BounceStatus = d.BounceStatus
+	}
+	if d.ComplaintStatus {
+		existingCampaign.ComplaintStatus = d.ComplaintStatus
+	}
+	if d.DeviceType != "" {
+		existingCampaign.DeviceType = d.DeviceType
+	}
+	if d.Location != "" {
+		existingCampaign.Location = d.Location
+	}
+	if d.RetryCount > 0 {
+		existingCampaign.RetryCount = d.RetryCount
+	}
+	if d.Notes != "" {
+		existingCampaign.Notes = d.Notes
+	}
+	if d.Version != "" {
+		existingCampaign.Version = d.Version
+	}
+
+	if err := r.DB.Save(&existingCampaign).Error; err != nil {
+		return fmt.Errorf("failed to update campaign: %w", err)
+	}
+
 	return nil
 }

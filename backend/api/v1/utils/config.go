@@ -26,6 +26,7 @@ type Config struct {
 	MAIL_PROCESSOR        string `env:"MAIL_PROCESSOR"`
 	ADMIN_EMAIL           string `env:"ADMIN_EMAIL"`
 	ADMIN_PASSWORD        string `env:"ADMIN_PASSWORD"`
+	SERVER_URL            string `env:"SERVER_URL"`
 }
 
 var LoadEnv = func() *Config {
@@ -54,6 +55,7 @@ var LoadEnv = func() *Config {
 		MAIL_PROCESSOR:        os.Getenv("MAIL_PROCESSOR"),
 		ADMIN_EMAIL:           os.Getenv("ADMIN_EMAIL"),
 		ADMIN_PASSWORD:        os.Getenv("ADMIN_PASSWORD"),
+		SERVER_URL:            os.Getenv("SERVER_URL"),
 	}
 
 	return config
