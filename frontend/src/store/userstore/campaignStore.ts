@@ -23,7 +23,7 @@ export type Campaign = {
     status: string;
     track_type: string;
     is_archived: boolean;
-    sent_at?: Date;
+    sent_at?: string;
     created_by: string;
     last_edited_by: string;
     template?: Template;

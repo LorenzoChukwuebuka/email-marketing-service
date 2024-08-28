@@ -111,23 +111,23 @@ const GetAllCampaignComponent: React.FC = () => {
                                     ) : (
 
                                         <>
-                                            <span className="space-x-5"> 
-                                                
-                                                 <button
-                                                className="text-gray-400 hover:text-gray-600  "
-                                                onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
-                                            >
-                                                ✏️
-                                            </button>
+                                            <span className="space-x-5">
+
+                                                <button
+                                                    className="text-gray-400 hover:text-gray-600  "
+                                                    onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                                >
+                                                    ✏️
+                                                </button>
 
                                                 <button
                                                     className="text-gray-400 hover:text-gray-600  "
                                                     onClick={() => deleteCampaign(campaign.uuid)}
                                                 >
                                                     <i className="bi bi-trash text-red-600"></i>
-                                                </button> 
-                                                
-                                                </span>
+                                                </button>
+
+                                            </span>
                                         </>
                                     )}
                                     </td>
