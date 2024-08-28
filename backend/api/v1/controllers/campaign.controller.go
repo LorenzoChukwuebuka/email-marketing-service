@@ -6,7 +6,10 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"github.com/mssola/user_agent"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -242,7 +245,25 @@ func (c *CampaignController) TrackOpenCampaignEmails(w http.ResponseWriter, r *h
 	vars := mux.Vars(r)
 	campaignId := vars["campaignId"]
 
-	if err := c.CampaignSVC.TrackOpenCampaignEmails(campaignId, contactMail); err != nil {
+	ipAddress := r.Header.Get("X-Forwarded-For")
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+
+	ua := user_agent.New(r.Header.Get("User-Agent"))
+
+	deviceType := "desktop"
+
+	if ua.Mobile() {
+		deviceType = "mobile"
+	}
+
+	osInfo := ua.OSInfo()
+	if osInfo.Name == "iPad" || osInfo.Name == "Android" {
+		deviceType = "tablet"
+	}
+
+	if err := c.CampaignSVC.TrackOpenCampaignEmails(campaignId, contactMail, deviceType, ipAddress); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
@@ -262,8 +283,22 @@ func (c *CampaignController) TrackClickedCampaignsEmails(w http.ResponseWriter, 
 }
 
 func (c *CampaignController) UnsubscribeFromCampaign(w http.ResponseWriter, r *http.Request) {
-	contactMail := r.URL.Query().Get("email")
-	camapignId := r.URL.Query().Get("campaignId")
 
-	println(camapignId, contactMail)
+	contactMail := r.URL.Query().Get("email")
+	camapignId := r.URL.Query().Get("campaign")
+
+	if err := c.CampaignSVC.UnsubscribeFromCampaign(camapignId, contactMail); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	templatePath := filepath.Join("api", "v1", "templates", "unsubscribe.templ")
+	unsubscribeTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write(unsubscribeTemplate)
 }

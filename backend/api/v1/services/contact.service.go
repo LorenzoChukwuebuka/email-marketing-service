@@ -330,3 +330,13 @@ func (s *ContactService) GetContactCount(userId string) (map[string]int64, error
 	}
 	return result, nil
 }
+
+func (s *ContactService) GetContactSubscriptionStatusForDashboard(userId string) (map[string]int64, error) {
+	result, err := s.ContactRepo.GetContactSubscriptionStatusForDashboard(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

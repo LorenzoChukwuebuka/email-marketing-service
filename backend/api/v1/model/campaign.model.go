@@ -56,13 +56,15 @@ type CampaignGroup struct {
 
 type EmailCampaignResult struct {
 	gorm.Model
-	CampaignID      string     `json:"campaign_id" gorm:"index"`                           // Campaign identifier
-	RecipientEmail  string     `json:"recipient_email" gorm:"size:255;index"`              // Email of the recipient
-	RecipientName   *string    `json:"recipient_name" gorm:"size:255;default:null"`        // Name of the recipient
-	Version         string     `json:"version" gorm:"size:10"`                             // Version of the campaign (e.g., A/B testing)
-	SentAt          time.Time  `json:"sent_at" gorm:"type:TIMESTAMP;default:null"`         // Timestamp when the email was sent
-	OpenedAt        *time.Time `json:"opened_at" gorm:"type:TIMESTAMP;default:null"`       // Timestamp when the email was opened
-	ClickedAt       *time.Time `json:"clicked_at" gorm:"type:TIMESTAMP;default:null"`      // Timestamp when a link in the email was clicked
+	CampaignID      string     `json:"campaign_id" gorm:"index"`                     // Campaign identifier
+	RecipientEmail  string     `json:"recipient_email" gorm:"size:255;index"`        // Email of the recipient
+	RecipientName   *string    `json:"recipient_name" gorm:"size:255;default:null"`  // Name of the recipient
+	Version         string     `json:"version" gorm:"size:10"`                       // Version of the campaign (e.g., A/B testing)
+	SentAt          time.Time  `json:"sent_at" gorm:"type:TIMESTAMP;default:null"`   // Timestamp when the email was sent
+	OpenedAt        *time.Time `json:"opened_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when the email was opened
+	OpenCount       int        `json:"open_count" gorm:"default:0"`
+	ClickedAt       *time.Time `json:"clicked_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when a link in the email was clicked
+	ClickCount      int        `gorm:"default:0"`
 	ConversionAt    *time.Time `json:"conversion_at" gorm:"type:TIMESTAMP;default:null"`   // Timestamp when a conversion occurred (e.g., purchase)
 	BounceStatus    string     `gorm:"size:20"`                                            // Status if the email bounced (e.g., "soft", "hard")
 	UnsubscribeAt   *time.Time `json:"unsubscribed_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when the recipient unsubscribed
@@ -112,13 +114,14 @@ type CampaignGroupResponse struct {
 
 type EmailCampaignResultResponse struct {
 	ID           uint       `json:"-"`
-	UserID       string     `json:"user_id"`
 	CampaignID   string     `json:"campaign_id"`
 	Version      string     `json:"version"`
 	SentAt       time.Time  `json:"sent_at"`
-	OpenedAt     *time.Time `json:"opened_at,omitempty"`
-	ClickedAt    *time.Time `json:"clicked_at,omitempty"`
-	ConversionAt *time.Time `json:"conversion_at,omitempty"`
+	OpenedAt     *time.Time `json:"opened_at"`
+	OpenCount    int        `json:"open_count"`
+	ClickedAt    *time.Time `json:"clicked_at"`
+	ClickCount   int        `json:"click_count"`
+	ConversionAt *time.Time `json:"conversion_at"`
 	CreatedAt    string     `json:"created_at"`
 	UpdatedAt    string     `json:"updated_at"`
 	DeletedAt    *string    `json:"deleted_at"`

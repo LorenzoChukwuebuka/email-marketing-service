@@ -412,7 +412,7 @@ func (s *CampaignService) addTrackingToTemplate(template string, campaignId stri
 	trackingPixel := fmt.Sprintf(`<img src="%s/campaigns/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, config.SERVER_URL,
 		campaignId, url.QueryEscape(recipientEmail))
 	unsubscribeLink := fmt.Sprintf(`<div style="margin-top: 20px; font-size: 12px; color: #666666; text-align: center;">
-        <a href="%s/campaigns/unsubscribe?email=%s&campaign=%s" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
+        <a href="%s/campaigns/unsubscribe?email=%s&campaign=%s" target="_blank" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
     </div>`, config.SERVER_URL, url.QueryEscape(recipientEmail), url.QueryEscape(campaignId))
 
 	// Inject tracking pixel and unsubscribe link at the end of the body or document
@@ -455,11 +455,24 @@ func (s *CampaignService) addTrackingToTemplate(template string, campaignId stri
 	return buf.String(), nil
 }
 
-func (s *CampaignService) TrackOpenCampaignEmails(campaignId string, email string) error {
+func (s *CampaignService) TrackOpenCampaignEmails(campaignId string, email string, deviceType string, ipAddress string) error {
 
 	htime := time.Now().UTC()
 
-	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, OpenedAt: &htime}
+	// Retrieve the existing email campaign result
+	existingEmailResult, err := s.CampaignRepo.GetEmailCampaignResult(campaignId, email)
+	if err != nil {
+		return err
+	}
+
+	// Increment the OpenCount by 1
+	openCount := 1
+
+	if existingEmailResult != nil {
+		openCount = existingEmailResult.OpenCount + 1
+	}
+
+	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, OpenedAt: &htime, DeviceType: deviceType, Location: ipAddress, OpenCount: openCount}
 
 	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
 		return err
@@ -504,7 +517,18 @@ func (s *CampaignService) UnsubscribeFromCampaign(campaignId string, email strin
 func (s *CampaignService) TrackClickedCampaignsEmails(campaignId string, email string) error {
 	htime := time.Now().UTC()
 
-	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, ClickedAt: &htime}
+	existingEmailResult, err := s.CampaignRepo.GetEmailCampaignResult(campaignId, email)
+	if err != nil {
+		return err
+	}
+
+	clickCount := 1
+
+	if existingEmailResult != nil {
+		clickCount = existingEmailResult.OpenCount + 1
+	}
+
+	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, ClickCount: clickCount, ClickedAt: &htime}
 
 	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
 		return err

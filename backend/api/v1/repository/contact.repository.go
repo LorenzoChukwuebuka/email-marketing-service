@@ -161,10 +161,6 @@ func (r *ContactRepository) DeleteContact(userId string, contactId string) error
 	return nil
 }
 
-func (r *ContactRepository) ToggleSubscription() error {
-	return nil
-}
-
 func (r *ContactRepository) UpdateContact(d *model.Contact) error {
 	var existingContact model.Contact
 
@@ -469,4 +465,45 @@ func (r *ContactRepository) GetContactCount(userId string) (map[string]int64, er
 	contactCounts["recent"] = recentCount
 
 	return contactCounts, nil
+}
+
+func (r *ContactRepository) GetContactSubscriptionStatusForDashboard(userId string) (map[string]int64, error) {
+	result := make(map[string]int64)
+
+	// 1. Total counts of unsubscribed contacts
+	var unsubscribedCount int64
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND is_subscribed = ?", userId, false).Count(&unsubscribedCount).Error; err != nil {
+		return nil, err
+	}
+	result["unsubscribed"] = unsubscribedCount
+
+	// 2. Total counts of contacts
+	var totalCount int64
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Count(&totalCount).Error; err != nil {
+		return nil, err
+	}
+	result["total"] = totalCount
+
+	// 3. New contacts (contacts less than 10 days old)
+	var newContactsCount int64
+	tenDaysAgo := time.Now().AddDate(0, 0, -10)
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND created_at >= ?", userId, tenDaysAgo).Count(&newContactsCount).Error; err != nil {
+		return nil, err
+	}
+	result["new"] = newContactsCount
+
+	// 4. Engaged subscribers (contacts who opened, clicked, or converted in any campaign)
+	var engagedCount int64
+	if err := r.DB.
+		Table("email_campaign_results").
+		Select("COUNT(DISTINCT contacts.id)").
+		Joins("JOIN contacts ON contacts.email = email_campaign_results.recipient_email").
+		Where("contacts.user_id = ?", userId).
+		Where("email_campaign_results.opened_at IS NOT NULL OR email_campaign_results.clicked_at IS NOT NULL OR email_campaign_results.conversion_at IS NOT NULL").
+		Count(&engagedCount).Error; err != nil {
+		return nil, err
+	}
+	result["engaged"] = engagedCount
+
+	return result, nil
 }

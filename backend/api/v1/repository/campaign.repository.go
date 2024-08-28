@@ -2,6 +2,7 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"time"
@@ -80,6 +81,29 @@ func (r *CampaignRepository) createCampaignGroupMapping(data model.CampaignGroup
 			return nil
 		}(),
 	}
+}
+
+func (r *CampaignRepository) ConvertEmailCampaignResultToResponse(result *model.EmailCampaignResult) *model.EmailCampaignResultResponse {
+	response := &model.EmailCampaignResultResponse{
+		ID:           result.ID,
+		CampaignID:   result.CampaignID,
+		Version:      result.Version,
+		SentAt:       result.SentAt,
+		OpenedAt:     result.OpenedAt,
+		OpenCount:    result.OpenCount,
+		ClickedAt:    result.ClickedAt,
+		ConversionAt: result.ConversionAt,
+		CreatedAt:    result.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    result.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:    nil,
+	}
+
+	if result.DeletedAt.Valid {
+		deletedAt := result.DeletedAt.Time.Format(time.RFC3339)
+		response.DeletedAt = &deletedAt
+	}
+
+	return response
 }
 
 func (r *CampaignRepository) CreateCampaign(d *model.Campaign) (string, error) {
@@ -264,10 +288,35 @@ func (r *CampaignRepository) AddOrEditCampaignGroup(d *model.CampaignGroup) erro
 }
 
 func (r *CampaignRepository) CreateEmailCampaignResult(d *model.EmailCampaignResult) error {
+	var existingResult model.EmailCampaignResult
+	result := r.DB.Where("recipient_email = ? AND campaign_id = ?", d.RecipientEmail, d.CampaignID).First(&existingResult)
+
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("failed to check existing campaign result: %w", result.Error)
+	}
+
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	// Create the new record
 	if err := r.DB.Create(&d).Error; err != nil {
 		return fmt.Errorf("failed to insert campaign result: %w", err)
 	}
+
 	return nil
+}
+
+func (r *CampaignRepository) GetEmailCampaignResult(campaignID, recipientEmail string) (*model.EmailCampaignResultResponse, error) {
+	var emailCampaignResult model.EmailCampaignResult
+	if err := r.DB.Where("campaign_id = ? AND recipient_email = ?", campaignID, recipientEmail).First(&emailCampaignResult).Error; err != nil {
+		return nil, err
+	}
+
+	response := r.ConvertEmailCampaignResultToResponse(&emailCampaignResult)
+
+	return response, nil
+
 }
 
 func (r *CampaignRepository) UpdateEmailCampaignResult(d *model.EmailCampaignResult) error {
@@ -315,9 +364,16 @@ func (r *CampaignRepository) UpdateEmailCampaignResult(d *model.EmailCampaignRes
 		existingCampaign.Version = d.Version
 	}
 
+	if d.OpenCount > 0 {
+		existingCampaign.OpenCount = d.OpenCount
+	}
+
 	if err := r.DB.Save(&existingCampaign).Error; err != nil {
 		return fmt.Errorf("failed to update campaign: %w", err)
 	}
 
 	return nil
 }
+
+
+

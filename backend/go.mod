@@ -10,6 +10,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.5.1
+	github.com/mssola/user_agent v0.6.0
 	github.com/robfig/cron/v3 v3.0.1
 	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.20.0

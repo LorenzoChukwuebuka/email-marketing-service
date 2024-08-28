@@ -6,13 +6,11 @@ import useCampaignStore, { CampaignData } from '../../../../store/userstore/camp
 import AddCampaignSubjectComponent from './addSubjectComponent';
 import AddCampaignRecipients from './addRecipientComponent';
 import AddSenderComponent from './addSenderComponent';
-import { Modal } from '../../../../components';
 
 const EditCampaignForm: React.FC = () => {
     const { id } = useParams<{ id: string }>() as { id: string };
-    const { getSingleCampaign, campaignData, resetCampaignData, setCurrentCampaignId, setCreateCampaignValues, sendCampaign, updateCampaign } = useCampaignStore();
+    const { getSingleCampaign, campaignData, resetCampaignData, setCurrentCampaignId, setCreateCampaignValues, sendCampaign, updateCampaign,currentCampaignId } = useCampaignStore();
     const navigate = useNavigate();
-
     const [isSubjectModalOpen, setIsSubjectModalOpen] = useState<boolean>(false);
     const [isRecipientModalOpen, setIsRecipientModalOpen] = useState<boolean>(false);
     const [isSenderModalOpen, setIsSenderModalOpen] = useState<boolean>(false);
@@ -41,16 +39,14 @@ const EditCampaignForm: React.FC = () => {
         }
     }, [campaignData]);
 
-
-    
-
     const handleButtonClick = (item: string) => {
         switch (item) {
             case "Subject":
                 setIsSubjectModalOpen(true);
                 break;
             case "Design":
-                setCurrentCampaignId(campaign?.uuid as string);
+                setCurrentCampaignId(id as string);
+                console.log(currentCampaignId,"current campaign Id")
                 navigate("/user/dash/templates");
                 break;
             case "Recipients":
@@ -181,8 +177,6 @@ const EditCampaignForm: React.FC = () => {
                     </div>
                 </div>
             )}
-
-
 
             {/* Modals */}
             <AddCampaignSubjectComponent campaign={campaign} isOpen={isSubjectModalOpen} onClose={() => setIsSubjectModalOpen(false)} />

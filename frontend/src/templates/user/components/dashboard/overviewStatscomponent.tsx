@@ -1,4 +1,16 @@
-const OverviewStats:React.FC = () => {
+import { useEffect } from "react";
+import useContactStore from "../../../../store/userstore/contactStore";
+
+const OverviewStats: React.FC = () => {
+    const { getContactSubEngagement, engagementCount } = useContactStore()
+
+    useEffect(() => {
+        const fetchEngagement = async () => {
+            await getContactSubEngagement()
+        }
+
+        fetchEngagement()
+    }, [getContactSubEngagement])
     return (
         <div className="bg-gray-100 p-6 rounded-lg">
             <div className="flex justify-between items-center mb-6">
@@ -9,10 +21,10 @@ const OverviewStats:React.FC = () => {
             <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-4">Subscription & Audience</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard title="Total active subscribers" value="0" />
-                    <StatCard title="New subscribers" value="0" />
-                    <StatCard title="Unsubscribed" value="0" />
-                    <StatCard title="Engaged Subscribers" value="0" />
+                    <StatCard title="Total active subscribers" value={engagementCount.total} />
+                    <StatCard title="New subscribers" value={engagementCount.new} />
+                    <StatCard title="Unsubscribed" value={engagementCount.unsubscribed} />
+                    <StatCard title="Engaged Subscribers" value={engagementCount.engaged} />
                 </div>
             </div>
         </div>
