@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-//	"path/filepath"
+	//"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -94,7 +94,7 @@ func (s *Server) Start() {
 	}
 
 	go func() {
-		fmt.Println("Server started on port 9000")
+		log.Println("Server started on port 9000")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe: %v", err)
 		}

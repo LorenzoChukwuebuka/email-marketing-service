@@ -302,3 +302,71 @@ func (c *CampaignController) UnsubscribeFromCampaign(w http.ResponseWriter, r *h
 	w.Header().Set("Content-Type", "text/html")
 	w.Write(unsubscribeTemplate)
 }
+
+func (c *CampaignController) GetEmailResultStats(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	result, err := c.CampaignSVC.GetEmailResultStats(campaignId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
+func (c *CampaignController) GetAllRecipientsForACampaign(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	result, err := c.CampaignSVC.GetAllRecipientsForACampaign(campaignId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetUserCampaignStats(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.CampaignSVC.GetUserCampaignStats(userId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+
+}
+
+func (c *CampaignController) GetUserCampaignsStats(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.CampaignSVC.GetUserCampaignsStats(userId)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}

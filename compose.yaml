@@ -7,6 +7,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9000:9000"
+      - "1025:1025"  # SMTP port
+    environment:  
+      SERVER_MODE: "production"
     env_file: ./backend/.env
     networks:
       - app-network

@@ -269,7 +269,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     },
     getContactSubEngagement: async () => {
         try {
-            let response = await axiosInstance.get("/contact/contact-engagement")
+            let response = await axiosInstance.get<APIResponse<ContactEngageCount>>("/contact/contact-engagement")
             get().setEngagementCount(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {

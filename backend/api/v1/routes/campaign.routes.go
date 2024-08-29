@@ -28,4 +28,8 @@ func (ur *CampaignRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/track/open/{campaignId}", campaignController.TrackOpenCampaignEmails).Methods("GET", "OPTIONS")
 	router.HandleFunc("/track/click/{campaignId}", campaignController.TrackClickedCampaignsEmails).Methods("GET", "OPTIONS")
 	router.HandleFunc("/unsubscribe", campaignController.UnsubscribeFromCampaign).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-stats/{campaignId}", middleware.JWTMiddleware(campaignController.GetEmailResultStats)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/get-email-recipients/{campaignId}", middleware.JWTMiddleware(campaignController.GetAllRecipientsForACampaign)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/user-campaign-stats", middleware.JWTMiddleware(campaignController.GetUserCampaignStats)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/user-campaigns-stats", middleware.JWTMiddleware(campaignController.GetUserCampaignsStats)).Methods("GET", "OPTIONS")
 }

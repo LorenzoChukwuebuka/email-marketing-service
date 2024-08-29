@@ -30,7 +30,21 @@ type Config struct {
 }
 
 var LoadEnv = func() *Config {
-	err := godotenv.Load(".env.development")
+
+	mode := os.Getenv("SERVER_MODE")
+
+	var envFilePath string
+
+	switch mode {
+	case "production":
+		envFilePath = ".env"
+	default:
+		envFilePath = ".env.development"
+	}
+
+	 
+
+	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

@@ -43,7 +43,11 @@ git:
 	git push
 
 docker:
-	docker-compose up --build
+	docker-compose up --build -d
 
 vet:
 	cd $(ROOT_DIR) && go vet
+
+start-smtp:
+	cd $(SMTP_DIR) && air 
+	

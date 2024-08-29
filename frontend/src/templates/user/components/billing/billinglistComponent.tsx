@@ -43,9 +43,7 @@ const BillingList: React.FC = () => {
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Plan Name
                             </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Number of Mails Per Day
-                            </th>
+
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 ">
@@ -69,13 +67,13 @@ const BillingList: React.FC = () => {
                                     <td className="py-4 px-4">{billing.transaction_id}</td>
                                     <td className="py-4 px-4">{billing.payment_method}</td>
                                     <td className="py-4 px-4">{billing.plan.planname}</td>
-                                    <td className="py-4 px-4">{billing.plan.number_of_mails_per_day}</td>
+
                                 </tr>
                             ))
                         ) : (
                             <tr>
                                 <td colSpan={10} className="py-4 px-4 text-center">
-                                   No Billing Data Available
+                                    No Billing Data Available
                                 </td>
                             </tr>
                         )}

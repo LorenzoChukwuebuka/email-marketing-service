@@ -37,7 +37,6 @@ const DragAndDropEditor: React.FC = () => {
         }
     }, [uuid, _type]);
 
-
     useEffect(() => {
         return () => {
             setCurrentTemplate(null)
@@ -47,7 +46,9 @@ const DragAndDropEditor: React.FC = () => {
     const saveDesign = () => {
         if (currentCampaignId) {
             setCreateCampaignValues({ template_id: uuid as string })
-            updateCampaign(currentCampaignId)
+
+            console.log({ campaignId: currentCampaignId, templateId: uuid })
+              updateCampaign(currentCampaignId)
         }
 
         const unlayer = emailEditorRef.current?.editor;

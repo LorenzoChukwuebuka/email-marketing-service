@@ -113,16 +113,17 @@ type CampaignGroupResponse struct {
 }
 
 type EmailCampaignResultResponse struct {
-	ID           uint       `json:"-"`
-	CampaignID   string     `json:"campaign_id"`
-	Version      string     `json:"version"`
-	SentAt       time.Time  `json:"sent_at"`
-	OpenedAt     *time.Time `json:"opened_at"`
-	OpenCount    int        `json:"open_count"`
-	ClickedAt    *time.Time `json:"clicked_at"`
-	ClickCount   int        `json:"click_count"`
-	ConversionAt *time.Time `json:"conversion_at"`
-	CreatedAt    string     `json:"created_at"`
-	UpdatedAt    string     `json:"updated_at"`
-	DeletedAt    *string    `json:"deleted_at"`
+	ID             uint       `json:"-"`
+	CampaignID     string     `json:"campaign_id"`
+	RecipientEmail string     `json:"recipient_email"`
+	Version        string     `json:"version"`
+	SentAt         time.Time  `json:"sent_at"`
+	OpenedAt       *time.Time `json:"opened_at"`
+	OpenCount      int        `json:"open_count"`
+	ClickedAt      *time.Time `json:"clicked_at"`
+	ClickCount     int        `json:"click_count"`
+	ConversionAt   *time.Time `json:"conversion_at"`
+	CreatedAt      string     `json:"created_at"`
+	UpdatedAt      string     `json:"updated_at"`
+	DeletedAt      *string    `json:"deleted_at"`
 }

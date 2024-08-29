@@ -12,6 +12,14 @@ const ContactGroupDash: React.FC = () => {
         searchGroup(query);
     };
 
+    const deleteGrp = async () => {
+        const confirmResult = confirm("Do you want to delete group?");
+
+        if (confirmResult) {
+            deleteGroup()
+        }
+    }
+
 
     return <>
 
@@ -30,7 +38,7 @@ const ContactGroupDash: React.FC = () => {
                     <>
                         <button
                             className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
-                            onClick={() => deleteGroup()}
+                            onClick={() => deleteGrp()}
                         >
 
                             <span className="text-red-500"> Delete Group </span>
