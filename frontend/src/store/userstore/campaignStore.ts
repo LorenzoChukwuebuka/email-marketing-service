@@ -55,7 +55,6 @@ type CampaignStats = {
     unique_opens: number;
 }
 
-
 type CampaignEmailRecipientStats = {
     campaign_id: string;
     recipient_email: string;
@@ -82,8 +81,19 @@ type CampaignUserStats = {
     total_opens: number;
     unique_clicks: number;
     unique_opens: number;
-  };
-  
+};
+
+type EmailCampaignStats = {
+    bounces: number;
+    campaign_id: string;
+    clicked: number;
+    complaints: number;
+    name: string;
+    opened: number;
+    recipients: number;
+    sent_date: string | null;   
+    unsubscribed: number;
+};
 
 
 type CampaignStore = {
@@ -91,6 +101,8 @@ type CampaignStore = {
     selectedCampaign: Campaign[]
     selectedGroupIds: string[]
     campaignStatData: CampaignStats
+    campaignUserStatsData: CampaignUserStats
+    allCampaignStatsData: EmailCampaignStats[]
     campaignRecipientData: CampaignEmailRecipientStats[]
     paginationInfo: Omit<PaginatedResponse<Campaign>, 'data'>;
     setCreateCampaignValues: (newData: CreateCampaignValues) => void
@@ -100,8 +112,10 @@ type CampaignStore = {
     currentCampaignId: string | null;
     setCurrentCampaignId: (id: string | null) => void;
     setCampaignStats: (newData: CampaignStats) => void
+    setAllCampaignStats: (newData: EmailCampaignStats[]) => void
     clearCurrentCampaignId: () => void;
     setCampaignEmailRecipients: (newData: CampaignEmailRecipientStats[]) => void
+    setCampaignUserStats: (newData: CampaignUserStats) => void
     createCampaign: () => Promise<void>
     getAllCampaigns: (page?: number, pageSize?: number) => Promise<void>
     setCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
@@ -116,6 +130,8 @@ type CampaignStore = {
     deleteCampaign: (campaignId: string) => Promise<void>
     getCampaignStats: (campaignId: string) => Promise<void>
     getCampaignRecipients: (campaignId: string) => Promise<void>
+    getCampaignUserStats: () => Promise<void>
+    getAllCampaignStats: () => Promise<void>
 }
 
 const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
@@ -144,6 +160,19 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
         current_page: 1,
         page_size: 10,
     },
+    allCampaignStatsData: [],
+    campaignUserStatsData: {
+        hard_bounces: 0,
+        open_rate: 0,
+        soft_bounces: 0,
+        total_bounces: 0,
+        total_clicks: 0,
+        total_deliveries: 0,
+        total_emails_sent: 0,
+        total_opens: 0,
+        unique_clicks: 0,
+        unique_opens: 0,
+    },
     campaignStatData: {
         hard_bounces: 0,
         open_rate: 0,
@@ -169,7 +198,8 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
     setSelectedGroupIds: (groupIds: string[]) => set({ selectedGroupIds: groupIds }),
     setScheduledCampaignData: (newData) => set({ scheduledCampaignData: newData }),
     setCampaignEmailRecipients: (newData) => set({ campaignRecipientData: newData }),
-    
+    setCampaignUserStats: (newData) => set({ campaignUserStatsData: newData }),
+    setAllCampaignStats: (newData) => set({ allCampaignStatsData: newData }),
 
     createCampaign: async () => {
         try {
@@ -452,7 +482,34 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
             }
         }
     },
-
+    getCampaignUserStats: async () => {
+        try {
+            let response = await axiosInstance.get<APIResponse<CampaignUserStats>>("/campaigns/user-campaign-stats")
+            get().setCampaignUserStats(response.data.payload)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload);
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
+    getAllCampaignStats: async () => {
+        try {
+            let response = await axiosInstance.get<APIResponse<EmailCampaignStats[]>>("/campaigns/user-campaigns-stats")
+            get().setAllCampaignStats(response.data.payload)
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload);
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    },
     resetCampaignData: () => set({ campaignData: null }),
 }),
 
