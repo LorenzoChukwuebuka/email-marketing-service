@@ -28,9 +28,9 @@ rundev:
 buildfe:
 	cd $(FE_DIR) && npm run build
 ifeq ($(OS),Windows_NT)
-	if exist $(subst /,\,$(CLIENT_DIR)) rmdir /s /q $(subst /,\,$(CLIENT_DIR))
-	mkdir $(subst /,\,$(CLIENT_DIR))
-	xcopy $(subst /,\,$(DIST_DIR)) $(subst /,\,$(CLIENT_DIR)) /E /I /Y
+	powershell -Command "if (Test-Path $(subst /,\,$(CLIENT_DIR))) { Remove-Item -Recurse -Force $(subst /,\,$(CLIENT_DIR)) }"
+	powershell -Command "New-Item -ItemType Directory -Force -Path $(subst /,\,$(CLIENT_DIR))"
+	powershell -Command "Copy-Item -Path '$(subst /,\,$(DIST_DIR))\*' -Destination '$(subst /,\,$(CLIENT_DIR))' -Recurse -Force"
 else
 	rm -rf $(CLIENT_DIR)
 	mkdir -p $(CLIENT_DIR)

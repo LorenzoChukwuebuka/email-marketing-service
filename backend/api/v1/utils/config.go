@@ -27,12 +27,11 @@ type Config struct {
 	ADMIN_EMAIL           string `env:"ADMIN_EMAIL"`
 	ADMIN_PASSWORD        string `env:"ADMIN_PASSWORD"`
 	SERVER_URL            string `env:"SERVER_URL"`
+	SLACK_WEBHOOK_URL     string `env:"SLACK_WEBHOOK_URL"`
 }
 
 var LoadEnv = func() *Config {
-
 	mode := os.Getenv("SERVER_MODE")
-
 	var envFilePath string
 
 	switch mode {
@@ -41,8 +40,6 @@ var LoadEnv = func() *Config {
 	default:
 		envFilePath = ".env.development"
 	}
-
-	 
 
 	err := godotenv.Load(envFilePath)
 	if err != nil {
@@ -70,6 +67,7 @@ var LoadEnv = func() *Config {
 		ADMIN_EMAIL:           os.Getenv("ADMIN_EMAIL"),
 		ADMIN_PASSWORD:        os.Getenv("ADMIN_PASSWORD"),
 		SERVER_URL:            os.Getenv("SERVER_URL"),
+		SLACK_WEBHOOK_URL:     os.Getenv("SLACK_WEBHOOK_URL"),
 	}
 
 	return config

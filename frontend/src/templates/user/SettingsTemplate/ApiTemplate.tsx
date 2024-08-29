@@ -109,6 +109,11 @@ const APISettingsDashTemplate: React.FC = () => {
         }
     }, []);
 
+    useEffect(() => {
+        localStorage.setItem("activeTab", activeTab);
+    }, [activeTab]);
+
+
 
    
 
