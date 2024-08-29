@@ -13,10 +13,15 @@ const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
     const [importModalOpen, setImportModalOpen] = useState<boolean>(false)
     const [groupModalOpen, setGroupModalOpen] = useState<boolean>(false)
 
-    const handleDelete = (e: FormEvent<HTMLButtonElement>) => {
+    const handleDelete = async (e: FormEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        deleteContact();
-        getAllContacts();
+        let confirmResult = confirm("Do you want to delete contact(s)?")
+
+        if (confirmResult) {
+            await deleteContact();
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        await getAllContacts();
     };
 
     const addContactToGroupt = () => {
@@ -31,7 +36,7 @@ const ContactsDashComponent: React.FC<ContactsDashTemplateProps> = () => {
         searchContacts(query);
     };
 
-   
+
     return (
         <>
 

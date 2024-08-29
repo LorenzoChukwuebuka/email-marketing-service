@@ -85,17 +85,18 @@ func (r *CampaignRepository) createCampaignGroupMapping(data model.CampaignGroup
 
 func (r *CampaignRepository) ConvertEmailCampaignResultToResponse(result *model.EmailCampaignResult) *model.EmailCampaignResultResponse {
 	response := &model.EmailCampaignResultResponse{
-		ID:           result.ID,
-		CampaignID:   result.CampaignID,
-		Version:      result.Version,
-		SentAt:       result.SentAt,
-		OpenedAt:     result.OpenedAt,
-		OpenCount:    result.OpenCount,
-		ClickedAt:    result.ClickedAt,
-		ConversionAt: result.ConversionAt,
-		CreatedAt:    result.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    result.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:    nil,
+		ID:             result.ID,
+		CampaignID:     result.CampaignID,
+		RecipientEmail: result.RecipientEmail,
+		Version:        result.Version,
+		SentAt:         result.SentAt,
+		OpenedAt:       result.OpenedAt,
+		OpenCount:      result.OpenCount,
+		ClickedAt:      result.ClickedAt,
+		ConversionAt:   result.ConversionAt,
+		CreatedAt:      result.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      result.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:      nil,
 	}
 
 	if result.DeletedAt.Valid {
@@ -375,5 +376,200 @@ func (r *CampaignRepository) UpdateEmailCampaignResult(d *model.EmailCampaignRes
 	return nil
 }
 
+func (r *CampaignRepository) GetAllRecipientsForACampaign(campaignId string) (*[]model.EmailCampaignResultResponse, error) {
+	var results []model.EmailCampaignResult
+	var response []model.EmailCampaignResultResponse
 
+	if err := r.DB.Where("campaign_id = ?", campaignId).Find(&results).Error; err != nil {
+		return nil, fmt.Errorf("error fetching campaign recipients: %w", err)
+	}
 
+	for _, result := range results {
+		response = append(response, *r.ConvertEmailCampaignResultToResponse(&result))
+	}
+
+	return &response, nil
+}
+
+func (r *CampaignRepository) GetEmailResultStats(campaignID string) (map[string]interface{}, error) {
+	var stats = make(map[string]interface{})
+
+	// Total emails sent
+	var totalSent int64
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ?", campaignID).Count(&totalSent).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total emails sent: %w", err)
+	}
+	stats["total_emails_sent"] = totalSent
+
+	// Unique opens
+	var uniqueOpens int64
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ? AND opened_at IS NOT NULL", campaignID).Count(&uniqueOpens).Error; err != nil {
+		return nil, fmt.Errorf("error calculating unique opens: %w", err)
+	}
+	stats["unique_opens"] = uniqueOpens
+
+	// Total opens
+	var totalOpens struct {
+		Total int64
+	}
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ?", campaignID).Select("COALESCE(SUM(open_count), 0) as total").Scan(&totalOpens).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total opens: %w", err)
+	}
+	stats["total_opens"] = totalOpens.Total
+
+	// Unique clicks
+	var uniqueClicks int64
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ? AND clicked_at IS NOT NULL", campaignID).Count(&uniqueClicks).Error; err != nil {
+		return nil, fmt.Errorf("error calculating unique clicks: %w", err)
+	}
+	stats["unique_clicks"] = uniqueClicks
+
+	// Total clicks
+	var totalClicks struct {
+		Total int64
+	}
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ?", campaignID).Select("COALESCE(SUM(click_count), 0) as total").Scan(&totalClicks).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total clicks: %w", err)
+	}
+	stats["total_clicks"] = totalClicks.Total
+
+	// Total bounces
+	var totalBounces int64
+	if err := r.DB.Model(&model.EmailCampaignResult{}).Where("campaign_id = ? AND bounce_status != ''", campaignID).Count(&totalBounces).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total bounces: %w", err)
+	}
+	stats["total_bounces"] = totalBounces
+
+	return stats, nil
+}
+
+func (r *CampaignRepository) GetUserCampaignStats(userID string) (map[string]int64, error) {
+	// Declare variables to store aggregated stats
+	var totalEmailsSent, totalOpens, uniqueOpens, totalClicks, uniqueClicks, softBounces, hardBounces int64
+
+	// Get all campaigns for the user
+	var campaigns []model.Campaign
+	if err := r.DB.Where("user_id = ?", userID).Find(&campaigns).Error; err != nil {
+		return nil, fmt.Errorf("error fetching campaigns for user: %w", err)
+	}
+
+	// Check if the user has any campaigns
+	if len(campaigns) == 0 {
+		return map[string]int64{}, nil // Return an empty map if no campaigns found
+	}
+
+	// Extract campaign UUIDs for use in the next query
+	campaignIDs := make([]string, len(campaigns))
+	for i, campaign := range campaigns {
+		campaignIDs[i] = campaign.UUID
+	}
+
+	// Get total number of emails sent across all campaigns for the user
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ?", campaignIDs).
+		Count(&totalEmailsSent).Error; err != nil {
+		return nil, fmt.Errorf("error counting total emails sent: %w", err)
+	}
+
+	// Get total number of opens
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ?", campaignIDs).
+		Select("SUM(open_count)").
+		Scan(&totalOpens).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total opens: %w", err)
+	}
+
+	// Get unique opens count
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ? AND open_count > 0", campaignIDs).
+		Count(&uniqueOpens).Error; err != nil {
+		return nil, fmt.Errorf("error calculating unique opens: %w", err)
+	}
+
+	// Get total number of clicks
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ?", campaignIDs).
+		Select("SUM(click_count)").
+		Scan(&totalClicks).Error; err != nil {
+		return nil, fmt.Errorf("error calculating total clicks: %w", err)
+	}
+
+	// Get unique clicks count
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ? AND click_count > 0", campaignIDs).
+		Count(&uniqueClicks).Error; err != nil {
+		return nil, fmt.Errorf("error calculating unique clicks: %w", err)
+	}
+
+	// Get count of soft bounces
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ? AND bounce_status = ?", campaignIDs, "soft").
+		Count(&softBounces).Error; err != nil {
+		return nil, fmt.Errorf("error calculating soft bounces: %w", err)
+	}
+
+	// Get count of hard bounces
+	if err := r.DB.Model(&model.EmailCampaignResult{}).
+		Where("campaign_id IN ? AND bounce_status = ?", campaignIDs, "hard").
+		Count(&hardBounces).Error; err != nil {
+		return nil, fmt.Errorf("error calculating hard bounces: %w", err)
+	}
+
+	// Calculate total bounces and deliveries
+	totalBounces := softBounces + hardBounces
+	totalDeliveries := totalEmailsSent - totalBounces
+
+	// Calculate the open rate percentage
+	var openRate float64
+	if totalEmailsSent > 0 {
+		openRate = (float64(uniqueOpens) / float64(totalEmailsSent)) * 100
+	}
+
+	// Construct and return the result map
+	stats := map[string]int64{
+		"total_emails_sent": totalEmailsSent,
+		"total_opens":       totalOpens,
+		"unique_opens":      uniqueOpens,
+		"total_clicks":      totalClicks,
+		"unique_clicks":     uniqueClicks,
+		"soft_bounces":      softBounces,
+		"hard_bounces":      hardBounces,
+		"total_bounces":     totalBounces,
+		"total_deliveries":  totalDeliveries,
+		"open_rate":         int64(openRate),
+	}
+
+	return stats, nil
+}
+
+func (r *CampaignRepository) GetAllCampaignStatsByUser(userID string) ([]map[string]interface{}, error) {
+	var allCampaignStats []map[string]interface{}
+
+	var campaigns []model.Campaign
+	if err := r.DB.Where("user_id = ?", userID).Find(&campaigns).Error; err != nil {
+		return nil, fmt.Errorf("error fetching campaigns for user: %w", err)
+	}
+
+	for _, campaign := range campaigns {
+		stats, err := r.GetEmailResultStats(campaign.UUID)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching stats for campaign %s: %w", campaign.UUID, err)
+		}
+
+		campaignStats := map[string]interface{}{
+			"campaign_id":  campaign.UUID,
+			"name":         campaign.Name,
+			"recipients":   stats["total_emails_sent"],
+			"opened":       stats["unique_opens"],
+			"clicked":      stats["unique_clicks"],
+			"unsubscribed": 0,
+			"complaints":   0,
+			"bounces":      stats["total_bounces"],
+			"sent_date":    campaign.SentAt,
+		}
+
+		allCampaignStats = append(allCampaignStats, campaignStats)
+	}
+
+	return allCampaignStats, nil
+}

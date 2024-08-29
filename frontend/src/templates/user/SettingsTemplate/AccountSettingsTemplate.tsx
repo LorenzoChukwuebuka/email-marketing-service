@@ -5,10 +5,13 @@ import {
     ProfileInformationComponent,
 } from "../components";
 
+type TabType = "Account Details" | "Change Password" | "Delete Account"
+
 const AccountSettingsTemplate: React.FC = () => {
-    const [activeTab, setActiveTab] = useState
-        <"Account Details" | "Change Password" | "Delete Account"
-        >("Account Details");
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "Account Details" || storedTab === "Change Password" || storedTab === "Delete Account") ? storedTab : "Account Details";
+    });
 
     useEffect(() => {
         const storedActiveTab = localStorage.getItem("activeTab");
@@ -21,14 +24,7 @@ const AccountSettingsTemplate: React.FC = () => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
-
-    console.log("Active Tab:", activeTab);
-
+  
     return (
         <>
             <div className="mb-6 mt-10">

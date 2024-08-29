@@ -10,9 +10,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Final Stage: Production image
 FROM alpine:3.17
-RUN apk --no-cache add ca-certificates wget bash
+RUN apk --no-cache add ca-certificates wget bash curl
 
 WORKDIR /root/
+
 
 # Copy the Go binary from the build stage
 COPY --from=backend-builder /app/main .
@@ -30,7 +31,7 @@ RUN chmod +x /healthcheck.sh
 RUN ls -l /healthcheck.sh
 
 # Expose the Go application port
-EXPOSE 9000
+EXPOSE 9000 1025
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh

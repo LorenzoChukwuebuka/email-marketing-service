@@ -8,7 +8,7 @@ import Pagination from '../../../../components/Pagination';
 
 const GetAllCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const { getAllCampaigns, campaignData, paginationInfo } = useCampaignStore()
+    const { getAllCampaigns, campaignData, paginationInfo, deleteCampaign } = useCampaignStore()
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -18,8 +18,16 @@ const GetAllCampaignComponent: React.FC = () => {
         fetchCampaign()
     }, [getAllCampaigns])
 
-    const deleteCampaign = async (uuid: string) => {
-        console.log(uuid)
+    const deleteCamp = async (uuid: string) => {
+        const confirmResult = confirm("Do you want to delete campaign?");
+
+        if (confirmResult) {
+            await deleteCampaign(uuid)
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            await getAllCampaigns()
+        } else {
+            console.log("Logout canceled");
+        }
     }
 
     const handlePageChange = (newPage: number) => {
@@ -122,7 +130,7 @@ const GetAllCampaignComponent: React.FC = () => {
 
                                                 <button
                                                     className="text-gray-400 hover:text-gray-600  "
-                                                    onClick={() => deleteCampaign(campaign.uuid)}
+                                                    onClick={() => deleteCamp(campaign.uuid)}
                                                 >
                                                     <i className="bi bi-trash text-red-600"></i>
                                                 </button>

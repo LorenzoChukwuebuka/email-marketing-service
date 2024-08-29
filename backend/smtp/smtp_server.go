@@ -1,38 +1,48 @@
-package server 
+package smtp_server
 
- import (
+import (
+	"email-marketing-service/api/v1/repository"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
-	"log"
-	"strings"
- 
-
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
+	"io"
+	"log"
+	"net/mail"
+	"strings"
+	"bytes"
 )
 
 // Debug flag to enable/disable debug logging
 const Debug = true
 
 // Backend implements SMTP server methods
-type Backend struct{}
+type Backend struct {
+	SMTPKeyRepo *repository.SMTPKeyRepository
+}
+
+func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
+	return &Backend{
+		SMTPKeyRepo: smtpKeyRepo,
+	}
+}
 
 // NewSession is called when a new SMTP session is initiated
 func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	debugLog("New session started")
-	return &Session{}, nil
+	return &Session{smtpKeyRepo: bkd.SMTPKeyRepo}, nil
 }
 
 // Session represents an SMTP session
 type Session struct {
-	from      string
-	to        []string
-	message   strings.Builder
-	authState int
-	username  string
-	password  string
+	from        string
+	to          []string
+	message     strings.Builder
+	authState   int
+	username    string
+	password    string
+	smtpKeyRepo *repository.SMTPKeyRepository
 }
 
 // AuthMechanisms returns the list of supported authentication mechanisms
@@ -58,10 +68,14 @@ func (s *Session) Auth(mech string) (sasl.Server, error) {
 // authenticateUser verifies the provided credentials
 func (s *Session) authenticateUser(identity, username, password string) error {
 	debugLog(fmt.Sprintf("Authenticating user: %s", username))
+	auth, err := s.smtpKeyRepo.GetSMTPMasterKeyUserAndPass(username, password)
 
-	// TODO: Replace with database lookup
-	if username != "username" || password != "password" {
-		return errors.New("invalid username or password")
+	if err != nil {
+		return errors.New("454 4.7.0 Temporary authentication failure")
+	}
+
+	if !auth {
+		return errors.New("535 5.7.8 Authentication credentials invalid")
 	}
 
 	debugLog("Authentication successful")
@@ -71,6 +85,10 @@ func (s *Session) authenticateUser(identity, username, password string) error {
 // Mail handles the MAIL FROM command
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
 	debugLog(fmt.Sprintf("Mail from: %s", from))
+	if from == "" {
+		return errors.New("501 5.1.1 Syntax error in parameters or arguments")
+	}
+
 	s.from = from
 	return nil
 }
@@ -78,6 +96,10 @@ func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
 // Rcpt handles the RCPT TO command
 func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 	debugLog(fmt.Sprintf("Rcpt to: %s", to))
+	if to == "" {
+		return errors.New("501 5.1.1 Syntax error in parameters or arguments") // Return an SMTP error code
+	}
+
 	s.to = append(s.to, to)
 	return nil
 }
@@ -91,6 +113,17 @@ func (s *Session) Data(r io.Reader) error {
 		s.message.Write(b)
 		debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
 		log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
+
+		err = s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to)
+		if err != nil {
+			return fmt.Errorf("error logging delivery: %w", err)
+		}
+
+		// Handle bounce detection or email processing here  
+
+		if err := s.processEmailBounce(b); err != nil {
+			return fmt.Errorf("error processing bounce: %w", err)
+		}
 	}
 	return nil
 }
@@ -118,7 +151,7 @@ func (s *Session) Command(cmd string, args []string) (string, error) {
 	switch s.authState {
 	case 1: // Waiting for username
 		if len(args) == 0 {
-			return "500 Syntax error, command unrecognized", nil
+			return "500 5.5.1 Syntax error, command unrecognized", nil
 		}
 		decoded, err := base64.StdEncoding.DecodeString(args[0])
 		if err != nil {
@@ -129,7 +162,7 @@ func (s *Session) Command(cmd string, args []string) (string, error) {
 		return "334 UGFzc3dvcmQ=", nil // "Password" in Base64
 	case 2: // Waiting for password
 		if len(args) == 0 {
-			return "500 Syntax error, command unrecognized", nil
+			return "500 5.5.1 Syntax error, command unrecognized", nil
 		}
 		decoded, err := base64.StdEncoding.DecodeString(args[0])
 		if err != nil {
@@ -138,16 +171,62 @@ func (s *Session) Command(cmd string, args []string) (string, error) {
 		s.password = string(decoded)
 		s.authState = 0
 
-		// TODO: Replace with database lookup
-		if s.username == "username" && s.password == "password" {
+		auth, err := s.smtpKeyRepo.GetSMTPMasterKeyUserAndPass(s.username, s.password)
+
+		if err != nil {
+			debugLog(fmt.Sprintf("Error authenticating user: %v", err))
+			return "454 4.7.0 Temporary authentication failure", nil
+		}
+
+		if auth {
 			debugLog("Authentication successful")
 			return "235 2.7.0 Authentication successful", nil
 		}
+
 		debugLog("Authentication failed")
 		return "535 5.7.8 Authentication credentials invalid", nil
 	default:
-		return "", nil
+		return "500 5.5.1 Syntax error, command unrecognized", nil
 	}
+}
+
+
+func (s *Session) processEmailBounce(emailContent []byte) error {
+	// Parse the email content
+	msg, err := mail.ReadMessage(bytes.NewReader(emailContent))
+	if err != nil {
+		return fmt.Errorf("error reading email message: %w", err)
+	}
+
+	// Use mail.Header to access email headers
+	header := msg.Header
+	bounceReason := header.Get("Diagnostic-Code")
+
+	// Determine if it's a soft or hard bounce
+	bounceType := "soft"
+	if strings.Contains(strings.ToLower(bounceReason), "permanent") {
+		bounceType = "hard"
+	}
+
+	// Extract the original recipient email from the headers or message body
+	recipientEmail := header.Get("Original-Recipient")
+
+	// Update your database with the bounce information
+	log.Printf("Bounce detected for %s: %s (%s)", recipientEmail, bounceReason, bounceType)
+
+	// Call your repository method to update the bounce status
+	if err := s.smtpKeyRepo.UpdateBounceStatus(recipientEmail, bounceType); err != nil {
+		return fmt.Errorf("error updating bounce status: %w", err)
+	}
+
+	return nil
+}
+
+// Utility function to detect if the email is a bounce (simple heuristic)
+func isBounceMessage(emailData []byte) bool {
+	emailStr := string(emailData)
+	// Check for common bounce indicators, such as 'Delivery Status Notification'
+	return strings.Contains(strings.ToLower(emailStr), "delivery status notification")
 }
 
 // debugLog prints debug information if Debug is true
@@ -156,3 +235,6 @@ func debugLog(message string) {
 		log.Printf("[DEBUG] %s", message)
 	}
 }
+
+
+

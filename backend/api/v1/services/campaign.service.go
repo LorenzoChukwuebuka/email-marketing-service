@@ -187,6 +187,10 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 		return err
 	}
 
+	if getGroup.SentAt != nil {
+		return fmt.Errorf("you have sent this campaign")
+	}
+
 	var groupIds []int
 	for _, group := range getGroup.CampaignGroups {
 		groupIds = append(groupIds, int(group.ID))
@@ -535,4 +539,44 @@ func (s *CampaignService) TrackClickedCampaignsEmails(campaignId string, email s
 	}
 
 	return nil
+}
+
+func (s *CampaignService) GetAllRecipientsForACampaign(campaignId string) (*[]model.EmailCampaignResultResponse, error) {
+	result, err := s.CampaignRepo.GetAllRecipientsForACampaign(campaignId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *CampaignService) GetEmailResultStats(campaignId string) (map[string]interface{}, error) {
+	result, err := s.CampaignRepo.GetEmailResultStats(campaignId)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *CampaignService) GetUserCampaignStats(userId string) (map[string]int64, error) {
+	userStats, err := s.CampaignRepo.GetUserCampaignStats(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userStats, nil
+}
+
+func (s *CampaignService) GetUserCampaignsStats(userId string) ([]map[string]interface{}, error) {
+
+	userStats, err := s.CampaignRepo.GetAllCampaignStatsByUser(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userStats, nil
 }

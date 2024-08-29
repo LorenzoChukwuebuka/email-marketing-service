@@ -11,6 +11,7 @@ import CreateTransactionalTemplateDashBoard from "../templates/user/templateBuil
 import CampaignDashTemplate from "../templates/user/campaign/campaignDashTemplate";
 import EditCampaignForm from "../templates/user/components/campaign/editCampaignComponent";
 import CampaignReport from "../templates/user/components/campaign/campaignReportComponent";
+import AnalyticsTemplateDash from "../templates/user/Analytics/AnalyticsTemplateDash";
 
 const UserDashRoute = () => (
     <Routes>
@@ -34,6 +35,7 @@ const UserDashRoute = () => (
             <Route path="campaign" element={<CampaignDashTemplate />} />
             <Route path="campaign/edit/:id" element={<EditCampaignForm />} />
             <Route path="campaign/report/:id" element={<CampaignReport />} />
+            <Route path="analytics" element={<AnalyticsTemplateDash />} />
         </Route>
 
     </Routes>

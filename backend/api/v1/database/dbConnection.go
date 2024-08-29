@@ -51,7 +51,7 @@ func initializeDatabase() {
 	}
 
 	autoMigrateModels()
-	fmt.Println("Connected to the database")
+	log.Println("Connected to the database")
 
 	seedData(db)
 }
@@ -145,9 +145,9 @@ func seedData(db *gorm.DB) {
 			return
 		}
 
-		fmt.Println("Plan and MailingLimit data seeded successfully")
+		log.Println("Plan and MailingLimit data seeded successfully")
 	} else {
-		fmt.Println("Plan data already exists, skipping seed")
+		log.Println("Plan data already exists, skipping seed")
 	}
 
 	// Check if Admin data already exists
@@ -180,9 +180,9 @@ func seedData(db *gorm.DB) {
 		if result.Error != nil {
 			log.Printf("Failed to seed Admin data: %v", result.Error)
 		} else {
-			fmt.Println("Admin data seeded successfully")
+			log.Println("Admin data seeded successfully")
 		}
 	} else {
-		fmt.Println("Admin data already exists, skipping seed")
+		log.Println("Admin data already exists, skipping seed")
 	}
 }

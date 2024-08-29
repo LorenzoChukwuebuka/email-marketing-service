@@ -26,6 +26,7 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 
 	// auth routes
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
+	router.HandleFunc("/health",userController.HealthCheck).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/user-login", userController.Login).Methods("POST", "OPTIONS")
@@ -64,5 +65,7 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	// Testing API routes
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
 	router.HandleFunc("/test-create-daily-mail-calc", smtpController.CreateRecordDailyMailCalculation).Methods("POST", "OPTIONS")
+
+	
 
 }

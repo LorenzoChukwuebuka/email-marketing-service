@@ -132,9 +132,9 @@ const UserDashLayout: React.FC = () => {
                                 </Link>
                             </li>
 
-                            <li className={getLinkClassName("/analytics")}>
+                            <li className={getLinkClassName("/user/dash/analytics")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/analytics"
                                     className="flex font-semibold text-base items-center"
                                 >
                                     <i className="bi bi-bar-chart-fill mr-2"></i> Analytics

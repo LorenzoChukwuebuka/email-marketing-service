@@ -38,6 +38,14 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello world")
 }
 
+func (c *UserController) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	health := map[string]interface{}{
+		"status":  200,
+		"message": "The application is working ....",
+	}
+	response.SuccessResponse(w, 200, health)
+}
+
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.User
 

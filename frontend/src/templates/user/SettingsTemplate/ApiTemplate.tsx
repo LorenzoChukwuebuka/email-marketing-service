@@ -13,8 +13,13 @@ interface ModalContent {
     content: string;
 }
 
+type Tabtype = "API Keys" | "SMTP"
+
 const APISettingsDashTemplate: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<"API Keys" | "SMTP">("SMTP");
+    const [activeTab, setActiveTab] = useState<Tabtype>(()=>{
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "API Keys" || storedTab === "SMTP" ) ? storedTab : "SMTP";
+    });
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
     const [modalContent, setModalContent] = useState<ModalContent>({ title: "", content: "" });
@@ -104,15 +109,8 @@ const APISettingsDashTemplate: React.FC = () => {
         }
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem("activeTab", activeTab);
-    }, [activeTab]);
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
+   
 
     return (
         <div className="p-6 max-w-5xl">

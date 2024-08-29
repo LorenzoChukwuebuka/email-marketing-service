@@ -71,8 +71,8 @@ func (r *MailUsageRepository) GetOrCreateCurrentMailUsageRecord(subscriptionId i
 		periodStart = now.Truncate(24 * time.Hour)
 		periodEnd = periodStart.Add(24 * time.Hour).Add(-time.Second)
 	} else {
-		periodStart = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		periodEnd = periodStart.AddDate(0, 1, 0).Add(-time.Nanosecond)
+		periodStart = now.Truncate(24 * time.Hour) // Start of the current day
+		periodEnd = periodStart.AddDate(0, 0, 30).Add(-time.Nanosecond)
 	}
 
 	var record model.MailUsage
