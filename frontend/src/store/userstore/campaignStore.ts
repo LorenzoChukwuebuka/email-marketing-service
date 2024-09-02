@@ -91,7 +91,7 @@ type EmailCampaignStats = {
     name: string;
     opened: number;
     recipients: number;
-    sent_date: string | null;   
+    sent_date: string | null;
     unsubscribed: number;
 };
 
@@ -132,6 +132,7 @@ type CampaignStore = {
     getCampaignRecipients: (campaignId: string) => Promise<void>
     getCampaignUserStats: () => Promise<void>
     getAllCampaignStats: () => Promise<void>
+    searchCampaign: (query?: string) => void
 }
 
 const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
@@ -510,6 +511,22 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
             }
         }
     },
+    searchCampaign: (query?: string) => {
+
+        const { getAllCampaigns, campaignData } = get();
+
+        if (!query) {
+            getAllCampaigns();
+            return;
+        }
+        const filteredGroup: CampaignData[] = (Array.isArray(campaignData) ? campaignData : [campaignData])
+            .filter((group): group is CampaignData => group !== null && group.name.toLowerCase().includes(query.toLowerCase()));
+
+        set({ campaignData: filteredGroup });
+
+    },
+
+   
     resetCampaignData: () => set({ campaignData: null }),
 }),
 

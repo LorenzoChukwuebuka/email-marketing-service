@@ -12,6 +12,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
     "@types/jwt-decode": "^3.1.0",
+    "@types/react-google-recaptcha": "^2.1.9",
     "axios": "^1.7.2",
     "crypto-js": "^4.2.0",
     "formik": "^2.4.6",
@@ -26,6 +27,7 @@
     "react-datetime-picker": "^6.0.1",
     "react-dom": "^18.2.0",
     "react-email-editor": "^1.7.11",
+    "react-google-recaptcha": "^3.1.0",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.23.1",
     "react-toastify": "^10.0.5",

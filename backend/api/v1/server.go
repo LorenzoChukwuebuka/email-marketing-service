@@ -51,7 +51,15 @@ func (s *Server) setupRoutes() {
 		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
 	}
 
-	staticDir := "./client"
+	mode := os.Getenv("SERVER_MODE")
+
+	var staticDir string
+
+	if mode == "" {
+		staticDir = "./client"
+	} else {
+		staticDir = "/app/client"
+	}
 
 	// Handle static files using Gorilla Mux
 	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))

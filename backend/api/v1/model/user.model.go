@@ -33,3 +33,11 @@ type UserResponse struct {
 	UpdatedAt   string    `json:"updated_at"`
 	DeletedAt   *string    `json:"deleted_at"`
 }
+
+
+type UserDomain struct {
+    TemporaryEmail    string `gorm:"unique;not null"`
+    EmailAssignedAt   time.Time
+    EmailExpiresAt    time.Time
+    // Other fields...
+}

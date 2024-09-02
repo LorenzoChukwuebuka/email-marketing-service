@@ -48,6 +48,10 @@ docker:
 vet:
 	cd $(ROOT_DIR) && go vet
 
-start-smtp:
-	cd $(SMTP_DIR) && air 
+ docker-exec:
+	docker exec -it $(ARGS) bash
+
+docker-restart:
+	docker-compose down
+	$(MAKE) docker
 	
