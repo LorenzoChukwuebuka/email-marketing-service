@@ -3,10 +3,12 @@ package smtp_server
 import (
 	"context"
 	"email-marketing-service/api/v1/repository"
-	"github.com/emersion/go-smtp"
-	"gorm.io/gorm"
+	"email-marketing-service/api/v1/utils"
 	"log"
 	"time"
+
+	"github.com/emersion/go-smtp"
+	"gorm.io/gorm"
 )
 
 // StartSMTPServer starts the SMTP server and listens for shutdown signals
@@ -17,8 +19,10 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 	be := NewBackend(smtpKeyRepo)
 	s := smtp.NewServer(be)
 
-	s.Addr = "localhost:1025"
-	s.Domain = "localhost"
+	config := utils.LoadEnv()
+
+	s.Addr =  config.SMTP_PORT
+	s.Domain = config.SMTP_SERVER
 	s.WriteTimeout = 600 * time.Second
 	s.ReadTimeout = 600 * time.Second
 	s.MaxMessageBytes = 1024 * 1024

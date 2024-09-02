@@ -151,9 +151,9 @@ const UserDashLayout: React.FC = () => {
                                     <i className="bi bi-wallet-fill"></i> &nbsp; Billing
                                 </Link>
                             </li>
-                            <li className={getLinkClassName("/support")}>
+                            <li className={getLinkClassName("/user/dash/support")}>
                                 <Link
-                                    to=""
+                                    to="/user/dash/support"
                                     className="flex font-semibold text-base items-center"
                                 >
                                     <i className="bi bi-headset"></i> &nbsp; Help & Support

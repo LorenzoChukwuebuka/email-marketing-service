@@ -166,18 +166,27 @@ func calculateExpiryDate(duration string) time.Time {
 }
 
 func (s *BillingService) cancelFreePlan(userId uint) error {
+	// Retrieve the user's current subscription
 	getUserCurrentSub, err := s.SubscriptionSVC.GetUsersCurrentSubscription(userId)
 	if err != nil {
+		// If there's an error (e.g., no active subscription), just return nil (no action)
 		return nil
 	}
+
+	// Get the name of the current plan
 	planName := getUserCurrentSub.Plan.PlanName
 
+	// Check if the current plan is the free plan (case insensitive)
 	if strings.ToLower(planName) == "free" {
+		// If it's a free plan, update its status to expired
 		err := s.SubscriptionRepo.UpdateExpiredSubscription(getUserCurrentSub.Id)
 		if err != nil {
-			return nil
+			// Return the error if the update fails
+			return err
 		}
 	}
+
+	// Continue without any errors if no action was needed or the action succeeded
 	return nil
 }
 

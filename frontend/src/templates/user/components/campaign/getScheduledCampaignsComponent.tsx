@@ -8,7 +8,7 @@ import Pagination from '../../../../components/Pagination';
 
 const GetScheduledCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const { getScheduledCampaign, scheduledCampaignData, paginationInfo } = useCampaignStore()
+    const { getScheduledCampaign, scheduledCampaignData, paginationInfo,searchCampaign } = useCampaignStore()
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -24,6 +24,10 @@ const GetScheduledCampaignComponent: React.FC = () => {
 
     const handlePageChange = (newPage: number) => {
         getScheduledCampaign(newPage, paginationInfo.page_size);
+    };
+
+    const handleSearch = (query: string) => {
+        searchCampaign(query);
     };
 
 
@@ -43,7 +47,7 @@ const GetScheduledCampaignComponent: React.FC = () => {
                     type="text"
                     placeholder="Search..."
                     className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                // onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 />
             </div>
         </div>

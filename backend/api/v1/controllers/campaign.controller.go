@@ -138,7 +138,6 @@ func (c *CampaignController) GetSingleCampaign(w http.ResponseWriter, r *http.Re
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request) {
@@ -315,7 +314,6 @@ func (c *CampaignController) GetEmailResultStats(w http.ResponseWriter, r *http.
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *CampaignController) GetAllRecipientsForACampaign(w http.ResponseWriter, r *http.Request) {
