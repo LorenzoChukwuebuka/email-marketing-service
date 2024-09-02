@@ -62,6 +62,7 @@ func (c *CampaignController) GetAllCampaigns(w http.ResponseWriter, r *http.Requ
 
 	page1 := r.URL.Query().Get("page")
 	pageSize1 := r.URL.Query().Get("page_size")
+	searchQuery := r.URL.Query().Get("search")
 
 	page, err := strconv.Atoi(page1)
 	if err != nil {
@@ -75,7 +76,7 @@ func (c *CampaignController) GetAllCampaigns(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result, err := c.CampaignSVC.GetAllCampaigns(userId, page, pageSize)
+	result, err := c.CampaignSVC.GetAllCampaigns(userId, page, pageSize, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

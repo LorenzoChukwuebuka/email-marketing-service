@@ -67,9 +67,9 @@ func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interfa
 	}, nil
 }
 
-func (s *CampaignService) GetAllCampaigns(userId string, page int, pageSize int) (repository.PaginatedResult, error) {
+func (s *CampaignService) GetAllCampaigns(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
 	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
-	campaignRepo, err := s.CampaignRepo.GetAllCampaigns(userId, paginationParams)
+	campaignRepo, err := s.CampaignRepo.GetAllCampaigns(userId, searchQuery, paginationParams)
 	if err != nil {
 		return repository.PaginatedResult{}, err
 	}
