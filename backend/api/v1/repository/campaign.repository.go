@@ -127,10 +127,16 @@ func (r *CampaignRepository) CampaignExists(d *model.Campaign) (bool, error) {
 
 }
 
-func (r *CampaignRepository) GetAllCampaigns(userId string, params PaginationParams) (PaginatedResult, error) {
+func (r *CampaignRepository) GetAllCampaigns(userId string, searchQuery string, params PaginationParams) (PaginatedResult, error) {
 	var campaigns []model.Campaign
 
-	query := r.DB.Model(&campaigns).Where("user_id = ?", userId).Preload("CampaignGroups").Order("created_at DESC")
+	query := r.DB.Model(&campaigns).Where("user_id = ?", userId).Preload("CampaignGroups")
+
+	if searchQuery != "" {
+		query = query.Where("name LIKE ?", "%"+searchQuery+"%")
+	}
+
+	query.Order("created_at DESC")
 
 	paginatedResult, err := Paginate(query, params, &campaigns)
 	if err != nil {

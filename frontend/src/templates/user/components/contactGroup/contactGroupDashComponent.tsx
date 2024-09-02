@@ -1,16 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useContactGroupStore from "../../../../store/userstore/contactGroupStore"
 import GetAllContactGroups from "./getAllContactGroupComponent"
 import CreateGroup from "./createGroupComponent";
+import useDebounce from "../../../../hooks/useDebounce";
 
 const ContactGroupDash: React.FC = () => {
 
-    const { selectedGroupIds, deleteGroup, searchGroup } = useContactGroupStore()
+    const { selectedGroupIds, deleteGroup, searchGroup, getAllGroups } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [searchQuery, setSearchQuery] = useState<string>(""); // New state for search query
+
+    // Debounce the search query
+    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+
 
     const handleSearch = (query: string) => {
-        searchGroup(query);
+        setSearchQuery(query)
     };
+
+
 
     const deleteGrp = async () => {
         const confirmResult = confirm("Do you want to delete group?");
@@ -20,50 +29,78 @@ const ContactGroupDash: React.FC = () => {
         }
     }
 
+    useEffect(() => {
+        const fetchG = async () => {
+            setIsLoading(true)
+            await getAllGroups()
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            setIsLoading(false)
+        }
+
+        fetchG()
+    }, [getAllGroups])
+
+    useEffect(() => {
+        if (debouncedSearchQuery !== "") {
+            searchGroup(debouncedSearchQuery);
+        } else {
+            getAllGroups(); // Reset to all groups when search query is empty
+        }
+    }, [debouncedSearchQuery, searchGroup, getAllGroups]);
 
     return <>
 
+        {isLoading ? (
+            <div className="flex items-center justify-center mt-20">
+                <span className="loading loading-spinner loading-lg"></span>
+            </div>
+        ) : (
+            <>
 
-        <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-            <div className="space-x-1  h-auto w-full p-2 px-2 ">
-                <button
-                    className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    Create Group
-                </button>
-
-
-                {selectedGroupIds.length > 0 && (
-                    <>
+                <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
+                    <div className="space-x-1  h-auto w-full p-2 px-2 ">
                         <button
-                            className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
-                            onClick={() => deleteGrp()}
+                            className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
+                            onClick={() => setIsModalOpen(true)}
                         >
-
-                            <span className="text-red-500"> Delete Group </span>
-                            <i className="bi bi-trash text-red-500"></i>
+                            Create Group
                         </button>
 
-                    </>
 
-                )}
-            </div>
+                        {selectedGroupIds.length > 0 && (
+                            <>
+                                <button
+                                    className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
+                                    onClick={() => deleteGrp()}
+                                >
 
-            <div className="ml-3">
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    onChange={(e) => handleSearch(e.target.value)}
-                />
-            </div>
+                                    <span className="text-red-500"> Delete Group </span>
+                                    <i className="bi bi-trash text-red-500"></i>
+                                </button>
 
-        </div>
+                            </>
 
-        <GetAllContactGroups />
+                        )}
+                    </div>
 
-        <CreateGroup isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                    <div className="ml-3">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+                            onChange={(e) => handleSearch(e.target.value)}
+                        />
+                    </div>
+
+                </div>
+
+                <GetAllContactGroups />
+
+                <CreateGroup isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+            </>
+        )}
+
 
     </>
 }

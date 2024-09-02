@@ -23,31 +23,6 @@ func (r *MailUsageRepository) CreateMailUsageRecord(m *model.MailUsage) error {
 	return nil
 }
 
-// func (r *MailUsageRepository) GetCurrentMailUsageRecord(subscriptionId int) (*model.MailUsageResponseModel, error) {
-// 	var record model.MailUsage
-
-// 	now := time.Now()
-
-// 	if err := r.DB.Where("subscription_id = ? AND period_start <= ? AND period_end >= ?", subscriptionId, now, now).First(&record).Error; err != nil {
-// 		return nil, fmt.Errorf("error fetching record: %w", err)
-// 	}
-
-// 	response := &model.MailUsageResponseModel{
-// 		ID:             int(record.ID),
-// 		UUID:           record.UUID,
-// 		SubscriptionID: record.SubscriptionID,
-// 		PeriodStart:    record.PeriodStart,
-// 		PeriodEnd:      record.PeriodEnd,
-// 		LimitAmount:    record.LimitAmount,
-// 		MailsSent:      record.MailsSent,
-// 		RemainingMails: record.LimitAmount - record.MailsSent,
-// 		CreatedAt:      record.CreatedAt.String(),
-// 		UpdatedAt:      record.UpdatedAt.String(),
-// 	}
-
-// 	return response, nil
-// }
-
 func (r *MailUsageRepository) GetCurrentMailUsageRecord(subscriptionId int) (*model.MailUsageResponseModel, error) {
     var record model.MailUsage
 

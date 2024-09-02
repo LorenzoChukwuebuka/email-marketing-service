@@ -117,7 +117,7 @@ type CampaignStore = {
     setCampaignEmailRecipients: (newData: CampaignEmailRecipientStats[]) => void
     setCampaignUserStats: (newData: CampaignUserStats) => void
     createCampaign: () => Promise<void>
-    getAllCampaigns: (page?: number, pageSize?: number) => Promise<void>
+    getAllCampaigns: (page?: number, pageSize?: number, search?: string) => Promise<void>
     setCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
     setScheduledCampaignData: (newData: (Campaign & BaseEntity)[] | Campaign & BaseEntity) => void
     getSingleCampaign: (uuid: string) => Promise<CampaignData | null>
@@ -229,10 +229,16 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
         }
     },
 
-    getAllCampaigns: async (page = 1, pageSize = 10) => {
+    getAllCampaigns: async (page = 1, pageSize = 10, query = "") => {
         try {
             const { setCampaignData, setPaginationInfo } = get()
-            let response = await axiosInstance.get<CampaignResponse>(`/campaigns/get-all-campaigns?page=${page}&page_size=${pageSize}`)
+            let response = await axiosInstance.get<CampaignResponse>("/campaigns/get-all-campaigns", {
+                params: {
+                    page: page || undefined,
+                    page_size: pageSize || undefined,
+                    search: query || undefined
+                }
+            })
             const { data, ...paginationInfo } = response.data.payload;
             setCampaignData(data)
             setPaginationInfo(paginationInfo)
@@ -511,22 +517,19 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
             }
         }
     },
-    searchCampaign: (query?: string) => {
+    searchCampaign: async (query?: string) => {
 
-        const { getAllCampaigns, campaignData } = get();
+        const { getAllCampaigns } = get();
 
         if (!query) {
-            getAllCampaigns();
+            await getAllCampaigns();
             return;
         }
-        const filteredGroup: CampaignData[] = (Array.isArray(campaignData) ? campaignData : [campaignData])
-            .filter((group): group is CampaignData => group !== null && group.name.toLowerCase().includes(query.toLowerCase()));
 
-        set({ campaignData: filteredGroup });
-
+        await getAllCampaigns(1, 10, query)
     },
 
-   
+
     resetCampaignData: () => set({ campaignData: null }),
 }),
 
