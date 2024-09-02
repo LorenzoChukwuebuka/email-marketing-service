@@ -77,9 +77,16 @@ func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {
 	return nil
 }
 
-func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
+	query := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId)
+
+	// Add search parameter if provided
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+
+	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get transactional templates: %w", err)
 	}
 
@@ -91,9 +98,16 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]mode
 	return templateResponses, nil
 }
 
-func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
+	query := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId)
+
+	// Add search parameter if provided
+	if search != "" {
+		query = query.Where("name ILIKE ?", "%"+search+"%")
+	}
+
+	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get marketing templates: %w", err)
 	}
 
@@ -104,6 +118,7 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.Te
 
 	return templateResponses, nil
 }
+
 
 func (r *TemplateRepository) GetSingleTemplate(templateId string) (*model.TemplateResponse, error) {
 	var template model.Template

@@ -48,9 +48,11 @@ func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *
 		return
 	}
 
+	searchQuery := r.URL.Query().Get("search")
+
 	userId := claims["userId"].(string)
 
-	result, err := c.TemplateSVC.GetAllMarketingTemplates(userId)
+	result, err := c.TemplateSVC.GetAllMarketingTemplates(userId, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -68,9 +70,11 @@ func (c *TemplateController) GetAllTransactionalTemplates(w http.ResponseWriter,
 		return
 	}
 
+	searchQuery := r.URL.Query().Get("search")
+
 	userId := claims["userId"].(string)
 
-	result, err := c.TemplateSVC.GetAllTransactionalTemplates(userId)
+	result, err := c.TemplateSVC.GetAllTransactionalTemplates(userId, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
