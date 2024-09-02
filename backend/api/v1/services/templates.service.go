@@ -17,7 +17,6 @@ type TemplateService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	MailUsageRepo    *repository.MailUsageRepository
 	UserRepo         *repository.UserRepository
-	
 }
 
 func NewTemplateService(templateRepo *repository.TemplateRepository, subscriptionRepository *repository.SubscriptionRepository,
@@ -27,7 +26,6 @@ func NewTemplateService(templateRepo *repository.TemplateRepository, subscriptio
 		SubscriptionRepo: subscriptionRepository,
 		MailUsageRepo:    mailUsageRepo,
 		UserRepo:         userRepo,
-		
 	}
 }
 
@@ -115,9 +113,9 @@ func (s *TemplateService) GetMarketingTemplate(userId string, templateId string)
 	return result, nil
 }
 
-func (s *TemplateService) GetAllTransactionalTemplates(userId string) ([]model.TemplateResponse, error) {
+func (s *TemplateService) GetAllTransactionalTemplates(userId string, searchQuery string) ([]model.TemplateResponse, error) {
 
-	result, err := s.TemplateRepo.GetAllTransactionalTemplates(userId)
+	result, err := s.TemplateRepo.GetAllTransactionalTemplates(userId, searchQuery)
 
 	if err != nil {
 		return []model.TemplateResponse{}, err
@@ -130,8 +128,8 @@ func (s *TemplateService) GetAllTransactionalTemplates(userId string) ([]model.T
 	return result, nil
 }
 
-func (s *TemplateService) GetAllMarketingTemplates(userId string) ([]model.TemplateResponse, error) {
-	result, err := s.TemplateRepo.GetAllMarketingTemplates(userId)
+func (s *TemplateService) GetAllMarketingTemplates(userId string, searchQuery string) ([]model.TemplateResponse, error) {
+	result, err := s.TemplateRepo.GetAllMarketingTemplates(userId, searchQuery)
 
 	if err != nil {
 		return []model.TemplateResponse{}, err
@@ -200,8 +198,6 @@ func (s *TemplateService) SendTestMail(d *dto.SendTestMailDTO) error {
 	if err != nil {
 		return fmt.Errorf("error fetching subscription record: %w", err)
 	}
-
-	
 
 	mailUsageRecord, err := s.MailUsageRepo.GetCurrentMailUsageRecord(int(subscription.ID))
 	if err != nil {
