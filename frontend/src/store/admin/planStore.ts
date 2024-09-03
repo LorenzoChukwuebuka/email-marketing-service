@@ -5,8 +5,6 @@ import { APIResponse } from '../../interface/api.interface';
 import { BaseEntity } from '../../interface/baseentity.interface';
 import { errResponse } from '../../utils/isError';
 
-
-
 type Feature = BaseEntity & {
     plan_Id: number;
     name: string;

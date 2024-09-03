@@ -105,8 +105,13 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             get().setTemplateData(response.data.payload)
 
         } catch (error) {
-            errResponse(error);
-            console.error("Failed to fetch templates", error);
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
     createTemplate: async () => {
@@ -284,6 +289,7 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         const { getAllMarketingTemplates } = get()
         if (!query) {
             await getAllMarketingTemplates()
+            return
         }
 
         await getAllMarketingTemplates(query)
@@ -294,6 +300,7 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
 
         if (!query) {
             await getAllTransactionalTemplates()
+            return
         }
 
         await getAllTransactionalTemplates(query)

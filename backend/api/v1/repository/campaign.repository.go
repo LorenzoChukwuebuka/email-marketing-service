@@ -133,7 +133,7 @@ func (r *CampaignRepository) GetAllCampaigns(userId string, searchQuery string, 
 	query := r.DB.Model(&campaigns).Where("user_id = ?", userId).Preload("CampaignGroups")
 
 	if searchQuery != "" {
-		query = query.Where("name LIKE ?", "%"+searchQuery+"%")
+		query = query.Where("name ILIKE ?", "%"+searchQuery+"%")
 	}
 
 	query.Order("created_at DESC")

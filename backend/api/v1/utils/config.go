@@ -28,6 +28,7 @@ type Config struct {
 	ADMIN_PASSWORD        string `env:"ADMIN_PASSWORD"`
 	SERVER_URL            string `env:"SERVER_URL"`
 	SLACK_WEBHOOK_URL     string `env:"SLACK_WEBHOOK_URL"`
+	DOMAIN                string `env:"DOMAIN"`
 }
 
 var LoadEnv = func() *Config {
@@ -68,6 +69,7 @@ var LoadEnv = func() *Config {
 		ADMIN_PASSWORD:        os.Getenv("ADMIN_PASSWORD"),
 		SERVER_URL:            os.Getenv("SERVER_URL"),
 		SLACK_WEBHOOK_URL:     os.Getenv("SLACK_WEBHOOK_URL"),
+		DOMAIN: os.Getenv("DOMAIN"),
 	}
 
 	return config

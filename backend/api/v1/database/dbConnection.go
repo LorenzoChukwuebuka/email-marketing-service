@@ -83,6 +83,10 @@ func autoMigrateModels() {
 		&model.Campaign{},
 		&model.CampaignGroup{},
 		&model.EmailCampaignResult{},
+		&model.UserTempEmail{},
+		&model.Log{},
+		&model.Domains{},
+		&model.Sender{},
 	)
 
 	if err != nil {

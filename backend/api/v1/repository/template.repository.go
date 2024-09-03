@@ -83,7 +83,7 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search 
 
 	// Add search parameter if provided
 	if search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+		query = query.Where("template_name ILIKE ?", "%"+search+"%")
 	}
 
 	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
@@ -104,7 +104,7 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search stri
 
 	// Add search parameter if provided
 	if search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+		query = query.Where("template_name ILIKE ?", "%"+search+"%")
 	}
 
 	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
