@@ -41,26 +41,147 @@ GDPR/CCPA Compliance: Ensure that your tracking methods comply with data protect
 By implementing these analytics methods, you'll be able to effectively monitor and optimize your email campaigns, leading to better engagement and higher conversion rates.
 
 
+ ########### ADMIN ########################
+
+ # CrabMailer Admin Dashboard Development Tips
+
+## Key Features to Include
+
+1. User Management
+   - View all users
+   - Add/Edit/Remove user accounts
+   - Manage user permissions
+
+2. System Analytics
+   - Overall platform usage statistics
+   - Total campaigns sent
+   - Active users count
+   - Peak usage times
+
+3. Content Moderation
+   - Review user-generated templates
+   - Approve/Reject campaigns if necessary
+   - Set content guidelines
+
+4. Billing Overview
+   - Access billing information for all users
+   - Generate revenue reports
+   - Manage subscription tiers
+
+5. Support Dashboard
+   - View and respond to user support tickets
+   - Track ticket status and resolution times
+
+6. System Settings
+   - Control global application settings
+   - Set email sending limits
+   - Manage blacklisted domains
+
+7. Template Library Management
+   - Add/Edit/Remove global templates
+   - Categorize templates
+   - Track template usage
+
+8. Compliance Monitoring
+   - Ensure adherence to email marketing regulations
+   - Set up automated compliance checks
+   - Generate compliance reports
+
+9. Server Status and Maintenance
+   - Monitor system performance
+   - Schedule and perform maintenance tasks
+   - Set up alerts for system issues
+
+10. Role Management
+    - Define admin roles with different access levels
+    - Assign roles to admin users
+    - Audit role permissions
+
+11. Audit Logs
+    - Record important actions by users and admins
+    - Implement searchable log history
+    - Set up automated alerts for suspicious activities
+
+12. Bulk Operations
+    - Perform actions across multiple user accounts
+    - Manage campaigns in bulk
+    - Send system-wide notifications
+
+## Development Tips
+
+1. Choose a suitable development framework (e.g., Electron for desktop, React Native for mobile)
+2. Design a clean, intuitive user interface
+3. Implement robust authentication and authorization
+4. Use a local database for offline functionality
+5. Ensure cross-platform compatibility
+6. Implement thorough error handling and logging
+7. Optimize performance for large data sets
+8. Include comprehensive help documentation
+9. Set up a secure update mechanism
+10. Conduct thorough testing across different devices and OS versions
+
+Remember to prioritize security at every step of the development process, as this dashboard will have access to sensitive user data and system controls.
 
 
-// frontendDir := "./../frontend/dist" // Adjust if needed
-	// absPath, err := filepath.Abs(frontendDir)
-	// if err != nil {
-	// 	log.Printf("Error getting absolute path: %v", err)
-	// } else {
-	// 	log.Printf("Attempting to serve frontend from: %s", absPath)
-	// 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-	// 		logger.Error("Frontend directory does not exist: %s", absPath)
-	// 	} else {
-	// 		fs := http.FileServer(http.Dir(absPath))
-	// 		s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+lookup
 
-	// 		s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 			indexFile := filepath.Join(absPath, "index.html")
-	// 			http.ServeFile(w, r, indexFile)
-	// 		})
+package main
 
-	// 		logger.Info("Frontend serving set up successfully with SPA support")
+import (
+	"fmt"
+	"net"
+	"strings"
+)
 
-	// 	}
-	// }
+func verifyDomain(domain string) bool {
+	// Check if the domain resolves to an IP address
+	ips, err := net.LookupIP(domain)
+	if err != nil {
+		fmt.Printf("Error looking up IP for %s: %v\n", domain, err)
+		return false
+	}
+	fmt.Printf("IP addresses for %s: %v\n", domain, ips)
+
+	// Check for MX records
+	mxRecords, err := net.LookupMX(domain)
+	if err != nil {
+		fmt.Printf("Error looking up MX records for %s: %v\n", domain, err)
+	} else {
+		fmt.Printf("MX records for %s:\n", domain)
+		for _, mx := range mxRecords {
+			fmt.Printf("  %v (priority: %v)\n", mx.Host, mx.Pref)
+		}
+	}
+
+	// Check for A records
+	aRecords, err := net.LookupHost(domain)
+	if err != nil {
+		fmt.Printf("Error looking up A records for %s: %v\n", domain, err)
+	} else {
+		fmt.Printf("A records for %s: %v\n", domain, aRecords)
+	}
+
+	// Check for NS records
+	nsRecords, err := net.LookupNS(domain)
+	if err != nil {
+		fmt.Printf("Error looking up NS records for %s: %v\n", domain, err)
+	} else {
+		fmt.Printf("NS records for %s:\n", domain)
+		for _, ns := range nsRecords {
+			fmt.Printf("  %v\n", ns.Host)
+		}
+	}
+
+	// If we've made it this far without returning false, the domain likely exists
+	fmt.Printf("The domain %s exists and is properly configured.\n", domain)
+	return true
+}
+
+func main() {
+	domain := "example.com"
+	if verifyDomain(domain) {
+		fmt.Printf("Domain %s is valid.\n", domain)
+	} else {
+		fmt.Printf("Domain %s is invalid or improperly configured.\n", domain)
+	}
+}

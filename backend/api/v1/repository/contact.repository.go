@@ -75,7 +75,7 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
 
 	if searchQuery != "" {
-		query = query.Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%")
+		query = query.Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%")
 	}
 
 	paginatedResult, err := Paginate(query, params, &contacts)
@@ -283,7 +283,7 @@ func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams,
 		Where("contact_groups.deleted_at IS NULL")
 
 	if searchQuery != "" {
-		query = query.Where("contact_groups.group_name LIKE ?", "%"+searchQuery+"%")
+		query = query.Where("contact_groups.group_name ILIKE ?", "%"+searchQuery+"%")
 	}
 
 	query = query.Order("contact_groups.created_at DESC")

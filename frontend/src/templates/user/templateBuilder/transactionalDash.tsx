@@ -4,16 +4,19 @@ import useTemplateStore, { Template } from "../../../store/userstore/templateSto
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "../../../components";
 import { BaseEntity } from "../../../interface/baseentity.interface";
+import useDebounce from "../../../hooks/useDebounce";
 
 const TransactionalTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<number | boolean | null>(null);
-    const { getAllTransactionalTemplates, _templateData, deleteTemplate } = useTemplateStore()
+    const { getAllTransactionalTemplates, _templateData, deleteTemplate, searchTransactional } = useTemplateStore()
     const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
-    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const modalRef = useRef<HTMLDivElement>(null)
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const navigate = useNavigate()
+    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+
 
     useEffect(() => {
         const fetchT = async () => {
@@ -27,6 +30,15 @@ const TransactionalTemplateDash: React.FC = () => {
 
     }, [getAllTransactionalTemplates])
 
+    useEffect(() => {
+        if (debouncedSearchQuery !== "") {
+            searchTransactional(debouncedSearchQuery);
+        } else {
+            getAllTransactionalTemplates(); // Reset to all tr.templates when search query is empty
+        }
+    }, [debouncedSearchQuery, searchTransactional, getAllTransactionalTemplates]);
+
+
     const openPreview = (template: (Template & BaseEntity)) => {
         setPreviewTemplate(template);
         setIsModalOpen(true);
@@ -34,7 +46,7 @@ const TransactionalTemplateDash: React.FC = () => {
 
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        setSearchQuery(e.target.value);
     };
 
     const handleNavigate = (template: (Template & BaseEntity)) => {

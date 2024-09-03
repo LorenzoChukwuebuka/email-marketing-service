@@ -91,22 +91,43 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		Verified: false,
 	}
 
+	tx := s.userRepo.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	if err := s.checkUserExists(user); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if err := s.createUserInDB(user); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	otp := utils.GenerateOTP(otpLength)
 
 	if err := s.createAndSendOTP(user, otp); err != nil {
+		tx.Rollback()
 		return nil, err
+	}
+
+	if err := s.createTempEmailForUser(user.UUID, user.Email); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return s.createSuccessResponse(user.UUID), nil
@@ -151,6 +172,25 @@ func (s *UserService) createSuccessResponse(userID string) map[string]interface{
 		"message": successMessage,
 		"userId":  userID,
 	}
+}
+
+func (s *UserService) createTempEmailForUser(userID string, UserEmail string) error {
+
+	parts := strings.Split(UserEmail, "@")
+
+	if len(parts) > 2 {
+		return fmt.Errorf("invalid email format")
+	}
+
+	tempMail := parts[0] + "@" + config.DOMAIN
+
+	tempModel := &model.UserTempEmail{UserId: userID, TemporaryEmail: tempMail}
+
+	if err := s.userRepo.CreateTempEmail(tempModel); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserService) VerifyUser(d *model.OTP) error {

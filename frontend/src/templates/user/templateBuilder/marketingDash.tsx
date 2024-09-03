@@ -4,14 +4,18 @@ import { Link, useNavigate } from "react-router-dom";
 import useTemplateStore, { Template } from "../../../store/userstore/templateStore";
 import { BaseEntity } from "../../../interface/baseentity.interface";
 import { Modal } from "../../../components";
+import useDebounce from "../../../hooks/useDebounce";
 
 const MarketingTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<number | boolean | null>(null);
-    const [searchTerm, setSearchTerm] = useState<string>("");
-    const { getAllMarketingTemplates, templateData, deleteTemplate } = useTemplateStore();
+    const { getAllMarketingTemplates, templateData, deleteTemplate, searchMarketing } = useTemplateStore();
     const [previewTemplate, setPreviewTemplate] = useState<Template & BaseEntity | null>(null);
     const modalRef = useRef<HTMLDivElement>(null)
     const [isLoading, setIsLoading] = useState<boolean>(false)
+
+    const [searchQuery, setSearchQuery] = useState<string>("");
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
 
     const navigate = useNavigate();
 
@@ -27,6 +31,13 @@ const MarketingTemplateDash: React.FC = () => {
 
     }, [getAllMarketingTemplates]);
 
+    useEffect(() => {
+        if (debouncedSearchQuery !== "") {
+            searchMarketing(debouncedSearchQuery);
+        } else {
+            getAllMarketingTemplates(); // Reset to all contacts when search query is empty
+        }
+    }, [debouncedSearchQuery, searchMarketing, getAllMarketingTemplates]);
 
     const openPreview = (template: (Template & BaseEntity)) => {
         setPreviewTemplate(template);
@@ -34,8 +45,8 @@ const MarketingTemplateDash: React.FC = () => {
     };
 
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
     };
 
     const handleNavigate = (template: (Template & BaseEntity)) => {
@@ -99,8 +110,8 @@ const MarketingTemplateDash: React.FC = () => {
                             type="text"
                             placeholder="Search..."
                             className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                            value={searchTerm}
-                            onChange={handleSearch} // Handle search input change
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)} // Handle search input change
                         />
                     </div>
                 </div>

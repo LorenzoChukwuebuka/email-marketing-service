@@ -206,3 +206,11 @@ func (r *UserRepository) UpdateUserRecords(d *model.User) error {
 
 	return nil
 }
+
+func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) (  error) {
+	if err := r.DB.Create(&d).Error; err != nil {
+		return   fmt.Errorf("failed to insert user: %w", err)
+	}
+	return  nil
+
+}

@@ -60,7 +60,7 @@ const AdminDashLayout: React.FC = () => {
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
                         <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            Mail Crib
+                            CrabMailer
                         </h2>
                         <ul className="mt-12 w-full">
                             <li className={getLinkClassName("/zen/dash")}>
@@ -68,7 +68,7 @@ const AdminDashLayout: React.FC = () => {
                                     to="/zen/dash"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-house mr-2"></i> DashBoard
+                                    <i className="bi bi-house-fill mr-2"></i> DashBoard
                                 </Link>
                             </li>
                             <li className={getLinkClassName("/zen/dash/plan")}>
@@ -76,7 +76,7 @@ const AdminDashLayout: React.FC = () => {
                                     to="/zen/dash/plan"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-bar-chart mr-2"></i> Plans
+                                    <i className="bi bi-bar-chart-fill mr-2"></i> Plans
                                 </Link>
                             </li>
                             <li className={getLinkClassName("/zen/dash/users")}>
@@ -84,7 +84,7 @@ const AdminDashLayout: React.FC = () => {
                                     to="/zen/dash/users"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-wallet"></i> &nbsp; Users
+                                    <i className="bi bi-people-fill"></i> &nbsp; Users
                                 </Link>
                             </li>
                             {/* <li className={`${getLinkClassName("")} relative`}>
