@@ -20,7 +20,7 @@ const AddCampaignSubjectComponent: React.FC<Props> = ({ isOpen, onClose, campaig
         preview_text: ""
     })
 
-    const { updateCampaign } = useCampaignStore()
+    const { updateCampaign, setCreateCampaignValues } = useCampaignStore()
 
     useEffect(() => {
         if (campaign) {
@@ -34,6 +34,10 @@ const AddCampaignSubjectComponent: React.FC<Props> = ({ isOpen, onClose, campaig
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         if (campaign?.uuid) {
+            setCreateCampaignValues({
+                subject: formValues.subject,
+                preview_text: formValues.preview_text
+            })
             await updateCampaign(campaign.uuid)
             onClose()
         }

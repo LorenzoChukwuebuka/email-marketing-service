@@ -19,6 +19,9 @@ build:
 air:
 	cd $(ROOT_DIR) && air
 
+tidy: 
+	cd $(ROOT_DIR) && go mod tidy
+
 npmi:
 	cd $(FE_DIR) && npm i $(ARGS)
 

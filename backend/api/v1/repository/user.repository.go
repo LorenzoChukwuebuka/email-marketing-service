@@ -101,6 +101,7 @@ func (r *UserRepository) Login(d *model.User) (model.UserResponse, error) {
 }
 
 func (r *UserRepository) FindUserById(d *model.User) (model.UserResponse, error) {
+
 	var user model.User
 	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -207,10 +208,10 @@ func (r *UserRepository) UpdateUserRecords(d *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) (  error) {
+func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) error {
 	if err := r.DB.Create(&d).Error; err != nil {
-		return   fmt.Errorf("failed to insert user: %w", err)
+		return fmt.Errorf("failed to insert user: %w", err)
 	}
-	return  nil
+	return nil
 
 }

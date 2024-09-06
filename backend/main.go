@@ -77,7 +77,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := smtp_server.StartSMTPServer(ctx,dbConn); err != nil {
+		if err := smtp_server.StartSMTPServer(ctx, dbConn); err != nil {
 			log.Printf("SMTP server error: %v", err)
 			cancel()
 		}
@@ -94,5 +94,4 @@ func main() {
 	wg.Wait()
 
 	log.Println("All components shut down gracefully")
-
 }

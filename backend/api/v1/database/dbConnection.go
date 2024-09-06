@@ -189,4 +189,35 @@ func seedData(db *gorm.DB) {
 	} else {
 		log.Println("Admin data already exists, skipping seed")
 	}
+
+	// Check if SMTPMasterKey data already exists
+	var smtpMasterKeyCount int64
+	db.Model(&model.SMTPMasterKey{}).Count(&smtpMasterKeyCount)
+
+	if smtpMasterKeyCount == 0 {
+		// Fetch an existing user to associate with the SMTP key
+		var user adminmodel.Admin
+		if err := db.First(&user).Error; err != nil {
+			log.Printf("Failed to fetch a user for SMTPMasterKey: %v", err)
+			return
+		}
+
+		// Now create the SMTPMasterKey with the correct UserId
+		smtpKey := model.SMTPMasterKey{
+			UUID:      uuid.New().String(),
+			UserId:    uuid.New().String(), // Use the existing user's ID
+			SMTPLogin: "adminuser",
+			KeyName:   "adminuser",
+			Password:  uuid.New().String(),
+			Status:    model.KeyActive,
+		}
+
+		if err := db.Create(&smtpKey).Error; err != nil {
+			log.Printf("Failed to seed SMTPMasterKey data: %v", err)
+		} else {
+			log.Println("SMTPMasterKey data seeded successfully")
+		}
+	} else {
+		log.Println("SMTPMasterKey data already exists, skipping seed")
+	}
 }

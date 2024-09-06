@@ -50,10 +50,7 @@ const GetAllCampaignComponent: React.FC = () => {
                 <span className="loading loading-spinner loading-lg"></span>
             </div>
         ) : (
-
-
             <>
-
                 <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
                     <div className="space-x-1  h-auto w-full p-2 px-2 ">
                         <button
@@ -105,7 +102,7 @@ const GetAllCampaignComponent: React.FC = () => {
                                         <tr key={campaign.uuid} className="hover:bg-gray-100">
                                             <td className="py-4 px-4">{campaign.name}</td>
                                             <td className="py-4 px-4">
-                                                <span className={`px-2 py-1 rounded-full text-sm font-medium ${campaign.status === 'draft' ? 'bg-gray-200 text-gray-800' :
+                                                <span className={`px-2 py- rounded-full text-sm font-medium ${campaign.status === 'draft' ? 'bg-gray-200 text-gray-800' :
                                                     campaign.status === 'Failed' ? 'bg-red-200 text-red-800' :
                                                         campaign.status === 'Sent' ? 'bg-green-200 text-green-800' :
                                                             campaign.status === 'Processing' ? 'bg-yellow-200 text-yellow-800' :
