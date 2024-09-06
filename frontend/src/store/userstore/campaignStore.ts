@@ -276,7 +276,7 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
     updateCampaign: async (uuid: string) => {
         try {
-            const { createCampaignValues, getSingleCampaign } = get();
+            const { createCampaignValues, getSingleCampaign, setCreateCampaignValues } = get();
             let successMessage = "";
             let updatedValues = { ...createCampaignValues };
 
@@ -307,8 +307,21 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
                 updatedValues = { ...updatedValues, status: "scheduled" };
                 successMessage = "Your campaign has been scheduled successfully";
-            } else if (createCampaignValues.subject) {
-                successMessage = "Subject was added successfully";
+            } else if (createCampaignValues.subject || createCampaignValues.preview_text) {
+                const campaign = await getSingleCampaign(uuid) as CampaignData || null;
+
+                if (!campaign) {
+                    eventBus.emit('error', 'Campaign not found');
+                    return;
+                }
+
+                updatedValues = {
+                    ...createCampaignValues,
+                    subject: createCampaignValues.subject || campaign.subject,
+                    preview_text: createCampaignValues.preview_text || campaign.preview_text,
+                };
+
+                successMessage = "Subject and preview text updated successfully";
             } else if (createCampaignValues.template_id) {
                 successMessage = "Template added successfully";
             } else {
@@ -323,6 +336,11 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
             if (response.data.status) {
                 eventBus.emit('success', successMessage);
+                setCreateCampaignValues({
+                    ...createCampaignValues,
+                    subject: updatedValues.subject,
+                    preview_text: updatedValues.preview_text,
+                });
             }
         } catch (error) {
             if (errResponse(error)) {

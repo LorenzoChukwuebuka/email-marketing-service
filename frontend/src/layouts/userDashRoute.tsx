@@ -13,6 +13,7 @@ import EditCampaignForm from "../templates/user/components/campaign/editCampaign
 import CampaignReport from "../templates/user/components/campaign/campaignReportComponent";
 import AnalyticsTemplateDash from "../templates/user/Analytics/AnalyticsTemplateDash";
 import HelpAndSupport from "../templates/supportAndTicket/HelpAndSupport";
+import DomainTemplateDash from "../templates/user/SettingsTemplate/domainsTemplatedash";
 
 const UserDashRoute = () => (
     <Routes>
@@ -38,6 +39,7 @@ const UserDashRoute = () => (
             <Route path="campaign/report/:id" element={<CampaignReport />} />
             <Route path="analytics" element={<AnalyticsTemplateDash />} />
             <Route path="support" element={<HelpAndSupport />} />
+            <Route path="settings/domain" element={<DomainTemplateDash />} />
         </Route>
 
     </Routes>

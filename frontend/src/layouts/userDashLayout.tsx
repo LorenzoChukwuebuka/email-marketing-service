@@ -210,6 +210,19 @@ const UserDashLayout: React.FC = () => {
                                                 Account Settings
                                             </Link>
                                         </li>
+
+                                        <li
+                                            className={`py-1 ${getLinkClassName(
+                                                "/user/dash/settings/domain"
+                                            )}`}
+                                        >
+                                            <Link
+                                                to="/user/dash/settings/domain"
+                                                className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
+                                            >
+                                                Senders and Domain
+                                            </Link>
+                                        </li>
                                     </ul>
                                 )}
                             </li>

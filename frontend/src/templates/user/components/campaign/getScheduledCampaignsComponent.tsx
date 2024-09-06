@@ -137,7 +137,6 @@ const GetScheduledCampaignComponent: React.FC = () => {
 
                 <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Campaigns" />
 
-
             </div>
             <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 

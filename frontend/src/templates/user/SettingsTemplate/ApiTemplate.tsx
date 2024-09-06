@@ -16,9 +16,9 @@ interface ModalContent {
 type Tabtype = "API Keys" | "SMTP"
 
 const APISettingsDashTemplate: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<Tabtype>(()=>{
+    const [activeTab, setActiveTab] = useState<Tabtype>(() => {
         const storedTab = localStorage.getItem("activeTab");
-        return (storedTab === "API Keys" || storedTab === "SMTP" ) ? storedTab : "SMTP";
+        return (storedTab === "API Keys" || storedTab === "SMTP") ? storedTab : "SMTP";
     });
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
@@ -115,7 +115,7 @@ const APISettingsDashTemplate: React.FC = () => {
 
 
 
-   
+
 
     return (
         <div className="p-6 max-w-5xl">

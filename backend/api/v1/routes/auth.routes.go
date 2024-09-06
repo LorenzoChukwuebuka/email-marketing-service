@@ -66,6 +66,4 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
 	router.HandleFunc("/test-create-daily-mail-calc", smtpController.CreateRecordDailyMailCalculation).Methods("POST", "OPTIONS")
 
-	
-
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"log"
 	"gorm.io/gorm"
 )
 
@@ -20,5 +21,13 @@ func (ls *LogRepository) LogAction(userID, action, details string) error {
 		Details: details,
 	}
 
-	return ls.DB.Create(&logEntry).Error
+	result := ls.DB.Create(&logEntry)
+	if result.Error != nil {
+		log.Printf("Error creating log entry: %v", result.Error)
+		return result.Error
+	}
+
+	log.Printf("Log entry created successfully: UserID=%s, Action=%s, Details=%s", userID, action, details)
+	return nil
+
 }

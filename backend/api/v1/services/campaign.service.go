@@ -193,7 +193,7 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 
 	var groupIds []int
 	for _, group := range getGroup.CampaignGroups {
-		groupIds = append(groupIds, int(group.ID))
+		groupIds = append(groupIds, int(group.GroupId))
 	}
 
 	var contacts []string

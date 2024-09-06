@@ -1,15 +1,11 @@
-version: "3"
-
 services:
-  app:
+  go-backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.app
     ports:
       - "9000:9000"
-      - "2525:25" # SMTP
-      - "2587:587" # Submission
-      - "2465:465" # SMTPS
+      - "1025:1025"
     environment:
       SERVER_MODE: "production"
     env_file: ./backend/.env
@@ -23,9 +19,6 @@ services:
       start_period: 40s
     volumes:
       - ./backend:/app
-      - ./config/postfix-main.cf:/etc/postfix/main.cf:ro
-      - ./config/dovecot.conf:/etc/dovecot/dovecot.conf:ro
-      - maildata:/var/mail/vhosts
     cap_add:
       - NET_BIND_SERVICE
     privileged: true # Be cautious with this in production
@@ -33,78 +26,23 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      app:
+      go-backend:
         condition: service_healthy
-    networks:
-      - app-network
-    command: /bin/sh -c "nginx -g 'daemon off;'"
-
-  redis:
-    image: redis:alpine
-    networks:
-      - app-network
-
-  clamav:
-    image: clamav/clamav
     networks:
       - app-network
 
   mailhog:
     image: mailhog/mailhog
     ports:
-      - "2225:25"
-      - "8025:8025"
-
-  spamassassin:
-    image: instantlinux/spamassassin
+      - "1026:1025" # SMTP
+      - "8025:8025" # Web UI
     networks:
       - app-network
-
-  # dovecot:
-  #   image: dovecot/dovecot
-  #   ports:
-  #     - "2143:143" # IMAP
-  #     - "2993:993" # IMAPS
-  #     - "2110:110" # POP3
-  #     - "2995:995" # POP3S
-  #   volumes:
-  #     - ./config/dovecot.conf:/etc/dovecot/dovecot.conf:ro
-  #     - ./debug-dovecot.sh:/debug-dovecot.sh:ro
-  #     - maildata:/var/mail/vhosts
-  #   networks:
-  #     - app-network
-  #   command:
-  #     [
-  #       "/bin/sh",
-  #       "-c",
-  #       "chmod +x /debug-dovecot.sh && /debug-dovecot.sh && dovecot -F",
-  #     ]
-
-  dovecot:
-    image: dovecot/dovecot
-    ports:
-      - "2143:143" # IMAP
-      - "2993:993" # IMAPS
-      - "2110:110" # POP3
-      - "2995:995" # POP3S
-    volumes:
-      - ./config/dovecot.conf:/etc/dovecot/dovecot.conf:ro
-      - ./config/dovecot-debug.sh:/root/debug-dovecot.sh:ro
-      - maildata:/var/mail/vhosts
-    networks:
-      - app-network
-    command: >
-      sh -c "cp /root/debug-dovecot.sh /tmp/debug-dovecot.sh &&
-           chmod +x /tmp/debug-dovecot.sh &&
-           /tmp/debug-dovecot.sh"
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  maildata:

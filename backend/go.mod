@@ -14,6 +14,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mssola/user_agent v0.6.0
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/toorop/go-dkim v0.0.0-20240103092955-90b7d1423f92
 	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.20.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
@@ -25,6 +26,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-test/deep v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/pgx/v5 v5.5.3 // indirect

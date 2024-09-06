@@ -182,4 +182,14 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 }
 
 
+func InitializeDomainController(db *gorm.DB)(*controllers.DomainController, error){
+	wire.Build(
+		controllers.NewDomainController,
+		services.NewDomainService,
+		repository.NewDomainRepository,
+	)
+  return nil,nil
+}
+
+
  

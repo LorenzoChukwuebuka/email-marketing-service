@@ -147,3 +147,10 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 	campaignController := controllers.NewCampaignController(campaignService)
 	return campaignController, nil
 }
+
+func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, error) {
+	domainRepository := repository.NewDomainRepository(db)
+	domainService := services.NewDomainService(domainRepository)
+	domainController := controllers.NewDomainController(domainService)
+	return domainController, nil
+}
