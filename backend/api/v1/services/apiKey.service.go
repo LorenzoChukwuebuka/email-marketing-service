@@ -5,7 +5,7 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
-	"fmt"
+	"errors"
 	"github.com/google/uuid"
 	"strings"
 )
@@ -21,6 +21,8 @@ func NewAPIKeyService(apiRepo *repository.APIKeyRepository) *APIKeyService {
 		APIKeyRepo: apiRepo,
 	}
 }
+
+var ErrAPIKeyExists = errors.New("API key name already exists")
 
 func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}, error) {
 	uuidObj := uuid.New().String()
@@ -43,7 +45,7 @@ func (s *APIKeyService) GenerateAPIKey(d *dto.APIkeyDTO) (map[string]interface{}
 	// Check if the name already exists
 	for _, existingKey := range existingKeys {
 		if existingKey.Name == d.Name {
-			return nil, fmt.Errorf("API key with name '%s' already exists", d.Name)
+			return nil, ErrAPIKeyExists
 		}
 	}
 

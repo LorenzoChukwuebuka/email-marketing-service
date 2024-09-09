@@ -101,20 +101,9 @@ const APISettingsDashTemplate: React.FC = () => {
         }
     };
 
-
-    useEffect(() => {
-        const storedActiveTab = localStorage.getItem("activeTab");
-        if (storedActiveTab) {
-            setActiveTab(storedActiveTab as "API Keys" | "SMTP");
-        }
-    }, []);
-
     useEffect(() => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
-
-
-
 
 
     return (

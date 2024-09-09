@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/model"
@@ -11,11 +12,10 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"encoding/base64"
 	"fmt"
+	"github.com/google/uuid"
 	"net"
 	"strings"
 	"text/template"
-
-	"github.com/google/uuid"
 )
 
 type DNSRecord struct {
@@ -72,7 +72,7 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 	dnsRecords := []DNSRecord{
 		{
 			Type:       "TXT",
-			RecordName: "@",
+			RecordName: "@ (or leave it empty)",
 			Value:      txtRecord,
 		},
 		{
@@ -121,19 +121,39 @@ func (s *DomainService) verifyDomain(domain string) bool {
 
 	mxRecords, err := net.LookupMX(domain)
 	if err != nil {
-		fmt.Printf("Error looking up MX records for %s: %v\n", domain, err)
+		fmt.Printf("Warning: Error looking up MX records for %s: %v\n", domain, err)
 	} else {
 		fmt.Printf("MX records for %s:\n", domain)
 		for _, mx := range mxRecords {
 			fmt.Printf("  %v (priority: %v)\n", mx.Host, mx.Pref)
 		}
 	}
-
 	return true
 }
 
 func (s *DomainService) generateTXTRecord(domain string) string {
-	return fmt.Sprintf("your-email-service-verification=%s", domain)
+
+	// Generate a unique hash based on the domain and a secret key
+	hash := sha256.Sum256([]byte(domain + config.ENC_KEY))
+
+	// Convert the first 16 bytes of the hash to base64
+	verificationCode := base64.URLEncoding.EncodeToString(hash[:16])
+
+	// Remove any non-alphanumeric characters
+	verificationCode = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return -1
+	}, verificationCode)
+
+	// Truncate to a reasonable length (e.g., 20 characters)
+	if len(verificationCode) > 20 {
+		verificationCode = verificationCode[:20]
+	}
+
+	return fmt.Sprintf("email-verify=%s", verificationCode)
+	//return fmt.Sprintf("your-email-service-verification=%s", domain)
 }
 
 func (s *DomainService) generateDMARCRecord(domain string) string {
@@ -147,7 +167,7 @@ func (s *DomainService) generateDKIMSelector() string {
 }
 
 func (s *DomainService) generateDKIMKeys() (string, string, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 500)
 	if err != nil {
 		return "", "", err
 	}
@@ -206,6 +226,10 @@ func (s *DomainService) InitiateVerification(domainID string) (bool, error) {
 		return false, fmt.Errorf("failed to retrieve domain: %v", err)
 	}
 
+	if domain.Verified {
+		return false, fmt.Errorf("domain has been verified")
+	}
+
 	verified, err := s.VerifyDNSRecords(domain)
 	if err != nil {
 		return false, err
@@ -228,18 +252,30 @@ func (s *DomainService) InitiateVerification(domainID string) (bool, error) {
 
 func (s *DomainService) VerifyDNSRecords(domain *model.DomainsResponse) (bool, error) {
 	txtVerified, err := s.verifyTXTRecord(domain.Domain, domain.TXTRecord)
-	if err != nil || !txtVerified {
-		return false, fmt.Errorf("TXT record verification failed: %v", err)
+	if err != nil {
+		return false, err
+	}
+
+	if !txtVerified {
+		return false, fmt.Errorf("TXT record verification failed")
 	}
 
 	dmarcVerified, err := s.verifyDMARCRecord(domain.Domain, domain.DMARCRecord)
-	if err != nil || !dmarcVerified {
-		return false, fmt.Errorf("DMARC record verification failed: %v", err)
+	if err != nil {
+		return false, err
+	}
+
+	if !dmarcVerified {
+		return false, fmt.Errorf("DMARC record verification failed")
 	}
 
 	dkimVerified, err := s.verifyDKIMRecord(domain.Domain, domain.DKIMSelector, domain.DKIMPublicKey)
-	if err != nil || !dkimVerified {
-		return false, fmt.Errorf("DKIM record verification failed: %v", err)
+	if err != nil {
+		return false, err
+	}
+
+	if !dkimVerified {
+		return false, fmt.Errorf("DKIM record verification failed")
 	}
 
 	return true, nil
@@ -276,18 +312,29 @@ func (s *DomainService) verifyDMARCRecord(domain, expectedRecord string) (bool, 
 }
 
 func (s *DomainService) verifyDKIMRecord(domain, selector, publicKey string) (bool, error) {
-	records, err := net.LookupTXT(fmt.Sprintf("%s._domainkey.%s", selector, domain))
+	dkimDomain := fmt.Sprintf("%s._domainkey.%s", selector, domain)
+	fmt.Printf("Looking up DKIM record for: %s\n", dkimDomain)
+
+	records, err := net.LookupTXT(dkimDomain)
 	if err != nil {
+		fmt.Printf("Error looking up DKIM record: %v\n", err)
 		return false, err
 	}
 
+	fmt.Printf("Found %d DKIM records\n", len(records))
+
 	expectedRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", publicKey)
-	for _, record := range records {
+	fmt.Printf("Expected DKIM record: %s\n", expectedRecord)
+
+	for i, record := range records {
+		fmt.Printf("Record %d: %s\n", i+1, record)
 		if strings.TrimSpace(record) == expectedRecord {
+			fmt.Println("DKIM record match found!")
 			return true, nil
 		}
 	}
 
+	fmt.Println("No matching DKIM record found")
 	return false, nil
 }
 
@@ -306,11 +353,12 @@ func (s *DomainService) GetDomain(uuid string) (*model.DomainsResponse, error) {
 	return getDomain, nil
 }
 
-func (s *DomainService) GetAllDomains(userId string) (*[]model.DomainsResponse, error) {
-	getAllDoamins, err := s.DomainRepo.GetAllDomains(userId)
+func (s *DomainService) GetAllDomains(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	getAllDoamins, err := s.DomainRepo.GetAllDomains(userId, searchQuery, paginationParams)
 
 	if err != nil {
-		return nil, nil
+		return repository.PaginatedResult{}, nil
 	}
 
 	return getAllDoamins, nil

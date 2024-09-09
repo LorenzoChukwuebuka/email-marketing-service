@@ -12,8 +12,6 @@ const StatItem = ({ value, label }: StatProp) => (
 );
 
 
-
-
 const AnalyticsTemplateDash: React.FC = () => {
 
     const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -31,16 +29,16 @@ const AnalyticsTemplateDash: React.FC = () => {
     }, [getCampaignUserStats])
 
     const stats = [
-        { value: `${campaignUserStatsData.total_emails_sent}`, label: 'Total Emails Sent' },
-        { value: `${campaignUserStatsData.total_deliveries}`, label: 'Total Delivered' },
-        { value: `${campaignUserStatsData.total_bounces}`, label: 'Total Bounce' },
-        { value: `0`, label: 'Total Complaints' },
-        { value: `0`, label: 'Total Rejected' },
-        { value: `${campaignUserStatsData.total_opens}`, label: 'Total Opens' },
-        { value: `${campaignUserStatsData.unique_opens}`, label: 'Total Unique Opens' },
-        { value: `${campaignUserStatsData.open_rate}%`, label: 'Total Open Rate' },
-        { value: `${campaignUserStatsData.total_clicks}`, label: 'Total Clicks' },
-        { value: `${campaignUserStatsData.unique_clicks}`, label: 'Total Unique Clicks' },
+        { value: `${campaignUserStatsData.total_emails_sent ?? 0}`, label: 'Total Emails Sent' },
+        { value: `${campaignUserStatsData.total_deliveries ?? 0}`, label: 'Total Delivered' },
+        { value: `${campaignUserStatsData.total_bounces ?? 0}`, label: 'Total Bounce' },
+        // { value: `0`, label: 'Total Complaints' },
+        // { value: `0`, label: 'Total Rejected' },
+        { value: `${campaignUserStatsData.total_opens ?? 0}`, label: 'Total Opens' },
+        { value: `${campaignUserStatsData.unique_opens ?? 0}`, label: 'Total Unique Opens' },
+        { value: `${campaignUserStatsData.open_rate ?? 0}%`, label: 'Total Open Rate' },
+        { value: `${campaignUserStatsData.total_clicks ?? 0}`, label: 'Total Clicks' },
+        { value: `${campaignUserStatsData.unique_clicks ?? 0}`, label: 'Total Unique Clicks' },
     ];
 
 

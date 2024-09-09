@@ -40,7 +40,6 @@ const (
 var (
 	mailer     = &custom.Mail{}
 	config     = utils.LoadEnv()
-	smtpserver = config.SMTP_SERVER
 )
 
 type UserService struct {
@@ -324,7 +323,7 @@ func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error
 		UUID:      uuid.New().String(),
 		KeyName:   "Master",
 		UserId:    userId,
-		SMTPLogin: userEmail + "@" + smtpserver,
+		SMTPLogin: userEmail,
 		Password:  utils.GenerateOTP(15),
 		Status:    model.KeyStatus("active"),
 	}

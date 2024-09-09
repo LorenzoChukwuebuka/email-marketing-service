@@ -10,8 +10,6 @@ const CampaignDashTemplate: React.FC = () => {
         return (storedTab === "Campaign" || storedTab === "Scheduled") ? storedTab : "Campaign";
     });
 
-   
-
     const handleTabChange = (tab: TabType) => {
         setActiveTab(tab);
         localStorage.setItem("activeTab", tab);
