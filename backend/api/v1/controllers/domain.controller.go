@@ -4,11 +4,11 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type DomainController struct {
@@ -46,9 +46,7 @@ func (c *DomainController) CreateDomain(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-
+	response.SuccessResponse(w, 200, result)
 }
 
 func (c *DomainController) VerifyDomain(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +67,6 @@ func (c *DomainController) VerifyDomain(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.SuccessResponse(w, 200, "Domain authenticated successfully")
-
 }
 
 func (c *DomainController) DeleteDomain(w http.ResponseWriter, r *http.Request) {
@@ -107,9 +104,25 @@ func (c *DomainController) GetAllDomains(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	page1 := r.URL.Query().Get("page")
+	pageSize1 := r.URL.Query().Get("page_size")
+	searchQuery := r.URL.Query().Get("search")
+
+	page, err := strconv.Atoi(page1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page number")
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSize1)
+	if err != nil {
+		response.ErrorResponse(w, "Invalid page size")
+		return
+	}
+
 	userId := claims["userId"].(string)
 
-	result, err := c.DomainService.GetAllDomains(userId)
+	result, err := c.DomainService.GetAllDomains(userId, page, pageSize, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

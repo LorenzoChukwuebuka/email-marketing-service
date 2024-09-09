@@ -154,3 +154,11 @@ func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, err
 	domainController := controllers.NewDomainController(domainService)
 	return domainController, nil
 }
+
+func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, error) {
+	domainRepository := repository.NewDomainRepository(db)
+	senderRepository := repository.NewSenderRepository(db)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	senderController := controllers.NewSenderController(senderServices)
+	return senderController, nil
+}

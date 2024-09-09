@@ -42,14 +42,16 @@ func (s *Server) setupRoutes() {
 
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.RouteInterface{
-		"":          routes.NewAuthRoute(s.db),
-		"admin":     routes.NewAdminRoute(s.db),
-		"templates": routes.NewTemplateRoute(s.db),
-		"contact":   routes.NewContactRoute(s.db),
-		"smtpkey":   routes.NewSMTPKeyRoute(s.db),
-		"apikey":    routes.NewAPIKeyRoute(s.db),
-		"campaigns": routes.NewCampaignRoute(s.db),
-		"domain":   routes.NewDomainRoute(s.db),
+		"":            routes.NewAuthRoute(s.db),
+		"admin":       routes.NewAdminRoute(s.db),
+		"templates":   routes.NewTemplateRoute(s.db),
+		"contact":     routes.NewContactRoute(s.db),
+		"smtpkey":     routes.NewSMTPKeyRoute(s.db),
+		"apikey":      routes.NewAPIKeyRoute(s.db),
+		"campaigns":   routes.NewCampaignRoute(s.db),
+		"domain":      routes.NewDomainRoute(s.db),
+		"sender":      routes.NewSenderRoute(s.db),
+		"transaction": routes.NewTransactionRoute(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -113,6 +115,8 @@ func (s *Server) Start() {
 			log.Fatalf("ListenAndServe: %v", err)
 		}
 	}()
+
+	//graceful shutdown
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)

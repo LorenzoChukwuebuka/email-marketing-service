@@ -1,0 +1,22 @@
+package routes
+
+import (
+	"email-marketing-service/api/v1/middleware"
+	"github.com/gorilla/mux"
+	"gorm.io/gorm"
+)
+
+type SenderRoute struct {
+	db *gorm.DB
+}
+
+func NewSenderRoute(db *gorm.DB) *SenderRoute {
+	return &SenderRoute{db: db}
+
+}
+
+func (ur *SenderRoute) InitRoutes(router *mux.Router) {
+	senderController, _ := InitializeSenderController(ur.db)
+
+	router.HandleFunc("/create-sender", middleware.JWTMiddleware(senderController.CreateSender)).Methods("POST", "OPTIONS")
+}

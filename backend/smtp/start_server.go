@@ -6,7 +6,7 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"log"
-	"os"
+	//"os"
 	"time"
 	"github.com/emersion/go-smtp"
 	"gorm.io/gorm"
@@ -22,17 +22,17 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 
 	config := utils.LoadEnv()
 
-	mode := os.Getenv("SERVER_MODE")
+	// mode := os.Getenv("SERVER_MODE")
 
-	var address string
+	// var address string
 
-	if mode == "" {
-		address = "localhost:1025"
-	} else {
-		address = "localhost:1025"
-	}
+	// if mode == "" {
+	// 	address = config.SMTP_PORT
+	// } else {
+	// 	address = config.SMTP_PORT
+	// }
 
-	s.Addr = address
+	s.Addr = config.SMTP_PORT
 	s.Domain = config.SMTP_SERVER
 	s.WriteTimeout = 600 * time.Second
 	s.ReadTimeout = 600 * time.Second

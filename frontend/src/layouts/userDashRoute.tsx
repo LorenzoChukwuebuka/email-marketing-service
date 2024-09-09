@@ -14,6 +14,7 @@ import CampaignReport from "../templates/user/components/campaign/campaignReport
 import AnalyticsTemplateDash from "../templates/user/Analytics/AnalyticsTemplateDash";
 import HelpAndSupport from "../templates/supportAndTicket/HelpAndSupport";
 import DomainTemplateDash from "../templates/user/SettingsTemplate/domainsTemplatedash";
+import DNSAuthenticationRecords from "../templates/user/components/domain/getSingleDomainRecords";
 
 const UserDashRoute = () => (
     <Routes>
@@ -40,6 +41,7 @@ const UserDashRoute = () => (
             <Route path="analytics" element={<AnalyticsTemplateDash />} />
             <Route path="support" element={<HelpAndSupport />} />
             <Route path="settings/domain" element={<DomainTemplateDash />} />
+            <Route path="settings/domain/records/:id" element={<DNSAuthenticationRecords />} />
         </Route>
 
     </Routes>

@@ -160,7 +160,6 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 		repository.NewMailUsageRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
-		
 	)
 
 	return nil, nil
@@ -176,20 +175,26 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		repository.NewMailUsageRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
-		
 	)
 	return nil, nil
 }
 
-
-func InitializeDomainController(db *gorm.DB)(*controllers.DomainController, error){
+func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, error) {
 	wire.Build(
 		controllers.NewDomainController,
 		services.NewDomainService,
 		repository.NewDomainRepository,
 	)
-  return nil,nil
+	return nil, nil
 }
 
+func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, error) {
+	wire.Build(
+		controllers.NewSenderController,
+		services.NewSenderServices,
+		repository.NewSenderRepository,
+		repository.NewDomainRepository,
+	)
 
- 
+	return nil, nil
+}

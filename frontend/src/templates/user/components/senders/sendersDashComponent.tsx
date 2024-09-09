@@ -9,7 +9,8 @@ type Props = {
 
 const EmailCard = ({ email, name, dkim, dmarc, onEdit, onDelete }: Props) => {
     return (
-        <div className="p-4 bg-white shadow rounded-lg mb-4">
+        <div className="p-6 bg-white shadow rounded-lg mb-4">
+            
             <div className="flex items-start">
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-4">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
@@ -67,6 +68,7 @@ const SendersDashComponent: React.FC = () => {
 
     return <>
         <div className="p-6 bg-gray-100 min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">Sender</h1>
             <EmailCard
                 email="enzobyte.tech@gmail.com"
                 name="hello"
