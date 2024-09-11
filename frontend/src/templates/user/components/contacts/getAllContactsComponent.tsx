@@ -3,6 +3,7 @@ import useContactStore, { Contact } from "../../../../store/userstore/contactSto
 import Pagination from "../../../../components/Pagination";
 import EditContact from "./editContactComponent";
 import useContactGroupStore from "../../../../store/userstore/contactGroupStore";
+import EmptyState from "../../../../components/emptyStateComponent";
 
 
 
@@ -58,95 +59,92 @@ const GetAllContacts: React.FC = () => {
     return (
         <>
             <div className="overflow-x-auto mt-8">
-                <table className="md:min-w-5xl min-w-full w-full rounded-sm  bg-white">
-                    <thead className="bg-gray-50">
-                        <tr >
-                            <th className="py-3 px-4 text-left">
-                                <input
-                                    type="checkbox"
-                                    className="form-checkbox h-4 w-4 text-blue-600"
-                                    onChange={handleSelectAll}
-                                    checked={selectedIds.length === (contactData?.length ?? 0)}
-                                />
-                            </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                First Name
-                            </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Last Name
-                            </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email
-                            </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                From
-                            </th>
-
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created On
-                            </th>
-
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Edit
-                            </th>
-
-
-
-                            <th className="py-3 px-4"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 ">
-                        {contactData && contactData.length > 0 ? (
-                            contactData.map((contact: any) => (
-                                <tr key={contact.uuid} className="hover:bg-slate-100" >
-                                    <td className="py-4 px-4">
+                {contactData && contactData.length > 0 ? (
+                    <>
+                        <table className="md:min-w-5xl min-w-full w-full rounded-sm  bg-white">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="py-3 px-4 text-left">
                                         <input
                                             type="checkbox"
                                             className="form-checkbox h-4 w-4 text-blue-600"
-                                            checked={selectedIds.includes(contact.uuid)}
-                                            onChange={() => handleSelect(contact.uuid)}
+                                            onChange={handleSelectAll}
+                                            checked={selectedIds.length === (contactData?.length ?? 0)}
                                         />
-                                    </td>
-                                    <td className="py-4 px-4">{contact.first_name}</td>
-                                    <td className="py-4 px-4">{contact.last_name}</td>
-                                    <td className="py-4 px-4">{contact.email}</td>
-                                    <td className="py-4 px-4">{contact.from}</td>
-                                    <td className="py-4 px-4">
-                                        {new Date(contact.created_at).toLocaleString('en-US', {
-                                            timeZone: 'UTC',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: 'numeric',
-                                            second: 'numeric'
-                                        })}
-                                    </td>
-
-                                    <td className="py-4 px-4">
-                                        <button
-                                            className="text-gray-400 hover:text-gray-600"
-                                            onClick={() => openEditModal(contact)}
-                                        >
-                                            ✏️
-                                        </button>
-                                    </td>
-
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        First Name
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Last Name
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        From
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Created On
+                                    </th>
+                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Edit
+                                    </th>
+                                    <th className="py-3 px-4"></th>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={7} className="py-4 px-4  text-center">
-                                    No contacts available
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {contactData.map((contact: any) => (
+                                    <tr key={contact.uuid} className="hover:bg-slate-100">
+                                        <td className="py-4 px-4">
+                                            <input
+                                                type="checkbox"
+                                                className="form-checkbox h-4 w-4 text-blue-600"
+                                                checked={selectedIds.includes(contact.uuid)}
+                                                onChange={() => handleSelect(contact.uuid)}
+                                            />
+                                        </td>
+                                        <td className="py-4 px-4">{contact.first_name}</td>
+                                        <td className="py-4 px-4">{contact.last_name}</td>
+                                        <td className="py-4 px-4">{contact.email}</td>
+                                        <td className="py-4 px-4">{contact.from}</td>
+                                        <td className="py-4 px-4">
+                                            {new Date(contact.created_at).toLocaleString('en-US', {
+                                                timeZone: 'UTC',
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: 'numeric',
+                                                minute: 'numeric',
+                                                second: 'numeric',
+                                            })}
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <button
+                                                className="text-gray-400 hover:text-gray-600"
+                                                onClick={() => openEditModal(contact)}
+                                            >
+                                                ✏️
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Contacts" />
+                    </>
+                ) : (
+                    <div className="py-4 px-4 text-center">
+                        <EmptyState
+                            title="You have not created any Contacts"
+                            description="Create contacts"
+                            icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                        />
+                    </div>
+                )}
+
 
             </div>
-
-            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Contacts" />
 
             <EditContact
                 isOpen={isModalOpen}

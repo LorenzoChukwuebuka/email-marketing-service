@@ -48,6 +48,7 @@ const DragAndDropEditor: React.FC = () => {
             setCreateCampaignValues({ template_id: uuid as string })
 
             console.log({ campaignId: currentCampaignId, templateId: uuid })
+            new Promise(resolve => setTimeout(resolve, 3000));
               updateCampaign(currentCampaignId)
         }
 

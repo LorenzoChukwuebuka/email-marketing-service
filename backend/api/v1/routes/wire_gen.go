@@ -27,7 +27,10 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	billingRepository := repository.NewBillingRepository(db)
 	mailUsageRepository := repository.NewMailUsageRepository(db)
 	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
-	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository)
+	domainRepository := repository.NewDomainRepository(db)
+	senderRepository := repository.NewSenderRepository(db)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository, senderServices)
 	userController := controllers.NewUserController(userService)
 	return userController, nil
 }
@@ -143,7 +146,8 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 	mailUsageRepository := repository.NewMailUsageRepository(db)
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	userRepository := repository.NewUserRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository)
+	domainRepository := repository.NewDomainRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository)
 	campaignController := controllers.NewCampaignController(campaignService)
 	return campaignController, nil
 }

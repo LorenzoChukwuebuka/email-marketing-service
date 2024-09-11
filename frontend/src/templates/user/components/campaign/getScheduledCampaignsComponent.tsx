@@ -5,6 +5,7 @@ import { parseDate } from "../../../../utils/utils";
 import { useNavigate } from "react-router-dom";
 import { BaseEntity } from "../../../../interface/baseentity.interface";
 import Pagination from '../../../../components/Pagination';
+import EmptyState from "../../../../components/emptyStateComponent";
 
 const GetScheduledCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -41,106 +42,96 @@ const GetScheduledCampaignComponent: React.FC = () => {
             <div className="flex items-center justify-center mt-20">
                 <span className="loading loading-spinner loading-lg"></span>
             </div>
-        ) : (<>
+        ) : (
 
-            <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-                <div className="space-x-1  h-auto w-full p-2 px-2 ">
-                    <button
-                        className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Create Campaign
-                    </button>
+            <>
+
+                <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
+                    <div className="space-x-1  h-auto w-full p-2 px-2 ">
+                        <button
+                            className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            Create Campaign
+                        </button>
+                    </div>
+
+                    <div className="ml-3">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+                            onChange={(e) => handleSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
 
-                <div className="ml-3">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                        onChange={(e) => handleSearch(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            <div className="overflow-x-auto mt-8">
-                <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
-                    <thead className="bg-gray-50">
-                        <tr>
-
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name
-                            </th>
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created On
-                            </th>
-
-                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-
-                            </th>
-
-                            <th className="py-3 px-4"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {scheduledCampaignData && (scheduledCampaignData as (BaseEntity & Campaign)[]).length > 0 ? (
-                            (scheduledCampaignData as (BaseEntity & Campaign)[]).map((campaign: any) => {
-                                return (
-                                    <tr key={campaign.uuid} className="hover:bg-gray-100">
-                                        <td className="py-4 px-4">{campaign.name}</td>
-                                        <td className="py-4 px-4"> {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</td>
-                                        <td className="py-4 px-4">
-                                            {parseDate(campaign.created_at).toLocaleString('en-US', {
-                                                timeZone: 'UTC',
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: 'numeric',
-                                                minute: 'numeric',
-                                                second: 'numeric'
-                                            })}
-                                        </td>
-
-                                        <td className="py-4 px-4">
-                                            <button
-                                                className="text-gray-400 hover:text-gray-600"
-                                                onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
-                                            >
-                                                ✏️
-                                            </button>
-                                        </td>
-                                        <td className="py-4 px-4">
-                                            <button
-                                                className="text-gray-400 hover:text-gray-600"
-                                                onClick={() => deleteCampaign(campaign.uuid)}
-                                            >
-                                                <i className="bi bi-trash text-red-500"></i>
-                                            </button>
-                                        </td>
+                <div className="overflow-x-auto mt-8">
+                    {Array.isArray(scheduledCampaignData) && scheduledCampaignData.length > 0 ? (
+                        <>
+                            <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created On</th>
+                                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                        <th className="py-3 px-4"></th>
                                     </tr>
-                                );
-                            })
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {scheduledCampaignData.map((campaign: any) => (
+                                        <tr key={campaign.uuid} className="hover:bg-gray-100">
+                                            <td className="py-4 px-4">{campaign.name}</td>
+                                            <td className="py-4 px-4">{campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</td>
+                                            <td className="py-4 px-4">
+                                                {parseDate(campaign.created_at).toLocaleString('en-US', {
+                                                    timeZone: 'UTC',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: 'numeric',
+                                                    second: 'numeric',
+                                                })}
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <button
+                                                    className="text-gray-400 hover:text-gray-600"
+                                                    onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                                >
+                                                    ✏️
+                                                </button>
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <button
+                                                    className="text-gray-400 hover:text-gray-600"
+                                                    onClick={() => deleteCampaign(campaign.uuid)}
+                                                >
+                                                    <i className="bi bi-trash text-red-500"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Campaigns" />
+                        </>
+                    ) : (
+                        <div className="py-4 px-4 text-center">
+                            <EmptyState
+                                title="You have not created any Scheduled Campaign"
+                                description="Scheduled campaigns are campaigns that are sent on a later date"
+                                icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                            />
+                        </div>
+                    )}
 
-                        ) : (
-                            <tr>
-                                <td colSpan={7} className="py-4 px-4  text-center">
-                                    No campaigns available
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                </div>
 
-                <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item="Campaigns" />
+                <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            </div>
-            <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-        </>)}
+            </>)}
 
     </>
 }

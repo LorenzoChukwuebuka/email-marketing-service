@@ -7,12 +7,15 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
+	"encoding/base64"
 	"fmt"
 	"golang.org/x/net/html"
+	"log"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 type CampaignService struct {
@@ -22,11 +25,12 @@ type CampaignService struct {
 	MailUsageRepo    *repository.MailUsageRepository
 	SubscriptionRepo *repository.SubscriptionRepository
 	UserRepo         *repository.UserRepository
+	DomainRepo       *repository.DomainRepository
 }
 
 func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo *repository.ContactRepository,
 	templateRepo *repository.TemplateRepository, mailusageRepo *repository.MailUsageRepository,
-	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository) *CampaignService {
+	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository, domainRepo *repository.DomainRepository) *CampaignService {
 	return &CampaignService{
 		CampaignRepo:     campaignRepo,
 		ContactRepo:      contactRepo,
@@ -34,6 +38,7 @@ func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo
 		MailUsageRepo:    mailusageRepo,
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
+		DomainRepo:       domainRepo,
 	}
 }
 
@@ -129,6 +134,7 @@ func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
 		PreviewText:    d.PreviewText,
 		UserId:         d.UserId,
 		SenderFromName: d.SenderFromName,
+		Sender:         d.Sender,
 		RecipientInfo:  d.RecipientInfo,
 		IsPublished:    d.IsPublished,
 		Status:         model.CampaignStatus(d.Status),
@@ -182,17 +188,17 @@ func (s *CampaignService) DeleteCampaign(campaignId string, userId string) error
 }
 
 func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
-	getGroup, err := s.CampaignRepo.GetSingleCampaign(d.UserId, d.CampaignId)
+	campaignG, err := s.CampaignRepo.GetSingleCampaign(d.UserId, d.CampaignId)
 	if err != nil {
 		return err
 	}
 
-	if getGroup.SentAt != nil {
+	if campaignG.SentAt != nil {
 		return fmt.Errorf("you have sent this campaign")
 	}
 
 	var groupIds []int
-	for _, group := range getGroup.CampaignGroups {
+	for _, group := range campaignG.CampaignGroups {
 		groupIds = append(groupIds, int(group.GroupId))
 	}
 
@@ -259,16 +265,16 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 			defer wg.Done()
 
 			subject := "No Subject"
-			if getGroup.Subject != nil {
-				subject = *getGroup.Subject
+			if campaignG.Subject != nil {
+				subject = *campaignG.Subject
 			}
 
 			previewText := ""
-			if getGroup.PreviewText != nil {
-				previewText = *getGroup.PreviewText
+			if campaignG.PreviewText != nil {
+				previewText = *campaignG.PreviewText
 			}
 
-			err := s.sendEmailBatch(getGroup.Template.EmailHtml, d.CampaignId, batch, subject, previewText, mailUsageRecord, &mu, userId.Email, *getGroup.SenderFromName)
+			err := s.sendEmailBatch(campaignG.Template.EmailHtml, d.CampaignId, batch, subject, previewText, mailUsageRecord, &mu, *campaignG.Sender, *campaignG.SenderFromName, d.UserId)
 			if err != nil {
 				errChan <- err
 			}
@@ -300,7 +306,7 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 	return nil
 }
 
-func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string, recipients []string, subject string, previewText string, mailUsageRecord *model.MailUsageResponseModel, mu *sync.Mutex, from string, fromName string) error {
+func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string, recipients []string, subject string, previewText string, mailUsageRecord *model.MailUsageResponseModel, mu *sync.Mutex, from string, fromName string, userId string) error {
 	for _, recipient := range recipients {
 		// Modify the email template with tracking info
 		modifiedTemplate, err := s.addTrackingToTemplate(templateHtml, campaignId, recipient)
@@ -309,7 +315,7 @@ func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string,
 		}
 
 		// Send the email
-		err = s.sendEmail(recipient, modifiedTemplate, subject, previewText, from, fromName)
+		err = s.sendEmail(recipient, modifiedTemplate, subject, previewText, from, fromName, userId)
 		if err != nil {
 			return fmt.Errorf("error sending email to recipient %s: %w", recipient, err)
 		}
@@ -348,7 +354,7 @@ func (s *CampaignService) sendEmailBatch(templateHtml string, campaignId string,
 	return nil
 }
 
-func (s *CampaignService) sendEmail(recipient string, emailContent string, subject string, previewText string, from string, fromName string) error {
+func (s *CampaignService) sendEmail(recipient string, emailContent string, subject string, previewText string, from string, fromName string, userId string) error {
 
 	validEmail := utils.IsValidEmail(recipient)
 
@@ -366,8 +372,87 @@ func (s *CampaignService) sendEmail(recipient string, emailContent string, subje
 		PreviewText: &previewText,
 	}
 
-	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
+	// mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
 
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create mail factory: %w", err)
+	// }
+
+	// if err := mailS.HandleSendMail(request); err != nil {
+	// 	return fmt.Errorf("failed to send email: %w", err)
+	// }
+
+	// return nil
+
+	// Convert the email content to bytes
+	emailBytes := []byte(emailContent)
+
+	// Get the domain from the sender's email
+	parts := strings.Split(from, "@")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid sender email format")
+	}
+	senderDomain := parts[1]
+
+	// Fetch the domain information
+	domain, err := s.DomainRepo.FindDomain(userId, senderDomain)
+	if err != nil {
+		if err == repository.ErrDomainNotFound {
+			// If the domain is not found, proceed without signing
+			return s.sendEmailWithSMTP(request)
+		}
+		return fmt.Errorf("failed to fetch domain: %w", err)
+	}
+
+	if domain != nil && domain.Verified {
+
+		// Check if the sender's domain matches or is a subdomain of the DKIM signing domain
+		if !strings.HasSuffix(senderDomain, domain.Domain) {
+			return fmt.Errorf("sender domain %s does not align with DKIM signing domain %s", senderDomain, domain.Domain)
+		}
+		senderModel := &model.Sender{
+			UUID:  domain.UUID,
+			Email: from,
+			Name:  fromName,
+		}
+
+		signedBody, err := s.signEmail(senderModel, emailBytes)
+		if err != nil {
+			// Log the error, but continue with unsigned email
+			log.Printf("failed to sign email: %v", err)
+		} else {
+			emailBytes = signedBody
+			request.HtmlContent = (*string)(unsafe.Pointer(&emailBytes))
+		}
+	}
+
+	return s.sendEmailWithSMTP(request)
+}
+
+func (s *CampaignService) signEmail(sender *model.Sender, emailBody []byte) ([]byte, error) {
+	// Fetch the domain associated with the sender
+	domain, err := s.DomainRepo.GetDomain(sender.UUID)
+	if err != nil || !domain.Verified {
+		return nil, fmt.Errorf("domain not found or not verified")
+	}
+
+	// Load the DKIM private key
+	privateKey, err := base64.StdEncoding.DecodeString(domain.DKIMPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode DKIM private key: %v", err)
+	}
+
+	// DKIM signing process
+	signedEmail, err := utils.SignEmail(&emailBody, domain.Domain, domain.DKIMSelector, string(privateKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign email: %v", err)
+	}
+
+	return signedEmail, nil
+}
+
+func (s *CampaignService) sendEmailWithSMTP(request *dto.EmailRequest) error {
+	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
 	if err != nil {
 		return fmt.Errorf("failed to create mail factory: %w", err)
 	}

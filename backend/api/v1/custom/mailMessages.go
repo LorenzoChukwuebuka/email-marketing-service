@@ -13,6 +13,7 @@ type Mail struct {
 
 var (
 	config = utils.LoadEnv()
+	sender = "noreply@crabmailer.app"
 )
 
 func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
@@ -38,7 +39,7 @@ func (m *Mail) SignUpMail(email string, username string, userId string, otp stri
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail)
+	err = utils.SendMail("Email Verification", email, formattedMail, sender,nil)
 
 	if err != nil {
 		return err
@@ -70,11 +71,15 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Password Reset", email, formattedMail)
+	err = utils.SendMail("Password Reset", email, formattedMail, sender,nil)
 
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (m *Mail) VerifySenderMail() error {
 	return nil
 }
 
@@ -102,7 +107,7 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail)
+	err = utils.SendMail("Email Verification", email, formattedMail, sender,nil)
 
 	if err != nil {
 		return err
@@ -134,7 +139,7 @@ func (m *Mail) SubscriptionExpiryMail(username string, email string, planName st
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Subscription Expiry Notification", email, formattedMail)
+	err := utils.SendMail("Subscription Expiry Notification", email, formattedMail, sender,nil)
 
 	if err != nil {
 		return err
@@ -165,7 +170,7 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Service expiry reminder", email, formattedMail)
+	err := utils.SendMail("Service expiry reminder", email, formattedMail, sender,nil)
 
 	if err != nil {
 		return err

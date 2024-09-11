@@ -113,7 +113,7 @@ const DNSAuthenticationRecords: React.FC = () => {
                 label="DKIM record"
                 type="TXT"
                 recordNamePlaceholder={domainD?.dkim_selector as string + "._domainkey"}
-                value={"v=DKIM1; k=rsa; p="+domainD?.dkim_public_key as string}
+                value={"v=DKIM1; k=rsa; p=" + domainD?.dkim_public_key as string}
             />
 
             <RecordInput

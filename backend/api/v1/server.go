@@ -2,12 +2,11 @@ package v1
 
 import (
 	"context"
+	"email-marketing-service/api/v1/middleware"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/routes"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +15,9 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 type Server struct {
@@ -92,17 +94,26 @@ func (s *Server) setupRoutes() {
 
 }
 
-func (s *Server) setupLogger() {
-	logger, err := utils.NewLogger("app.log", utils.INFO)
+func (s *Server) setupLogger() (*os.File, error) {
+	logFile, err := os.OpenFile("requests.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal("logger failed to load")
+		log.Fatal("Failed to open log file:", err)
+		return nil, err
 	}
-	defer logger.Close()
+
+	logger := log.New(logFile, "", log.LstdFlags)
+	s.router.Use(middleware.LoggingMiddleware(logger))
+	return logFile, nil
 }
 
 func (s *Server) Start() {
 	s.setupRoutes()
-	s.setupLogger()
+
+	logFile, err := s.setupLogger()
+	if err != nil {
+		log.Fatal("Failed to set up logger:", err)
+	}
+	defer logFile.Close()
 
 	server := &http.Server{
 		Addr:    ":9000",

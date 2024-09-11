@@ -7,6 +7,7 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 )
 
@@ -23,7 +24,6 @@ func NewSenderServices(domainRepo *repository.DomainRepository, senderRepo *repo
 }
 
 func (s *SenderServices) CreateSender(d *dto.SenderDTO) error {
-
 	if err := utils.ValidateData(d); err != nil {
 		return fmt.Errorf("invalid plan data: %w", err)
 	}
@@ -47,33 +47,62 @@ func (s *SenderServices) CreateSender(d *dto.SenderDTO) error {
 	}
 
 	if senderExists {
-		return fmt.Errorf("the sender details alrady exists")
+		return fmt.Errorf("the sender details already exists")
 	}
 
 	getDomain, err := s.DomainRepo.FindDomain(d.UserID, domainName)
 
 	if err != nil {
 		if err.Error() == "domain not found" {
-			senderModel.IsSigned = false
+
+			if s.HasMXRecord(domainName) {
+				senderModel.IsSigned = false
+				senderModel.Verified = true
+			} else {
+				senderModel.IsSigned = false
+				senderModel.Verified = false
+			}
+
 		} else {
 			return err
 		}
 	}
 
-
 	if getDomain != nil {
 		if getDomain.Verified {
 			senderModel.IsSigned = true
+			senderModel.Verified = true
 		} else {
 			senderModel.IsSigned = false
+			senderModel.Verified = false
 		}
-	
+
 	}
 
-	 if err := s.SenderRepo.CreateSender(senderModel); err != nil {
+	if err := s.SenderRepo.CreateSender(senderModel); err != nil {
 		return err
-	 }
+	}
 
 	return nil
 
 }
+
+func (s *SenderServices) HasMXRecord(domain string) bool {
+	mxRecords, err := net.LookupMX(domain)
+	return err == nil && len(mxRecords) > 0
+}
+
+func (s *SenderServices) GetAllSenders(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	getSenders, err := s.SenderRepo.GetAllSenders(userId, searchQuery, paginationParams)
+
+	if err != nil {
+		return repository.PaginatedResult{}, err
+	}
+
+	return getSenders, nil
+}
+
+func (s *SenderServices) DeleteSender() {}
+
+func (s *SenderServices) UpdateSender() {}

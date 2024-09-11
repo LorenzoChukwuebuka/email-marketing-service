@@ -10,7 +10,7 @@ type Sender struct {
 	Email    string `json:"email"`
 	Verified bool   `json:"verified"`
 	IsSigned bool   `json:"is_signed"`
-	DomainID string `json:"domain_id"`
+	DomainID uint   `json:"domain_id"`
 }
 
 type Domains struct {
@@ -24,6 +24,7 @@ type Domains struct {
 	DKIMPublicKey  string `json:"dkim_public_key"`
 	DKIMPrivateKey string `json:"dkim_private_key"`
 	Verified       bool   `json:"verified"`
+	MXRecord       string `gorm:"type:text"`
 }
 
 type SenderResponse struct {
@@ -33,22 +34,25 @@ type SenderResponse struct {
 	Name      string  `json:"name" `
 	Email     string  `json:"email" `
 	Verified  bool    `json:"verified"`
+	IsSigned  bool    `json:"is_signed"`
 	CreatedAt string  `json:"created_at"`
 	UpdatedAt string  `json:"updated_at"`
 	DeletedAt *string `json:"deleted_at"`
 }
 
 type DomainsResponse struct {
-	ID            uint    `json:"-"`
-	UUID          string  `json:"uuid" `
-	UserID        string  `json:"user_id" `
-	Domain        string  `json:"domain" `
-	TXTRecord     string  `json:"txt_record"`
-	DMARCRecord   string  `json:"dmarc_record"`
-	DKIMSelector  string  `json:"dkim_selector"`
-	DKIMPublicKey string  `json:"dkim_public_key"`
-	Verified      bool    `json:"verified"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-	DeletedAt     *string `json:"deleted_at"`
+	ID             uint    `json:"-"`
+	UUID           string  `json:"uuid" `
+	UserID         string  `json:"user_id" `
+	Domain         string  `json:"domain" `
+	TXTRecord      string  `json:"txt_record"`
+	DMARCRecord    string  `json:"dmarc_record"`
+	DKIMSelector   string  `json:"dkim_selector"`
+	DKIMPublicKey  string  `json:"dkim_public_key"`
+	DKIMPrivateKey string  `json:"-"`
+	Verified       bool    `json:"verified"`
+	MXRecord       string  `json:"mx_record"`
+	CreatedAt      string  `json:"created_at"`
+	UpdatedAt      string  `json:"updated_at"`
+	DeletedAt      *string `json:"deleted_at"`
 }

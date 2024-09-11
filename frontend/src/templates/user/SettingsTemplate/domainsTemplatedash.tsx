@@ -23,8 +23,8 @@ const DomainTemplateDash: React.FC = () => {
     const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-    const { createDomain, setDomainFormValues, domainformValues,getAllDomain } = useDomainStore();
-    const { createSender, setSenderFormValues, senderFormValues } = useSenderStore()
+    const { createDomain, setDomainFormValues, domainformValues, getAllDomain } = useDomainStore();
+    const { createSender, setSenderFormValues, senderFormValues,getSenders } = useSenderStore()
 
     useEffect(() => {
         localStorage.setItem("activeTab", activeTab);
@@ -43,7 +43,7 @@ const DomainTemplateDash: React.FC = () => {
 
     const handleCreateSender = (): void => {
         setKeyType("Sender");
-        setSenderFormValues({ name: "" });
+        setSenderFormValues({ name: "", email: "" });
         openModal("Add Sender", "Please provide a name for your new sender.");
     };
 
@@ -65,6 +65,7 @@ const DomainTemplateDash: React.FC = () => {
                     title: "New Sender Added",
                     content: "Your new sender has been added successfully.",
                 });
+                await getSenders()
             }
         } catch (error) {
             setModalContent({
@@ -77,16 +78,20 @@ const DomainTemplateDash: React.FC = () => {
         if (keyType === "Domain") {
             setDomainFormValues({ domain: "" });
         } else {
-            setSenderFormValues({ name: "" });
+            setSenderFormValues({ name: "", email: "" });
         }
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = event.target;
+        const { name, value } = event.target;
         if (keyType === "Domain") {
             setDomainFormValues({ domain: value });
         } else {
-            setSenderFormValues({ name: value });
+
+            setSenderFormValues({
+                ...senderFormValues,
+                [name]: value, // Dynamically update the form values based on input name
+            });
         }
     };
 
@@ -156,12 +161,36 @@ const DomainTemplateDash: React.FC = () => {
                         <input
                             type="text"
                             id="name"
+                            name="name"
                             value={keyType === "Domain" ? domainformValues.domain : senderFormValues.name}
                             onChange={handleInputChange}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             required
                         />
                     </div>
+
+
+                    {keyType === "Sender" && (
+                        <div className="mb-4">
+                            <label
+                                htmlFor="name"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                {keyType} Email
+                            </label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={senderFormValues.email}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                required
+                            />
+                        </div>
+                    )}
+
+
                     <div className="flex justify-end space-x-2">
                         <button
                             type="button"

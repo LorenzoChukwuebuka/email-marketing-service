@@ -450,8 +450,8 @@ func (r *CampaignRepository) GetEmailResultStats(campaignID string) (map[string]
 }
 
 func (r *CampaignRepository) GetUserCampaignStats(userID string) (map[string]int64, error) {
-	// Declare variables to store aggregated stats
-	var totalEmailsSent, totalOpens, uniqueOpens, totalClicks, uniqueClicks, softBounces, hardBounces int64
+	// Initialize variables to store aggregated stats
+	var totalEmailsSent, totalOpens, uniqueOpens, totalClicks, uniqueClicks, softBounces, hardBounces int64 = 0, 0, 0, 0, 0, 0, 0
 
 	// Get all campaigns for the user
 	var campaigns []model.Campaign
@@ -480,7 +480,7 @@ func (r *CampaignRepository) GetUserCampaignStats(userID string) (map[string]int
 	// Get total number of opens
 	if err := r.DB.Model(&model.EmailCampaignResult{}).
 		Where("campaign_id IN ?", campaignIDs).
-		Select("SUM(open_count)").
+		Select("COALESCE(SUM(open_count), 0)").
 		Scan(&totalOpens).Error; err != nil {
 		return nil, fmt.Errorf("error calculating total opens: %w", err)
 	}
@@ -495,7 +495,7 @@ func (r *CampaignRepository) GetUserCampaignStats(userID string) (map[string]int
 	// Get total number of clicks
 	if err := r.DB.Model(&model.EmailCampaignResult{}).
 		Where("campaign_id IN ?", campaignIDs).
-		Select("SUM(click_count)").
+		Select("COALESCE(SUM(click_count), 0)").
 		Scan(&totalClicks).Error; err != nil {
 		return nil, fmt.Errorf("error calculating total clicks: %w", err)
 	}

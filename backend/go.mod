@@ -3,6 +3,7 @@ module email-marketing-service
 go 1.20
 
 require (
+	github.com/emersion/go-imap v1.2.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
 	github.com/emersion/go-smtp v0.21.3
 	github.com/go-playground/validator/v10 v10.15.1

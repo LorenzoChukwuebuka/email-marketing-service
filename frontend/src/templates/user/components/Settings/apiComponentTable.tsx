@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import useAPIKeyStore from "../../../../store/userstore/apiKeyStore";
-import { convertToNormalTime, maskAPIKey } from "../../../../utils/utils";
+import { convertToNormalTime, maskAPIKey, copyToClipboard } from "../../../../utils/utils";
 import EmptyState from "../../../../components/emptyStateComponent";
 
 interface APIKey {
@@ -12,8 +12,8 @@ interface APIKey {
 
 const APIKeysTableComponent: React.FC = () => {
     const { getAPIKey, apiKeyData, deleteAPIKey } = useAPIKeyStore();
-
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [copyingKey, setCopyingKey] = useState<string | null>(null);
 
     const shouldRenderNoKey = () => {
         return (
@@ -28,16 +28,25 @@ const APIKeysTableComponent: React.FC = () => {
         setDeletingId(null);
     };
 
+    const handleCopy = (key: string) => {
+        copyToClipboard(key);
+        setCopyingKey(key);
+        setTimeout(() => {
+            setCopyingKey(null);
+        }, 2000);
+    };
+
     useEffect(() => {
         getAPIKey();
     }, [getAPIKey]);
 
     if (shouldRenderNoKey()) {
         return (
-            <> <EmptyState title="You  have not generated any API Key"
+            <EmptyState
+                title="You have not generated any API Key"
                 description="Kindly Generate an API Key to enjoy our services"
-                icon={<i className="bi bi-emoji-frown text-xl"></i>} />
-            </>
+                icon={<i className="bi bi-emoji-frown text-xl"></i>}
+            />
         );
     }
 
@@ -77,6 +86,14 @@ const APIKeysTableComponent: React.FC = () => {
                                         <span className="text-sm text-gray-500 mr-2">
                                             {maskAPIKey(key.api_key)}
                                         </span>
+                                        <button
+                                            className="p-1 rounded-md bg-gray-200 hover:bg-gray-300"
+                                            onClick={() => handleCopy(key.api_key)}
+                                        >
+                                            <i
+                                                className={`bi ${copyingKey === key.api_key ? 'bi-clipboard-check' : 'bi-clipboard'}`}
+                                            ></i>
+                                        </button>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">

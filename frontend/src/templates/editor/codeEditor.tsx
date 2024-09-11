@@ -85,6 +85,7 @@ function CodeEditor(): JSX.Element {
 
         if (currentCampaignId) {
             setCreateCampaignValues({ template_id: uuid as string })
+            new Promise(resolve => setTimeout(resolve, 3000));
             updateCampaign(currentCampaignId)
         }
 
