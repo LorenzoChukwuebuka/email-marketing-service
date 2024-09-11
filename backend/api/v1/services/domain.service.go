@@ -22,6 +22,7 @@ type DNSRecord struct {
 	Type       string
 	RecordName string
 	Value      string
+	Priority   int
 }
 
 type DomainService struct {
@@ -64,6 +65,7 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 	dmarcRecord := s.generateDMARCRecord(d.Domain)
 	dkimSelector := s.generateDKIMSelector()
 	dkimPublicKey, dkimPrivateKey, err := s.generateDKIMKeys()
+	mxRecord := s.generateMXRecord(d.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate DKIM keys: %v", err)
 	}
@@ -85,6 +87,8 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 			RecordName: fmt.Sprintf("%s._domainkey", dkimSelector),
 			Value:      fmt.Sprintf("v=DKIM1; k=rsa; p=%s", dkimPublicKey),
 		},
+
+		mxRecord,
 	}
 
 	// Generate downloadable content
@@ -99,7 +103,7 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 	domainModel.DKIMSelector = dkimSelector
 	domainModel.DKIMPublicKey = dkimPublicKey
 	domainModel.DKIMPrivateKey = dkimPrivateKey
-
+	domainModel.MXRecord = fmt.Sprintf("mail.%s", d.Domain)
 	if err := s.DomainRepo.CreateDomain(domainModel); err != nil {
 		return nil, err
 	}
@@ -167,7 +171,7 @@ func (s *DomainService) generateDKIMSelector() string {
 }
 
 func (s *DomainService) generateDKIMKeys() (string, string, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 500)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return "", "", err
 	}
@@ -218,6 +222,15 @@ func (s *DomainService) generateDownloadableRecords(domain string, records []DNS
 	}
 
 	return buf.String(), nil
+}
+
+func (s *DomainService) generateMXRecord(domain string) DNSRecord {
+	return DNSRecord{
+		Type:       "MX",
+		RecordName: "@",
+		Value:      fmt.Sprintf("mail.%s", domain),
+		Priority:   10,
+	}
 }
 
 func (s *DomainService) InitiateVerification(domainID string) (bool, error) {
@@ -278,6 +291,15 @@ func (s *DomainService) VerifyDNSRecords(domain *model.DomainsResponse) (bool, e
 		return false, fmt.Errorf("DKIM record verification failed")
 	}
 
+	mxVerified, err := s.verifyMXRecord(domain.Domain, domain.MXRecord)
+	if err != nil {
+		return false, err
+	}
+
+	if !mxVerified {
+		return false, fmt.Errorf("MX record verification failed")
+	}
+
 	return true, nil
 }
 
@@ -323,12 +345,19 @@ func (s *DomainService) verifyDKIMRecord(domain, selector, publicKey string) (bo
 
 	fmt.Printf("Found %d DKIM records\n", len(records))
 
-	expectedRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", publicKey)
+	expectedRecord := fmt.Sprintf("v=DKIM1;k=rsa;p=%s", publicKey)
 	fmt.Printf("Expected DKIM record: %s\n", expectedRecord)
+
+	// Remove all spaces from the expected record
+	expectedNormalized := strings.ReplaceAll(expectedRecord, " ", "")
 
 	for i, record := range records {
 		fmt.Printf("Record %d: %s\n", i+1, record)
-		if strings.TrimSpace(record) == expectedRecord {
+
+		// Remove all spaces from the found record
+		recordNormalized := strings.ReplaceAll(record, " ", "")
+
+		if recordNormalized == expectedNormalized {
 			fmt.Println("DKIM record match found!")
 			return true, nil
 		}
@@ -338,7 +367,30 @@ func (s *DomainService) verifyDKIMRecord(domain, selector, publicKey string) (bo
 	return false, nil
 }
 
+func (s *DomainService) verifyMXRecord(domain, expectedMX string) (bool, error) {
+	mxRecords, err := net.LookupMX(domain)
+	if err != nil {
+		fmt.Printf("Error looking up MX records: %v\n", err)
+		return false, err
+	}
+
+	fmt.Printf("Found %d MX records for domain %s\n", len(mxRecords), domain)
+	fmt.Printf("Expected MX: %s\n", expectedMX)
+
+	for _, mx := range mxRecords {
+		fmt.Printf("Found MX record: %s (Priority: %v)\n", mx.Host, mx.Pref)
+		if strings.TrimSuffix(mx.Host, ".") == strings.TrimSuffix(expectedMX, ".") {
+			fmt.Println("MX record match found!")
+			return true, nil
+		}
+	}
+
+	fmt.Println("No matching MX record found")
+	return false, nil
+}
+
 func (s *DomainService) DeleteDomain(id string) error {
+
 	if err := s.DomainRepo.DeleteDomain(id); err != nil {
 		return err
 	}

@@ -128,6 +128,15 @@ func seedData(db *gorm.DB) {
 					IsActive:    true,
 					Description: "Create and save your own email templates",
 				},
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Contacts",
+					Identifier:  "contacts",
+					CountLimit:  50,
+					SizeLimit:   500,
+					IsActive:    true,
+					Description: "Create and save your own email templates",
+				},
 			},
 		}
 
@@ -140,7 +149,7 @@ func seedData(db *gorm.DB) {
 		// Now create the MailingLimit with the correct PlanID
 		mailingLimit := model.MailingLimit{
 			PlanID:      plan.ID,
-			LimitAmount: 100,
+			LimitAmount: 500,
 			LimitPeriod: "day",
 		}
 

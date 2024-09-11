@@ -8,6 +8,7 @@ import { BaseEntity } from '../../interface/baseentity.interface';
 import Cookies from 'js-cookie'
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Template } from './templateStore';
+import { StateStorage } from 'zustand/middleware';
 
 export type Campaign = {
     name: string;
@@ -133,7 +134,25 @@ type CampaignStore = {
     getCampaignUserStats: () => Promise<void>
     getAllCampaignStats: () => Promise<void>
     searchCampaign: (query?: string) => void
+    persistStore: () => void
 }
+
+
+
+// Create a custom storage object
+const customStorage: StateStorage = {
+    getItem: (key) => {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : null;
+    },
+    setItem: (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value));
+    },
+    removeItem: (key) => {
+        localStorage.removeItem(key);
+    },
+};
+
 
 const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
@@ -213,7 +232,7 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
             if (response.data.status == true) {
                 eventBus.emit("success", "Campaign created successfully")
-
+                await new Promise(resolve => setTimeout(resolve, 3000))
                 window.location.href = "/user/dash/campaign/edit/" + response.data.payload.campaignId
             }
         } catch (error) {
@@ -277,71 +296,72 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
     updateCampaign: async (uuid: string) => {
         try {
             const { createCampaignValues, getSingleCampaign, setCreateCampaignValues } = get();
-            let successMessage = "";
-            let updatedValues = { ...createCampaignValues };
 
-            if (createCampaignValues.scheduled_at) {
-                const campaign = await getSingleCampaign(uuid) as CampaignData || null;
-
-                if (!campaign) {
-                    eventBus.emit('error', 'Campaign not found');
-                    return;
-                }
-
-                const { template, subject, campaign_groups } = campaign;
-
-                if (!template?.email_html) {
-                    eventBus.emit('error', 'You haven`t created a template yet');
-                    return;
-                }
-
-                if (!subject) {
-                    eventBus.emit('error', 'You have not created a subject yet');
-                    return;
-                }
-
-                if (!campaign_groups?.length) {
-                    eventBus.emit('error', 'You have not created a recipient yet');
-                    return;
-                }
-
-                updatedValues = { ...updatedValues, status: "scheduled" };
-                successMessage = "Your campaign has been scheduled successfully";
-            } else if (createCampaignValues.subject || createCampaignValues.preview_text) {
-                const campaign = await getSingleCampaign(uuid) as CampaignData || null;
-
-                if (!campaign) {
-                    eventBus.emit('error', 'Campaign not found');
-                    return;
-                }
-
-                updatedValues = {
-                    ...createCampaignValues,
-                    subject: createCampaignValues.subject || campaign.subject,
-                    preview_text: createCampaignValues.preview_text || campaign.preview_text,
-                };
-
-                successMessage = "Subject and preview text updated successfully";
-            } else if (createCampaignValues.template_id) {
-                successMessage = "Template added successfully";
-            } else {
-                eventBus.emit('error', "No recognizable field was found");
+            // Fetch the current campaign data
+            const currentCampaign = await getSingleCampaign(uuid) as CampaignData;
+            if (!currentCampaign) {
+                eventBus.emit('error', 'Campaign not found');
                 return;
             }
 
+            // Prepare the update payload
+            const updatePayload: Partial<Campaign> = {};
+            let successMessage = "Campaign updated successfully";
+
+            // Check and update each field
+            const fieldsToUpdate = [
+                'name', 'subject', 'preview_text', 'sender', 'sender_from_name',
+                'template_id', 'scheduled_at', 'status'
+            ] as const;
+
+            fieldsToUpdate.forEach(field => {
+                if (createCampaignValues[field] !== undefined && createCampaignValues[field] !== currentCampaign[field]) {
+                    updatePayload[field] = createCampaignValues[field];
+                }
+            });
+
+            // Special handling for scheduled campaigns
+            if (createCampaignValues.scheduled_at) {
+                if (!currentCampaign.template?.email_html) {
+                    eventBus.emit('error', 'You haven\'t created a template yet');
+                    return;
+                }
+                if (!currentCampaign.subject) {
+                    eventBus.emit('error', 'You have not created a subject yet');
+                    return;
+                }
+                if (!currentCampaign.campaign_groups?.length) {
+                    eventBus.emit('error', 'You have not created a recipient yet');
+                    return;
+                }
+                updatePayload.status = 'scheduled';
+                successMessage = "Your campaign has been scheduled successfully";
+            }
+
+            // Only proceed if there are changes to update
+            if (Object.keys(updatePayload).length === 0) {
+                eventBus.emit('info', 'No changes detected');
+                return;
+            }
+
+            // Send the update request
             const response = await axiosInstance.put<ResponseT>(
                 `/campaigns/update-campaign/${uuid}`,
-                updatedValues
+                updatePayload
             );
 
             if (response.data.status) {
                 eventBus.emit('success', successMessage);
+                // Update the local state
                 setCreateCampaignValues({
                     ...createCampaignValues,
-                    subject: updatedValues.subject,
-                    preview_text: updatedValues.preview_text,
+                    ...updatePayload
                 });
+
+                // Manually persist the updated store
+                get().persistStore();
             }
+
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload);
@@ -353,7 +373,6 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
             }
         }
     },
-
     createCampaignGroup: async (uuid: string, groupIds: string[]) => {
         try {
             console.log("uuid", uuid)
@@ -547,6 +566,11 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
         await getAllCampaigns(1, 10, query)
     },
 
+    // Add a method to manually persist the store
+    persistStore: () => {
+        const state = get();
+        customStorage.setItem('campaign-store', JSON.stringify(state));
+    },
 
     resetCampaignData: () => set({ campaignData: null }),
 }),

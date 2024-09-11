@@ -27,7 +27,7 @@ const AccountSettingsTemplate: React.FC = () => {
 
     return (
         <>
-            <div className="mb-6 p-4 mt-10">
+            <div className="mb-6 p-6 mt-10">
                 <nav className="flex space-x-4 mt-5 border-b">
                     <button
                         className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Account Details"

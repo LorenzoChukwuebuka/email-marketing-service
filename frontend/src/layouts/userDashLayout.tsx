@@ -270,16 +270,18 @@ const UserDashLayout: React.FC = () => {
                                             <span className="text-black bg-gray-300 rounded-md">
                                                 Plan: {mailData?.plan}
                                             </span>
-                                            <img
+                                            {/* <img
                                                 className="h-8 w-8 rounded-full"
                                                 src={reactSVG}
                                                 alt="User avatar"
-                                            />
+                                            /> */}
                                             {userName}
                                             <span className="text-blue-500">
-                                                <Link to="/user/dash/settings/account-management">My Profile</Link>
+                                                <i className="bi bi-person-fill"></i>    <Link to="/user/dash/settings/account-management"> My Profile</Link>
                                             </span>
-                                            <a onClick={() => { Logout(); closeDropdown(); }}>Logout</a>
+
+                                            <span className="text-black"> <i className="bi bi-gear-wide-connected"></i> <Link to="/user/dash/settings/api"> API & SMTP</Link> </span>
+                                            <a onClick={() => { Logout(); closeDropdown(); }}> <i className="bi bi-box-arrow-in-left"></i> Logout</a>
                                         </div>
                                     </li>
                                 </ul>

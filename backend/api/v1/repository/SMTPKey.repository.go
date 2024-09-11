@@ -4,8 +4,10 @@ import (
 	"email-marketing-service/api/v1/model"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type SMTPKeyRepository struct {
@@ -171,4 +173,29 @@ func (r *SMTPKeyRepository) UpdateBounceStatus(recipientEmail, status string) er
 	return r.DB.Model(&model.EmailCampaignResult{}).
 		Where("recipient_email = ?", recipientEmail).
 		Update("bounce_status", status).Error
+}
+
+type Email struct {
+	ID      uint `gorm:"primaryKey"`
+	From    string
+	To      string
+	Content []byte
+}
+
+func (r *SMTPKeyRepository) StoreEmail(username string, mailbox, from string, to []string, content []byte) error {
+	email := &model.EmailBox{
+		From:    from,
+		To:      strings.Join(to, ","),
+		Content: content,
+	}
+	return r.DB.Create(email).Error
+
+}
+
+func (r *SMTPKeyRepository) GetEmails(username, mailbox string) ([]model.EmailBox, error) {
+	var emails []model.EmailBox
+	if err := r.DB.Where("username = ? AND mailbox = ?", username, mailbox).Find(&emails).Error; err != nil {
+		return nil, err
+	}
+	return emails, nil
 }

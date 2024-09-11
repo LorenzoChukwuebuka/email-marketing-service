@@ -18,8 +18,8 @@ const RichTextEditor = () => {
     const uuid = queryParams.get('uuid');
     const _type = queryParams.get('type');
     const [editorContent, setEditorContent] = useState(currentTemplate?.email_html || '');
-    const { updateCampaign, setCreateCampaignValues,currentCampaignId, clearCurrentCampaignId  } = useCampaignStore()
-     
+    const { updateCampaign, setCreateCampaignValues, currentCampaignId, clearCurrentCampaignId } = useCampaignStore()
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,7 +39,7 @@ const RichTextEditor = () => {
         }
     }, [uuid, _type]);
 
-    
+
 
     useEffect(() => {
         return () => {
@@ -50,14 +50,15 @@ const RichTextEditor = () => {
     useEffect(() => {
         const debounce = setTimeout(() => {
             saveDesign();
-        }, 1000);  
+        }, 1000);
         return () => clearTimeout(debounce);
     }, [editorContent]);
 
- 
+
     const saveDesign = async () => {
         if (currentCampaignId) {
             setCreateCampaignValues({ template_id: uuid as string })
+            new Promise(resolve => setTimeout(resolve, 3000));
             updateCampaign(currentCampaignId)
         }
 

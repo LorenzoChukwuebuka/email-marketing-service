@@ -5,11 +5,19 @@ import { convertToNormalTime, copyToClipboard, maskAPIKey } from "../../../../ut
 const SMTPKeysTableComponent: React.FC = () => {
     const { getSMTPKeys, smtpKeyData, deleteSMTPKey, generateSMTPKey } = useSMTPKeyStore()
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [copyingKey, setCopyingKey] = useState<string | null>(null);
 
     const handleDelete = async (id: string) => {
         await deleteSMTPKey(id)
     }
 
+    const handleCopy = (key: string) => {
+        copyToClipboard(key);
+        setCopyingKey(key);
+        setTimeout(() => {
+            setCopyingKey(null);
+        }, 2000);
+    };
     useEffect(() => {
         getSMTPKeys()
     }, [])
@@ -65,30 +73,12 @@ const SMTPKeysTableComponent: React.FC = () => {
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
+                                <div className="flex space-x-2 items-center">
                                     <span className="text-sm text-gray-500 mr-2">
                                         {maskAPIKey(smtpKeyData.smtp_master_password)}
                                     </span>
-                                    <button className="p-1 rounded-full bg-gray-200 hover:bg-gray-300" onClick={() => copyToClipboard(smtpKeyData.smtp_master_password)} title="click here to copy">
-                                        <svg
-                                            className="h-4 w-4 text-gray-600"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                            />
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                            />
-                                        </svg>
+                                    <button className="p-1 rounded-md bg-gray-200 hover:bg-gray-300" onClick={() => handleCopy(smtpKeyData.smtp_master_password)} title="click here to copy">
+                                        <i className={`bi ${copyingKey === smtpKeyData.smtp_master_password ? 'bi-clipboard2-check' : 'bi-clipboard'}`}></i>
                                     </button>
                                 </div>
                             </td>

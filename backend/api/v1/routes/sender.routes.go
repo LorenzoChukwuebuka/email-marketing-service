@@ -19,4 +19,5 @@ func (ur *SenderRoute) InitRoutes(router *mux.Router) {
 	senderController, _ := InitializeSenderController(ur.db)
 
 	router.HandleFunc("/create-sender", middleware.JWTMiddleware(senderController.CreateSender)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/get-all-senders", middleware.JWTMiddleware(senderController.GetAllSenders)).Methods("GET", "OPTIONS")
 }

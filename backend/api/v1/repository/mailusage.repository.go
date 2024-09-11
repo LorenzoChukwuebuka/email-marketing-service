@@ -2,10 +2,10 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"time"
-	"errors"
 )
 
 type MailUsageRepository struct {
@@ -24,32 +24,32 @@ func (r *MailUsageRepository) CreateMailUsageRecord(m *model.MailUsage) error {
 }
 
 func (r *MailUsageRepository) GetCurrentMailUsageRecord(subscriptionId int) (*model.MailUsageResponseModel, error) {
-    var record model.MailUsage
+	var record model.MailUsage
 
-    now := time.Now()
+	now := time.Now()
 
-    // Query to find the current mail usage record
-    if err := r.DB.Where("subscription_id = ? AND period_start <= ? AND period_end >= ?", subscriptionId, now, now).First(&record).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, fmt.Errorf("no active mail usage record found for subscription ID %d", subscriptionId)
-        }
-        return nil, fmt.Errorf("error fetching mail usage record: %w", err)
-    }
+	// Query to find the current mail usage record
+	if err := r.DB.Where("subscription_id = ? AND period_start <= ? AND period_end >= ?", subscriptionId, now, now).First(&record).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("no active mail usage record found for subscription ID %d", subscriptionId)
+		}
+		return nil, fmt.Errorf("error fetching mail usage record: %w", err)
+	}
 
-    response := &model.MailUsageResponseModel{
-        ID:             int(record.ID),
-        UUID:           record.UUID,
-        SubscriptionID: record.SubscriptionID,
-        PeriodStart:    record.PeriodStart,
-        PeriodEnd:      record.PeriodEnd,
-        LimitAmount:    record.LimitAmount,
-        MailsSent:      record.MailsSent,
-        RemainingMails: record.LimitAmount - record.MailsSent,
-        CreatedAt:      record.CreatedAt.String(),
-        UpdatedAt:      record.UpdatedAt.String(),
-    }
+	response := &model.MailUsageResponseModel{
+		ID:             int(record.ID),
+		UUID:           record.UUID,
+		SubscriptionID: record.SubscriptionID,
+		PeriodStart:    record.PeriodStart,
+		PeriodEnd:      record.PeriodEnd,
+		LimitAmount:    record.LimitAmount,
+		MailsSent:      record.MailsSent,
+		RemainingMails: record.LimitAmount - record.MailsSent,
+		CreatedAt:      record.CreatedAt.String(),
+		UpdatedAt:      record.UpdatedAt.String(),
+	}
 
-    return response, nil
+	return response, nil
 }
 
 func (r *MailUsageRepository) UpdateMailUsageRecord(m *model.MailUsage) error {

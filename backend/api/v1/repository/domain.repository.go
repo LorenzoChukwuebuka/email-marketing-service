@@ -2,9 +2,9 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"errors"
 )
 
 type DomainRepository struct {
@@ -12,7 +12,6 @@ type DomainRepository struct {
 }
 
 var ErrDomainNotFound = errors.New("domain not found")
-
 
 func NewDomainRepository(db *gorm.DB) *DomainRepository {
 	return &DomainRepository{
@@ -48,16 +47,18 @@ func (r *DomainRepository) GetDomain(uuid string) (*model.DomainsResponse, error
 	}
 
 	response := &model.DomainsResponse{
-		UUID:          domain.UUID,
-		UserID:        domain.UserID,
-		Domain:        domain.Domain,
-		TXTRecord:     domain.TXTRecord,
-		DMARCRecord:   domain.DMARCRecord,
-		DKIMSelector:  domain.DKIMSelector,
-		DKIMPublicKey: domain.DKIMPublicKey,
-		Verified:      domain.Verified,
-		CreatedAt:     domain.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:     domain.UpdatedAt.Format("2006-01-02 15:04:05"),
+		UUID:           domain.UUID,
+		UserID:         domain.UserID,
+		Domain:         domain.Domain,
+		TXTRecord:      domain.TXTRecord,
+		DMARCRecord:    domain.DMARCRecord,
+		DKIMSelector:   domain.DKIMSelector,
+		DKIMPublicKey:  domain.DKIMPublicKey,
+		DKIMPrivateKey: domain.DKIMPrivateKey,
+		MXRecord:       domain.MXRecord,
+		Verified:       domain.Verified,
+		CreatedAt:      domain.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:      domain.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	if domain.DeletedAt.Valid {
@@ -73,6 +74,7 @@ func (r *DomainRepository) UpdateDomain(d *model.Domains) error {
 }
 
 func (r *DomainRepository) DeleteDomain(id string) error {
+
 	if err := r.DB.Where("uuid = ?", id).Delete(&model.Domains{}).Error; err != nil {
 		return fmt.Errorf("failed to delete domain: %w", err)
 	}
@@ -122,12 +124,11 @@ func (r *DomainRepository) GetAllDomains(userID string, searchQuery string, para
 	return paginatedResult, nil
 }
 
-
-func (r *DomainRepository) FindDomain(userId string, domainName string)(*model.DomainsResponse,error){
+func (r *DomainRepository) FindDomain(userId string, domainName string) (*model.DomainsResponse, error) {
 	var domain model.Domains
-	if err := r.DB.Where("user_id = ? AND domain = ?", userId,domainName).First(&domain).Error; err != nil {
+	if err := r.DB.Where("user_id = ? AND domain = ?", userId, domainName).First(&domain).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil,  ErrDomainNotFound
+			return nil, ErrDomainNotFound
 		}
 		return nil, err
 	}

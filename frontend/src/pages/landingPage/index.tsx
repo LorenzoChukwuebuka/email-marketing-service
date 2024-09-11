@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom"
+import Cookies from "js-cookie";
 
 const IndexLandingPage: React.FC = () => {
+
     return (
         <>
             <header className="bg-white py-4 shadow-sm p-4">

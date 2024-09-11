@@ -38,8 +38,8 @@ const (
 )
 
 var (
-	mailer     = &custom.Mail{}
-	config     = utils.LoadEnv()
+	mailer = &custom.Mail{}
+	config = utils.LoadEnv()
 )
 
 type UserService struct {
@@ -50,6 +50,7 @@ type UserService struct {
 	billingRepo      *repository.BillingRepository
 	MailUsageRepo    *repository.MailUsageRepository
 	smtpKeyRepo      *repository.SMTPKeyRepository
+	SenderSVC        *SenderServices
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -58,7 +59,7 @@ func NewUserService(userRepo *repository.UserRepository,
 	subscriptionRepo *repository.SubscriptionRepository,
 	billingRepo *repository.BillingRepository,
 	mailUsageRepo *repository.MailUsageRepository,
-	smtpKeyRepo *repository.SMTPKeyRepository,
+	smtpKeyRepo *repository.SMTPKeyRepository, sendersvc *SenderServices,
 ) *UserService {
 	return &UserService{
 		userRepo:         userRepo,
@@ -68,6 +69,7 @@ func NewUserService(userRepo *repository.UserRepository,
 		billingRepo:      billingRepo,
 		MailUsageRepo:    mailUsageRepo,
 		smtpKeyRepo:      smtpKeyRepo,
+		SenderSVC:        sendersvc,
 	}
 }
 
@@ -197,8 +199,16 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 		return fmt.Errorf("invalid OTP data: %w", err)
 	}
 
+	tx := s.userRepo.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	otpData, err := s.otpService.RetrieveOTP(d)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("error retrieving OTP: %w", err)
 	}
 
@@ -212,11 +222,18 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 
 	userId, err := s.userRepo.VerifyUserAccount(user)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("unable to verify user: %w", err)
 	}
 
 	if err = s.otpService.DeleteOTP(int(otpData.ID)); err != nil {
+		tx.Rollback()
 		return fmt.Errorf("unable to delete OTP: %w", err)
+	}
+
+	if err = s.createSender(d.UserId); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("unable to create sender")
 	}
 
 	return s.createUserBasicPlan(userId)
@@ -334,6 +351,22 @@ func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error
 		return ErrCreatingSMTPKey
 	}
 
+	return nil
+}
+
+func (s *UserService) createSender(userId string) error {
+
+	userModel := &model.User{UUID: userId}
+
+	getUser, err := s.userRepo.FindUserById(userModel)
+
+	if err != nil {
+		return err
+	}
+
+	sender := &dto.SenderDTO{UserID: userId, Email: getUser.Email, Name: "my company"}
+
+	s.SenderSVC.CreateSender(sender)
 	return nil
 }
 

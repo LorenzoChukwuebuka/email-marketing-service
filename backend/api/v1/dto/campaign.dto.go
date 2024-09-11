@@ -31,6 +31,7 @@ type CampaignDTO struct {
 	ScheduledAt    *time.Time     `json:"scheduled_at"`
 	HasCustomLogo  bool           `json:"has_custom_logo"`
 	Template       *string        `json:"template"`
+	Sender         *string        `json:"sender"`
 }
 
 type CampaignGroupDTO struct {
