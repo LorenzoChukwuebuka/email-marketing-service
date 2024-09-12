@@ -76,7 +76,7 @@ const GetAllContactGroups: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {(contactgroupData as ContactGroupData[]).map((group: ContactGroupData) => (
-                                    <tr key={group.uuid}>
+                                    <tr key={group.uuid} className="hover:bg-gray-100">
                                         <td className="py-4 px-4">
                                             <input
                                                 type="checkbox"

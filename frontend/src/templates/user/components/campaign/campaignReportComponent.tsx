@@ -14,7 +14,6 @@ const StatItem = ({ value, label }: StatProp) => (
     </div>
 );
 
-
 const CampaignReport: React.FC = () => {
 
     const { getSingleCampaign, campaignData, getCampaignStats, campaignStatData } = useCampaignStore();
@@ -34,16 +33,16 @@ const CampaignReport: React.FC = () => {
 
 
     const stats = [
-        { value: `${campaignStatData.total_emails_sent}`, label: 'Emails Sent' },
-        { value: `${campaignStatData.total_deliveries}`, label: 'Delivered' },
-        { value: `${campaignStatData.total_bounces}`, label: 'Bounce' },
+        { value: `${campaignStatData.total_emails_sent ?? 0} `, label: 'Emails Sent' },
+        { value: `${campaignStatData.total_deliveries ?? 0}`, label: 'Delivered' },
+        { value: `${campaignStatData.total_bounces ?? 0}`, label: 'Bounce' },
         { value: `0`, label: 'Complaints' },
-        { value: `${campaignStatData.hard_bounces}`, label: 'Rejected' },
-        { value: `${campaignStatData.total_opens}`, label: 'Opens' },
-        { value: `${campaignStatData.unique_opens}`, label: 'Unique Opens' },
-        { value: `${campaignStatData.open_rate}%`, label: 'Open rate' },
-        { value: `${campaignStatData.total_clicks}`, label: 'Total Clicks' },
-        { value: `${campaignStatData.unique_clicks}`, label: 'Unique Clicks' },
+        { value: `${campaignStatData.hard_bounces ?? 0}`, label: 'Rejected' },
+        { value: `${campaignStatData.total_opens ?? 0}`, label: 'Opens' },
+        { value: `${campaignStatData.unique_opens ?? 0}`, label: 'Unique Opens' },
+        { value: `${campaignStatData.open_rate ?? 0}%`, label: 'Open rate' },
+        { value: `${campaignStatData.total_clicks ?? 0}`, label: 'Total Clicks' },
+        { value: `${campaignStatData.unique_clicks ?? 0}`, label: 'Unique Clicks' },
     ];
 
     return (
@@ -74,17 +73,9 @@ const CampaignReport: React.FC = () => {
                     </>
                 )}
             </div>
-
-
         </>
-
     )
 }
-
-
-
-
-
 
 
 export default CampaignReport

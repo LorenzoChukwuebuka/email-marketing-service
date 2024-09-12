@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
+	//"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -60,32 +60,34 @@ func (s *Server) setupRoutes() {
 		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
 	}
 
-	mode := os.Getenv("SERVER_MODE")
+	// mode := os.Getenv("SERVER_MODE")
 
-	var staticDir string
+	// var staticDir string
 
-	if mode == "" {
-		staticDir = "./client"
-	} else {
-		staticDir = "/app/client"
-	}
+	// if mode == "" {
+	// 	staticDir = "./client"
+	// } else if mode == "test" {
+	// 	staticDir = "/app/client"
+	// } else {
+	// 	staticDir = "/app/client"
+	// }
 
-	// Handle static files using Gorilla Mux
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+	// // Handle static files using Gorilla Mux
+	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
-	// Handle all other routes by serving index.html for the SPA
-	s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := filepath.Join(staticDir, r.URL.Path)
+	// // Handle all other routes by serving index.html for the SPA
+	// s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	path := filepath.Join(staticDir, r.URL.Path)
 
-		// If the requested file exists, serve it
-		if _, err := os.Stat(path); err == nil {
-			http.ServeFile(w, r, path)
-			return
-		}
+	// 	// If the requested file exists, serve it
+	// 	if _, err := os.Stat(path); err == nil {
+	// 		http.ServeFile(w, r, path)
+	// 		return
+	// 	}
 
-		// Otherwise, serve index.html
-		http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
-	})
+	// 	// Otherwise, serve index.html
+	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+	// })
 
 	s.router.Use(recoveryMiddleware)
 	s.router.Use(enableCORS)

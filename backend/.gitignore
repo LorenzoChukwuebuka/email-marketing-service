@@ -23,6 +23,7 @@ go.work
 #env 
 .env
 .env.development
+.env.test
 
 #air
 tmp

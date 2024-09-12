@@ -38,6 +38,8 @@ var LoadEnv = func() *Config {
 	switch mode {
 	case "production":
 		envFilePath = ".env"
+	case "test":
+		envFilePath = ".env.test"
 	default:
 		envFilePath = ".env.development"
 	}

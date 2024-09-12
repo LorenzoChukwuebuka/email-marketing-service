@@ -29,10 +29,10 @@ const RecentCampaigns = () => {
                 {campaignData && (campaignData as (Campaign & BaseEntity)[]).length > 0 ? (<>
 
                     {(campaignData as (Campaign & BaseEntity)[]).slice(0, 3).map((campaign, index) => (
-                        <div key={campaign.uuid} className="border-b-2 last:border-b-2 p-4">
+                        <div key={campaign?.uuid} className="border-b-2 last:border-b-2 p-4">
                             <div className="flex justify-between items-center">
                                 <span className="font-medium">
-                                    {campaign.name} #{index + 1}
+                                    {campaign?.name} #{index + 1}
                                 </span>
                                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                                     <span className="flex items-center">
@@ -41,14 +41,13 @@ const RecentCampaigns = () => {
                                         </svg>
                                         Draft
                                     </span>
-                                    <span>Last edit {parseDate(campaign.updated_at).toLocaleString('en-US', {
-                                        timeZone: 'UTC',
+                                    <span>Last edit {new Date(campaign?.updated_at as string).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: '2-digit',
                                         year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric'
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        second: '2-digit',
                                     })}</span>
                                 </div>
                             </div>
