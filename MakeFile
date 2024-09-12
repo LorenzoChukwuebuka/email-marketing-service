@@ -57,4 +57,8 @@ vet:
 docker-restart:
 	docker-compose down
 	$(MAKE) docker
+
+docker-dev:
+	docker-compose -f docker-compose.dev.yaml up --build -d
+
 	

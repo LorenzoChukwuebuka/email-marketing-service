@@ -56,26 +56,24 @@ const CampaignRecipientComponent: React.FC<Props> = ({ campaignId }) => {
                             return (
                                 <tr key={campaign.uuid} className="hover:bg-gray-100">
                                     <td className="py-4 px-4">{campaign?.recipient_email}</td>
-                                    <td className="py-4 px-4">{parseDate(campaign?.sent_at).toLocaleString('en-US', {
-                                        timeZone: 'UTC',
+                                    <td className="py-4 px-4">{new Date(campaign.sent_at as string).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: '2-digit',
                                         year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric'
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        second: '2-digit',
                                     })}</td>
-                                    <td className="py-4 px-4">{parseDate(campaign?.opened_at as string).toLocaleString('en-US', {
-                                        timeZone: 'UTC',
+                                    <td className="py-4 px-4">{new Date(campaign.opened_at as string).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: '2-digit',
                                         year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric'
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        second: '2-digit',
                                     })}</td>
                                     <td className="py-4 px-4">{campaign?.open_count}</td>
-                                    <td className="py-4 px-4">{ campaign?.clicked_at && parseDate(campaign?.clicked_at as string).toLocaleString('en-US', {
+                                    <td className="py-4 px-4">{campaign?.clicked_at && parseDate(campaign?.clicked_at as string).toLocaleString('en-US', {
                                         timeZone: 'UTC',
                                         year: 'numeric',
                                         month: 'long',

@@ -225,10 +225,7 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
         try {
             const { createCampaignValues } = get()
 
-            let cookie: any = Cookies.get("Cookies");
-            let user = JSON.parse(cookie)?.details?.company;
-            const updatedCampaignValues = { ...createCampaignValues, sender_from_name: user };
-            let response = await axiosInstance.post<ResponseT>("/campaigns/create-campaign", updatedCampaignValues)
+            let response = await axiosInstance.post<ResponseT>("/campaigns/create-campaign", createCampaignValues)
 
             if (response.data.status == true) {
                 eventBus.emit("success", "Campaign created successfully")
@@ -434,26 +431,30 @@ const useCampaignStore = create(persist<CampaignStore>((set, get) => ({
 
             // Check if campaign is defined and has the necessary properties
             if (!campaign) {
-                eventBus.emit('success', 'You must fill all the neccessary fields')
+                eventBus.emit('error', 'You must fill all the neccessary fields')
                 return
             }
 
             // Check if template exists and has content
             if (!campaign?.template || !campaign?.template.email_html) {
-                eventBus.emit('success', 'You haven`t created a template yet')
+                eventBus.emit('error', 'You haven`t created a template yet')
                 return
             }
 
             // Check if subject exists
             if (!campaign?.subject) {
-                eventBus.emit('success', 'You have not created a subject yet')
+                eventBus.emit('error', 'You have not created a subject yet')
                 return
             }
 
             // Check if campaign_groups exist and have recipients
             if (!campaign?.campaign_groups || campaign?.campaign_groups.length === 0) {
-                eventBus.emit('success', 'You have not created a recipient yet')
+                eventBus.emit('error', 'You have not created a recipient yet')
                 return
+            }
+
+            if (!campaign?.sender || !campaign?.sender_from_name) {
+                eventBus.emit('error', 'You have not created a sender ')
             }
 
             let value = { campaign_id: campaignId }

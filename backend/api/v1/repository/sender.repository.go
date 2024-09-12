@@ -72,10 +72,33 @@ func (r *SenderRepository) GetAllSenders(userId string, searchQuery string, para
 		response = append(response, senderResponse)
 	}
 
-
- 
-
 	paginatedResult.Data = response
 
 	return paginatedResult, nil
+}
+
+func (r *SenderRepository) DeleteSender(uuid string, userId string) error {
+	var sender model.Sender
+
+	// Query the sender by uuid and userId to ensure that the sender belongs to the correct user.
+	if err := r.DB.Where("uuid = ? AND user_id = ?", uuid, userId).First(&sender).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return err
+		} else {
+			fmt.Printf("Error querying database: %v\n", err)
+			return err
+		}
+	}
+
+	// Delete the sender record
+	if err := r.DB.Delete(&sender).Error; err != nil {
+		fmt.Printf("Error deleting sender: %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *SenderRepository) UpdateSender(d *model.Sender) error {
+	return nil
 }

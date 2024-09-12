@@ -197,6 +197,8 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 		return fmt.Errorf("you have sent this campaign")
 	}
 
+	 
+
 	var groupIds []int
 	for _, group := range campaignG.CampaignGroups {
 		groupIds = append(groupIds, int(group.GroupId))

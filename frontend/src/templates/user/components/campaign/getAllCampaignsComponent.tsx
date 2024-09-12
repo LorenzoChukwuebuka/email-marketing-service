@@ -82,7 +82,7 @@ const GetAllCampaignComponent: React.FC = () => {
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created On</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                                        <th className="py-3 px-4"></th>
+
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -93,10 +93,10 @@ const GetAllCampaignComponent: React.FC = () => {
                                                 <td className="py-4 px-4">{campaign.name}</td>
                                                 <td className="py-4 px-4">
                                                     <span
-                                                        className={`px-2 py- rounded-full text-sm font-medium ${campaign.status === 'draft' ? 'bg-gray-200 text-gray-800' :
+                                                        className={`px-2 py-1 rounded-full text-sm font-medium ${campaign.status === 'draft' ? 'bg-gray-200 text-gray-800' :
                                                             campaign.status === 'Failed' ? 'bg-red-200 text-red-800' :
                                                                 campaign.status === 'Sent' ? 'bg-green-200 text-green-800' :
-                                                                    campaign.status === 'Processing' ? 'bg-yellow-200 text-yellow-800' : ''
+                                                                    campaign.status === 'Sending' ? 'bg-yellow-200 text-yellow-800' : ''
                                                             }`}>
                                                         {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                                                     </span>
@@ -121,7 +121,7 @@ const GetAllCampaignComponent: React.FC = () => {
                                                             <span className="bg-gray-300 rounded-md p-1">View Report</span>
                                                         </button>
                                                     ) : (
-                                                        <span className="space-x-5">
+                                                        <span className="space-x-8">
                                                             <button
                                                                 className="text-gray-400 hover:text-gray-600"
                                                                 onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}

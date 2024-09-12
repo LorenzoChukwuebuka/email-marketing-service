@@ -90,7 +90,7 @@ const GetAllContacts: React.FC = () => {
                                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Edit
                                     </th>
-                                    <th className="py-3 px-4"></th>
+                                 
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">

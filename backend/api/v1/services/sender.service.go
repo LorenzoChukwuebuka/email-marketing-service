@@ -103,6 +103,13 @@ func (s *SenderServices) GetAllSenders(userId string, page int, pageSize int, se
 	return getSenders, nil
 }
 
-func (s *SenderServices) DeleteSender() {}
+func (s *SenderServices) DeleteSender(uuid string, userId string) error {
+	if err := s.SenderRepo.DeleteSender(uuid, userId); err != nil {
+		return err
+	}
+	return nil
+}
 
-func (s *SenderServices) UpdateSender() {}
+func (s *SenderServices) UpdateSender(d *dto.SenderDTO) {
+	
+}
