@@ -76,7 +76,7 @@ const EmailCard = ({ email, name, dkim, dkimSigned, dmarc, verified, verificatio
 };
 
 const SendersDashComponent: React.FC = () => {
-    const { getSenders, senderData } = useSenderStore();
+    const { getSenders, senderData, deleteSender } = useSenderStore();
 
     useEffect(() => {
         const fetchSender = async () => {
@@ -90,9 +90,16 @@ const SendersDashComponent: React.FC = () => {
         // Logic to handle editing the email
     };
 
-    const handleDelete = (email: string) => {
-        console.log(`Delete ${email}`);
-        // Logic to handle deleting the email
+    const handleDelete = async (id: string) => {
+        let confirmResult = confirm("Do you want to delete contact(s)?");
+
+        if (confirmResult) {
+            await deleteSender(id);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        await getSenders()
     };
 
     return (
@@ -111,8 +118,8 @@ const SendersDashComponent: React.FC = () => {
                             dmarc={sender.is_signed ? "Dmarc is verified" : "Freemail domain is not recommended ⚠️"}
                             verified={sender.verified}
                             verificationText={`${sender.email} has been verified.`}
-                            onEdit={() => handleEdit(sender.email)}
-                            onDelete={() => handleDelete(sender.email)}
+                            onEdit={() => handleEdit(sender.uuid)}
+                            onDelete={() => handleDelete(sender.uuid)}
                         />
                     ))}
                 </>

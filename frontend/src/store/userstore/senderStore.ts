@@ -110,7 +110,20 @@ const useSenderStore = create<SenderStore>((set, get) => ({
     },
 
     deleteSender: async (id: string) => {
-
+        try {
+            let response = await axiosInstance.delete<ResponseT>("/sender/delete-sender/" + id)
+            if (response.data.status === true) {
+                eventBus.emit("success", "sender deleted successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
     },
 }));
 

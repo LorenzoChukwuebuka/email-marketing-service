@@ -5,34 +5,15 @@ import (
 	"email-marketing-service/api/v1"
 	"email-marketing-service/api/v1/database"
 	"email-marketing-service/api/v1/dto"
-	"email-marketing-service/api/v1/observers"
-	"email-marketing-service/api/v1/repository"
-	"email-marketing-service/api/v1/services"
-	"email-marketing-service/api/v1/utils"
 	smtp_server "email-marketing-service/smtp"
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	
 )
 
-func cronJobs(dbConn *gorm.DB) *cron.Cron {
-	subscriptionRepo := repository.NewSubscriptionRepository(dbConn)
-	planRepo := repository.NewPlanRepository(dbConn)
-	dailyRepo := repository.NewMailUsageRepository(dbConn)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo, dailyRepo, planRepo)
-
-	// Create a new cron scheduler
-	c := cron.New()
-	c.AddFunc("0 0 * * *", func() {
-		subscriptionService.UpdateExpiredSubscription()
-	})
-
-	return c
-}
 
 func main() {
 	dto.InitValidate()
@@ -42,19 +23,6 @@ func main() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	smtpWebHookRepo := repository.NewMailStatusRepository(dbConn)
-	eventBus := utils.GetEventBus()
-	dbObserver := observers.NewCreateEmailStatusObserver(smtpWebHookRepo)
-	eventBus.Register("send_success", dbObserver)
-	eventBus.Register("send_failed", dbObserver)
-
-	c := cronJobs(dbConn)
-
-	go func() {
-		c.Start()
-		defer c.Stop()
-		select {}
-	}()
 
 	server := v1.NewServer(dbConn)
 

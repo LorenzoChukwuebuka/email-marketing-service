@@ -2,7 +2,7 @@ services:
   go-backend:
     build:
       context: .
-      dockerfile: Dockerfile.app
+      dockerfile: Dockerfile.test
     ports:
       - "9000:9000"
       - "1027:1025"

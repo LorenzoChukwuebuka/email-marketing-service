@@ -71,18 +71,21 @@ const DomainDashboardComponent: React.FC = () => {
             </p>
             <a href="#" className="text-blue-500 underline mb-4 inline-block">Learn what a DKIM or DMARC is.</a> */}
 
-                <div className="w-52 mb-4">
-                    <input
-                        type="text"
-                        placeholder="Search domain by name"
-                        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        onChange={(e) => handleSearchInput(e.target.value)}
-                        value={searchQuery}
-                    />
-                </div>
+
 
                 {Array.isArray(domainData) && domainData.length > 0 ? (
                     <>
+
+                        <div className="w-52 mb-4">
+                            <input
+                                type="text"
+                                placeholder="Search domain by name"
+                                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onChange={(e) => handleSearchInput(e.target.value)}
+                                value={searchQuery}
+                            />
+                        </div>
+
                         <table className="min-w-full bg-white rounded-lg ">
                             <thead>
                                 <tr>
