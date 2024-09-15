@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CreateCampaignComponent from "./createCampaignComponent";
 import useCampaignStore, { Campaign } from "../../../../store/userstore/campaignStore";
 import { parseDate } from "../../../../utils/utils";
@@ -12,6 +12,8 @@ const GetScheduledCampaignComponent: React.FC = () => {
     const { getScheduledCampaign, scheduledCampaignData, paginationInfo, searchCampaign } = useCampaignStore()
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchCampaign = async () => {
@@ -23,8 +25,22 @@ const GetScheduledCampaignComponent: React.FC = () => {
         fetchCampaign()
     }, [getScheduledCampaign])
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setActiveDropdown(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     const deleteCampaign = async (uuid: string) => {
         console.log(uuid)
+        setActiveDropdown(null);
     }
 
     const handlePageChange = (newPage: number) => {
@@ -35,17 +51,13 @@ const GetScheduledCampaignComponent: React.FC = () => {
         searchCampaign(query);
     };
 
-
     return <>
-
         {isLoading ? (
             <div className="flex items-center justify-center mt-20">
                 <span className="loading loading-spinner loading-lg"></span>
             </div>
         ) : (
-
             <>
-
                 <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
                     <div className="space-x-1  h-auto w-full p-2 px-2 ">
                         <button
@@ -76,7 +88,6 @@ const GetScheduledCampaignComponent: React.FC = () => {
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created On</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                                        <th className="py-3 px-4"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -96,20 +107,38 @@ const GetScheduledCampaignComponent: React.FC = () => {
                                                 })}
                                             </td>
                                             <td className="py-4 px-4">
-                                                <button
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                    onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
-                                                >
-                                                    ✏️
-                                                </button>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <button
-                                                    className="text-gray-400 hover:text-gray-600"
-                                                    onClick={() => deleteCampaign(campaign.uuid)}
-                                                >
-                                                    <i className="bi bi-trash text-red-500"></i>
-                                                </button>
+                                                <div className="relative">
+                                                    <button
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                        onClick={() => setActiveDropdown(activeDropdown === campaign.uuid ? null : campaign.uuid)}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                        </svg>
+                                                    </button>
+                                                    {activeDropdown === campaign.uuid && (
+                                                        <div
+                                                            ref={dropdownRef}
+                                                            className="absolute right-0 mt-2 w-28 bg-white border border-gray-300 rounded-md shadow-lg z-10"
+                                                        >
+                                                            <button
+                                                                className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                onClick={() => {
+                                                                    navigate(`/user/dash/campaign/edit/${campaign.uuid}`);
+                                                                    setActiveDropdown(null);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                className="block w-full px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
+                                                                onClick={() => deleteCampaign(campaign.uuid)}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -126,13 +155,11 @@ const GetScheduledCampaignComponent: React.FC = () => {
                             />
                         </div>
                     )}
-
                 </div>
 
                 <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-            </>)}
-
+            </>
+        )}
     </>
 }
 

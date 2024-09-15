@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CreateCampaignComponent from "./createCampaignComponent";
 import useCampaignStore, { Campaign } from "../../../../store/userstore/campaignStore";
 import { parseDate } from "../../../../utils/utils";
@@ -11,6 +11,8 @@ const GetAllCampaignComponent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getAllCampaigns, campaignData, paginationInfo, deleteCampaign, searchCampaign } = useCampaignStore()
     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -23,6 +25,19 @@ const GetAllCampaignComponent: React.FC = () => {
         fetchCampaign()
     }, [getAllCampaigns])
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setActiveDropdown(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     const deleteCamp = async (uuid: string) => {
         const confirmResult = confirm("Do you want to delete campaign?");
 
@@ -31,8 +46,9 @@ const GetAllCampaignComponent: React.FC = () => {
             await new Promise((resolve) => setTimeout(resolve, 1000))
             await getAllCampaigns()
         } else {
-            console.log("Logout canceled");
+            console.log("Delete canceled");
         }
+        setActiveDropdown(null);
     }
 
     const handlePageChange = (newPage: number) => {
@@ -43,9 +59,7 @@ const GetAllCampaignComponent: React.FC = () => {
         searchCampaign(query);
     };
 
-
     return <>
-
         {isLoading ? (
             <div className="flex items-center justify-center mt-20">
                 <span className="loading loading-spinner loading-lg"></span>
@@ -82,7 +96,6 @@ const GetAllCampaignComponent: React.FC = () => {
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created On</th>
                                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
@@ -115,26 +128,41 @@ const GetAllCampaignComponent: React.FC = () => {
                                                 <td className="py-4 px-4">
                                                     {isSent ? (
                                                         <button
-                                                            className="text-gray-800 hover:text-blue-700"
+                                                            className="text-blue-600 hover:text-blue-700"
                                                             onClick={() => navigate(`/user/dash/campaign/report/${campaign.uuid}`)}
                                                         >
-                                                            <span className="bg-gray-300 rounded-md p-1">View Report</span>
+                                                            View Report
                                                         </button>
                                                     ) : (
-                                                        <span className="space-x-8">
+                                                        <div className="relative">
                                                             <button
                                                                 className="text-gray-400 hover:text-gray-600"
-                                                                onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                                                onClick={() => setActiveDropdown(activeDropdown === campaign.uuid ? null : campaign.uuid)}
                                                             >
-                                                                ✏️
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                                </svg>
                                                             </button>
-                                                            <button
-                                                                className="text-gray-400 hover:text-gray-600"
-                                                                onClick={() => deleteCamp(campaign.uuid)}
-                                                            >
-                                                                <i className="bi bi-trash text-red-600"></i>
-                                                            </button>
-                                                        </span>
+                                                            {activeDropdown === campaign.uuid && (
+                                                                <div
+                                                                    ref={dropdownRef}
+                                                                    className="absolute right-0 mt-2 w-28 bg-white border border-gray-300 rounded-md shadow-lg z-10"
+                                                                >
+                                                                    <button
+                                                                        className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                        onClick={() => navigate(`/user/dash/campaign/edit/${campaign.uuid}`)}
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        className="block w-full px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
+                                                                        onClick={() => deleteCamp(campaign.uuid)}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>
@@ -153,17 +181,10 @@ const GetAllCampaignComponent: React.FC = () => {
                             />
                         </div>
                     )}
-
-
-
-
-
                 </div>
                 <CreateCampaignComponent isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             </>
         )}
-
-
     </>
 }
 

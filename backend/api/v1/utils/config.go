@@ -44,6 +44,7 @@ var LoadEnv = func() *Config {
 		envFilePath = ".env.development"
 	}
 
+	log.Printf("Server mode: %s. loading env %s", mode,envFilePath)
 	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -71,7 +72,7 @@ var LoadEnv = func() *Config {
 		ADMIN_PASSWORD:        os.Getenv("ADMIN_PASSWORD"),
 		SERVER_URL:            os.Getenv("SERVER_URL"),
 		SLACK_WEBHOOK_URL:     os.Getenv("SLACK_WEBHOOK_URL"),
-		DOMAIN: os.Getenv("DOMAIN"),
+		DOMAIN:                os.Getenv("DOMAIN"),
 	}
 
 	return config

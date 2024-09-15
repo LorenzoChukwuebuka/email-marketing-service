@@ -98,7 +98,7 @@ const useBillingStore = create<BillingStore>((set, get) => ({
         try {
             const { paymentValues } = get()
 
-            let response = await axiosInstance.post<APIResponse<InitializeData>>("/initialize-transaction", paymentValues)
+            let response = await axiosInstance.post<APIResponse<InitializeData>>("/transaction/initialize-transaction", paymentValues)
             if (response.data.status == true) {
                 window.location.href = response.data.payload.data.authorization_url
             }
@@ -114,7 +114,7 @@ const useBillingStore = create<BillingStore>((set, get) => ({
     },
     confirmPayment: async (reference: string, paymentMethod: string) => {
         try {
-            let response = await axiosInstance.get<ResponseT>("/verify-transaction/" + paymentMethod + "/" + reference)
+            let response = await axiosInstance.get<ResponseT>("/transaction/verify-transaction/" + paymentMethod + "/" + reference)
             if (response.data.status == true) {
                 window.location.href = "/user/dash/billing"
                 eventBus.emit('success', response.data.payload.data)
@@ -131,13 +131,13 @@ const useBillingStore = create<BillingStore>((set, get) => ({
     },
     fetchBillingData: async (page = 1, pageSize = 10) => {
         try {
-            const { setBillingData, setPaginationInfo,setIsLoading } = get()
+            const { setBillingData, setPaginationInfo, setIsLoading } = get()
             setIsLoading(true)
-            let response = await axiosInstance.get<BillingAPIResponse>(`/get-all-billing?page=${page}&page_size=${pageSize}`)
+            let response = await axiosInstance.get<BillingAPIResponse>(`/transaction/get-all-billing?page=${page}&page_size=${pageSize}`)
             const { data, ...paginationInfo } = response.data.payload;
             setPaginationInfo(paginationInfo);
             setBillingData(data)
-            
+
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)
@@ -146,7 +146,7 @@ const useBillingStore = create<BillingStore>((set, get) => ({
             } else {
                 console.error("Unknown error:", error);
             }
-        }finally{
+        } finally {
             get().setIsLoading(false)
         }
     }

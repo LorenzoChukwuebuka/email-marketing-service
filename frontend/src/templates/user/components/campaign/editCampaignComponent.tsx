@@ -68,6 +68,8 @@ const EditCampaignForm: React.FC = () => {
             setIsCalendarOpen(false);
 
             await updateCampaign(campaign?.uuid as string)
+            await new Promise((resolve) => setTimeout(resolve, 500))
+            await getSingleCampaign(id);
         }
     };
 

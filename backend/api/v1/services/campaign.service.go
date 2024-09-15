@@ -667,3 +667,7 @@ func (s *CampaignService) GetUserCampaignsStats(userId string) ([]map[string]int
 
 	return userStats, nil
 }
+
+
+//############################################ JOBS ################################################## 
+

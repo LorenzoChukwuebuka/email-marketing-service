@@ -234,13 +234,6 @@ func (s *Session) processEmailBounce(emailContent []byte) error {
 	return nil
 }
 
-// Utility function to detect if the email is a bounce (simple heuristic)
-func isBounceMessage(emailData []byte) bool {
-	emailStr := string(emailData)
-	// Check for common bounce indicators, such as 'Delivery Status Notification'
-	return strings.Contains(strings.ToLower(emailStr), "delivery status notification")
-}
-
 // debugLog prints debug information if Debug is true
 func debugLog(message string) {
 	if Debug {

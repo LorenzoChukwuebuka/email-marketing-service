@@ -163,9 +163,6 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         try {
             setIsLoading(true)
             const { formValues } = get()
-
-
-
             const options: CredentialCreationOptions = {
                 publicKey: {
                     challenge: new Uint8Array(32), // Example challenge
@@ -364,7 +361,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             let response = await axiosInstance.post('/user-login', loginValues)
             if (response.data.message === 'success') {
                 Cookies.set('Cookies', JSON.stringify(response.data.payload), {
-                    expires: 7,
+                    expires: 3,
                     sameSite: 'Strict',
                     secure: true
                 })
