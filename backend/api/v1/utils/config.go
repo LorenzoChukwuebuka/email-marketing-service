@@ -44,7 +44,6 @@ var LoadEnv = func() *Config {
 		envFilePath = ".env.development"
 	}
 
-	log.Printf("Server mode: %s. loading env %s", mode,envFilePath)
 	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatal("Error loading .env file")

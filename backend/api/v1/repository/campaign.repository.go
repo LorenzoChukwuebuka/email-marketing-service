@@ -579,3 +579,20 @@ func (r *CampaignRepository) GetAllCampaignStatsByUser(userID string) ([]map[str
 
 	return allCampaignStats, nil
 }
+
+func (r *CampaignRepository) GetDueScheduledCampaigns() ([]model.CampaignResponse, error) {
+	var campaigns []model.Campaign
+	currentTime := time.Now().Format(time.RFC3339)
+	err := r.DB.Where("scheduled_at <= ? AND status = ?", currentTime, model.Scheduled).Find(&campaigns).Error
+	if err != nil {
+		return nil, fmt.Errorf("error fetching due scheduled campaigns: %w", err)
+	}
+
+	var response []model.CampaignResponse
+	for _, campaign := range campaigns {
+		campaignResponse := r.createCampaignMapping(campaign)
+		response = append(response, *campaignResponse)
+	}
+
+	return response, nil
+}

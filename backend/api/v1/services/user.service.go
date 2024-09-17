@@ -540,3 +540,11 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 
 	return &userDetails, nil
 }
+
+func (s *UserService) AddCredential(userID string, credential *model.WebAuthnCredential) error {
+	return s.userRepo.AddCredential(userID, credential)
+}
+
+func (s *UserService) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
+	return s.userRepo.GetCredentials(userID)
+}

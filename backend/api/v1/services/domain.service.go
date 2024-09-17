@@ -11,6 +11,7 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"github.com/google/uuid"
 	"net"
@@ -171,21 +172,56 @@ func (s *DomainService) generateDKIMSelector() string {
 }
 
 func (s *DomainService) generateDKIMKeys() (string, string, error) {
+	// Generate a 2048-bit RSA key pair
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return "", "", err
 	}
 
-	publicKeyDER, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	// Extract the public key
+	publicKey := &privateKey.PublicKey
+
+	// Convert the public key to PKIX, ASN.1 DER form
+	publicKeyDER, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
 		return "", "", err
 	}
 
+	// Encode the public key in base64
 	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKeyDER)
-	privateKeyPEM := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString(privateKeyPEM)
 
-	return publicKeyBase64, privateKeyBase64, nil
+	// Format the public key for DKIM (remove newlines and split into chunks)
+	formattedPublicKey := formatPublicKeyForDKIM(publicKeyBase64)
+
+	// Encode the private key in PEM format
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	}
+	privateKeyBuf := new(bytes.Buffer)
+	if err := pem.Encode(privateKeyBuf, privateKeyPEM); err != nil {
+		return "", "", err
+	}
+	privateKeyString := privateKeyBuf.String()
+
+	return formattedPublicKey, privateKeyString, nil
+}
+
+// Helper function to format the public key for DKIM
+func formatPublicKeyForDKIM(publicKey string) string {
+	// Remove any newlines
+	publicKey = strings.ReplaceAll(publicKey, "\n", "")
+
+	// Split the key into chunks of 253 characters (DNS TXT record limit)
+	var chunks []string
+	for len(publicKey) > 253 {
+		chunks = append(chunks, publicKey[:253])
+		publicKey = publicKey[253:]
+	}
+	chunks = append(chunks, publicKey)
+
+	// Join the chunks with double quotes and spaces
+	return strings.Join(chunks, "\" \"")
 }
 
 func (s *DomainService) generateDownloadableRecords(domain string, records []DNSRecord) (string, error) {

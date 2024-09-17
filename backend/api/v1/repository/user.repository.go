@@ -215,3 +215,16 @@ func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) error {
 	return nil
 
 }
+
+// AddCredential adds a new WebAuthn credential to the database
+func (repo *UserRepository) AddCredential(userID string, credential *model.WebAuthnCredential) error {
+	credential.UserID = userID
+	return repo.DB.Create(credential).Error
+}
+
+// GetCredentials retrieves WebAuthn credentials for a user
+func (repo *UserRepository) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
+	var credentials []model.WebAuthnCredential
+	err := repo.DB.Where("user_id = ?", userID).Find(&credentials).Error
+	return credentials, err
+}

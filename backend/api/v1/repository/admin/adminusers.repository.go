@@ -1,10 +1,15 @@
 package adminrepository
 
+import "gorm.io/gorm"
+
 type AdminUsersRepository struct {
+	DB *gorm.DB
 }
 
-func NewAdminUserRepository() *AdminUsersRepository {
-	return &AdminUsersRepository{}
+func NewAdminUserRepository(db *gorm.DB) *AdminUsersRepository {
+	return &AdminUsersRepository{
+		DB: db,
+	}
 }
 
 func (r *AdminUsersRepository) GetAllUsers() error {

@@ -39,7 +39,7 @@ func (m *Mail) SignUpMail(email string, username string, userId string, otp stri
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail, sender,nil)
+	err = utils.SendMail("Email Verification", email, formattedMail, sender, nil)
 
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Password Reset", email, formattedMail, sender,nil)
+	err = utils.SendMail("Password Reset", email, formattedMail, sender, nil)
 
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail, sender,nil)
+	err = utils.SendMail("Email Verification", email, formattedMail, sender, nil)
 
 	if err != nil {
 		return err
@@ -117,29 +117,25 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 }
 
 func (m *Mail) SubscriptionExpiryMail(username string, email string, planName string) error {
-	mailTemplate :=
-		`<html>
-		<body style="font-family: Arial, sans-serif;">
-			<h2>Hi .Username ,</h2>
-			<p>Please note that your .PlanName plan has expired</p>
-			
-			<p>Regards,<br>  .Appname </p>
-		</body>
-		</html>
-       `
+	templatePath := filepath.Join("api", "v1", "templates", "planexpiry.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
+
 	replacements := map[string]string{
 		"{{Username}}": username,
 		"{{PlanName}}": planName,
 		"{{AppName}}":  config.APPName,
 	}
 
-	formattedMail := mailTemplate
+	formattedMail := string(mailTemplate)
 
 	for placeholder, value := range replacements {
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Subscription Expiry Notification", email, formattedMail, sender,nil)
+	err = utils.SendMail("Subscription Expiry Notification", email, formattedMail, sender, nil)
 
 	if err != nil {
 		return err
@@ -170,7 +166,7 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Service expiry reminder", email, formattedMail, sender,nil)
+	err := utils.SendMail("Service expiry reminder", email, formattedMail, sender, nil)
 
 	if err != nil {
 		return err
