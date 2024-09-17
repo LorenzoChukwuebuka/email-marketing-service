@@ -39,7 +39,6 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 	s.MaxMessageBytes = 1024 * 1024
 	s.MaxRecipients = 50
 	s.AllowInsecureAuth = false
-	
 
 	log.Println("Starting SMTP server at", s.Addr)
 

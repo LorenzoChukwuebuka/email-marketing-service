@@ -17,6 +17,7 @@ func (f *JobFactory) CreateJobs() []Job {
 	return []Job{
 		NewUpdateExpiredSubscriptionJob(f.DB),
 		NewDailMailCalculationJob(f.DB),
+		NewSendScheduledCampaignJobs(f.DB),
 		// Add other jobs here
 	}
 }

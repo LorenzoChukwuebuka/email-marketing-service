@@ -42,7 +42,7 @@ func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo
 	}
 }
 
-const BATCH_SIZE = 20
+const BATCH_SIZE = 100
 
 func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
@@ -187,7 +187,7 @@ func (s *CampaignService) DeleteCampaign(campaignId string, userId string) error
 	return nil
 }
 
-func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
+func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool) error {
 	campaignG, err := s.CampaignRepo.GetSingleCampaign(d.UserId, d.CampaignId)
 	if err != nil {
 		return err
@@ -197,7 +197,17 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 		return fmt.Errorf("you have sent this campaign")
 	}
 
-	 
+	// Check if the campaign is scheduled and not due yet
+	if isScheduled && campaignG.ScheduledAt != nil {
+		scheduledTime, err := time.Parse(time.RFC3339, *campaignG.ScheduledAt)
+		if err != nil {
+			return fmt.Errorf("invalid scheduled time format: %w", err)
+		}
+
+		if scheduledTime.After(time.Now()) {
+			return nil // Not due yet, exit without sending
+		}
+	}
 
 	var groupIds []int
 	for _, group := range campaignG.CampaignGroups {
@@ -276,7 +286,16 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO) error {
 				previewText = *campaignG.PreviewText
 			}
 
-			err := s.sendEmailBatch(campaignG.Template.EmailHtml, d.CampaignId, batch, subject, previewText, mailUsageRecord, &mu, *campaignG.Sender, *campaignG.SenderFromName, d.UserId)
+			err := s.sendEmailBatch(campaignG.Template.EmailHtml,
+				d.CampaignId,
+				batch, subject,
+				previewText,
+				mailUsageRecord,
+				&mu,
+				*campaignG.Sender,
+				*campaignG.SenderFromName,
+				d.UserId)
+
 			if err != nil {
 				errChan <- err
 			}
@@ -668,6 +687,27 @@ func (s *CampaignService) GetUserCampaignsStats(userId string) ([]map[string]int
 	return userStats, nil
 }
 
+//############################################ JOBS ##################################################
 
-//############################################ JOBS ################################################## 
+func (s *CampaignService) SendScheduledCampaigns() error {
+	// Fetch all scheduled campaigns that are due
+	scheduledCampaigns, err := s.CampaignRepo.GetDueScheduledCampaigns()
+	if err != nil {
+		return fmt.Errorf("error fetching due scheduled campaigns: %w", err)
+	}
 
+	for _, campaign := range scheduledCampaigns {
+		sendDTO := &dto.SendCampaignDTO{
+			UserId:     campaign.UserId,
+			CampaignId: campaign.UUID,
+		}
+
+		err := s.SendCampaign(sendDTO, true)
+		if err != nil {
+			// Log the error but continue with other campaigns
+			log.Printf("Error sending scheduled campaign %s: %v", campaign.UUID, err)
+		}
+	}
+
+	return nil
+}

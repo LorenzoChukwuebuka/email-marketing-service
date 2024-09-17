@@ -5,13 +5,13 @@ import (
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
+	"github.com/mssola/user_agent"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/mux"
-	"github.com/mssola/user_agent"
 )
 
 type CampaignController struct {
@@ -162,7 +162,7 @@ func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request
 	reqdata.UserId = userId
 	reqdata.UUID = campaignId
 
-	fmt.Printf("%+v\n",reqdata)
+	fmt.Printf("%+v\n", reqdata)
 
 	if err := c.CampaignSVC.UpdateCampaign(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -215,7 +215,7 @@ func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request
 
 	reqdata.UserId = userId
 
-	if err := c.CampaignSVC.SendCampaign(reqdata); err != nil {
+	if err := c.CampaignSVC.SendCampaign(reqdata, false); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}

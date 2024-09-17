@@ -87,6 +87,7 @@ func autoMigrateModels() {
 		&model.Log{},
 		&model.Domains{},
 		&model.Sender{},
+		&model.WebAuthnCredential{},
 	)
 
 	if err != nil {
@@ -104,7 +105,7 @@ func seedData(db *gorm.DB) {
 		plan := model.Plan{
 			UUID:     uuid.New().String(),
 			PlanName: "Free",
-			Duration: "month",
+			Duration: "day",
 			Price:    0,
 			Details:  "Our best plan for power users",
 			Status:   model.PlanStatus(model.StatusActive),
@@ -149,7 +150,7 @@ func seedData(db *gorm.DB) {
 		// Now create the MailingLimit with the correct PlanID
 		mailingLimit := model.MailingLimit{
 			PlanID:      plan.ID,
-			LimitAmount: 500,
+			LimitAmount: 200,
 			LimitPeriod: "day",
 		}
 

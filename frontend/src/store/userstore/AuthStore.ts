@@ -163,38 +163,36 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         try {
             setIsLoading(true)
             const { formValues } = get()
-            const options: CredentialCreationOptions = {
-                publicKey: {
-                    challenge: new Uint8Array(32), // Example challenge
-                    rp: {
-                        name: "Example RP",
-                        id: "example.com",
-                    },
-                    user: {
-                        id: new Uint8Array(32), // Example user ID
-                        name: "user@example.com",
-                        displayName: "Example User",
-                    },
-                    pubKeyCredParams: [
-                        {
-                            alg: -7, // ES256 algorithm
-                            type: "public-key",
-                        },
-                    ],
-                    authenticatorSelection: {
-                        authenticatorAttachment: "platform",
-                        userVerification: "preferred",
-                    },
-                    timeout: 60000,
-                    attestation: "direct", // Must be one of the allowed values
-                },
-            };
+            // const options: CredentialCreationOptions = {
+            //     publicKey: {
+            //         challenge: new Uint8Array(32), // Example challenge
+            //         rp: {
+            //             name: "Example RP",
+            //             id: "example.com",
+            //         },
+            //         user: {
+            //             id: new Uint8Array(32), // Example user ID
+            //             name: "user@example.com",
+            //             displayName: "Example User",
+            //         },
+            //         pubKeyCredParams: [
+            //             {
+            //                 alg: -7, // ES256 algorithm
+            //                 type: "public-key",
+            //             },
+            //         ],
+            //         authenticatorSelection: {
+            //             authenticatorAttachment: "platform",
+            //             userVerification: "preferred",
+            //         },
+            //         timeout: 60000,
+            //         attestation: "direct", // Must be one of the allowed values
+            //     },
+            // };
 
-            let credential = await navigator.credentials.create(options)
+            // let credential = await navigator.credentials.create(options)
 
-            console.log(credential)
-
-
+            // console.log(credential)
 
             let response = await axiosInstance.post('/user-signup', formValues)
             if (response.data.status === true) {

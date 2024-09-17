@@ -2,12 +2,14 @@ package v1
 
 import (
 	"context"
-	cronjobs "email-marketing-service/api/v1/cronJobs"
+	cronjobs "email-marketing-service/api/v1/jobs"
 	"email-marketing-service/api/v1/middleware"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/routes"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -16,9 +18,6 @@ import (
 	"runtime"
 	"syscall"
 	"time"
-
-	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
 
 type Server struct {
