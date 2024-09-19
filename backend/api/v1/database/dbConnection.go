@@ -88,6 +88,8 @@ func autoMigrateModels() {
 		&model.Domains{},
 		&model.Sender{},
 		&model.WebAuthnCredential{},
+		&model.EmailBox{},
+		&model.UserNotification{},
 	)
 
 	if err != nil {

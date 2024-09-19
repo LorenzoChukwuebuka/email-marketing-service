@@ -231,3 +231,39 @@ func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Requ
 
 	response.SuccessResponse(w, 200, result)
 }
+
+func (c *UserController) GetAllUserNotifications(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.userService.GetAllNotifications(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}
+
+func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	err := c.userService.UpdateReadStatus(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "notifications updated")
+}

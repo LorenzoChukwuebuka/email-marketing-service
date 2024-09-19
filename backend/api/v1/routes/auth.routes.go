@@ -18,15 +18,13 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	userController, _ := InitializeUserController(ur.db)
 	planController, _ := InitializePlanController(ur.db)
 	sessionController, _ := InitializeUserssionController(ur.db)
-
 	smtpController, _ := InitializeSMTPController(ur.db)
-	transactionController, _ := InitializeTransactionController(ur.db)
 	supportTicketController, _ := InitializeSupportTicketController(ur.db)
 	subscriptionController, _ := InitializeSubscriptionController(ur.db)
 
 	// auth routes
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
-	router.HandleFunc("/health",userController.HealthCheck).Methods("GET")
+	router.HandleFunc("/health", userController.HealthCheck).Methods("GET")
 	router.HandleFunc("/user-signup", userController.RegisterUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/verify-user", userController.VerifyUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/user-login", userController.Login).Methods("POST", "OPTIONS")
@@ -37,11 +35,9 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-user-details", middleware.JWTMiddleware(userController.GetUserDetails)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/edit-user-details", middleware.JWTMiddleware(userController.EditUser)).Methods("PUT", "OPTIONS")
 
-	// Transaction routes
-	router.HandleFunc("/initialize-transaction", middleware.JWTMiddleware(transactionController.InitiateNewTransaction)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/verify-transaction/{paymentmethod}/{reference}", middleware.JWTMiddleware(transactionController.ChargeTransaction)).Methods("GET", "OPTIONS")
-	router.HandleFunc("/get-single-billing/{billingId}", middleware.JWTMiddleware(transactionController.GetSingleBillingRecord)).Methods("GET", "OPTIONS")
-	router.HandleFunc("/get-all-billing", middleware.JWTMiddleware(transactionController.GetAllUserBilling))
+	//user notifications
+	router.HandleFunc("/user-notifications", middleware.JWTMiddleware(userController.GetAllUserNotifications)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/update-read-status", middleware.JWTMiddleware(userController.UpdateReadStatus)).Methods("PUT", "OPTIONS")
 
 	// Plan routes
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")

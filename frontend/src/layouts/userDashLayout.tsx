@@ -3,17 +3,24 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import reactSVG from "./../assets/0832855c4b75f4d5a1dd822d6fb0d38d.jpg";
 import useDailyUserMailSentCalc from "../store/userstore/userDashStore";
+import useUserNotificationStore from "../store/userstore/notifications.store";
 
+interface CookieData {
+    token: string;
+    // Add other properties if needed
+}
 
 const UserDashLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [userName, setUserName] = useState<string>("");
     const [settingsDropdownOpen, setSettingsDropdownOpen] = useState<boolean>(false);
+    const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+
     const location = useLocation();
     const navigate = useNavigate();
 
     const { mailData, getUserMailData } = useDailyUserMailSentCalc();
-
+    const { notificationsData, getUserNotifications, setNotificationData, updateReadStatus } = useUserNotificationStore()
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -25,6 +32,16 @@ const UserDashLayout: React.FC = () => {
         setIsDropdownOpen(false);
     };
 
+    const toggleNotificationDropdown = () => {
+        setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+    };
+
+    const closeNotificationDropdown = () => {
+        setIsNotificationDropdownOpen(false);
+    };
+
+    const hasNotifications = notificationsData.length > 0;
+    const hasUnreadNotifications = hasNotifications && notificationsData.some(notification => notification.read_status === false);
 
     const getLinkClassName = (path: string): string => {
         const baseClass = "mb-4 text-center text-lg font-semibold";
@@ -67,10 +84,17 @@ const UserDashLayout: React.FC = () => {
         }
     };
 
+    //for the name
     const apiName = import.meta.env.VITE_API_NAME;
     const firstFourLetters = apiName.slice(0, 4);
     const remainingLetters = apiName.slice(4);
 
+    const readNotifications = async () => {
+        if(hasUnreadNotifications){
+            await updateReadStatus()
+        }
+       
+    }
 
     useEffect(() => {
         let cookie = Cookies.get("Cookies");
@@ -78,9 +102,51 @@ const UserDashLayout: React.FC = () => {
         setUserName(user);
     }, []);
 
+    const getToken = (): string | null => {
+        const cookies = Cookies.get('Cookies');
+
+        if (!cookies) {
+            return null;
+        }
+
+        try {
+            const cookieData: CookieData = JSON.parse(cookies);
+            return cookieData.token;
+        } catch (error) {
+            console.error('Failed to parse cookies:', error);
+            return null;
+        }
+    };
+
     useEffect(() => {
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/notification-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                    // Start notification check and pass the JWT token
+                    registration.active?.postMessage({
+                        type: 'START_NOTIFICATION_CHECK',
+                        token: getToken()
+                    });
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+
+        // Listen for messages from the service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'NOTIFICATION_UPDATE') {
+                setNotificationData(event.data.payload);
+            }
+        });
+
+
         getUserMailData();
-    }, [getUserMailData]);
+        getUserNotifications()
+    }, [getUserMailData, getUserNotifications, setNotificationData]);
+
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -243,8 +309,47 @@ const UserDashLayout: React.FC = () => {
                     </button>
                     {/* <h1 className="text-xl font-semibold"> Dashboard </h1> */}
 
-                    <div className="space-x-4 ">
-                        <i className="bi bi-bell font-bold"></i>
+                    <div className="space-x-4 flex items-center">
+
+                        {/**notification dropdown */}
+                        <div className="dropdown dropdown-end relative">
+                            <div
+                                tabIndex={0}
+                                role="button"
+                                className="m-1 cursor-pointer relative"
+                                onClick={toggleNotificationDropdown}
+                            >
+                                <i className="bi bi-bell font-bold text-xl" onClick={readNotifications}></i>
+                                {hasUnreadNotifications && (
+                                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                                )}
+                            </div>
+                            {isNotificationDropdownOpen && (
+                                <div className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-80 p-2 shadow absolute right-0">
+                                    <h3 className="font-bold text-lg mb-2 px-3">Notifications</h3>
+                                    <div className="max-h-80 overflow-y-auto">
+                                        {hasNotifications ? (
+                                            notificationsData.map((notification, index) => (
+                                                <div key={index} className="p-3 border-b border-gray-200 last:border-b-0">
+                                                    <p className="text-sm font-semibold">{notification.title}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{notification.created_at}</p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm p-3">No new notifications</p>
+                                        )}
+                                    </div>
+                                    {hasNotifications && (
+                                        <Link to="/user/dash/notifications" className="text-blue-500 text-sm font-semibold p-3 block text-center hover:bg-gray-100 rounded-b-lg">
+                                            View all activity
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+
+                        {/**settings and profile drop down*/}
                         <div className="dropdown dropdown-end">
 
                             <div

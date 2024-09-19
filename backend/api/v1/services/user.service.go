@@ -43,14 +43,15 @@ var (
 )
 
 type UserService struct {
-	userRepo         *repository.UserRepository
-	otpService       *OTPService
-	planRepo         *repository.PlanRepository
-	subscriptionRepo *repository.SubscriptionRepository
-	billingRepo      *repository.BillingRepository
-	MailUsageRepo    *repository.MailUsageRepository
-	smtpKeyRepo      *repository.SMTPKeyRepository
-	SenderSVC        *SenderServices
+	userRepo             *repository.UserRepository
+	otpService           *OTPService
+	planRepo             *repository.PlanRepository
+	subscriptionRepo     *repository.SubscriptionRepository
+	billingRepo          *repository.BillingRepository
+	MailUsageRepo        *repository.MailUsageRepository
+	smtpKeyRepo          *repository.SMTPKeyRepository
+	SenderSVC            *SenderServices
+	UserNotificationRepo *repository.UserNotificationRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -59,17 +60,18 @@ func NewUserService(userRepo *repository.UserRepository,
 	subscriptionRepo *repository.SubscriptionRepository,
 	billingRepo *repository.BillingRepository,
 	mailUsageRepo *repository.MailUsageRepository,
-	smtpKeyRepo *repository.SMTPKeyRepository, sendersvc *SenderServices,
+	smtpKeyRepo *repository.SMTPKeyRepository, sendersvc *SenderServices, userNotificationRepo *repository.UserNotificationRepository,
 ) *UserService {
 	return &UserService{
-		userRepo:         userRepo,
-		otpService:       otpSvc,
-		planRepo:         planRepo,
-		subscriptionRepo: subscriptionRepo,
-		billingRepo:      billingRepo,
-		MailUsageRepo:    mailUsageRepo,
-		smtpKeyRepo:      smtpKeyRepo,
-		SenderSVC:        sendersvc,
+		userRepo:             userRepo,
+		otpService:           otpSvc,
+		planRepo:             planRepo,
+		subscriptionRepo:     subscriptionRepo,
+		billingRepo:          billingRepo,
+		MailUsageRepo:        mailUsageRepo,
+		smtpKeyRepo:          smtpKeyRepo,
+		SenderSVC:            sendersvc,
+		UserNotificationRepo: userNotificationRepo,
 	}
 }
 
@@ -547,4 +549,22 @@ func (s *UserService) AddCredential(userID string, credential *model.WebAuthnCre
 
 func (s *UserService) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
 	return s.userRepo.GetCredentials(userID)
+}
+
+func (s *UserService) GetAllNotifications(userId string) ([]model.UserNotificationResponse, error) {
+	usernotifications, err := s.UserNotificationRepo.GetAllUserNotification(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return usernotifications, err
+}
+
+func (s *UserService) UpdateReadStatus(userId string) error {
+	if err := s.UserNotificationRepo.UpdateReadStatus(userId); err != nil {
+		return err
+	}
+
+	return nil
 }

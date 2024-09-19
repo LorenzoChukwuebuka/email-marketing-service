@@ -29,6 +29,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		repository.NewSMTPkeyRepository,
 		repository.NewSenderRepository,
 		repository.NewDomainRepository,
+		repository.NewUserNotificationRepository,
 	)
 
 	return nil, nil
@@ -179,6 +180,7 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
 		repository.NewDomainRepository,
+		repository.NewUserNotificationRepository,
 	)
 	return nil, nil
 }

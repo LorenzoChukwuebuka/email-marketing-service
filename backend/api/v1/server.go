@@ -157,9 +157,26 @@ func (s *Server) Start() {
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Check if the request is coming from the same origin as the server
+		if r.Header.Get("Origin") == "" {
+			// Same-origin request, no need for CORS headers
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		// For different-origin requests (e.g., during development)
+		allowedOrigins := []string{"http://localhost:5054", "*"}
+		origin := r.Header.Get("Origin")
+
+		for _, allowedOrigin := range allowedOrigins {
+			if origin == allowedOrigin {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				break
+			}
+		}
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)

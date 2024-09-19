@@ -1,5 +1,6 @@
 # Stage 1: Build the Go backend
 FROM golang:1.20 as backend-builder
+
 WORKDIR /app
 
 # Copy the backend source code

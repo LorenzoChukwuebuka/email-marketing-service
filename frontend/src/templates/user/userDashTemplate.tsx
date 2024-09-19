@@ -6,6 +6,7 @@ import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
 import ContactsDashboard from "./components/dashboard/contactsComponent";
 import useDailyUserMailSentCalc from "../../store/userstore/userDashStore";
 
+
 interface UserDetails {
     fullname: string;
 }
@@ -18,7 +19,6 @@ const UserDashboardTemplate: React.FC = () => {
     const navigate = useNavigate();
     const { mailData, getUserMailData } = useDailyUserMailSentCalc();
     const [isLoading, setIsLoading] = useState<boolean>(false)
-
 
     useEffect(() => {
         const cookie = Cookies.get("Cookies");
@@ -44,50 +44,44 @@ const UserDashboardTemplate: React.FC = () => {
 
     }, [getUserMailData]);
 
-
-
     const handleSendCampaign = () => navigate('/user/dash/campaign');
     const handleCreateContact = () => navigate('/user/dash/contacts');
     const handleCreateEmailTemplate = () => navigate('/user/dash/templates');
-
+    const handleUpgrade = () => navigate('/user/dash/billing')
 
     return (
         <>
-
             {isLoading ? (<div className="flex items-center justify-center mt-20">
                 <span className="loading loading-spinner loading-lg"></span>
-            </div>) : (<>
+            </div>) : (
+                <>
+                    <div className=" mt-2 p-6 flex items-center">
+                        <h2 className="text-2xl font-bold mb-2">Welcome {userName}
+                            <span>  {mailData?.plan === 'free' || 'Free' ? (
+                                <>
+                                    <button className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border  rounded-md transition-colors" onClick={handleUpgrade} >
+                                        Upgrade
+                                    </button>
+                                </>
+                            ) : (
+                                <span className="ml-2 text-sm font-normal text-gray-600">{mailData?.plan}</span>
+                            )}
+                            </span>
+                        </h2>
 
-
-                <div className=" mt-2 p-6 flex items-center">
-                    <h2 className="text-2xl font-bold mb-2">Welcome {userName}  </h2>
-
-                    <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
-                        <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
-                        <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
-                        <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                        <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
+                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
+                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
+                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                        </div>
                     </div>
-                </div>
-                {/* <div className="p-6 mt-1 mb-2">
-                {mailData?.plan === 'free' || 'Free' ? (
-                    <>
-                        <span className="ml-2 text-sm font-normal text-gray-600">Free Plan</span>
-                        <button className="ml-4 px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                            Upgrade
-                        </button>
-                    </>
-                ) : (
-                    <span className="ml-2 text-sm font-normal text-gray-600">{mailData?.plan}</span>
-                )}
 
-            </div> */}
+                    <OverviewStats />
+                    <RecentCampaigns />
+                    <ContactsDashboard />
 
-                <OverviewStats />
-                <RecentCampaigns />
-                <ContactsDashboard />
-
-            </>)}
-
+                </>
+            )}
 
         </>
     );
