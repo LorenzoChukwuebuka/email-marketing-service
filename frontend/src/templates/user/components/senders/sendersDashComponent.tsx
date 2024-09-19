@@ -1,6 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSenderStore from "../../../../store/userstore/senderStore";
 import EmptyState from "../../../../components/emptyStateComponent";
+import EditSenderComponent from "./editSendersComponent";
+import { Sender } from "../../../../store/userstore/senderStore";
+
+
 
 type Props = {
     email: string;
@@ -77,6 +81,8 @@ const EmailCard = ({ email, name, dkim, dkimSigned, dmarc, verified, verificatio
 
 const SendersDashComponent: React.FC = () => {
     const { getSenders, senderData, deleteSender } = useSenderStore();
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedSender, setSelectedSender] = useState<Sender | null>(null);
 
     useEffect(() => {
         const fetchSender = async () => {
@@ -85,9 +91,11 @@ const SendersDashComponent: React.FC = () => {
         fetchSender();
     }, [getSenders]);
 
-    const handleEdit = (email: string) => {
-        console.log(`Edit ${email}`);
-        // Logic to handle editing the email
+
+
+    const handleEdit = (sender: Sender) => {
+        setSelectedSender(sender);
+        setIsEditModalOpen(true);
     };
 
     const handleDelete = async (id: string) => {
@@ -97,9 +105,14 @@ const SendersDashComponent: React.FC = () => {
             await deleteSender(id);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        await getSenders()
+        await getSenders();
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setSelectedSender(null);
     };
 
     return (
@@ -118,7 +131,7 @@ const SendersDashComponent: React.FC = () => {
                             dmarc={sender.is_signed ? "Dmarc is verified" : "Freemail domain is not recommended ⚠️"}
                             verified={sender.verified}
                             verificationText={`${sender.email} has been verified.`}
-                            onEdit={() => handleEdit(sender.uuid)}
+                            onEdit={() => handleEdit(sender)}
                             onDelete={() => handleDelete(sender.uuid)}
                         />
                     ))}
@@ -130,8 +143,17 @@ const SendersDashComponent: React.FC = () => {
                     icon={<i className="bi bi-emoji-frown text-xl"></i>}
                 />
             )}
+
+            {selectedSender && (
+                <EditSenderComponent
+                    isOpen={isEditModalOpen}
+                    onClose={handleCloseEditModal}
+                    Sender={selectedSender}
+                />
+            )}
         </div>
     );
 }
+
 
 export default SendersDashComponent;

@@ -114,11 +114,6 @@ func (s *Session) Data(r io.Reader) error {
 		debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
 		log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
 
-		// // Store the email for IMAP access
-		// if err := s.smtpKeyRepo.StoreEmail(s.from, s.to, b); err != nil {
-		// 	return fmt.Errorf("error storing email: %w", err)
-		// }
-
 		// Store the email for IMAP access
 		username := strings.Split(s.from, "@")[0] // Example: extract username from `from` address
 		mailbox := "INBOX"                        // Assume all emails go to INBOX

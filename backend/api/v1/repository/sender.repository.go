@@ -99,6 +99,37 @@ func (r *SenderRepository) DeleteSender(uuid string, userId string) error {
 	return nil
 }
 
+func (r *SenderRepository) FindSenderByEmail(email string, userId string) (*model.Sender, error) {
+	var sender model.Sender
+	// Query the sender by email and user ID
+	result := r.DB.Where("email = ? AND user_id = ?", email, userId).First(&sender)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("sender not found")
+		}
+		return nil, result.Error
+	}
+	return &sender, nil
+}
+
 func (r *SenderRepository) UpdateSender(d *model.Sender) error {
+	// Perform the update using GORM's Save method
+	result := r.DB.Model(&model.Sender{}).Where("uuid = ? AND user_id = ?", d.UUID, d.UserID).Updates(map[string]interface{}{
+		"name":      d.Name,
+		"email":     d.Email,
+		"verified":  d.Verified,
+		"is_signed": d.IsSigned,
+	})
+
+	// Check for any errors during the update
+	if result.Error != nil {
+		return fmt.Errorf("failed to update sender: %w", result.Error)
+	}
+
+	// If no rows were affected, return an error indicating no record was found
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no sender record found to update")
+	}
+
 	return nil
 }

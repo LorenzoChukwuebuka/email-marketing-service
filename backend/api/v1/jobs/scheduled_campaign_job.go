@@ -18,7 +18,8 @@ func NewSendScheduledCampaignJobs(db *gorm.DB) *SendScheduledCampaignJobs {
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	domainRepository := repository.NewDomainRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository)
+	userNotification := repository.NewUserNotificationRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository,userNotification)
 	return &SendScheduledCampaignJobs{
 		campaignSVC: campaignService,
 	}

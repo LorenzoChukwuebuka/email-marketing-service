@@ -16,7 +16,7 @@ type ContactController struct {
 	ContactService   *services.ContactService
 	UserRepo         *repository.UserRepository
 	SubscriptionRepo *repository.SubscriptionRepository
-	//Response *utils.ApiResponse
+	
 }
 
 func NewContactController(contactsvc *services.ContactService, userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *ContactController {
@@ -24,7 +24,7 @@ func NewContactController(contactsvc *services.ContactService, userRepo *reposit
 		ContactService:   contactsvc,
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
-		//Response : &utils.ApiResponse{},
+		
 	}
 }
 
@@ -45,18 +45,14 @@ func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request
 	}
 
 	reqdata.UserId = userId
-
 	result, err := c.ContactService.CreateContact(&reqdata)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
-//will have to revisit this again
 
 func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
@@ -64,7 +60,6 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 		response.ErrorResponse(w, "Invalid claims")
 		return
 	}
-
 	userId := claims["userId"].(string)
 
 	userModel := &model.User{UUID: userId}
@@ -120,7 +115,6 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 	}
 
 	response.SuccessResponse(w, http.StatusOK, "Contacts uploaded successfully")
-
 }
 
 func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Request) {
@@ -360,7 +354,6 @@ func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Re
 	}
 
 	response.SuccessResponse(w, 200, "group deleted successfully")
-
 }
 
 func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.Request) {
@@ -387,16 +380,12 @@ func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.R
 		response.ErrorResponse(w, "Invalid page size")
 		return
 	}
-
 	result, err := c.ContactService.GetAllContactGroups(userId, page, pageSize, searchQuery)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r *http.Request) {

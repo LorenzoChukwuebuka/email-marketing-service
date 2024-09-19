@@ -27,7 +27,7 @@ import React, { useEffect, useState } from 'react';
 import Cookies from "js-cookie";
 import { Link } from "react-router-dom";
 import { ArrowRight, Mail, Zap, Shield, Users, ChevronDown, Menu, X } from 'lucide-react';
-import mailpicture from "./../../assets/crab-mailer.svg"
+import mailpicture from "./../../assets/dashboard.jpg"
 
 const IndexLandingPage = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -62,12 +62,28 @@ const IndexLandingPage = () => {
     };
 
 
+    const plans = [
+        { name: 'Basic', price: '29', features: ['Feature 1', 'Feature 2', 'Feature 3'] },
+        { name: 'Pro', price: '79', features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'] },
+        { name: 'Enterprise', price: '199', features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'] }
+    ];
+
+
+
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
 
     return (
         <div className="min-h-screen  flex flex-col bg-gray-50">
             <header className="bg-white py-4 shadow-sm sticky top-0 z-50">
                 <div className="container mx-auto px-4 flex justify-between items-center">
-                    <div className="text-2xl font-bold text-blue-600">CrabMailer</div>
+
+                    <h1 className="text-center text-2xl font-bold">
+                        <span className="text-indigo-700">{firstFourLetters}</span>
+                        <span className="text-gray-700">{remainingLetters}</span>
+                        <i className="bi bi-mailbox2-flag text-indigo-700 ml-2"></i>
+                    </h1>
                     <nav className="hidden md:flex space-x-6">
                         <a href="#features" className="text-gray-600 hover:text-gray-800">Features</a>
                         {/* <a href="#testimonials" className="text-gray-600 hover:text-gray-800">Testimonials</a> */}
@@ -78,10 +94,10 @@ const IndexLandingPage = () => {
                         {!isAuthenticated ? (
                             <>
                                 <Link to="/auth/login" className="text-gray-600 hover:text-gray-800 px-3 py-2">Login</Link>
-                                <Link to="/auth/sign-up" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">Sign up</Link>
+                                <Link to="/auth/sign-up" className="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">Sign up</Link>
                             </>
                         ) : (
-                            <Link to="/user/dash" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">My Dashboard</Link>
+                            <Link to="/user/dash" className="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">My Dashboard</Link>
                         )}
                     </div>
                     <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -114,7 +130,7 @@ const IndexLandingPage = () => {
                             </Link>
                         </div>
                         <div className="md:w-1/2">
-                            <img src={mailpicture} alt="Email marketing illustration" className="rounded-lg w-[70%] h-[70%] shadow-xl" />
+                            <img src={mailpicture} alt="Email marketing illustration" className="rounded-lg w-[80%] h-[70%] shadow-xl" />
                         </div>
                     </div>
                 </section>
@@ -158,20 +174,26 @@ const IndexLandingPage = () => {
 
                 {/* Pricing Section */}
                 <section id="pricing" className="py-20 bg-white">
-                    <div className="container mx-auto px-8">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Simple, Transparent Pricing</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {['Basic', 'Pro', 'Enterprise'].map((plan, index) => (
+                            {plans.map((plan, index) => (
                                 <div key={index} className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-                                    <h3 className="text-2xl font-bold mb-4">{plan}</h3>
-                                    <p className="text-4xl font-bold mb-6">&#8358;
-                                        {index === 0 ? '29' : index === 1 ? '79' : '199'}<span className="text-lg font-normal text-gray-500">/mo</span></p>
-                                    <ul className="mb-8">
-                                        <li className="flex items-center mb-2"><ArrowRight className="w-4 h-4 mr-2 text-green-500" /> Feature 1</li>
-                                        <li className="flex items-center mb-2"><ArrowRight className="w-4 h-4 mr-2 text-green-500" /> Feature 2</li>
-                                        <li className="flex items-center mb-2"><ArrowRight className="w-4 h-4 mr-2 text-green-500" /> Feature 3</li>
+                                    <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
+                                    <p className="text-4xl font-bold mb-6">
+                                        &#8358;{plan.price}<span className="text-lg font-normal text-gray-500">/mo</span>
+                                    </p>
+                                    <ul className="mb-8 space-y-2">
+                                        {plan.features.map((feature, featureIndex) => (
+                                            <li key={featureIndex} className="flex items-center">
+                                                <ArrowRight className="w-4 h-4 mr-2 text-green-500" />
+                                                {feature}
+                                            </li>
+                                        ))}
                                     </ul>
-                                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition duration-300">Choose Plan</button>
+                                    <button className="w-full bg-blue-900 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-300">
+                                        Choose Plan
+                                    </button>
                                 </div>
                             ))}
                         </div>

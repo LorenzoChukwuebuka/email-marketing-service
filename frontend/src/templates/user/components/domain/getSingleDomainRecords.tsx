@@ -123,6 +123,20 @@ const DNSAuthenticationRecords: React.FC = () => {
                 value={domainD?.dmarc_record as string}
             />
 
+            <RecordInput
+                label="SPF record"
+                type="TXT"
+                recordNamePlaceholder="@"
+                value={domainD?.spf_record as string}
+            />
+
+            <RecordInput
+                label="Mx record"
+                type="TXT"
+                recordNamePlaceholder="@"
+                value={domainD?.mx_record as string}
+            />
+
             <div className="flex justify-between items-center mt-4">
                 <button className="py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition duration-200" onClick={(e) => authenticate(e)}>
                     Authenticate Domain

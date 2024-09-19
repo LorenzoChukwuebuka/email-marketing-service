@@ -15,6 +15,7 @@ import AnalyticsTemplateDash from "../templates/user/Analytics/AnalyticsTemplate
 import HelpAndSupport from "../templates/supportAndTicket/HelpAndSupport";
 import DomainTemplateDash from "../templates/user/SettingsTemplate/domainsTemplatedash";
 import DNSAuthenticationRecords from "../templates/user/components/domain/getSingleDomainRecords";
+import NotificationList from "../templates/user/notifications/notificationDashTemplate";
 
 const UserDashRoute = () => (
     <Routes>
@@ -42,6 +43,7 @@ const UserDashRoute = () => (
             <Route path="support" element={<HelpAndSupport />} />
             <Route path="settings/domain" element={<DomainTemplateDash />} />
             <Route path="settings/domain/records/:id" element={<DNSAuthenticationRecords />} />
+            <Route path="notifications" element={<NotificationList/>} />
         </Route>
 
     </Routes>

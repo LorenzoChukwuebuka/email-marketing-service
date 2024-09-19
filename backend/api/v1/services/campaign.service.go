@@ -26,11 +26,12 @@ type CampaignService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	UserRepo         *repository.UserRepository
 	DomainRepo       *repository.DomainRepository
+	UserNotification *repository.UserNotificationRepository
 }
 
 func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo *repository.ContactRepository,
 	templateRepo *repository.TemplateRepository, mailusageRepo *repository.MailUsageRepository,
-	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository, domainRepo *repository.DomainRepository) *CampaignService {
+	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository, domainRepo *repository.DomainRepository, userNotification *repository.UserNotificationRepository) *CampaignService {
 	return &CampaignService{
 		CampaignRepo:     campaignRepo,
 		ContactRepo:      contactRepo,
@@ -39,6 +40,7 @@ func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
 		DomainRepo:       domainRepo,
+		UserNotification: userNotification,
 	}
 }
 
@@ -65,6 +67,11 @@ func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interfa
 
 	if err != nil {
 		return nil, err
+	}
+
+	notificationTitle := fmt.Sprintf("Campaign %s has been successfully saved as draft", d.Name)
+	if err := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); err != nil {
+		fmt.Printf("Failed to create notification: %v\n", err)
 	}
 
 	return map[string]interface{}{
@@ -188,13 +195,14 @@ func (s *CampaignService) DeleteCampaign(campaignId string, userId string) error
 }
 
 func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool) error {
+	// Initial checks and validations
 	campaignG, err := s.CampaignRepo.GetSingleCampaign(d.UserId, d.CampaignId)
 	if err != nil {
 		return err
 	}
 
 	if campaignG.SentAt != nil {
-		return fmt.Errorf("you have sent this campaign")
+		return fmt.Errorf("you have already sent this campaign")
 	}
 
 	// Check if the campaign is scheduled and not due yet
@@ -209,6 +217,40 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 		}
 	}
 
+	// Update campaign status to "Queued"
+	err = s.updateCampaignStatus(d.CampaignId, "Queued", d.UserId)
+	if err != nil {
+		return err
+	}
+
+	// Start the sending process in a goroutine
+	go func() {
+		if err := s.processCampaign(d, campaignG); err != nil {
+			log.Printf("Error processing campaign: %v", err)
+			if updateErr := s.updateCampaignStatus(d.CampaignId, "Failed", d.UserId); updateErr != nil {
+				log.Printf("Failed to update campaign status to Failed: %v", updateErr)
+			}
+
+			notificationTitle := fmt.Sprintf("Campaign '%s' failed to send", campaignG.Name)
+			if notifErr := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); notifErr != nil {
+				log.Printf("Failed to create notification: %v", notifErr)
+			}
+		} else {
+			if updateErr := s.updateCampaignStatus(d.CampaignId, "Sent", d.UserId); updateErr != nil {
+				log.Printf("Failed to update campaign status to Sent: %v", updateErr)
+			}
+
+			notificationTitle := fmt.Sprintf("Campaign '%s' was sent successfully", campaignG.Name)
+			if notifErr := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); notifErr != nil {
+				log.Printf("Failed to create notification: %v", notifErr)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (s *CampaignService) processCampaign(d *dto.SendCampaignDTO, campaignG *model.CampaignResponse) error {
 	var groupIds []int
 	for _, group := range campaignG.CampaignGroups {
 		groupIds = append(groupIds, int(group.GroupId))
@@ -221,11 +263,9 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 			return err
 		}
 		for _, contact := range getContactsFromGroup.Contacts {
-
 			if !contact.IsSubscribed {
 				contacts = append(contacts, contact.Email)
 			}
-
 		}
 	}
 
@@ -313,14 +353,6 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 
 	// Check for any errors from the goroutines
 	for err := range errChan {
-		// If there's an error, update campaign status to "Failed"
-		s.updateCampaignStatus(d.CampaignId, "Failed", d.UserId)
-		return err
-	}
-
-	// Update campaign status to "Sent"
-	err = s.updateCampaignStatus(d.CampaignId, "Sent", d.UserId)
-	if err != nil {
 		return err
 	}
 

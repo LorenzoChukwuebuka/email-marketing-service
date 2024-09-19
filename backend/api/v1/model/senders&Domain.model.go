@@ -23,6 +23,7 @@ type Domains struct {
 	DKIMSelector   string `json:"dkim_selector"`
 	DKIMPublicKey  string `json:"dkim_public_key"`
 	DKIMPrivateKey string `json:"dkim_private_key"`
+	SPFRecord      string `json:"spf_record"`
 	Verified       bool   `json:"verified"`
 	MXRecord       string `gorm:"type:text"`
 }
@@ -50,6 +51,7 @@ type DomainsResponse struct {
 	DKIMSelector   string  `json:"dkim_selector"`
 	DKIMPublicKey  string  `json:"dkim_public_key"`
 	DKIMPrivateKey string  `json:"-"`
+	SPFRecord      string  `json:"spf_record"`
 	Verified       bool    `json:"verified"`
 	MXRecord       string  `json:"mx_record"`
 	CreatedAt      string  `json:"created_at"`

@@ -2,14 +2,15 @@ package smtp_server
 
 import (
 	"context"
+	//"crypto/tls"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"log"
 	//"os"
+	"time"
 	"github.com/emersion/go-smtp"
 	"gorm.io/gorm"
-	"time"
 )
 
 // StartSMTPServer starts the SMTP server and listens for shutdown signals
@@ -38,7 +39,15 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 	s.ReadTimeout = 600 * time.Second
 	s.MaxMessageBytes = 1024 * 1024
 	s.MaxRecipients = 50
-	s.AllowInsecureAuth = false
+	s.AllowInsecureAuth = true
+
+	// cert, err := tls.LoadX509KeyPair("/etc/letsencrypt/live/yourdomain.com/fullchain.pem", "/etc/letsencrypt/live/yourdomain.com/privkey.pem")
+	// if err != nil {
+	// 	log.Fatalf("Failed to load TLS certificate: %v", err)
+	// }
+	// s.TLSConfig = &tls.Config{
+	// 	Certificates: []tls.Certificate{cert},
+	// }
 
 	log.Println("Starting SMTP server at", s.Addr)
 

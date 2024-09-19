@@ -66,6 +66,7 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 	dmarcRecord := s.generateDMARCRecord(d.Domain)
 	dkimSelector := s.generateDKIMSelector()
 	dkimPublicKey, dkimPrivateKey, err := s.generateDKIMKeys()
+	spfRecord := s.generateSPFRecord(d.Domain)
 	mxRecord := s.generateMXRecord(d.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate DKIM keys: %v", err)
@@ -88,6 +89,11 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 			RecordName: fmt.Sprintf("%s._domainkey", dkimSelector),
 			Value:      fmt.Sprintf("v=DKIM1; k=rsa; p=%s", dkimPublicKey),
 		},
+		{
+			Type:       "TXT",
+			RecordName: "@",
+			Value:      spfRecord, // Add SPF record
+		},
 
 		mxRecord,
 	}
@@ -104,6 +110,7 @@ func (s *DomainService) CreateDomain(d *dto.DomainDTO) (map[string]interface{}, 
 	domainModel.DKIMSelector = dkimSelector
 	domainModel.DKIMPublicKey = dkimPublicKey
 	domainModel.DKIMPrivateKey = dkimPrivateKey
+	domainModel.SPFRecord = spfRecord
 	domainModel.MXRecord = fmt.Sprintf("mail.%s", d.Domain)
 	if err := s.DomainRepo.CreateDomain(domainModel); err != nil {
 		return nil, err
@@ -224,6 +231,11 @@ func formatPublicKeyForDKIM(publicKey string) string {
 	return strings.Join(chunks, "\" \"")
 }
 
+func (s *DomainService) generateSPFRecord(domain string) string {
+	// SPF policy: include the mail server, and allow only this server to send mail for the domain
+	return fmt.Sprintf("v=spf1 include:mail.%s ~all", domain)
+}
+
 func (s *DomainService) generateDownloadableRecords(domain string, records []DNSRecord) (string, error) {
 	tmpl := `Domain: {{.Domain}}
 
@@ -299,6 +311,21 @@ func (s *DomainService) InitiateVerification(domainID string) (bool, error) {
 	return verified, nil
 }
 
+func (s *DomainService) verifySPFRecord(domain, expectedRecord string) (bool, error) {
+	records, err := net.LookupTXT(domain)
+	if err != nil {
+		return false, err
+	}
+
+	for _, record := range records {
+		if strings.HasPrefix(record, "v=spf1") && record == expectedRecord {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (s *DomainService) VerifyDNSRecords(domain *model.DomainsResponse) (bool, error) {
 	txtVerified, err := s.verifyTXTRecord(domain.Domain, domain.TXTRecord)
 	if err != nil {
@@ -334,6 +361,14 @@ func (s *DomainService) VerifyDNSRecords(domain *model.DomainsResponse) (bool, e
 
 	if !mxVerified {
 		return false, fmt.Errorf("MX record verification failed")
+	}
+
+	spfVerified, err := s.verifySPFRecord(domain.Domain, domain.SPFRecord)
+	if err != nil {
+		return false, err
+	}
+	if !spfVerified {
+		return false, fmt.Errorf("SPF record verification failed")
 	}
 
 	return true, nil

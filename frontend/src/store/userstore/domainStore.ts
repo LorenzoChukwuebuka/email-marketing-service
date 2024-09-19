@@ -14,6 +14,8 @@ export type DomainRecord = {
     dmarc_record: string;
     dkim_selector: string;
     dkim_public_key: string;
+    spf_record: string;
+    mx_record: string
     verified: boolean;
 } & BaseEntity;
 
