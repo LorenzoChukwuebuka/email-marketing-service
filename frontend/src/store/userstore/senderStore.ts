@@ -105,7 +105,21 @@ const useSenderStore = create<SenderStore>((set, get) => ({
 
     updateSender: async (id: string, data: Partial<Sender>) => {
 
+        try {
+            let response = await axiosInstance.put<ResponseT>("/sender/update-sender/" + id, data)
 
+            if (response.data.status === true) {
+                eventBus.emit('success', "Sender updated successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
 
     },
 

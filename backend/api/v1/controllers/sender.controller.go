@@ -114,11 +114,24 @@ func (c *SenderController) UpdateSender(w http.ResponseWriter, r *http.Request) 
 
 	userId := claims["userId"].(string)
 
+	vars := mux.Vars(r)
+
+	senderId := vars["senderId"]
+
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
 
 	reqdata.UserID = userId
+
+	reqdata.SenderId = senderId
+
+	if err := c.SenderSVC.UpdateSender(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "sender updated successfully")
 
 }

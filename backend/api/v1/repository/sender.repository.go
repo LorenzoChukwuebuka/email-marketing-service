@@ -99,10 +99,10 @@ func (r *SenderRepository) DeleteSender(uuid string, userId string) error {
 	return nil
 }
 
-func (r *SenderRepository) FindSenderByEmail(email string, userId string) (*model.Sender, error) {
+func (r *SenderRepository) FindSenderByID(id string, userId string) (*model.Sender, error) {
 	var sender model.Sender
 	// Query the sender by email and user ID
-	result := r.DB.Where("email = ? AND user_id = ?", email, userId).First(&sender)
+	result := r.DB.Where("uuid = ? AND user_id = ?", id, userId).First(&sender)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("sender not found")
