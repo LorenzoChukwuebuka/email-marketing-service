@@ -124,7 +124,7 @@ func (s *SenderServices) UpdateSender(d *dto.SenderDTO) error {
 	domainName := emailParts[1]
 
 	// Retrieve the existing sender
-	existingSender, err := s.SenderRepo.FindSenderByEmail(d.Email, d.UserID)
+	existingSender, err := s.SenderRepo.FindSenderByID(d.SenderId, d.UserID)
 	if err != nil {
 		if err.Error() == "sender not found" {
 			return errors.New("sender not found")

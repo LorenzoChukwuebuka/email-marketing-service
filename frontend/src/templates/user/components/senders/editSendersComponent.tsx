@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from "../../../../components";
-import { Sender } from "../../../../store/userstore/senderStore";
+import useSenderStore, { Sender } from "../../../../store/userstore/senderStore";
 
 type Props = {
     isOpen: boolean;
@@ -13,6 +13,8 @@ const EditSenderComponent: React.FC<Props> = ({ isOpen, onClose, Sender }) => {
         name: Sender.name,
         email: Sender.email
     });
+
+    const { updateSender, getSenders } = useSenderStore()
 
     useEffect(() => {
         // Update local state when Sender prop changes
@@ -27,12 +29,12 @@ const EditSenderComponent: React.FC<Props> = ({ isOpen, onClose, Sender }) => {
         setFormValues(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission here
-        console.log('Submitting:', formValues);
-        // You would typically call an update function from your store here
+        await updateSender(Sender.uuid, formValues)
         onClose();
+        await new Promise(resolve => setTimeout(resolve, 500))
+        await getSenders()
     };
 
     return (
