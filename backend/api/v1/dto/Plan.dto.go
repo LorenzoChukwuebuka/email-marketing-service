@@ -3,8 +3,8 @@ package dto
 type PlanStatus string
 
 const (
-	StatusActive   Status = "active"
-	StatusInactive Status = "inactive"
+	StatusActive   PlanStatus = "active"
+	StatusInactive PlanStatus = "inactive"
 )
 
 type Plan struct {

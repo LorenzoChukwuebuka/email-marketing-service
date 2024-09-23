@@ -44,7 +44,7 @@ const UserDashLayout: React.FC = () => {
     const hasUnreadNotifications = hasNotifications && notificationsData.some(notification => notification.read_status === false);
 
     const getLinkClassName = (path: string): string => {
-        const baseClass = "mb-4 text-center text-lg font-semibold";
+        const baseClass = "mb-2 text-center text-lg font-semibold";
         const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
         const inactiveClass =
             "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
@@ -90,10 +90,10 @@ const UserDashLayout: React.FC = () => {
     const remainingLetters = apiName.slice(4);
 
     const readNotifications = async () => {
-        if(hasUnreadNotifications){
+        if (hasUnreadNotifications) {
             await updateReadStatus()
         }
-       
+
     }
 
     useEffect(() => {
@@ -350,7 +350,7 @@ const UserDashLayout: React.FC = () => {
 
 
                         {/**settings and profile drop down*/}
-                        <div className="dropdown dropdown-end">
+                        <div className="dropdown dropdown-end relative">
 
                             <div
                                 tabIndex={0}
@@ -364,7 +364,7 @@ const UserDashLayout: React.FC = () => {
                             {isDropdownOpen && (
                                 <ul
                                     tabIndex={0}
-                                    className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-52 p-2 shadow"
+                                    className="dropdown-content menu bg-white rounded-box z-[50] mt-4 w-60 p-2 shadow"
                                 >
                                     <li>
                                         <div className="flex flex-col items-center">

@@ -5,13 +5,15 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
+	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -43,15 +45,16 @@ var (
 )
 
 type UserService struct {
-	userRepo             *repository.UserRepository
-	otpService           *OTPService
-	planRepo             *repository.PlanRepository
-	subscriptionRepo     *repository.SubscriptionRepository
-	billingRepo          *repository.BillingRepository
-	MailUsageRepo        *repository.MailUsageRepository
-	smtpKeyRepo          *repository.SMTPKeyRepository
-	SenderSVC            *SenderServices
-	UserNotificationRepo *repository.UserNotificationRepository
+	userRepo              *repository.UserRepository
+	otpService            *OTPService
+	planRepo              *repository.PlanRepository
+	subscriptionRepo      *repository.SubscriptionRepository
+	billingRepo           *repository.BillingRepository
+	MailUsageRepo         *repository.MailUsageRepository
+	smtpKeyRepo           *repository.SMTPKeyRepository
+	SenderSVC             *SenderServices
+	UserNotificationRepo  *repository.UserNotificationRepository
+	AdminNotificationRepo *adminrepository.AdminNotificationRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -60,18 +63,22 @@ func NewUserService(userRepo *repository.UserRepository,
 	subscriptionRepo *repository.SubscriptionRepository,
 	billingRepo *repository.BillingRepository,
 	mailUsageRepo *repository.MailUsageRepository,
-	smtpKeyRepo *repository.SMTPKeyRepository, sendersvc *SenderServices, userNotificationRepo *repository.UserNotificationRepository,
+	smtpKeyRepo *repository.SMTPKeyRepository,
+	sendersvc *SenderServices,
+	userNotificationRepo *repository.UserNotificationRepository,
+	adminNotificationRepo *adminrepository.AdminNotificationRepository,
 ) *UserService {
 	return &UserService{
-		userRepo:             userRepo,
-		otpService:           otpSvc,
-		planRepo:             planRepo,
-		subscriptionRepo:     subscriptionRepo,
-		billingRepo:          billingRepo,
-		MailUsageRepo:        mailUsageRepo,
-		smtpKeyRepo:          smtpKeyRepo,
-		SenderSVC:            sendersvc,
-		UserNotificationRepo: userNotificationRepo,
+		userRepo:              userRepo,
+		otpService:            otpSvc,
+		planRepo:              planRepo,
+		subscriptionRepo:      subscriptionRepo,
+		billingRepo:           billingRepo,
+		MailUsageRepo:         mailUsageRepo,
+		smtpKeyRepo:           smtpKeyRepo,
+		SenderSVC:             sendersvc,
+		UserNotificationRepo:  userNotificationRepo,
+		AdminNotificationRepo: adminNotificationRepo,
 	}
 }
 
@@ -127,6 +134,13 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	if err := s.createTempEmailForUser(user.UUID, user.Email); err != nil {
 		tx.Rollback()
 		return nil, err
+	}
+
+	notificationTitle := fmt.Sprintf("A new member %s has registered", d.FullName)
+	link := fmt.Sprintf("/zen/dash/users/detail/%s", user.UUID)
+	if err := utils.CreateAdminNotifications(s.AdminNotificationRepo, user.UUID, link, notificationTitle); err != nil {
+		tx.Rollback()
+		fmt.Printf("Failed to create notification: %v\n", err)
 	}
 
 	if err := tx.Commit().Error; err != nil {

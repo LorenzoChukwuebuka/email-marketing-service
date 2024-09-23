@@ -31,7 +31,8 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	senderRepository := repository.NewSenderRepository(db)
 	senderServices := services.NewSenderServices(domainRepository, senderRepository)
 	userNotificationRepository := repository.NewUserNotificationRepository(db)
-	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository, senderServices, userNotificationRepository)
+	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
+	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository, senderServices, userNotificationRepository, adminNotificationRepository)
 	userController := controllers.NewUserController(userService)
 	return userController, nil
 }
@@ -113,14 +114,6 @@ func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, e
 	return adminControllerAdminController, nil
 }
 
-func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
-	supportRepository := repository.NewSupportRepository(db)
-	userRepository := repository.NewUserRepository(db)
-	supportTicketService := services.NewSupportTicketService(supportRepository, userRepository)
-	supportTicketController := controllers.NewTicketController(supportTicketService)
-	return supportTicketController, nil
-}
-
 func InitializeContactController(db *gorm.DB) (*controllers.ContactController, error) {
 	contactRepository := repository.NewContactRepository(db)
 	contactService := services.NewContactService(contactRepository)
@@ -167,4 +160,21 @@ func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, err
 	senderServices := services.NewSenderServices(domainRepository, senderRepository)
 	senderController := controllers.NewSenderController(senderServices)
 	return senderController, nil
+}
+
+func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
+	supportRepository := repository.NewSupportRepository(db)
+	userRepository := repository.NewUserRepository(db)
+	userNotificationRepository := repository.NewUserNotificationRepository(db)
+	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
+	supportTicketService := services.NewSupportTicketService(supportRepository, userRepository, userNotificationRepository, adminNotificationRepository)
+	supportTicketController := controllers.NewSupportTicketController(supportTicketService)
+	return supportTicketController, nil
+}
+
+func InitializeAdminUsersController(db *gorm.DB) (*adminController.AdminUsersController, error) {
+	adminUsersRepository := adminrepository.NewAdminUsersRepository(db)
+	adminUsers := adminservice.NewAdminUsersService(adminUsersRepository)
+	adminUsersController := adminController.NewAdminUsersController(adminUsers)
+	return adminUsersController, nil
 }
