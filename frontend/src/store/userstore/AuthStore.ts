@@ -26,7 +26,7 @@ type ResetPasswordValues = Pick<FormValues, 'email' | 'confirmPassword' | 'passw
 
 type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | 'token'>;
 
-type UserDetails = {
+export type UserDetails = {
     fullname: string
     email: string
     company: string
@@ -163,37 +163,6 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         try {
             setIsLoading(true)
             const { formValues } = get()
-            // const options: CredentialCreationOptions = {
-            //     publicKey: {
-            //         challenge: new Uint8Array(32), // Example challenge
-            //         rp: {
-            //             name: "Example RP",
-            //             id: "example.com",
-            //         },
-            //         user: {
-            //             id: new Uint8Array(32), // Example user ID
-            //             name: "user@example.com",
-            //             displayName: "Example User",
-            //         },
-            //         pubKeyCredParams: [
-            //             {
-            //                 alg: -7, // ES256 algorithm
-            //                 type: "public-key",
-            //             },
-            //         ],
-            //         authenticatorSelection: {
-            //             authenticatorAttachment: "platform",
-            //             userVerification: "preferred",
-            //         },
-            //         timeout: 60000,
-            //         attestation: "direct", // Must be one of the allowed values
-            //     },
-            // };
-
-            // let credential = await navigator.credentials.create(options)
-
-            // console.log(credential)
-
             let response = await axiosInstance.post('/user-signup', formValues)
             if (response.data.status === true) {
                 eventBus.emit(

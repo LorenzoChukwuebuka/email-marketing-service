@@ -45,6 +45,8 @@ const useUserNotificationStore = create<UserNotificationStore>((set, get) => ({
     updateReadStatus: async () => {
         try {
             await axiosInstance.put("/update-read-status")
+            new Promise(resolve => setTimeout(resolve, 500))
+            get().getUserNotifications()
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data?.payload);

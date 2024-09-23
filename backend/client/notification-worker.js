@@ -46,7 +46,7 @@ function startNotificationCheck() {
       })
       .then(data => {
         if (data.status === true) {
-          console.log('Notifications received:', data.payload);
+        //  console.log('Notifications received:', data.payload);
           self.clients.matchAll().then(clients => {
             clients.forEach(client => {
               client.postMessage({

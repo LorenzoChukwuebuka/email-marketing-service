@@ -30,6 +30,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		repository.NewSenderRepository,
 		repository.NewDomainRepository,
 		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
 	)
 
 	return nil, nil
@@ -133,17 +134,6 @@ func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, e
 	return nil, nil
 }
 
-func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
-	wire.Build(
-		controllers.NewTicketController,
-		services.NewSupportTicketService,
-		repository.NewSupportRepository,
-		repository.NewUserRepository,
-	)
-
-	return nil, nil
-}
-
 func InitializeContactController(db *gorm.DB) (*controllers.ContactController, error) {
 	wire.Build(
 		controllers.NewContactController,
@@ -203,4 +193,29 @@ func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, err
 	)
 
 	return nil, nil
+}
+
+func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
+	wire.Build(
+		controllers.NewSupportTicketController,
+		services.NewSupportTicketService,
+		repository.NewSupportRepository,
+		repository.NewUserRepository,
+		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
+	)
+
+	return nil, nil
+}
+
+
+func InitializeAdminUsersController(db *gorm.DB)(*adminController.AdminUsersController,error){
+	wire.Build(
+		adminController.NewAdminUsersController,
+		adminservice.NewAdminUsersService,
+		adminrepository.NewAdminUsersRepository,
+
+	)
+
+	return nil,nil
 }

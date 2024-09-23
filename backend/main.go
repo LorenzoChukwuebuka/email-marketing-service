@@ -4,7 +4,6 @@ import (
 	"context"
 	"email-marketing-service/api/v1"
 	"email-marketing-service/api/v1/database"
-	"email-marketing-service/api/v1/dto"
 	smtp_server "email-marketing-service/smtp"
 	"log"
 	"os"
@@ -16,8 +15,6 @@ import (
 
 
 func main() {
-	dto.InitValidate()
-
 	dbConn, err := database.InitDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)

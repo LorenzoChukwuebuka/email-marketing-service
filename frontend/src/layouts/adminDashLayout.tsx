@@ -9,7 +9,7 @@ const AdminDashLayout: React.FC = () => {
     const navigate = useNavigate();
 
     const getLinkClassName = (path: string): string => {
-        const baseClass = "mb-4 text-center text-lg font-semibold";
+        const baseClass = "mb-2 text-center text-lg font-semibold";
         const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
         const inactiveClass = "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
 
@@ -25,6 +25,11 @@ const AdminDashLayout: React.FC = () => {
     const toggleSettingsDropdown = () => {
         setSettingsDropdownOpen(prevState => !prevState);
     };
+
+    //for the name
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
 
     const Logout = () => {
         const confirmResult = window.confirm("Do you want to logout?");
@@ -60,7 +65,8 @@ const AdminDashLayout: React.FC = () => {
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
                         <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            CrabMailer
+                            <span>{firstFourLetters}</span>
+                            <span className="text-blue-500">{remainingLetters}</span> <i className="bi bi-mailbox2-flag text-blue-500"></i>
                         </h2>
                         <ul className="mt-12 w-full">
                             <li className={getLinkClassName("/zen/dash")}>
@@ -87,49 +93,33 @@ const AdminDashLayout: React.FC = () => {
                                     <i className="bi bi-people-fill"></i> &nbsp; Users
                                 </Link>
                             </li>
-                            {/* <li className={`${getLinkClassName("")} relative`}>
-                <button
-                  onClick={toggleSettingsDropdown}
-                  className="flex items-center w-full justify-between"
-                >
-                  <span className="flex font-semibold text-base items-center">
-                    <i className="bi bi-gear mr-2"></i> Settings
-                  </span>
-                  <i
-                    className={`bi ${
-                      settingsDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
-                    } ml-2`}
-                  ></i>
-                </button>
-                {settingsDropdownOpen && (
-                  <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        User Management
-                      </Link>
-                    </li>
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        API Tokens
-                      </Link>
-                    </li>
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        Account Settings
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li> */}
+                            <li className={getLinkClassName("/zen/dash/support")}>
+                                <Link
+                                    to="/zen/dash/support"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-headset"></i> &nbsp; Support
+                                </Link>
+                            </li>
+
+                            <li className={getLinkClassName("/zen/dash/analytics")}>
+                                <Link
+                                    to="/zen/dash/analytics"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-people-fill"></i> &nbsp; Analytics
+                                </Link>
+                            </li>
+
+                            <li className={getLinkClassName("/zen/dash/analytics")}>
+                                <Link
+                                    to="/zen/dash/analytics"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-people-fill"></i> &nbsp; Billing
+                                </Link>
+                            </li>
+
                         </ul>
                     </nav>
                 )}
@@ -146,6 +136,10 @@ const AdminDashLayout: React.FC = () => {
                         <span style={{ fontSize: "24px" }}>{sidebarOpen ? "≡" : "☰"}</span>
                     </button>
                     <h1 className="text-xl font-semibold">Home</h1>
+                    {/* <div className="space-x-4 flex items-center">
+
+                        d
+                    </div> */}
                     <button
                         className="hover:bg-blue-200 hover:rounded-btn hover:text-blue-500 font-semibold p-1"
                         onClick={Logout}

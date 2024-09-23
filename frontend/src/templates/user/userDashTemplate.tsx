@@ -56,16 +56,23 @@ const UserDashboardTemplate: React.FC = () => {
             </div>) : (
                 <>
                     <div className=" mt-2 p-6 flex items-center">
-                        <h2 className="text-2xl font-bold mb-2">Welcome {userName}
-                            <span>  {mailData?.plan === 'free' || 'Free' ? (
-                                <>
-                                    <button className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border  rounded-md transition-colors" onClick={handleUpgrade} >
-                                        Upgrade
-                                    </button>
-                                </>
-                            ) : (
-                                <span className="ml-2 text-sm font-normal text-gray-600">{mailData?.plan}</span>
-                            )}
+                        <h2 className="text-2xl font-bold mb-2">
+                            Welcome {userName}
+                            <span>
+                                {mailData?.plan?.toLowerCase() === 'free' ? (
+                                    <>
+                                        <button
+                                            className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors"
+                                            onClick={handleUpgrade}
+                                        >
+                                            Upgrade
+                                        </button>
+                                    </>
+                                ) : (
+                                    <span className="ml-2 text-sm font-normal text-gray-600">
+                                        
+                                    </span>
+                                )}
                             </span>
                         </h2>
 

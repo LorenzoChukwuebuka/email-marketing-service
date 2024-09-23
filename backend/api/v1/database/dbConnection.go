@@ -69,7 +69,8 @@ func autoMigrateModels() {
 		&model.Billing{},
 		&adminmodel.Admin{},
 		&model.SupportTicket{},
-		&model.TicketFiles{},
+		&model.TicketFile{},
+		&model.TicketMessage{},
 		&model.SentEmails{},
 		&model.KnowledgeBaseArticle{},
 		&model.KnowledgeBaseCategory{},
@@ -90,6 +91,7 @@ func autoMigrateModels() {
 		&model.WebAuthnCredential{},
 		&model.EmailBox{},
 		&model.UserNotification{},
+		&adminmodel.AdminNotification{},
 	)
 
 	if err != nil {

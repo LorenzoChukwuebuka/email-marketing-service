@@ -160,6 +160,11 @@ func (s *CampaignService) UpdateCampaign(d *dto.CampaignDTO) error {
 		return err
 	}
 
+	notificationTitle := fmt.Sprintf("Campaign %s has been updated successfully", d.Name)
+	if err := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); err != nil {
+		fmt.Printf("Failed to create notification: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -188,9 +193,20 @@ func (s *CampaignService) AddOrEditCampaignGroup(d *dto.CampaignGroupDTO) error 
 }
 
 func (s *CampaignService) DeleteCampaign(campaignId string, userId string) error {
+	getCampaign, err := s.CampaignRepo.GetSingleCampaign(userId, campaignId)
+	if err != nil {
+		return err
+	}
+
+	notificationTitle := fmt.Sprintf("Campaign %s has been deleted successfully", getCampaign.Name)
+	if err := utils.CreateNotification(s.UserNotification, userId, notificationTitle); err != nil {
+		fmt.Printf("Failed to create notification: %v\n", err)
+	}
+
 	if err := s.CampaignRepo.DeleteCampaign(campaignId, userId); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -236,7 +252,7 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 				log.Printf("Failed to create notification: %v", notifErr)
 			}
 		} else {
-			if updateErr := s.updateCampaignStatus(d.CampaignId, "Sent", d.UserId); updateErr != nil {
+			if updateErr := s.updateCampaignStatus(d.CampaignId, string(model.Sent), d.UserId); updateErr != nil {
 				log.Printf("Failed to update campaign status to Sent: %v", updateErr)
 			}
 

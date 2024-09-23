@@ -16,6 +16,8 @@ import HelpAndSupport from "../templates/supportAndTicket/HelpAndSupport";
 import DomainTemplateDash from "../templates/user/SettingsTemplate/domainsTemplatedash";
 import DNSAuthenticationRecords from "../templates/user/components/domain/getSingleDomainRecords";
 import NotificationList from "../templates/user/notifications/notificationDashTemplate";
+import SupportRequestForm from "../templates/supportAndTicket/components/ticket/createSupportTicket";
+import TicketDetails from "../templates/supportAndTicket/components/ticket/ticketDetails";
 
 const UserDashRoute = () => (
     <Routes>
@@ -41,9 +43,11 @@ const UserDashRoute = () => (
             <Route path="campaign/report/:id" element={<CampaignReport />} />
             <Route path="analytics" element={<AnalyticsTemplateDash />} />
             <Route path="support" element={<HelpAndSupport />} />
+            <Route path="support/ticket" element={<SupportRequestForm />} />
+            <Route path="support/ticket/details/:id" element={<TicketDetails />} />
             <Route path="settings/domain" element={<DomainTemplateDash />} />
             <Route path="settings/domain/records/:id" element={<DNSAuthenticationRecords />} />
-            <Route path="notifications" element={<NotificationList/>} />
+            <Route path="notifications" element={<NotificationList />} />
         </Route>
 
     </Routes>
