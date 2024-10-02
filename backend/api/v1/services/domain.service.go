@@ -26,6 +26,8 @@ type DNSRecord struct {
 	Priority   int
 }
 
+const Keysize int = 400
+
 type DomainService struct {
 	DomainRepo *repository.DomainRepository
 }
@@ -180,7 +182,7 @@ func (s *DomainService) generateDKIMSelector() string {
 
 func (s *DomainService) generateDKIMKeys() (string, string, error) {
 	// Generate a 2048-bit RSA key pair
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, Keysize)
 	if err != nil {
 		return "", "", err
 	}

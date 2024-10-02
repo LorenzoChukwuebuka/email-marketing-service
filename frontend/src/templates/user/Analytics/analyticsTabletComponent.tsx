@@ -10,9 +10,6 @@ const AnalyticsTableComponent: React.FC = () => {
         const fetchData = async () => {
             await getAllCampaignStats()
         }
-
-
-
         fetchData()
     }, [getAllCampaignStats])
     return <>

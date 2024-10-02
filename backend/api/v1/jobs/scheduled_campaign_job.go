@@ -19,7 +19,7 @@ func NewSendScheduledCampaignJobs(db *gorm.DB) *SendScheduledCampaignJobs {
 	userRepository := repository.NewUserRepository(db)
 	domainRepository := repository.NewDomainRepository(db)
 	userNotification := repository.NewUserNotificationRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository,userNotification)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository, userNotification)
 	return &SendScheduledCampaignJobs{
 		campaignSVC: campaignService,
 	}
@@ -30,5 +30,5 @@ func (j *SendScheduledCampaignJobs) Run() {
 }
 
 func (j *SendScheduledCampaignJobs) Schedule() string {
-	return "*/5 * * * *" // Every 5 minutes
+	return "0 */5 * * * *"
 }

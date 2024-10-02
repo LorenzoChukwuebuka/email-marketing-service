@@ -256,3 +256,20 @@ func (r *AdminUsersRepository) GetUserStats(userID string) (AdminUserStats, erro
 
 	return stats, nil
 }
+
+func (r *AdminUsersRepository) AllUsersEmail() ([]model.UserResponse, error) {
+	var users []model.User
+	result := r.DB.Select("email").Where("verified = ?", true).Find(&users)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// Convert []User to []UserResponse
+	var userResponses []model.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, ConvertUserToUserResponse(user))
+	}
+
+	return userResponses, nil
+}

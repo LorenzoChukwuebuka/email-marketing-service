@@ -372,7 +372,7 @@ const UserDashLayout: React.FC = () => {
                                                 Emails sent: {mailData?.remainingMails}/
                                                 {mailData?.mailsPerDay}
                                             </span>
-                                            <span className="text-black bg-gray-300 rounded-md">
+                                            <span className="text-black bg-gray-300 px-1 py-1 rounded-md">
                                                 Plan: {mailData?.plan}
                                             </span>
                                             {/* <img

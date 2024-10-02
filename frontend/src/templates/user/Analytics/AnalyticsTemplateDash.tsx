@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import useCampaignStore from "../../../store/userstore/campaignStore";
 import AnalyticsTableComponent from "./analyticsTabletComponent";
+import useMetadata from "../../../hooks/useMetaData";
+import { HelmetProvider,Helmet } from "react-helmet-async";
 
 type StatProp = { value: string; label: string }
 
@@ -41,26 +43,31 @@ const AnalyticsTemplateDash: React.FC = () => {
         { value: `${campaignUserStatsData.unique_clicks ?? 0}`, label: 'Total Unique Clicks' },
     ];
 
+    const metaData = useMetadata()("Dashboard")
+
 
     return <>
-        <div className="bg-gray-100 mt-10 mb-5 p-6">
+        <HelmetProvider>
+            <Helmet {...metaData} title="Analytics"/>
+            <div className="bg-gray-100 mt-10 mb-5 p-6">
 
-            <h1 className="font-semibold text-lg   mb-4"> Analytics </h1>
+                <h1 className="font-semibold text-lg   mb-4"> Analytics </h1>
 
-            {isLoading ? <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div> : (
-                <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {stats.map((stat, index) => (
-                            <StatItem key={index} value={stat.value} label={stat.label} />
-                        ))}
-                    </div>
+                {isLoading ? <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div> : (
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {stats.map((stat, index) => (
+                                <StatItem key={index} value={stat.value} label={stat.label} />
+                            ))}
+                        </div>
 
-                    <AnalyticsTableComponent />
-                </>
-            )}
+                        <AnalyticsTableComponent />
+                    </>
+                )}
 
 
-        </div>
+            </div>
+        </HelmetProvider>
     </>
 }
 

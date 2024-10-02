@@ -41,14 +41,34 @@ const RecentCampaigns = () => {
                                         </svg>
                                         Draft
                                     </span>
-                                    <span>Last edit {new Date(campaign?.updated_at as string).toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        second: '2-digit',
-                                    })}</span>
+                                    <span>
+                                        Last edit {(() => {
+                                            const updatedAt = campaign?.updated_at;
+                                            const fallbackDate = campaign?.created_at;
+
+                                            // Remove the " WAT" part and try to parse the date
+                                            const cleanDate = (dateString: string) => dateString?.replace(" WAT", "");
+
+                                            // Parse the updated_at, fallback to created_at if necessary
+                                            const validDate = updatedAt && !isNaN(new Date(cleanDate(updatedAt)).getTime())
+                                                ? cleanDate(updatedAt)
+                                                : cleanDate(fallbackDate);
+
+                                            // Format the date
+                                            return validDate
+                                                ? new Date(validDate).toLocaleDateString('en-GB', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    second: '2-digit',
+                                                })
+                                                : 'Unknown date';
+                                        })()}
+                                    </span>
+
+
                                 </div>
                             </div>
                         </div>

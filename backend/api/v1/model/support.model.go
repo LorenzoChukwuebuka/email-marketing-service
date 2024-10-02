@@ -36,25 +36,25 @@ type SupportTicket struct {
 	Status       SupportStatus   `json:"status" gorm:"default:pending"`
 	Priority     Priority        `json:"priority" gorm:"default:low"`
 	LastReply    *time.Time      `json:"last_reply"`
-	Files        []TicketFile    `gorm:"foreignKey:TicketID" json:"ticket_files"`
 	Messages     []TicketMessage `gorm:"foreignKey:TicketID" json:"messages"`
 }
 
 type TicketFile struct {
 	gorm.Model
-	UUID     string `gorm:"type:uuid;default:uuid_generate_v4();index"`
-	TicketID uint   `json:"ticket_id"`
-	FileName string `json:"file_name" gorm:"size:255"`
-	FilePath string `json:"file_path" gorm:"size:255"`
+	UUID      string `gorm:"type:uuid;default:uuid_generate_v4();index"`
+	MessageID uint   `json:"message_id"`
+	FileName  string `json:"file_name" gorm:"size:255"`
+	FilePath  string `json:"file_path" gorm:"size:255"`
 }
 
 type TicketMessage struct {
 	gorm.Model
-	UUID     string `gorm:"type:uuid;default:uuid_generate_v4();index"`
-	TicketID uint   `json:"ticket_id"`
-	UserID   string `json:"user_id"`
-	Message  string `json:"message" gorm:"type:text"`
-	IsAdmin  bool   `json:"is_admin" gorm:"default:false"`
+	UUID     string       `gorm:"type:uuid;default:uuid_generate_v4();index"`
+	TicketID uint         `json:"ticket_id"`
+	UserID   string       `json:"user_id"`
+	Message  string       `json:"message" gorm:"type:text"`
+	IsAdmin  bool         `json:"is_admin" gorm:"default:false"`
+	Files    []TicketFile `gorm:"foreignKey:MessageID" json:"files"`
 }
 
 // KnowledgeBaseArticle represents an article in the knowledge base
@@ -90,7 +90,6 @@ type SupportTicketResponse struct {
 	Status       SupportStatus           `json:"status"`
 	Priority     Priority                `json:"priority"`
 	LastReply    *time.Time              `json:"last_reply"`
-	Files        []TicketFileResponse    `json:"files"`
 	Messages     []TicketMessageResponse `json:"messages"`
 	CreatedAt    time.Time               `json:"created_at"`
 	UpdatedAt    time.Time               `json:"updated_at"`
@@ -100,6 +99,7 @@ type TicketFileResponse struct {
 	ID        uint      `json:"-"`
 	UUID      string    `json:"uuid"`
 	FileName  string    `json:"file_name"`
+	FilePath  string    `json:"file_path"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -112,4 +112,5 @@ type TicketMessageResponse struct {
 	CreatedAt time.Time                 `json:"created_at"`
 	User      *UserResponse             `json:"user,omitempty"`
 	Admin     *adminmodel.AdminResponse `json:"admin,omitempty"`
+	Files     []TicketFileResponse      `json:"files"`
 }

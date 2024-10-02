@@ -8,6 +8,7 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"golang.org/x/net/html"
 	"log"
@@ -46,6 +47,24 @@ func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo
 
 const BATCH_SIZE = 100
 
+var (
+	ErrInvalidData                = errors.New("invalid data")
+	ErrCampaignAlreadyExists      = errors.New("campaign already exists")
+	ErrCampaignAlreadySent        = errors.New("you have already sent this campaign")
+	ErrInvalidScheduledTime       = errors.New("invalid scheduled time format")
+	ErrExceededPlanLimit          = errors.New("you have exceeded your plan limit")
+	ErrEmptyTemplate              = errors.New("empty template provided")
+	ErrInvalidSenderEmail         = errors.New("invalid sender email format")
+	ErrDomainNotFoundOrUnverified = errors.New("domain not found or not verified")
+	ErrFailedToDecodeDKIMKey      = errors.New("failed to decode DKIM private key")
+	ErrFailedToSignEmail          = errors.New("failed to sign email")
+	ErrFailedToCreateMailFactory  = errors.New("failed to create mail factory")
+	ErrFailedToSendEmail          = errors.New("failed to send email")
+	ErrFailedToParseHTML          = errors.New("failed to parse HTML template")
+	ErrFailedToRenderHTML         = errors.New("failed to render modified HTML")
+	ErrFailedToCommitTransaction  = errors.New("failed to commit transaction")
+)
+
 func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interface{}, error) {
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid  data: %w", err)
@@ -60,7 +79,7 @@ func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interfa
 	}
 
 	if campaignExist {
-		return nil, fmt.Errorf("campaign already exists")
+		return nil, ErrCampaignAlreadyExists
 	}
 
 	saveCampaign, err := s.CampaignRepo.CreateCampaign(campaignModel)
@@ -218,7 +237,7 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 	}
 
 	if campaignG.SentAt != nil {
-		return fmt.Errorf("you have already sent this campaign")
+		return ErrCampaignAlreadySent
 	}
 
 	// Check if the campaign is scheduled and not due yet

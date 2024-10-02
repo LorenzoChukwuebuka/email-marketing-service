@@ -5,6 +5,8 @@ import OverviewStats from "./components/dashboard/overviewStatscomponent";
 import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
 import ContactsDashboard from "./components/dashboard/contactsComponent";
 import useDailyUserMailSentCalc from "../../store/userstore/userDashStore";
+import useMetadata from "../../hooks/useMetaData";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 
 interface UserDetails {
@@ -49,46 +51,56 @@ const UserDashboardTemplate: React.FC = () => {
     const handleCreateEmailTemplate = () => navigate('/user/dash/templates');
     const handleUpgrade = () => navigate('/user/dash/billing')
 
+    const metaData = useMetadata()("Dashboard")
+
     return (
         <>
-            {isLoading ? (<div className="flex items-center justify-center mt-20">
-                <span className="loading loading-spinner loading-lg"></span>
-            </div>) : (
-                <>
-                    <div className=" mt-2 p-6 flex items-center">
-                        <h2 className="text-2xl font-bold mb-2">
-                            Welcome {userName}
-                            <span>
-                                {mailData?.plan?.toLowerCase() === 'free' ? (
-                                    <>
-                                        <button
-                                            className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors"
-                                            onClick={handleUpgrade}
-                                        >
-                                            Upgrade
-                                        </button>
-                                    </>
-                                ) : (
-                                    <span className="ml-2 text-sm font-normal text-gray-600">
-                                        
-                                    </span>
-                                )}
-                            </span>
-                        </h2>
+            <HelmetProvider>
 
-                        <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
-                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
-                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
-                            <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                <Helmet {...metaData}
+                    title={`Welcome ${userName} - Crabmailer`}
+                />
+
+                {isLoading ? (<div className="flex items-center justify-center mt-20">
+                    <span className="loading loading-spinner loading-lg"></span>
+                </div>) : (
+                    <>
+                        <div className=" mt-2 p-6 flex items-center">
+                            <h2 className="text-2xl font-bold mb-2">
+                                Welcome {userName}
+                                <span>
+                                    {mailData?.plan?.toLowerCase() === 'free' ? (
+                                        <>
+                                            <button
+                                                className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors"
+                                                onClick={handleUpgrade}
+                                            >
+                                                Upgrade
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="ml-2 text-sm font-normal text-gray-600">
+
+                                        </span>
+                                    )}
+                                </span>
+                            </h2>
+
+                            <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                            </div>
                         </div>
-                    </div>
 
-                    <OverviewStats />
-                    <RecentCampaigns />
-                    <ContactsDashboard />
+                        <OverviewStats />
+                        <RecentCampaigns />
+                        <ContactsDashboard />
 
-                </>
-            )}
+                    </>
+                )}
+
+            </HelmetProvider>
 
         </>
     );

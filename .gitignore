@@ -27,4 +27,6 @@ go.work
 #air
 tmp
 
+out
+
 requests.log

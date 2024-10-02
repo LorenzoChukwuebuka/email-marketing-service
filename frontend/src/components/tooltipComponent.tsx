@@ -1,47 +1,33 @@
 import React, { useState } from 'react';
-import { InfoIcon } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
-interface AuthenticationStatusProps {
-    status: string;
-    statusColor: 'green' | 'red' | 'yellow';
-    tooltipTitle: string;
-    tooltipContent: React.ReactNode;
+type Props = {
+    text: string
+    icon?: any
+    iconSize?: number
+    iconColor?: any
 }
 
-const AuthenticationStatus: React.FC<AuthenticationStatusProps> = ({
-    status,
-    statusColor,
-    tooltipTitle,
-    tooltipContent
-}) => {
-    const [showTooltip, setShowTooltip] = useState(false);
-
-    const colorClasses = {
-        green: 'bg-green-100 text-green-800',
-        red: 'bg-red-100 text-red-800',
-        yellow: 'bg-yellow-100 text-yellow-800'
-    };
+const CustomTooltip = ({ text, icon: Icon = HelpCircle, iconSize = 20, iconColor = "currentColor" }: Props) => {
+    const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
     return (
-        <div className="relative inline-flex items-center space-x-2">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[statusColor]}`}>
-                {status}
-            </span>
-            <div
-                className="relative"
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-            >
-                <InfoIcon size={16} className="text-gray-500 cursor-help" />
-                {showTooltip && (
-                    <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 w-64 p-4 bg-white rounded-lg shadow-lg text-sm text-gray-700 z-10">
-                        <p className="font-semibold mb-2">{tooltipTitle}</p>
-                        {tooltipContent}
-                    </div>
-                )}
-            </div>
+        <div className="relative inline-block">
+            <Icon
+                size={iconSize}
+                color={iconColor}
+                className="cursor-pointer"
+                onMouseEnter={() => setIsTooltipVisible(true)}
+                onMouseLeave={() => setIsTooltipVisible(false)}
+            />
+            {isTooltipVisible && (
+                <div className="absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm tooltip dark:bg-gray-700 -top-10 left-1/2 transform -translate-x-1/2">
+                    {text}
+                    <div className="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            )}
         </div>
     );
 };
 
-export default AuthenticationStatus;
+export default CustomTooltip;

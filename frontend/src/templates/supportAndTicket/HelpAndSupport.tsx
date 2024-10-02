@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Book, HelpCircle, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 
 const HelpAndSupport: React.FC = () => {
     return (
@@ -49,17 +50,22 @@ type Props = { icon: any; title: string; description: string; link: string }
 
 const SupportCard = ({ icon, title, description, link }: Props) => {
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-            <div className="flex items-center mb-4">
-                {icon}
-                <h2 className="text-xl font-semibold text-gray-800 ml-3">{title}</h2>
+        <HelmetProvider>
+            <Helmet title="Help and support - CrabMailer" />
+
+
+            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center mb-4">
+                    {icon}
+                    <h2 className="text-xl font-semibold text-gray-800 ml-3">{title}</h2>
+                </div>
+                <Link to={link}>
+
+                    <p className="text-gray-600">{description}</p>
+
+                </Link>
             </div>
-            <Link to={link}>
-
-                <p className="text-gray-600">{description}</p>
-
-            </Link>
-        </div>
+        </HelmetProvider>
     );
 };
 

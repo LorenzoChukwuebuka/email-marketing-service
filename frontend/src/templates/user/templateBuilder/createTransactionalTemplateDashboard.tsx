@@ -89,7 +89,7 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
 
             {activeTab === "Templates Gallery" && (
                 <>
-                    Nothing here
+                   Coming soon
                 </>
             )}
 

@@ -23,11 +23,11 @@ const (
 )
 
 type CreateSupportTicketRequest struct {
-	Subject     string                `form:"subject" validate:"required,max=255"`
-	Description string                `form:"description" `
-	Priority    Priority              `form:"priority" validate:"required,validpriority"`
-	Message     string                `form:"message" validate:"required"`
-	File        *multipart.FileHeader `form:"file"`
+	Subject     string                  `form:"subject" validate:"required,max=255"`
+	Description string                  `form:"description" `
+	Priority    Priority                `form:"priority" validate:"required,validpriority"`
+	Message     string                  `form:"message" validate:"required"`
+	File        []*multipart.FileHeader `form:"file"`
 }
 
 type CreateSupportTicketResponse struct {
@@ -36,8 +36,8 @@ type CreateSupportTicketResponse struct {
 }
 
 type ReplyTicketRequest struct {
-	Message string                `form:"message" validate:"required"`
-	File    *multipart.FileHeader `form:"file"`
+	Message string                  `form:"message" validate:"required"`
+	File    []*multipart.FileHeader `form:"file"`
 }
 
 type ReplyTicketResponse struct {
