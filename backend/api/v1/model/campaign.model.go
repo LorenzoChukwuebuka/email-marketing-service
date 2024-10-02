@@ -16,6 +16,7 @@ const (
 	Sent        CampaignStatus = "sent"
 	FailedC     CampaignStatus = "failed"
 	Proccessing CampaignStatus = "proccessing"
+	Suspended   CampaignStatus = "suspended"
 )
 
 const (

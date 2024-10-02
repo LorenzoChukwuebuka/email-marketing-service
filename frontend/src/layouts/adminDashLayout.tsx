@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 const AdminDashLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [settingsDropdownOpen, setSettingsDropdownOpen] = useState<boolean>(false);
+    const [manageUsersDropdownOpen, setManageUsersDropdownOpen] = useState<boolean>(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -24,6 +25,10 @@ const AdminDashLayout: React.FC = () => {
 
     const toggleSettingsDropdown = () => {
         setSettingsDropdownOpen(prevState => !prevState);
+    };
+
+    const toggleManageUsersDropdown = () => {
+        setManageUsersDropdownOpen(prevState => !prevState);
     };
 
     //for the name
@@ -85,13 +90,28 @@ const AdminDashLayout: React.FC = () => {
                                     <i className="bi bi-bar-chart-fill mr-2"></i> Plans
                                 </Link>
                             </li>
-                            <li className={getLinkClassName("/zen/dash/users")}>
-                                <Link
-                                    to="/zen/dash/users"
-                                    className="flex font-semibold text-base items-center"
+                            <li className={`${getLinkClassName("/zen/dash/users")} relative`}>
+                                <button
+                                    onClick={toggleManageUsersDropdown}
+                                    className="flex font-semibold text-base items-center w-full"
                                 >
-                                    <i className="bi bi-people-fill"></i> &nbsp; Users
-                                </Link>
+                                    <i className="bi bi-people-fill"></i> &nbsp; Manage Users
+                                    <i className={`bi ${manageUsersDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'} ml-auto`}></i>
+                                </button>
+                                {manageUsersDropdownOpen && (
+                                    <ul className="pl-4 mt-2">
+                                        <li className={getLinkClassName("/zen/dash/users")}>
+                                            <Link to="/zen/dash/users" className="flex font-semibold text-sm items-center">
+                                                Users
+                                            </Link>
+                                        </li>
+                                        <li className={getLinkClassName("/zen/dash/email-users")}>
+                                            <Link to="/zen/dash/email-users" className="flex font-semibold text-sm items-center">
+                                                Email All Users
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                )}
                             </li>
                             <li className={getLinkClassName("/zen/dash/support")}>
                                 <Link
@@ -101,7 +121,6 @@ const AdminDashLayout: React.FC = () => {
                                     <i className="bi bi-headset"></i> &nbsp; Support
                                 </Link>
                             </li>
-
                             <li className={getLinkClassName("/zen/dash/analytics")}>
                                 <Link
                                     to="/zen/dash/analytics"
@@ -110,16 +129,14 @@ const AdminDashLayout: React.FC = () => {
                                     <i className="bi bi-people-fill"></i> &nbsp; Analytics
                                 </Link>
                             </li>
-
-                            <li className={getLinkClassName("/zen/dash/analytics")}>
+                            <li className={getLinkClassName("/zen/dash/billing")}>
                                 <Link
-                                    to="/zen/dash/analytics"
+                                    to="/zen/dash/billing"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-people-fill"></i> &nbsp; Billing
+                                    <i className="bi bi-credit-card"></i> &nbsp; Billing
                                 </Link>
                             </li>
-
                         </ul>
                     </nav>
                 )}
@@ -136,10 +153,6 @@ const AdminDashLayout: React.FC = () => {
                         <span style={{ fontSize: "24px" }}>{sidebarOpen ? "≡" : "☰"}</span>
                     </button>
                     <h1 className="text-xl font-semibold">Home</h1>
-                    {/* <div className="space-x-4 flex items-center">
-
-                        d
-                    </div> */}
                     <button
                         className="hover:bg-blue-200 hover:rounded-btn hover:text-blue-500 font-semibold p-1"
                         onClick={Logout}

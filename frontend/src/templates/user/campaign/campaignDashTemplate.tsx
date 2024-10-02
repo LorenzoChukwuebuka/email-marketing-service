@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import GetAllCampaignComponent from "../components/campaign/getAllCampaignsComponent";
 import GetScheduledCampaignComponent from "../components/campaign/getScheduledCampaignsComponent";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import useMetadata from "../../../hooks/useMetaData";
 
 type TabType = "Campaign" | "Scheduled";
 
@@ -15,32 +17,39 @@ const CampaignDashTemplate: React.FC = () => {
         localStorage.setItem("activeTab", tab);
     };
 
-    return (
-        <div className="p-6 max-w-full">
-            <nav className="flex space-x-8 border-b">
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Campaign"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Campaign")}
-                >
-                    My Campaigns
-                </button>
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Scheduled"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Scheduled")}
-                >
-                    Scheduled
-                </button>
-            </nav>
+    const metaData = useMetadata()("Campaigns")
 
-            {activeTab === "Campaign" && <GetAllCampaignComponent />}
-            {activeTab === "Scheduled" && <GetScheduledCampaignComponent />}
-        </div>
+    return (
+        <HelmetProvider>
+            <Helmet {...metaData}
+                title={activeTab === "Scheduled" ? "Scheduled Campaigns - CrabMailer" : "My Campaigns - CrabMailer"}
+            />
+            <div className="p-6 max-w-full">
+                <nav className="flex space-x-8 border-b">
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Campaign"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Campaign")}
+                    >
+                        My Campaigns
+                    </button>
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Scheduled"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Scheduled")}
+                    >
+                        Scheduled
+                    </button>
+                </nav>
+
+                {activeTab === "Campaign" && <GetAllCampaignComponent />}
+                {activeTab === "Scheduled" && <GetScheduledCampaignComponent />}
+            </div>
+        </HelmetProvider>
     );
 };
 

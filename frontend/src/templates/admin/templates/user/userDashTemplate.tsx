@@ -2,6 +2,7 @@ import { useState } from "react";
 import AllUsersTable from "../components/users/allUserTableComponent";
 import VerifiedUsersTable from "../components/users/verifiedUsersTableComponent";
 import UnVerifiedUsersTable from "../components/users/unverifiedUsersComponent";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 type TabType = "All" | "Verified" | "Unverified";
 const AdminUserDashTemplate = () => {
@@ -16,48 +17,71 @@ const AdminUserDashTemplate = () => {
     };
 
     return <>
-        <div className="p-6 max-w-full">
-            <nav className="flex space-x-8 border-b">
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "All"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("All")}
-                >
-                    All Users
-                </button>
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Verified"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Verified")}
-                >
+        <HelmetProvider>
 
-                    Verified Users
+            <Helmet title={(() => {
+                // Define a mapping of activeTab values to titles
+                const getTitle = () => {
+                    switch (activeTab) {
+                        case "All":
+                            return "All Users";
+                        case "Verified":
+                            return "Verified Users";
+                        case "Unverified":
+                            return "Unverified Users";
+                        default:
+                            return "";
+                    }
+                };
 
-                </button>
+                // Return the computed title
+                return getTitle();
+            })()} />
 
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Unverified"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Unverified")}
-                >
-                    Unverified Users
-                </button>
-            </nav>
+            <div className="p-6 max-w-full">
+                <nav className="flex space-x-8 border-b">
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "All"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("All")}
+                    >
+                        All Users
+                    </button>
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Verified"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Verified")}
+                    >
 
-            {activeTab === "All" && <AllUsersTable />}
+                        Verified Users
 
-            {activeTab === "Verified" && <VerifiedUsersTable />}
+                    </button>
 
-            {activeTab === "Unverified" && <UnVerifiedUsersTable />}
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Unverified"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Unverified")}
+                    >
+                        Unverified Users
+                    </button>
+                </nav>
+
+                {activeTab === "All" && <AllUsersTable />}
+
+                {activeTab === "Verified" && <VerifiedUsersTable />}
+
+                {activeTab === "Unverified" && <UnVerifiedUsersTable />}
 
 
-        </div>
+            </div>
+
+        </HelmetProvider>
 
     </>;
 };

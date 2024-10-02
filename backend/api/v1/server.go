@@ -44,18 +44,20 @@ func (s *Server) setupRoutes() {
 
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.RouteInterface{
-		"":            routes.NewAuthRoute(s.db),
-		"admin":       routes.NewAdminRoute(s.db),
-		"templates":   routes.NewTemplateRoute(s.db),
-		"contact":     routes.NewContactRoute(s.db),
-		"smtpkey":     routes.NewSMTPKeyRoute(s.db),
-		"apikey":      routes.NewAPIKeyRoute(s.db),
-		"campaigns":   routes.NewCampaignRoute(s.db),
-		"domain":      routes.NewDomainRoute(s.db),
-		"sender":      routes.NewSenderRoute(s.db),
-		"transaction": routes.NewTransactionRoute(s.db),
-		"support":     routes.NewSupportRoute(s.db),
-		"admin/users": routes.NewAdminUsersRoute(s.db),
+		"":               routes.NewAuthRoute(s.db),
+		"admin":          routes.NewAdminRoute(s.db),
+		"templates":      routes.NewTemplateRoute(s.db),
+		"contact":        routes.NewContactRoute(s.db),
+		"smtpkey":        routes.NewSMTPKeyRoute(s.db),
+		"apikey":         routes.NewAPIKeyRoute(s.db),
+		"campaigns":      routes.NewCampaignRoute(s.db),
+		"domain":         routes.NewDomainRoute(s.db),
+		"sender":         routes.NewSenderRoute(s.db),
+		"transaction":    routes.NewTransactionRoute(s.db),
+		"support":        routes.NewSupportRoute(s.db),
+		"admin/users":    routes.NewAdminUsersRoute(s.db),
+		"admin/support":  routes.NewAdminSupportRoute(s.db),
+		"admin/campaign": routes.NewAdminCampaignRoute(s.db),
 	}
 
 	for path, route := range routeMap {

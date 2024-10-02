@@ -167,7 +167,8 @@ func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketC
 	userRepository := repository.NewUserRepository(db)
 	userNotificationRepository := repository.NewUserNotificationRepository(db)
 	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
-	supportTicketService := services.NewSupportTicketService(supportRepository, userRepository, userNotificationRepository, adminNotificationRepository)
+	adminRepository := adminrepository.NewAdminRepository(db)
+	supportTicketService := services.NewSupportTicketService(supportRepository, userRepository, userNotificationRepository, adminNotificationRepository, adminRepository)
 	supportTicketController := controllers.NewSupportTicketController(supportTicketService)
 	return supportTicketController, nil
 }
@@ -177,4 +178,21 @@ func InitializeAdminUsersController(db *gorm.DB) (*adminController.AdminUsersCon
 	adminUsers := adminservice.NewAdminUsersService(adminUsersRepository)
 	adminUsersController := adminController.NewAdminUsersController(adminUsers)
 	return adminUsersController, nil
+}
+
+func InitialiazeAdminSupportController(db *gorm.DB) (*adminController.AdminSupportTicketController, error) {
+	adminSupportRepository := adminrepository.NewAdminSupportRepository(db)
+	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
+	userNotificationRepository := repository.NewUserNotificationRepository(db)
+	supportRepository := repository.NewSupportRepository(db)
+	adminSupportService := adminservice.NewAdminSupportService(adminSupportRepository, adminNotificationRepository, userNotificationRepository, supportRepository)
+	adminSupportTicketController := adminController.NewAdminSupportTicketController(adminSupportService)
+	return adminSupportTicketController, nil
+}
+
+func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampaignController, error) {
+	adminCampaignRepository := adminrepository.NewAdminCampaignRepository(db)
+	adminCampaignService := adminservice.NewAdminCampaignService(adminCampaignRepository)
+	adminCampaignController := adminController.NewAdminCampaginController(adminCampaignService)
+	return adminCampaignController, nil
 }

@@ -20,7 +20,6 @@ func main() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-
 	server := v1.NewServer(dbConn)
 
 	ctx, cancel := context.WithCancel(context.Background())

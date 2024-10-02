@@ -17,7 +17,7 @@ import EditorRouter from "./pages/editors/editorRouter";
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
         toast.success(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -30,7 +30,7 @@ const App: React.FC = () => {
 
     const handleError = (message: string) => {
         toast.error(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -43,7 +43,7 @@ const App: React.FC = () => {
 
     const handleInfo = (message: string) => {
         toast.info(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,

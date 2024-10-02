@@ -36,7 +36,7 @@ func JWTEncode(userId string, user_uuid string, username string, email string) (
 	return tokenString, nil
 }
 
-func AdminJWTEncode(userId int, user_uuid string, admintype string, email string) (string, error) {
+func AdminJWTEncode(userId string, user_uuid string, admintype string, email string) (string, error) {
 	LoadEnv()
 	// Create a new token object with claims
 	claims := jwt.MapClaims{

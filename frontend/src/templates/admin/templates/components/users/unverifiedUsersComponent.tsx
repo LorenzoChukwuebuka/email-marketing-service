@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useAdminUserStore, { AdminUserDetails } from '../../../../../store/admin/AdminUser.store';
 import Pagination from '../../../../../components/Pagination';
 import useDebounce from '../../../../../hooks/useDebounce';
+import { useNavigate } from 'react-router-dom';
 
 const UnVerifiedUsersTable: React.FC = () => {
     const { getUnverifiedUsers, userdetailsData, paginationInfo, searchUser } = useAdminUserStore()
@@ -9,6 +10,8 @@ const UnVerifiedUsersTable: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState<string>(""); // New state for search query
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+
+    const navigate = useNavigate()
 
     const handleSearch = (query: string) => {
         setSearchQuery(query)
@@ -165,7 +168,7 @@ const UnVerifiedUsersTable: React.FC = () => {
                                             minute: 'numeric',
                                             second: 'numeric'
                                         }) || "Not verified"}</td>
-                                        <td className="py-4 px-4">   <i className="bi bi-eye"></i></td>
+                                        <td className="py-4 px-4" onClick={() => navigate("/zen/dash/users/detail/" + user.uuid)}>   <i className="bi bi-eye"></i></td>
                                     </tr>
                                 );
                             })

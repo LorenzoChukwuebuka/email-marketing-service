@@ -1,5 +1,18 @@
+import { useEffect } from "react"
+import useAdminSupportStore from "../../../../../store/admin/AdminSupport"
+import Pagination from "../../../../../components/Pagination"
+
 const PendingSupportTicketComponentTable: React.FC = () => {
+    const { getAllPendingTickets, supportData, paginationInfo } = useAdminSupportStore()
     const handleSearch = (query: string) => { }
+
+    const handlePageChange = () => {
+        getAllPendingTickets(paginationInfo.page_size)
+    }
+
+    useEffect(() => {
+        getAllPendingTickets()
+    }, [])
     return <>
 
         <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
@@ -42,39 +55,68 @@ const PendingSupportTicketComponentTable: React.FC = () => {
                         <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Last Reply
                         </th>
+                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            View
+                        </th>
                     </tr>
                 </thead>
 
                 {/* Commenting out the table body as requested */}
-                {/* <tbody className="divide-y divide-gray-200">
-            {Array.isArray(ticketData) && ticketData && ticketData.length > 0 ? (
-                ticketData.map((ticket, index) => {
-                    return (
-                        <tr key={index} className="hover:bg-gray-100">
-                            <td className="py-4 px-4">{ticket?.name}</td>
-                            <td className="py-4 px-4">{ticket?.email}</td>
-                            <td className="py-4 px-4">{ticket?.subject}</td>
-                            <td className="py-4 px-4">{ticket?.description}</td>
-                            <td className="py-4 px-4">{ticket?.ticket_number}</td>
-                            <td className="py-4 px-4">{ticket?.status}</td>
-                            <td className="py-4 px-4">{ticket?.priority}</td>
-                            <td className="py-4 px-4">{ticket?.last_reply}</td>
+                <tbody className="divide-y divide-gray-200">
+                    {Array.isArray(supportData) && supportData && supportData.length > 0 ? (
+                        supportData.map((ticket, index) => {
+                            return (
+                                <tr key={index} className="hover:bg-gray-100">
+                                    <td className="py-4 px-4">{ticket?.name}</td>
+                                    <td className="py-4 px-4">{ticket?.email}</td>
+                                    <td className="py-4 px-4">{ticket?.subject}</td>
+                                    <td className="py-4 px-4">{ticket?.description}</td>
+                                    <td className="py-4 px-4">{"#" + ticket?.ticket_number}</td>
+                                    <td
+                                        className={`py-4 px-4 ${ticket?.status === 'closed' ? 'bg-black text-white' :
+                                            ticket?.status === 'pending' ? 'bg-red-500 text-white' :
+                                                ticket?.status === 'open' ? 'bg-green-500 text-white' :
+                                                    ticket?.status === 'resolved' ? 'bg-green-500 text-white' : ''
+                                            }`}
+                                    >
+                                        {ticket?.status}
+                                    </td>
+
+                                    <td
+                                        className={`py-4 px-4 ${ticket?.priority === 'high' ? 'bg-red-500 text-white' :
+                                            ticket?.priority === 'medium' ? 'bg-yellow-500 text-black' :
+                                                ticket?.priority === 'low' ? 'bg-blue-500 text-white' : '' // Use any suitable color for 'low'
+                                            }`}
+                                    >
+                                        {ticket?.priority}
+                                    </td>
+
+                                    <td className="py-4 px-4">{ticket.last_reply && new Date(ticket.last_reply).toLocaleString('en-US', {
+                                        timeZone: 'UTC',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        second: 'numeric'
+                                    }) || "Not available"}</td>
+                                    <td className="py-4 px-4"> <i className="bi bi-eye"></i> </td>
+                                </tr>
+                            );
+                        })
+                    ) : (
+                        <tr>
+                            <td colSpan={8} className="py-4 px-4 text-center">
+                                No ticket data available
+                            </td>
                         </tr>
-                    );
-                })
-            ) : (
-                <tr>
-                    <td colSpan={8} className="py-4 px-4 text-center">
-                        No ticket data available
-                    </td>
-                </tr>
-            )}
-        </tbody> */}
+                    )}
+                </tbody>
 
             </table>
 
             {/* Commenting out the pagination component as requested */}
-            {/* <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item={"Pending Tickets"} /> */}
+            <Pagination paginationInfo={paginationInfo} handlePageChange={handlePageChange} item={"Pending Tickets"} />
         </div>
 
 

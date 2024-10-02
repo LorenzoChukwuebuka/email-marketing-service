@@ -28,6 +28,7 @@
     "react-dom": "^18.2.0",
     "react-email-editor": "^1.7.11",
     "react-google-recaptcha": "^3.1.0",
+    "react-helmet-async": "^2.0.5",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.23.1",
     "react-toastify": "^10.0.5",
@@ -55,6 +56,6 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.4",
-    "vite": "^5.2.0"
+    "vite": "^5.4.7"
   }
 }

@@ -5,7 +5,6 @@ import (
 	"email-marketing-service/api/v1/services"
 	"github.com/golang-jwt/jwt"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
@@ -44,10 +43,16 @@ func (c *SupportTicketController) CreateTicket(w http.ResponseWriter, r *http.Re
 		Message:     r.FormValue("message"),
 	}
 
-	file, header, err := r.FormFile("file")
-	if err == nil {
-		req.File = header
+	// Retrieve multiple files from form
+	formFiles := r.MultipartForm.File["file"] // "files" should match the form field name
+	for _, header := range formFiles {
+		file, err := header.Open()
+		if err != nil {
+			response.ErrorResponse(w, "Error opening file")
+			return
+		}
 		defer file.Close()
+		req.File = append(req.File, header) // Store file header
 	}
 
 	if err := dto.ValidateCreateSupportTicketRequest(req); err != nil {
@@ -63,6 +68,7 @@ func (c *SupportTicketController) CreateTicket(w http.ResponseWriter, r *http.Re
 
 	response.SuccessResponse(w, http.StatusCreated, res)
 }
+
 
 func (c *SupportTicketController) ReplyTicket(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
@@ -89,10 +95,16 @@ func (c *SupportTicketController) ReplyTicket(w http.ResponseWriter, r *http.Req
 		Message: r.FormValue("message"),
 	}
 
-	file, header, err := r.FormFile("file")
-	if err == nil {
-		req.File = header
+	// Retrieve multiple files from form
+	formFiles := r.MultipartForm.File["file"] // "files" should match the form field name
+	for _, header := range formFiles {
+		file, err := header.Open()
+		if err != nil {
+			response.ErrorResponse(w, "Error opening file")
+			return
+		}
 		defer file.Close()
+		req.File = append(req.File, header) // Store file header
 	}
 
 	if err := dto.ValidateReplyTicketRequest(req); err != nil {
@@ -145,4 +157,16 @@ func (c *SupportTicketController) GetSingleTicket(w http.ResponseWriter, r *http
 	}
 
 	response.SuccessResponse(w, 200, res)
+}
+
+func (c *SupportTicketController) CloseTicket(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	ticketId := vars["ticketId"]
+
+	if err := c.TicketService.CloseTicket(ticketId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+	response.SuccessResponse(w, 200, "you have successfully closed this ticket")
 }

@@ -88,7 +88,7 @@ const CreateMarketingTemplateDashBoard: React.FC = () => {
 
             {activeTab === "Templates Gallery" && (
                 <>
-                    Nothing here
+                    Coming Soon
                 </>
             )}
 

@@ -9,11 +9,10 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
+	"time"
 )
 
 var (
@@ -34,7 +33,7 @@ var (
 
 const (
 	bcryptCost     = 14
-	otpLength      = 8
+	otpLength      = 20
 	successMessage = "Account created successfully. Kindly verify your account"
 	freePlanName   = "free"
 )
@@ -178,9 +177,19 @@ func (s *UserService) createAndSendOTP(user *model.User, otp string) error {
 		return fmt.Errorf("%w: %v", ErrCreatingOTP, err)
 	}
 
-	if err := mailer.SignUpMail(user.Email, user.FullName, user.UUID, otp); err != nil {
-		return fmt.Errorf("%w: %v", ErrSendingEmail, err)
+	errChan := make(chan error)
+
+	go func() {
+		if err := mailer.SignUpMail(user.Email, user.FullName, user.UUID, otp); err != nil {
+			errChan <- fmt.Errorf("%w: %v", ErrSendingEmail, err)
+		}
+		close(errChan)
+	}()
+
+	if err := <-errChan; err != nil {
+		return err
 	}
+
 	return nil
 }
 

@@ -23,7 +23,7 @@ func (f *JobFactory) CreateJobs() []Job {
 }
 
 func SetupCronJobs(db *gorm.DB) *cron.Cron {
-	c := cron.New()
+	c := cron.New(cron.WithSeconds())
 	factory := NewJobFactory(db)
 	jobs := factory.CreateJobs()
 

@@ -5,6 +5,8 @@ import DomainDashboardComponent from "../components/domain/domainDashComponent";
 import { Modal } from "../../../components";
 import useDomainStore from "../../../store/userstore/domainStore";
 import useSenderStore from "../../../store/userstore/senderStore";
+import useMetadata from "../../../hooks/useMetaData";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 type TabType = "Domain" | "Sender"
 
@@ -24,7 +26,7 @@ const DomainTemplateDash: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     const { createDomain, setDomainFormValues, domainformValues, getAllDomain } = useDomainStore();
-    const { createSender, setSenderFormValues, senderFormValues,getSenders } = useSenderStore()
+    const { createSender, setSenderFormValues, senderFormValues, getSenders } = useSenderStore()
 
     useEffect(() => {
         localStorage.setItem("activeTab", activeTab);
@@ -95,136 +97,143 @@ const DomainTemplateDash: React.FC = () => {
         }
     };
 
+    const metaData = useMetadata()("Settings")
+
     return (
-        <div className="p-6 max-w-7xl">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    {activeTab === "Sender" && (
-                        <button
-                            onClick={handleCreateSender}
-                            className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
-                        >
-                            Add Sender
-                        </button>
-                    )}
-                    {activeTab === "Domain" && (
-                        <button
-                            onClick={handleCreateDomain}
-                            className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
-                        >
-                            Add Domain
-                        </button>
-                    )}
-                </div>
-            </div>
 
-            <div className="mb-6">
-                <nav className="flex space-x-4 border-b">
-                    <button
-                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Sender"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
-                            } transition-colors`}
-                        onClick={() => setActiveTab("Sender")}
-                    >
-                        Senders
-                    </button>
-                    <button
-                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Domain"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
-                            } transition-colors`}
-                        onClick={() => setActiveTab("Domain")}
-                    >
-                        Domains
-                    </button>
-                </nav>
-            </div>
+        <HelmetProvider>
 
-            {activeTab === "Sender" && <SendersDashComponent />}
-            {activeTab === "Domain" && <DomainDashboardComponent />}
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={modalContent.title}
-            >
-                <form onSubmit={handleSubmitForm}>
-                    <p className="mb-4 text-gray-600">{modalContent.content}</p>
-                    <div className="mb-4">
-                        <label
-                            htmlFor="name"
-                            className="block text-sm font-medium text-gray-700"
-                        >
-                            {keyType} Name
-                        </label>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={keyType === "Domain" ? domainformValues.domain : senderFormValues.name}
-                            onChange={handleInputChange}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            required
-                        />
+            <Helmet {...metaData} title={activeTab === "Domain" ? "Domains - CrabMailer" : activeTab === "Sender" ? "Sender - CrabMailer" : ""} />
+            <div className="p-6 max-w-7xl">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        {activeTab === "Sender" && (
+                            <button
+                                onClick={handleCreateSender}
+                                className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
+                            >
+                                Add Sender
+                            </button>
+                        )}
+                        {activeTab === "Domain" && (
+                            <button
+                                onClick={handleCreateDomain}
+                                className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
+                            >
+                                Add Domain
+                            </button>
+                        )}
                     </div>
+                </div>
 
+                <div className="mb-6">
+                    <nav className="flex space-x-4 border-b">
+                        <button
+                            className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Sender"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-transparent hover:border-gray-300"
+                                } transition-colors`}
+                            onClick={() => setActiveTab("Sender")}
+                        >
+                            Senders
+                        </button>
+                        <button
+                            className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Domain"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-transparent hover:border-gray-300"
+                                } transition-colors`}
+                            onClick={() => setActiveTab("Domain")}
+                        >
+                            Domains
+                        </button>
+                    </nav>
+                </div>
 
-                    {keyType === "Sender" && (
+                {activeTab === "Sender" && <SendersDashComponent />}
+                {activeTab === "Domain" && <DomainDashboardComponent />}
+
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={modalContent.title}
+                >
+                    <form onSubmit={handleSubmitForm}>
+                        <p className="mb-4 text-gray-600">{modalContent.content}</p>
                         <div className="mb-4">
                             <label
                                 htmlFor="name"
                                 className="block text-sm font-medium text-gray-700"
                             >
-                                {keyType} Email
+                                {keyType} Name
                             </label>
                             <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={senderFormValues.email}
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={keyType === "Domain" ? domainformValues.domain : senderFormValues.name}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                 required
                             />
                         </div>
-                    )}
 
 
+                        {keyType === "Sender" && (
+                            <div className="mb-4">
+                                <label
+                                    htmlFor="name"
+                                    className="block text-sm font-medium text-gray-700"
+                                >
+                                    {keyType} Email
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={senderFormValues.email}
+                                    onChange={handleInputChange}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                    required
+                                />
+                            </div>
+                        )}
+
+
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                                Add {keyType}
+                            </button>
+                        </div>
+                    </form>
+                </Modal>
+
+                <Modal
+                    isOpen={isKeyModalOpen}
+                    onClose={() => setIsKeyModalOpen(false)}
+                    title={modalContent.title}
+                >
+                    <p className="mb-4">{modalContent.content}</p>
                     <div className="flex justify-end space-x-2">
                         <button
-                            type="button"
-                            onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
+                            onClick={() => setIsKeyModalOpen(false)}
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                         >
-                            Add {keyType}
+                            Close
                         </button>
                     </div>
-                </form>
-            </Modal>
-
-            <Modal
-                isOpen={isKeyModalOpen}
-                onClose={() => setIsKeyModalOpen(false)}
-                title={modalContent.title}
-            >
-                <p className="mb-4">{modalContent.content}</p>
-                <div className="flex justify-end space-x-2">
-                    <button
-                        onClick={() => setIsKeyModalOpen(false)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                        Close
-                    </button>
-                </div>
-            </Modal>
-        </div>
+                </Modal>
+            </div>
+        </HelmetProvider>
     );
 };
 

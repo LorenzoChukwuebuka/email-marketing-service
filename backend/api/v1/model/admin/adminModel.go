@@ -25,7 +25,7 @@ type AdminResponse struct {
 	MiddleName *string `json:"middlename"`
 	LastName   *string `json:"lastname"`
 	Email      string  `json:"email"`
-	Password   string  `json:"password"`
+	Password   string  `json:"-"`
 	Type       string  `jsosn:"type"`
 }
 

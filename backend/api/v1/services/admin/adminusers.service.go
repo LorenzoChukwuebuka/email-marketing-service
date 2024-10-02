@@ -4,6 +4,7 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	adminrepository "email-marketing-service/api/v1/repository/admin"
+	"errors"
 )
 
 type AdminUsers struct {
@@ -90,4 +91,16 @@ func (s *AdminUsers) GetUserStats(userId string) (*adminrepository.AdminUserStat
 	}
 
 	return &stats, nil
+}
+
+func (s *AdminUsers) SendEmailToUsers(content string) error {
+
+	if content == "" {
+		return errors.New("the content of the mail is empty")
+	}
+
+	
+
+
+	return nil
 }

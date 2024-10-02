@@ -21,4 +21,5 @@ func (ur *SupportRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/reply-ticket/{ticketId}", middleware.JWTMiddleware(supportTicketController.ReplyTicket)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/get-tickets", middleware.JWTMiddleware(supportTicketController.GetTicketsByUserID)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-ticket/{ticketId}", middleware.JWTMiddleware(supportTicketController.GetSingleTicket)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/close/{ticketId}", middleware.JWTMiddleware(supportTicketController.CloseTicket)).Methods("PUT", "OPTIONS")
 }

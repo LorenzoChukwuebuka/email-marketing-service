@@ -203,19 +203,43 @@ func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketC
 		repository.NewUserRepository,
 		repository.NewUserNotificationRepository,
 		adminrepository.NewAdminNoficationRepository,
+		adminrepository.NewAdminRepository,
 	)
 
 	return nil, nil
 }
 
-
-func InitializeAdminUsersController(db *gorm.DB)(*adminController.AdminUsersController,error){
+func InitializeAdminUsersController(db *gorm.DB) (*adminController.AdminUsersController, error) {
 	wire.Build(
 		adminController.NewAdminUsersController,
 		adminservice.NewAdminUsersService,
 		adminrepository.NewAdminUsersRepository,
-
+		// repository.NewUserNotificationRepository,
+		// adminrepository.NewAdminNoficationRepository,
 	)
 
-	return nil,nil
+	return nil, nil
+}
+
+func InitialiazeAdminSupportController(db *gorm.DB) (*adminController.AdminSupportTicketController, error) {
+	wire.Build(
+		adminController.NewAdminSupportTicketController,
+		adminservice.NewAdminSupportService,
+		adminrepository.NewAdminSupportRepository,
+		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
+		repository.NewSupportRepository,
+	)
+
+	return nil, nil
+}
+
+func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampaignController, error) {
+	wire.Build(
+		adminController.NewAdminCampaginController,
+		adminservice.NewAdminCampaignService,
+		adminrepository.NewAdminCampaignRepository,
+	)
+
+	return nil, nil
 }
