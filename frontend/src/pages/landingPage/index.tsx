@@ -1,24 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import Cookies from "js-cookie";
 import { Link } from "react-router-dom";
 import { ArrowRight, Mail, Zap, Shield, Users, ChevronDown, Menu, X } from 'lucide-react';
 import mailpicture from "./../../assets/dashboard.jpg"
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import useMetadata from '../../hooks/useMetaData';
+import Footer from './footer';
+import NavBar from './navbar';
 
 const IndexLandingPage: React.FC = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [activeAccordion, setActiveAccordion] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    useEffect(() => {
-        const userCookie = Cookies.get("Cookies"); // Replace "Cookies" with the actual name of your cookie
-        if (userCookie) {
-            setIsAuthenticated(true); // Set authenticated if cookie exists
-        } else {
-            setIsAuthenticated(false);
-        }
-    }, []);
+    const [activeAccordion, setActiveAccordion] = useState(null);
 
     const features = [
         { icon: <Mail className="w-8 h-8" />, title: 'Powerful Email Campaigns', description: 'Create and send beautiful, responsive emails that drive results.' },
@@ -44,9 +35,6 @@ const IndexLandingPage: React.FC = () => {
         { name: 'Enterprise', price: '199', features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'] }
     ];
 
-    const apiName = import.meta.env.VITE_API_NAME;
-    const firstFourLetters = apiName.slice(0, 4);
-    const remainingLetters = apiName.slice(4);
 
     const metaData = useMetadata()("LandingPage")
 
@@ -54,57 +42,18 @@ const IndexLandingPage: React.FC = () => {
 
         <HelmetProvider>
             <Helmet {...metaData} />
-            <div className="min-h-screen  flex flex-col bg-gray-50">
-                <header className="bg-white py-4 shadow-sm sticky top-0 z-50">
-                    <div className="container mx-auto px-4 flex justify-between items-center">
-
-                        <h1 className="text-center text-2xl font-bold">
-                            <span className="text-indigo-700">{firstFourLetters}</span>
-                            <span className="text-gray-700">{remainingLetters}</span>
-                            <i className="bi bi-mailbox2-flag text-indigo-700 ml-2"></i>
-                        </h1>
-                        <nav className="hidden md:flex space-x-6">
-                            <a href="#features" className="text-gray-600 hover:text-gray-800">Features</a>
-                            {/* <a href="#testimonials" className="text-gray-600 hover:text-gray-800">Testimonials</a> */}
-                            <a href="#pricing" className="text-gray-600 hover:text-gray-800">Pricing</a>
-                            <a href="#faq" className="text-gray-600 hover:text-gray-800">FAQ</a>
-                        </nav>
-                        <div className="hidden md:flex items-center">
-                            {!isAuthenticated ? (
-                                <>
-                                    <Link to="/auth/login" className="text-gray-600 hover:text-gray-800 px-3 py-2">Login</Link>
-                                    <Link to="/auth/sign-up" className="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">Sign up</Link>
-                                </>
-                            ) : (
-                                <Link to="/user/dash" className="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-md ml-4 transition duration-300">My Dashboard</Link>
-                            )}
-                        </div>
-                        <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
-                    </div>
-                    {isMenuOpen && (
-                        <div className="md:hidden bg-white py-4 px-4">
-                            <a href="#features" className="block py-2 text-gray-600 hover:text-gray-800">Features</a>
-                            <a href="#testimonials" className="block py-2 text-gray-600 hover:text-gray-800">Testimonials</a>
-                            <a href="#pricing" className="block py-2 text-gray-600 hover:text-gray-800">Pricing</a>
-                            <a href="#faq" className="block py-2 text-gray-600 hover:text-gray-800">FAQ</a>
-                            <Link to="/auth/login" className="block py-2 text-gray-600 hover:text-gray-800">Login</Link>
-                            <Link to="/auth/sign-up" className="block py-2 text-blue-600 hover:text-blue-700">Sign up</Link>
-                        </div>
-                    )}
-                </header>
-
+            <div className="min-h-screen landing-page  flex flex-col bg-gray-50">
+                <NavBar />
                 <main className="flex-grow ">
                     {/* Hero Section */}
                     <section className="bg-blue-900 p-4 text-white space-x-5 py-20">
                         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
                             <div className="md:w-1/2 mb-10 md:mb-0">
-                                <h1 className="text-4xl md:text-5xl font-bold mb-6">Supercharge Your Email Marketing</h1>
+                                <h1 className="text-4xl md:text-7xl font-semibold mb-6">Supercharge Your Email Marketing</h1>
                                 <p className="text-xl">Reach your audience, drive conversions, and grow</p>
                                 <p className="text-xl mb-8"> your business with our powerful email marketing platform.</p>
                                 <Link to="/auth/sign-up" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3 rounded-md inline-flex items-center transition duration-300">
-                                    Start Free Trial
+                                    Sign Up
                                     <ArrowRight className="ml-2 w-5 h-5" />
                                 </Link>
                             </div>
@@ -210,54 +159,14 @@ const IndexLandingPage: React.FC = () => {
                             <h2 className="text-3xl font-bold mb-4">Ready to supercharge your email marketing?</h2>
                             <p className="text-xl mb-8">Join thousands of businesses that trust CrabMailer for their email marketing needs.</p>
                             <Link to="/auth/sign-up" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3 rounded-md inline-flex items-center transition duration-300">
-                                Start Your Free Trial
+                                Sign Up
                                 <ArrowRight className="ml-2 w-5 h-5" />
                             </Link>
                         </div>
                     </section>
                 </main>
 
-                <footer className="bg-gray-800 text-white py-12">
-                    <div className="container mx-auto px-4">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Product</h3>
-                                <ul className="space-y-2">
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Features</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Pricing</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Integrations</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Resources</h3>
-                                <ul className="space-y-2">
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Blog</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Help Center</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Guides</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Company</h3>
-                                <ul className="space-y-2">
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">About Us</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Careers</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Contact</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">Legal</h3>
-                                <ul className="space-y-2">
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Privacy Policy</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">Terms of Service</a></li>
-                                    <li><a href="#" className="hover:text-gray-300 transition duration-300">GDPR</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="mt-12 pt-8 border-t border-gray-700 text-center">
-                            <p>&copy; {new Date().getFullYear()} CrabMailer. All rights reserved.</p>
-                        </div>
-                    </div>
-                </footer>
+                <Footer />
             </div>
         </HelmetProvider>
     );

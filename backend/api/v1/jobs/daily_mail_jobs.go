@@ -32,5 +32,5 @@ func (j *DailyFreeMailCalcJob) Run() {
 }
 
 func (j *DailyFreeMailCalcJob) Schedule() string {
-	return "0 0 * * *"
+	return "0 0 0 * * *"
 }

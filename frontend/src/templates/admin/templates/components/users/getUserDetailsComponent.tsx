@@ -39,9 +39,7 @@ const AdminUserDetailComponent = () => {
                             <p className="text-sm">Total Templates Created</p>
                             <p className="text-2xl font-bold">{userStatsData.total_templates}</p>
                         </div>
-                        <a href="#" className="text-xs mt-2 bg-white text-purple-600 px-2 py-1 rounded hover:bg-purple-100 transition-colors duration-200 text-center">
-                            View Templates
-                        </a>
+
                     </div>
 
                     {/* <div className="bg-blue-500 text-white p-4 rounded-lg shadow">
@@ -69,9 +67,7 @@ const AdminUserDetailComponent = () => {
                             <p className="text-sm">Total Groups Created</p>
                             <p className="text-2xl font-bold">{userStatsData.total_groups}</p>
                         </div>
-                        <a href="#" className="text-xs mt-2 bg-white text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition-colors duration-200 text-center">
-                            View Groups
-                        </a>
+
                     </div>
 
                     <div className="bg-purple-600 text-white p-4 rounded-lg shadow">
@@ -79,9 +75,7 @@ const AdminUserDetailComponent = () => {
                             <p className="text-sm">Total Contacts</p>
                             <p className="text-2xl font-bold">{userStatsData.total_contacts}</p>
                         </div>
-                        <a href="#" className="text-xs mt-2 bg-white text-purple-600 px-2 py-1 rounded hover:bg-purple-100 transition-colors duration-200 text-center">
-                            View Contacts
-                        </a>
+
                     </div>
                 </div>
 

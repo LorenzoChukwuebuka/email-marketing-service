@@ -22,9 +22,13 @@ const AdminUserCampaigns: React.FC = () => {
 
     const handleSearch = (query: string) => { }
 
-    const deleteCamp = (uuid: string) => { }
+    const deleteCamp = (uuid: string) => {
+        console.log(uuid)
+    }
 
-    const suspendCampaign = () => { }
+    const suspendCampaign = (uuid: string) => {
+        console.log(uuid)
+    }
 
     const pageTitle = username
         ? `Campaigns for ${username}`
@@ -33,12 +37,34 @@ const AdminUserCampaigns: React.FC = () => {
 
     useEffect(() => {
         getAllUserCampaign(userid as string)
-    }, [getAllUserCampaign])
+    }, [getAllUserCampaign, userid])
 
     return (
         <HelmetProvider>
 
             <Helmet title={pageTitle} />
+
+            <button
+                className="text-blue-600 mr-2"
+                onClick={() => window.history.back()}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                </svg>
+
+
+            </button>
 
             <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
 
@@ -117,14 +143,16 @@ const AdminUserCampaigns: React.FC = () => {
                                                             >
                                                                 <button
                                                                     className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                    onClick={() => navigate(`/zen/dash/users/campaign/${campaign.uuid}`)}
                                                                 >
-                                                                    Suspend
+                                                                    View
                                                                 </button>
                                                                 <button
                                                                     className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                    onClick={() => suspendCampaign(campaign.uuid)}
 
                                                                 >
-                                                                    View Campaign Results
+                                                                    Suspend
                                                                 </button>
                                                                 <button
                                                                     className="block w-full px-4 py-2 text-sm text-red-700 hover:bg-gray-100"

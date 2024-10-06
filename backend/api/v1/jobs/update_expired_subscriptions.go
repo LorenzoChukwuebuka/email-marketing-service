@@ -26,5 +26,5 @@ func (j *UpdateExpiredSubscriptionJob) Run() {
 }
 
 func (j *UpdateExpiredSubscriptionJob) Schedule() string {
-	return "0 0 * * *"
+	return "0 0 0 * * *"
 }
