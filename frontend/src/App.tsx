@@ -13,6 +13,8 @@ import { AdminDashRoute } from "./layouts/adminDashRoute";
 import useTokenExpiration from './hooks/usetokenExpiration';
 import PaymentSuccessPage from "./pages/userDashboard/paymentSuccesspage";
 import EditorRouter from "./pages/editors/editorRouter";
+import PrivacyPolicy from "./pages/landingPage/privacypage";
+import TermsOfService from "./pages/landingPage/tos";
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
@@ -78,6 +80,8 @@ const App: React.FC = () => {
             <ToastContainer />
             <Routes>
                 <Route index element={<IndexLandingPage />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/tos" element={<TermsOfService />} />
                 <Route path="/auth/*" element={<AuthRoute />} />
                 <Route path="/next/*" element={<AdminAuthRoute />} />
 

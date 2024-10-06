@@ -196,3 +196,10 @@ func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampa
 	adminCampaignController := adminController.NewAdminCampaginController(adminCampaignService)
 	return adminCampaignController, nil
 }
+
+func InitializeAdminBillingController(db *gorm.DB) (*adminController.AdminBillingController, error) {
+	adminBillingRepository := adminrepository.NewAdminBillingRepository(db)
+	adminBillingService := adminservice.NewAdminBillingService(adminBillingRepository)
+	adminBillingController := adminController.NewAdminBillingController(adminBillingService)
+	return adminBillingController, nil
+}

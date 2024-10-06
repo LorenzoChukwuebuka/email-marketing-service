@@ -16,6 +16,7 @@ type User struct {
 	Verified    bool       `json:"verified"`
 	Blocked     bool       `json:"blocked" gorm:"default:false"`
 	VerifiedAt  *time.Time `json:"verified_at" gorm:"type:TIMESTAMP;null;default:null"`
+	//Status      string     `json:"status" gorm:"type:varchar(20);default:active"`
 }
 
 type UserResponse struct {

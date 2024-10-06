@@ -40,7 +40,7 @@ const useAdminUserCamapaignStore = create<AdminUserSpecificCampaignStore>((set, 
     // Fetch all campaigns for a specific user
     getAllUserCampaign: async (userId: string, page = 1, pageSize = 10, query = "") => {
         try {
-            let response = await axiosInstance.get("/admin/campaign/user-campaigns/" + userId, {
+            let response = await axiosInstance.get<APIResponse<PaginatedResponse<CampaignData>>>("/admin/campaign/user-campaigns/" + userId, {
                 params: {
                     page: page || undefined,
                     page_size: pageSize || undefined,
@@ -67,7 +67,11 @@ const useAdminUserCamapaignStore = create<AdminUserSpecificCampaignStore>((set, 
     // Fetch details of a single campaign by ID
     getSingleUserCampaign: async (campaignId: string) => {
         try {
+            let response = await axiosInstance.get<APIResponse<CampaignData>>("/admin/campaign/campaign/" + campaignId)
 
+            if (response.data.status === true) {
+                get().setCampaignData(response.data.payload)
+            }
         } catch (error) {
             if (errResponse(error)) {
                 eventBus.emit('error', error?.response?.data.payload)

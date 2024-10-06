@@ -243,3 +243,12 @@ func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampa
 
 	return nil, nil
 }
+
+func InitializeAdminBillingController(db *gorm.DB)(*adminController.AdminBillingController,error){
+	wire.Build(
+		adminController.NewAdminBillingController,
+		adminservice.NewAdminBillingService,
+		adminrepository.NewAdminBillingRepository,
+	)
+	return nil, nil
+}

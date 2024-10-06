@@ -3,6 +3,7 @@ import useAuthStore from "../../store/userstore/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 
+
 const SignUpTemplate: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const { formValues, isLoading, setFormValues, registerUser } = useAuthStore();
@@ -66,8 +67,15 @@ const SignUpTemplate: React.FC = () => {
                         {renderInput("fullname", "Full Name", "text")}
                         {renderInput("email", "Email", "email")}
                         {renderInput("company", "Company", "text")}
-                        {renderInput("password", "Password", "password")}
-                        {renderInput("confirmPassword", "Confirm Password", "password")}
+                        <div className="flex flex-col sm:flex-row sm:space-x-4">
+                            <div className="flex-1">
+                                {renderInput("password", "Password", "password")}
+                            </div>
+                            <div className="flex-1 mt-4 sm:mt-0">
+                                {renderInput("confirmPassword", "Confirm Password", "password")}
+                            </div>
+                        </div>
+
 
                         <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
                             <button

@@ -63,7 +63,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                 <dl className="sm:divide-y sm:divide-gray-200">
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <InfoItem label="Email Subject" value={campaignData?.subject as string} />
-                        <InfoItem label="Sender Email" value={user} />
+                        <InfoItem label="Sender Email" value={campaignData?.sender} />
                         <InfoItem label="Sender From" value={campaignData?.sender_from_name as string} />
                     </div>
                     <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
