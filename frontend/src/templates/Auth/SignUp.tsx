@@ -3,9 +3,9 @@ import useAuthStore from "../../store/userstore/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
 
+
 const SignUpTemplate: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
     const { formValues, isLoading, setFormValues, registerUser } = useAuthStore();
 
     const validationSchema = Yup.object().shape({
@@ -18,7 +18,9 @@ const SignUpTemplate: React.FC = () => {
         company: Yup.string().required("Company is required"),
         password: Yup.string()
             .required("Password is required")
-            .min(8, "Password must be at least 8 characters"),
+            .min(8, "Password must be at least 8 characters")
+            .matches(/[a-zA-Z]/, "Password must contain at least one letter")
+            .matches(/[0-9]/, "Password must contain at least one number"),
         confirmPassword: Yup.string()
             .oneOf([Yup.ref("password"), undefined], "Passwords must match")
             .required("Confirm Password is required"),
@@ -29,7 +31,6 @@ const SignUpTemplate: React.FC = () => {
         try {
             await validationSchema.validate(formValues, { abortEarly: false });
             await registerUser();
-
             setErrors({});
         } catch (err) {
             const validationErrors: { [key: string]: string } = {};
@@ -42,147 +43,105 @@ const SignUpTemplate: React.FC = () => {
         }
     };
 
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
+
     return (
-        <main className="min-h-screen">
-            <div className="bg-[rgb(4,22,43)] h-[15em] pt-2">
-                <h1 className="text-center text-2xl font-semibold text-white mt-8">
-                    {import.meta.env.VITE_API_NAME}
+        <main className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+            <div className="py-4">
+                <h1 className="text-center text-3xl font-bold">
+                    <span className="text-indigo-700">{firstFourLetters}</span>
+                    <span className="text-gray-700">{remainingLetters}</span>
+                    <i className="bi bi-mailbox2-flag text-indigo-700 ml-2"></i>
                 </h1>
             </div>
 
-            <div className="bg-white w-[60%] min-h-auto md:h-[20em] -mt-[7em] mx-auto rounded-btn">
-                <h1 className="text-[rgb(4,22,43)] text-2xl font-semibold text-center mt-10">
-                    Get Started with {import.meta.env.VITE_API_NAME}
-                </h1>
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-gray-50 shadow-md rounded-lg p-8 max-w-md mx-auto">
+                    <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">
+                        Get Started with {import.meta.env.VITE_API_NAME}
+                    </h2>
 
-                <div className="mt-8 mb-5">
-                    <form
-                        className="mx-auto w-full max-w-xs space-y-4"
-                        onSubmit={handleSubmit}
-                    >
-                        <label className="block">
-                            <span className="text-medium font-medium">Full Name</span>
-                            <input
-                                type="text"
-                                placeholder=""
-                                value={formValues.fullname}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                    setFormValues({
-                                        ...formValues,
-                                        fullname: event.target.value,
-                                    })
-                                }
-                                className="block w-full p-2 border border-gray-300 rounded-md"
-                            />
-                            {errors.fullname && (
-                                <div style={{ color: "red" }}>{errors.fullname}</div>
-                            )}
-                        </label>
-                        <label className="block">
-                            <span className="text-medium font-medium">Email</span>
-                            <input
-                                type="email"
-                                placeholder=""
-                                value={formValues.email}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                    setFormValues({
-                                        ...formValues,
-                                        email: event.target.value,
-                                    })
-                                }
-                                className="block w-full p-2 border border-gray-300 rounded-md"
-                            />
-                            {errors.email && (
-                                <div style={{ color: "red" }}>{errors.email}</div>
-                            )}
-                        </label>
-                        <label className="block">
-                            <span className="text-medium font-medium">Company</span>
-                            <input
-                                type="text"
-                                placeholder=""
-                                value={formValues.company}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                    setFormValues({
-                                        ...formValues,
-                                        company: event.target.value,
-                                    })
-                                }
-                                className="block w-full p-2 border border-gray-300 rounded-md"
-                            />
-                            {errors.company && (
-                                <div style={{ color: "red" }}>{errors.company}</div>
-                            )}
-                        </label>
-                        <label className="block">
-                            <span className="text-medium font-medium">Password</span>
-                            <input
-                                type="password"
-                                placeholder=""
-                                value={formValues.password}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                    setFormValues({
-                                        ...formValues,
-                                        password: event.target.value,
-                                    })
-                                }
-                                className="block w-full p-2 border border-gray-300 rounded-md"
-                            />
-                            {errors.password && (
-                                <div style={{ color: "red" }}>{errors.password}</div>
-                            )}
-                        </label>
-                        <label className="block">
-                            <span className="text-medium font-medium">Confirm Password</span>
-                            <input
-                                type="password"
-                                value={formValues.confirmPassword}
-                                placeholder=""
-                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                    setFormValues({
-                                        ...formValues,
-                                        confirmPassword: event.target.value,
-                                    })
-                                }
-                                className="block w-full p-2 border border-gray-300 rounded-md"
-                            />
-                            {errors.confirmPassword && (
-                                <div style={{ color: "red" }}>{errors.confirmPassword}</div>
-                            )}
-                        </label>
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        {renderInput("fullname", "Full Name", "text")}
+                        {renderInput("email", "Email", "email")}
+                        {renderInput("company", "Company", "text")}
+                        <div className="flex flex-col sm:flex-row sm:space-x-4">
+                            <div className="flex-1">
+                                {renderInput("password", "Password", "password")}
+                            </div>
+                            <div className="flex-1 mt-4 sm:mt-0">
+                                {renderInput("confirmPassword", "Confirm Password", "password")}
+                            </div>
+                        </div>
 
-                        <div className="flex flex-row justify-between">
-                            {!isLoading ? (
-                                <button
-                                    type="submit"
-                                    className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
-                                >
-                                    Create Account
-                                </button>
-                            ) : (
-                                <button
-                                    className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
-                                    disabled
-                                >
-                                    <span className="flex flex-row items-center">
-                                        Please wait
-                                        <span className="loading loading-dots loading-sm"></span>
-                                    </span>
-                                </button>
-                            )}
 
+                        <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
                             <button
-                                type="button"
-                                className="bg-black hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2"
+                                type="submit"
+                                className={`w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                                    }`}
+                                disabled={isLoading}
                             >
-                                <Link to="/auth/login"> Login </Link>
+                                {isLoading ? (
+                                    <span className="flex items-center justify-center">
+                                        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Creating account...
+                                    </span>
+                                ) : (
+                                    "Create Account"
+                                )}
                             </button>
+                            <Link
+                                to="/auth/login"
+                                className="text-indigo-600 hover:text-indigo-800 transition duration-300 ease-in-out"
+                            >
+                                Already have an account? Log in
+                            </Link>
                         </div>
                     </form>
+
+                    <div className="mt-4 text-center text-sm text-gray-600">
+                        By signing up, you agree to our{" "}
+                        <a href="#" className="text-indigo-600 hover:underline">
+                            Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a href="#" className="text-indigo-600 hover:underline">
+                            Privacy Policy
+                        </a>
+                    </div>
                 </div>
             </div>
         </main>
     );
+
+    function renderInput(name: keyof typeof formValues, label: string, type: string) {
+        return (
+            <div>
+                <label htmlFor={name} className="block text-sm font-medium text-gray-600 mb-1">
+                    {label}
+                </label>
+                <input
+                    type={type}
+                    id={name}
+                    name={name}
+                    value={formValues[name]}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setFormValues({ ...formValues, [name]: e.target.value })
+                    }
+                    className={`w-full px-3 py-2 border ${errors[name] ? "border-red-400" : "border-gray-300"
+                        } rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition duration-150 ease-in-out`}
+                    placeholder={label}
+                />
+                {errors[name] && <p className="mt-1 text-sm text-red-500">{errors[name]}</p>}
+            </div>
+        );
+    }
 };
 
 export default SignUpTemplate;

@@ -1,10 +1,16 @@
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import { ResetPasswordTemplate } from "../../../templates";
+import useMetadata from "../../../hooks/useMetaData";
 
 
 const ResetPassword: React.FC = () => {
+    const metatdata = useMetadata()("ResetPassword")
     return (
         <>
-            <ResetPasswordTemplate />
+            <HelmetProvider>
+                <Helmet {...metatdata} />
+                <ResetPasswordTemplate />
+            </HelmetProvider>
         </>
     );
 }

@@ -1,19 +1,15 @@
 package model
 
 import (
+	adminmodel "email-marketing-service/api/v1/model/admin"
 	"time"
-)
 
-type Status string
-
-const (
-	Open     Status = "open"
-	Pending  Status = "pending"
-	Resolved Status = "resolved"
-	Closed   Status = "closed"
+	"gorm.io/gorm"
 )
 
 type Priority string
+
+type SupportStatus string
 
 const (
 	Low    Priority = "low"
@@ -21,27 +17,44 @@ const (
 	High   Priority = "high"
 )
 
+const (
+	OpenTicket     SupportStatus = "open"
+	CloseTicket    SupportStatus = "closed"
+	ResolvedTicket SupportStatus = "resolved"
+	PendingTicket  SupportStatus = "pending"
+)
+
 type SupportTicket struct {
-	ID          uint          `gorm:"primaryKey" json:"-"`
-	UUID        string        `gorm:"type:uuid;default:uuid_generate_v4();index"`
-	Subject     string        `json:"subject"`
-	Description string        `json:"description"`
-	Status      Status        `json:"status"`
-	Priority    Priority      `json:"priority"`
-	SenderID    uint          `json:"sender_id"`
-	AssignedTo  uint          `json:"assigned_to"`
-	CreatedAt   time.Time     `json:"created_at" gorm:"type:TIMESTAMP;default:CURRENT_TIMESTAMP"`
-	UpdatedAt   time.Time     `json:"updated_at" gorm:"type:TIMESTAMP;null;default:null"`
-	Files       []TicketFiles `gorm:"foreignKey:TicketID" json:"ticket_files"`
+	gorm.Model
+	UUID         string          `gorm:"type:uuid;default:uuid_generate_v4();index"`
+	UserID       string          `json:"user_id"`
+	Name         string          `json:"name" gorm:"size:40"`
+	Email        string          `json:"email" gorm:"size:40"`
+	Subject      string          `json:"subject" gorm:"size:255"`
+	Description  string          `json:"description" gorm:"type:text;default:null"`
+	TicketNumber string          `json:"ticket_number"`
+	Status       SupportStatus   `json:"status" gorm:"default:pending"`
+	Priority     Priority        `json:"priority" gorm:"default:low"`
+	LastReply    *time.Time      `json:"last_reply"`
+	Messages     []TicketMessage `gorm:"foreignKey:TicketID" json:"messages"`
 }
 
-type TicketFiles struct {
-	ID         uint      `gorm:"primary_key" json:"-"`
-	UUID       string    `gorm:"type:uuid;default:uuid_generate_v4();index"`
-	TicketID   uint      `json:"ticket_id"`
-	TicketFile string    `json:"ticket_file"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+type TicketFile struct {
+	gorm.Model
+	UUID      string `gorm:"type:uuid;default:uuid_generate_v4();index"`
+	MessageID uint   `json:"message_id"`
+	FileName  string `json:"file_name" gorm:"size:255"`
+	FilePath  string `json:"file_path" gorm:"size:255"`
+}
+
+type TicketMessage struct {
+	gorm.Model
+	UUID     string       `gorm:"type:uuid;default:uuid_generate_v4();index"`
+	TicketID uint         `json:"ticket_id"`
+	UserID   string       `json:"user_id"`
+	Message  string       `json:"message" gorm:"type:text"`
+	IsAdmin  bool         `json:"is_admin" gorm:"default:false"`
+	Files    []TicketFile `gorm:"foreignKey:MessageID" json:"files"`
 }
 
 // KnowledgeBaseArticle represents an article in the knowledge base
@@ -56,11 +69,48 @@ type KnowledgeBaseArticle struct {
 
 // KnowledgeBaseCategory represents a category for knowledge base articles
 type KnowledgeBaseCategory struct {
-	ID          uint                   `gorm:"primary_key" json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	ParentID    *uint                  `json:"parent_id"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          uint      `gorm:"primary_key" json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ParentID    *uint     `json:"parent_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	//    []KnowledgeBaseArticle `gorm:"foreignkey:CategoryID" json:"articles"`
+}
+
+type SupportTicketResponse struct {
+	ID           uint                    `json:"-"`
+	UUID         string                  `json:"uuid"`
+	UserID       string                  `json:"user_id"`
+	Name         string                  `json:"name"`
+	Email        string                  `json:"email"`
+	Subject      string                  `json:"subject"`
+	Description  string                  `json:"description"`
+	TicketNumber string                  `json:"ticket_number"`
+	Status       SupportStatus           `json:"status"`
+	Priority     Priority                `json:"priority"`
+	LastReply    *time.Time              `json:"last_reply"`
+	Messages     []TicketMessageResponse `json:"messages"`
+	CreatedAt    time.Time               `json:"created_at"`
+	UpdatedAt    time.Time               `json:"updated_at"`
+}
+
+type TicketFileResponse struct {
+	ID        uint      `json:"-"`
+	UUID      string    `json:"uuid"`
+	FileName  string    `json:"file_name"`
+	FilePath  string    `json:"file_path"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type TicketMessageResponse struct {
+	ID        uint                      `json:"-"`
+	UUID      string                    `json:"uuid"`
+	UserID    string                    `json:"user_id"`
+	Message   string                    `json:"message"`
+	IsAdmin   bool                      `json:"is_admin"`
+	CreatedAt time.Time                 `json:"created_at"`
+	User      *UserResponse             `json:"user,omitempty"`
+	Admin     *adminmodel.AdminResponse `json:"admin,omitempty"`
+	Files     []TicketFileResponse      `json:"files"`
 }

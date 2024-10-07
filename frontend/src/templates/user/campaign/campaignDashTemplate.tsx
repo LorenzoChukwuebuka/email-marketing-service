@@ -1,64 +1,56 @@
 import { useEffect, useState } from "react";
+import GetAllCampaignComponent from "../components/campaign/getAllCampaignsComponent";
+import GetScheduledCampaignComponent from "../components/campaign/getScheduledCampaignsComponent";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import useMetadata from "../../../hooks/useMetaData";
 
+type TabType = "Campaign" | "Scheduled";
 
 const CampaignDashTemplate: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<"Campaign" | "Drafts" | "Scheduled" | "Sent">("Campaign");
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "Campaign" || storedTab === "Scheduled") ? storedTab : "Campaign";
+    });
 
-    useEffect(() => {
-        const storedActiveTab = localStorage.getItem("activeTab");
-        if (storedActiveTab) {
-            setActiveTab(storedActiveTab as "Campaign" | "Drafts");
-        }
-    }, []);
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        localStorage.setItem("activeTab", tab);
+    };
 
-    useEffect(() => {
-        localStorage.setItem("activeTab", activeTab);
-    }, [activeTab]);
+    const metaData = useMetadata()("Campaigns")
 
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
+    return (
+        <HelmetProvider>
+            <Helmet {...metaData}
+                title={activeTab === "Scheduled" ? "Scheduled Campaigns - CrabMailer" : "My Campaigns - CrabMailer"}
+            />
+            <div className="p-6 max-w-full">
+                <nav className="flex space-x-8 border-b">
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Campaign"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Campaign")}
+                    >
+                        My Campaigns
+                    </button>
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Scheduled"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Scheduled")}
+                    >
+                        Scheduled
+                    </button>
+                </nav>
 
+                {activeTab === "Campaign" && <GetAllCampaignComponent />}
+                {activeTab === "Scheduled" && <GetScheduledCampaignComponent />}
+            </div>
+        </HelmetProvider>
+    );
+};
 
-    return <>
-        <div className="p-6 max-w-full">
-            <nav className="flex space-x-8  border-b">
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Campaign"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => setActiveTab("Campaign")}
-                >
-                    My  Campaigns
-                </button>
-
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Drafts"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => setActiveTab("Drafts")}
-                >
-                    Drafts
-                </button>
-            </nav>
-
-            {activeTab === "Campaign" && (
-                <>
-                    hello
-                </>
-            )}
-
-            {activeTab === "Drafts" && (
-                <>
-                    hi
-                </>
-            )}
-        </div>
-    </>
-}
-
-export default CampaignDashTemplate
+export default CampaignDashTemplate;

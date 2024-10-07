@@ -29,5 +29,6 @@ func (ur *ContactRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-single-group/{groupId}", middleware.JWTMiddleware(contactController.GetASingleGroupWithContacts))
 	router.HandleFunc("/delete-group/{groupId}", middleware.JWTMiddleware(contactController.DeleteContactGroup)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/edit-group/{groupId}", middleware.JWTMiddleware(contactController.UpdateContactGroup)).Methods("PUT", "OPTIONS")
-	router.HandleFunc("/get-contact-count",middleware.JWTMiddleware(contactController.GetContactCount)).Methods("GET","OPTIONS")
+	router.HandleFunc("/get-contact-count", middleware.JWTMiddleware(contactController.GetContactCount)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/contact-engagement", middleware.JWTMiddleware(contactController.GetContactSubscriptionStatusForDashboard)).Methods("GET", "OPTIONS")
 }

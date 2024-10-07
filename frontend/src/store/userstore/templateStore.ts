@@ -44,8 +44,8 @@ type TemplateStore = {
     currentTemplate: (Template & BaseEntity) | null;
     setCurrentTemplate: (template: (Template & BaseEntity) | null) => void;
     setFormValues: (newFormValues: Omit<Template, "user_id">) => void;
-    getAllMarketingTemplates: () => Promise<void>;
-    getAllTransactionalTemplates: () => Promise<void>;
+    getAllMarketingTemplates: (query?: string) => Promise<void>;
+    getAllTransactionalTemplates: (query?: string) => Promise<void>;
     createTemplate: () => Promise<void>
     getSingleTransactionalTemplate: (uuid: string) => Promise<void>
     getSingleMarketingTemplate: (uuid: string) => Promise<void>
@@ -53,6 +53,8 @@ type TemplateStore = {
     deleteTemplate: (uuid: string) => Promise<void>
     resetForm: () => void
     sendTestMail: () => Promise<void>
+    searchMarketing: (query: string) => Promise<void>
+    searchTransactional: (query: string) => Promise<void>
 };
 
 type TemplateResponse = APIResponse<(Template & BaseEntity)[] | (Template & BaseEntity)>
@@ -93,14 +95,23 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
     setCurrentTemplate: (template) => set({ currentTemplate: template }),
     setEmailTestValues: (newData) => set({ sendEmailTestValues: newData }),
 
-    getAllMarketingTemplates: async () => {
+    getAllMarketingTemplates: async (query = "") => {
         try {
-            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-marketing-templates');
+            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-marketing-templates', {
+                params: {
+                    search: query || undefined
+                }
+            });
             get().setTemplateData(response.data.payload)
 
         } catch (error) {
-            errResponse(error);
-            console.error("Failed to fetch templates", error);
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
         }
     },
     createTemplate: async () => {
@@ -144,9 +155,13 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         }
     },
 
-    getAllTransactionalTemplates: async () => {
+    getAllTransactionalTemplates: async (query = "") => {
         try {
-            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-transactional-templates');
+            const response = await axiosInstance.get<TemplateResponse>('/templates/get-all-transactional-templates', {
+                params: {
+                    search: query || undefined
+                }
+            });
             get()._setTemplateData(response.data.payload)
         } catch (error) {
             if (errResponse(error)) {
@@ -205,7 +220,20 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
     },
 
     deleteTemplate: async (uuid: string) => {
-
+        try {
+            const response = await axiosInstance.delete<ResponseT>("/templates/delete-template/" + uuid)
+            if (response.data.status === true) {
+                eventBus.emit("success", "template deleted successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
     },
 
 
@@ -256,6 +284,27 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
             editor_type: null,
         }
     }),
+
+    searchMarketing: async (query) => {
+        const { getAllMarketingTemplates } = get()
+        if (!query) {
+            await getAllMarketingTemplates()
+            return
+        }
+
+        await getAllMarketingTemplates(query)
+
+    },
+    searchTransactional: async (query) => {
+        const { getAllTransactionalTemplates } = get()
+
+        if (!query) {
+            await getAllTransactionalTemplates()
+            return
+        }
+
+        await getAllTransactionalTemplates(query)
+    }
 }));
 
 export default useTemplateStore;

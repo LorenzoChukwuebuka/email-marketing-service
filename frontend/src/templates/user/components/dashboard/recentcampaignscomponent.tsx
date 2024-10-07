@@ -1,19 +1,91 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import EmptyState from '../../../../components/emptyStateComponent';
+import { useNavigate } from 'react-router-dom';
+import useCampaignStore, { Campaign } from '../../../../store/userstore/campaignStore';
+import { parseDate } from '../../../../utils/utils';
+import { BaseEntity } from '../../../../interface/baseentity.interface';
 
 const RecentCampaigns = () => {
+    const navigate = useNavigate()
+    const { getAllCampaigns, campaignData } = useCampaignStore()
+
+    useEffect(() => {
+        const fetchData = async () => {
+            await getAllCampaigns()
+        }
+        fetchData()
+    }, [])
+
     return (
-        <div className="font-sans p-6">
-            <h2 className="text-2xl font-bold mb-4">Recent campaigns</h2>
-            <div className="bg-white rounded-lg shadow-md p-8">
-                <div className="text-center">
-                    <h3 className="text-xl font-semibold mb-2">Launch your first campaign</h3>
-                    <p className="text-gray-600 mb-6">
-                        You can boost your business by messaging a wide audience.
-                    </p>
-                    <button className="bg-gray-900 text-white font-semibold py-2 px-4 rounded-full hover:bg-gray-800 transition duration-300">
-                        Create a campaign
-                    </button>
+        <div className=" mx-auto mt-5 p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold mb-4">Recent campaigns</h2>
+                <div>
+                    <a href="/user/dash/campaign" className="text-blue-600 mr-4 font-semibold">Go to Campaigns</a>
+
                 </div>
+            </div>
+            <div className="border rounded-lg">
+                {campaignData && (campaignData as (Campaign & BaseEntity)[]).length > 0 ? (<>
+
+                    {(campaignData as (Campaign & BaseEntity)[]).slice(0, 3).map((campaign, index) => (
+                        <div key={campaign?.uuid} className="border-b-2 last:border-b-2 p-4">
+                            <div className="flex justify-between items-center">
+                                <span className="font-medium">
+                                    {campaign?.name} #{index + 1}
+                                </span>
+                                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span className="flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Draft
+                                    </span>
+                                    <span>
+                                        Last edit {(() => {
+                                            const updatedAt = campaign?.updated_at;
+                                            const fallbackDate = campaign?.created_at;
+
+                                            // Remove the " WAT" part and try to parse the date
+                                            const cleanDate = (dateString: string) => dateString?.replace(" WAT", "");
+
+                                            // Parse the updated_at, fallback to created_at if necessary
+                                            const validDate = updatedAt && !isNaN(new Date(cleanDate(updatedAt)).getTime())
+                                                ? cleanDate(updatedAt)
+                                                : cleanDate(fallbackDate);
+
+                                            // Format the date
+                                            return validDate
+                                                ? new Date(validDate).toLocaleDateString('en-GB', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    second: '2-digit',
+                                                })
+                                                : 'Unknown date';
+                                        })()}
+                                    </span>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </>) : (
+                    <>
+                        <EmptyState className='shadow-md'
+                            title="You have not created any Campaign"
+                            description="Create and easily send marketing emails to your audience"
+                            icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                            buttonText="Create Campaigns"
+                            onButtonClick={() => navigate("/user/dash/campaign")}
+                        />
+
+
+                    </>)}
+
             </div>
         </div>
     );

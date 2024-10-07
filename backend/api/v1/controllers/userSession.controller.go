@@ -4,9 +4,9 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type UserSessionController struct {
@@ -22,7 +22,10 @@ func NewUserSessionController(usersessionSvc *services.UserSessionService) *User
 func (c *UserSessionController) CreateSessions(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.UserSession
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	result, err := c.UserSessionSVC.CreateSession(reqdata)
 

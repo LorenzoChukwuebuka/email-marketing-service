@@ -30,74 +30,7 @@ curl -H 'api-key: YOUR_API_V3_KEY'
 }'
 'https://api.brevo.com/v3/emailCampaigns'`,
 
-        Ruby: `
-# ------------------
-# Create a campaign
-# ------------------
-require 'uri'
-require 'net/http'
-require 'json'
 
-url = URI("https://api.brevo.com/v3/emailCampaigns")
-
-http = Net::HTTP.new(url.host, url.port)
-http.use_ssl = true
-
-request = Net::HTTP::Post.new(url)
-request["api-key"] = 'YOUR_API_V3_KEY'
-request["content-type"] = 'application/json'
-
-request.body = JSON.dump({
-  "name": "Campaign sent via the API",
-  "subject": "My subject",
-  "sender": { "name": "From name", "email": "myfrommail@mycompany.com" },
-  "type": "classic",
-  "htmlContent": "Congratulations! You successfully sent this example campaign via the Brevo API.",
-  "recipients": { "listIds": [2, 7] },
-  "scheduledAt": "2018-01-01 00:00:01"
-})
-
-response = http.request(request)
-puts response.read_body`,
-
-        "Node Js": `// ------------------
-// Create a campaign
-// ------------------
-const https = require('https');
-
-let data = JSON.stringify({
-  "name": "Campaign sent via the API",
-  "subject": "My subject",
-  "sender": { "name": "From name", "email": "myfrommail@mycompany.com" },
-  "type": "classic",
-  "htmlContent": "Congratulations! You successfully sent this example campaign via the Brevo API.",
-  "recipients": { "listIds": [2, 7] },
-  "scheduledAt": "2018-01-01 00:00:01"
-});
-
-let options = {
-  hostname: 'api.brevo.com',
-  port: 443,
-  path: '/v3/emailCampaigns',
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'api-key': 'YOUR_API_V3_KEY'
-  }
-};
-
-let req = https.request(options, (res) => {
-  let body = '';
-  res.on('data', (chunk) => {
-    body += chunk;
-  });
-  res.on('end', () => {
-    console.log(body);
-  });
-});
-
-req.write(data);
-req.end();`,
     };
 
     return (

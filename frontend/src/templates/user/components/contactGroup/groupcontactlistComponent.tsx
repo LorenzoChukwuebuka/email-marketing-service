@@ -65,8 +65,16 @@ const GroupContactList: React.FC = () => {
                     <p>Loading...</p>
                 ) : group ? (
                     <>
-                        <h2 className="text-xl font-bold text-gray-800">Group Name: {group.group_name}</h2>
-                        <p className="text-md text-gray-500 p-2 px-2 mt-2">Description: {group.description}</p>
+
+                        <div className="flex items-start flex-col mb-5">
+                            <button className="text-blue-600 mr-2" onClick={() => window.history.back()}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                            </button>
+                            <h2 className="text-xl font-bold text-gray-800">Group Name: {group.group_name}</h2>
+                            <p className="text-md block text-gray-500 p-2 px-2 mt-2">Description: {group.description}</p>
+                        </div>
 
                         <h1 className="text-xl font-semibold mt-5">Contacts</h1>
 

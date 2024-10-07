@@ -51,7 +51,7 @@ func initializeDatabase() {
 	}
 
 	autoMigrateModels()
-	fmt.Println("Connected to the database")
+	log.Println("Connected to the database")
 
 	seedData(db)
 }
@@ -69,7 +69,8 @@ func autoMigrateModels() {
 		&model.Billing{},
 		&adminmodel.Admin{},
 		&model.SupportTicket{},
-		&model.TicketFiles{},
+		&model.TicketFile{},
+		&model.TicketMessage{},
 		&model.SentEmails{},
 		&model.KnowledgeBaseArticle{},
 		&model.KnowledgeBaseCategory{},
@@ -83,6 +84,14 @@ func autoMigrateModels() {
 		&model.Campaign{},
 		&model.CampaignGroup{},
 		&model.EmailCampaignResult{},
+		&model.UserTempEmail{},
+		&model.Log{},
+		&model.Domains{},
+		&model.Sender{},
+		&model.WebAuthnCredential{},
+		&model.EmailBox{},
+		&model.UserNotification{},
+		&adminmodel.AdminNotification{},
 	)
 
 	if err != nil {
@@ -100,7 +109,7 @@ func seedData(db *gorm.DB) {
 		plan := model.Plan{
 			UUID:     uuid.New().String(),
 			PlanName: "Free",
-			Duration: "month",
+			Duration: "day",
 			Price:    0,
 			Details:  "Our best plan for power users",
 			Status:   model.PlanStatus(model.StatusActive),
@@ -124,6 +133,15 @@ func seedData(db *gorm.DB) {
 					IsActive:    true,
 					Description: "Create and save your own email templates",
 				},
+				{
+					UUID:        uuid.New().String(),
+					Name:        "Contacts",
+					Identifier:  "contacts",
+					CountLimit:  50,
+					SizeLimit:   500,
+					IsActive:    true,
+					Description: "Create and save your own email templates",
+				},
 			},
 		}
 
@@ -136,7 +154,7 @@ func seedData(db *gorm.DB) {
 		// Now create the MailingLimit with the correct PlanID
 		mailingLimit := model.MailingLimit{
 			PlanID:      plan.ID,
-			LimitAmount: 100,
+			LimitAmount: 200,
 			LimitPeriod: "day",
 		}
 
@@ -145,9 +163,9 @@ func seedData(db *gorm.DB) {
 			return
 		}
 
-		fmt.Println("Plan and MailingLimit data seeded successfully")
+		log.Println("Plan and MailingLimit data seeded successfully")
 	} else {
-		fmt.Println("Plan data already exists, skipping seed")
+		log.Println("Plan data already exists, skipping seed")
 	}
 
 	// Check if Admin data already exists
@@ -180,9 +198,40 @@ func seedData(db *gorm.DB) {
 		if result.Error != nil {
 			log.Printf("Failed to seed Admin data: %v", result.Error)
 		} else {
-			fmt.Println("Admin data seeded successfully")
+			log.Println("Admin data seeded successfully")
 		}
 	} else {
-		fmt.Println("Admin data already exists, skipping seed")
+		log.Println("Admin data already exists, skipping seed")
+	}
+
+	// Check if SMTPMasterKey data already exists
+	var smtpMasterKeyCount int64
+	db.Model(&model.SMTPMasterKey{}).Count(&smtpMasterKeyCount)
+
+	if smtpMasterKeyCount == 0 {
+		// Fetch an existing user to associate with the SMTP key
+		var user adminmodel.Admin
+		if err := db.First(&user).Error; err != nil {
+			log.Printf("Failed to fetch a user for SMTPMasterKey: %v", err)
+			return
+		}
+
+		// Now create the SMTPMasterKey with the correct UserId
+		smtpKey := model.SMTPMasterKey{
+			UUID:      uuid.New().String(),
+			UserId:    uuid.New().String(), // Use the existing user's ID
+			SMTPLogin: "adminuser",
+			KeyName:   "adminuser",
+			Password:  uuid.New().String(),
+			Status:    model.KeyActive,
+		}
+
+		if err := db.Create(&smtpKey).Error; err != nil {
+			log.Printf("Failed to seed SMTPMasterKey data: %v", err)
+		} else {
+			log.Println("SMTPMasterKey data seeded successfully")
+		}
+	} else {
+		log.Println("SMTPMasterKey data already exists, skipping seed")
 	}
 }

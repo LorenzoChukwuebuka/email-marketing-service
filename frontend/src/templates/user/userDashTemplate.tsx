@@ -4,25 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import OverviewStats from "./components/dashboard/overviewStatscomponent";
 import RecentCampaigns from "./components/dashboard/recentcampaignscomponent";
 import ContactsDashboard from "./components/dashboard/contactsComponent";
+import useDailyUserMailSentCalc from "../../store/userstore/userDashStore";
+import useMetadata from "../../hooks/useMetaData";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+
 
 interface UserDetails {
     fullname: string;
 }
-
 interface CookieData {
     details: UserDetails;
-}
-
-interface ActionCardInterface {
-    title: string;
-    description: string;
-    icon: string;
-    onClick: () => void;
 }
 
 const UserDashboardTemplate: React.FC = () => {
     const [userName, setUserName] = useState<string>("");
     const navigate = useNavigate();
+    const { mailData, getUserMailData } = useDailyUserMailSentCalc();
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     useEffect(() => {
         const cookie = Cookies.get("Cookies");
@@ -36,63 +34,76 @@ const UserDashboardTemplate: React.FC = () => {
         }
     }, []);
 
-    const handleSendCampaign = () => navigate('/send-campaign');
+    useEffect(() => {
+        const fetchD = async () => {
+            setIsLoading(true)
+            getUserMailData();
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            setIsLoading(false)
+        }
+
+        fetchD()
+
+    }, [getUserMailData]);
+
+    const handleSendCampaign = () => navigate('/user/dash/campaign');
     const handleCreateContact = () => navigate('/user/dash/contacts');
     const handleCreateEmailTemplate = () => navigate('/user/dash/templates');
+    const handleUpgrade = () => navigate('/user/dash/billing')
+
+    const metaData = useMetadata()("Dashboard")
 
     return (
         <>
-            <div className="bg-white rounded-lg  p-6">
-                <h2 className="text-2xl font-bold mb-4">Welcome {userName}</h2>
-            </div>
+            <HelmetProvider>
 
-            <div className="p-6 bg-gray-100">
-                <div className="flex justify-between mb-5">
-                    <ActionCard
-                        title="Send Campaign"
-                        description="Create a campaign and send marketing mails to your audience easily"
-                        icon="📢"
-                        onClick={handleSendCampaign}
-                    />
+                <Helmet {...metaData}
+                    title={`Welcome ${userName} - Crabmailer`}
+                />
 
-                    <ActionCard
-                        title="Create Contact"
-                        description="Add or upload your contacts to your mailing lists"
-                        icon="👤"
-                        onClick={handleCreateContact}
-                    />
+                {isLoading ? (<div className="flex items-center justify-center mt-20">
+                    <span className="loading loading-spinner loading-lg"></span>
+                </div>) : (
+                    <>
+                        <div className=" mt-2 p-6 flex items-center">
+                            <h2 className="text-2xl font-bold mb-2">
+                                Welcome {userName}
+                                <span>
+                                    {mailData?.plan?.toLowerCase() === 'free' ? (
+                                        <>
+                                            <button
+                                                className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors"
+                                                onClick={handleUpgrade}
+                                            >
+                                                Upgrade
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="ml-2 text-sm font-normal text-gray-600">
 
-                    <ActionCard
-                        title="Create Email Template"
-                        description="Start a new email template or pick from an existing one"
-                        icon="✉️"
-                        onClick={handleCreateEmailTemplate}
-                    />
-                </div>
-            </div>
+                                        </span>
+                                    )}
+                                </span>
+                            </h2>
 
-            <OverviewStats />
+                            <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
+                                <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                            </div>
+                        </div>
 
-            <RecentCampaigns />
+                        <OverviewStats />
+                        <RecentCampaigns />
+                        <ContactsDashboard />
 
-            <ContactsDashboard/>
+                    </>
+                )}
+
+            </HelmetProvider>
+
         </>
     );
 };
-
-
-const ActionCard: React.FC<ActionCardInterface> = ({ title, description, icon, onClick }) => (
-    <div
-        className="bg-white rounded-lg cursor-pointer shadow p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 hover:shadow-lg hover:bg-gray-50"
-        onClick={onClick}
-    >
-        <div className="flex items-center mb-2">
-            <span className="text-2xl mr-2">{icon}</span>
-            <h3 className="font-semibold">{title}</h3>
-        </div>
-        <p className="text-sm text-gray-600">{description}</p>
-    </div>
-);
-
 
 export default UserDashboardTemplate;

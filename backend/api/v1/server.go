@@ -2,6 +2,9 @@ package v1
 
 import (
 	"context"
+	cronjobs "email-marketing-service/api/v1/jobs"
+	"email-marketing-service/api/v1/middleware"
+	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/routes"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
@@ -11,21 +14,24 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	//"path/filepath"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
 )
 
 type Server struct {
-	router *mux.Router
-	db     *gorm.DB
+	router  *mux.Router
+	db      *gorm.DB
+	logRepo *repository.LogRepository
 }
 
 func NewServer(db *gorm.DB) *Server {
+	logRepo := repository.NewLogRepository(db)
 	return &Server{
-		router: mux.NewRouter(),
-		db:     db,
+		router:  mux.NewRouter(),
+		db:      db,
+		logRepo: logRepo,
 	}
 }
 
@@ -35,60 +41,96 @@ var (
 )
 
 func (s *Server) setupRoutes() {
+
 	apiV1Router := s.router.PathPrefix("/api/v1").Subrouter()
 	routeMap := map[string]routes.RouteInterface{
-		"":          routes.NewAuthRoute(s.db),
-		"admin":     routes.NewAdminRoute(s.db),
-		"templates": routes.NewTemplateRoute(s.db),
-		"contact":   routes.NewContactRoute(s.db),
-		"smtpkey":   routes.NewSMTPKeyRoute(s.db),
-		"apikey":    routes.NewAPIKeyRoute(s.db),
-		"campaigns": routes.NewCampaignRoute(s.db),
+		"":               routes.NewAuthRoute(s.db),
+		"admin":          routes.NewAdminRoute(s.db),
+		"templates":      routes.NewTemplateRoute(s.db),
+		"contact":        routes.NewContactRoute(s.db),
+		"smtpkey":        routes.NewSMTPKeyRoute(s.db),
+		"apikey":         routes.NewAPIKeyRoute(s.db),
+		"campaigns":      routes.NewCampaignRoute(s.db),
+		"domain":         routes.NewDomainRoute(s.db),
+		"sender":         routes.NewSenderRoute(s.db),
+		"transaction":    routes.NewTransactionRoute(s.db),
+		"support":        routes.NewSupportRoute(s.db),
+		"admin/users":    routes.NewAdminUsersRoute(s.db),
+		"admin/support":  routes.NewAdminSupportRoute(s.db),
+		"admin/campaign": routes.NewAdminCampaignRoute(s.db),
 	}
 
 	for path, route := range routeMap {
 		route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
 	}
 
-	// frontendDir := "./../frontend/dist" // Adjust if needed
-	// absPath, err := filepath.Abs(frontendDir)
-	// if err != nil {
-	// 	log.Printf("Error getting absolute path: %v", err)
-	// } else {
-	// 	log.Printf("Attempting to serve frontend from: %s", absPath)
-	// 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-	// 		logger.Error("Frontend directory does not exist: %s", absPath)
-	// 	} else {
-	// 		fs := http.FileServer(http.Dir(absPath))
-	// 		s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
-
-	// 		s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 			indexFile := filepath.Join(absPath, "index.html")
-	// 			http.ServeFile(w, r, indexFile)
-	// 		})
-
-	// 		logger.Info("Frontend serving set up successfully with SPA support")
-
-	// 	}
-	// }
-
 	s.router.Use(recoveryMiddleware)
 	s.router.Use(enableCORS)
 	s.router.Use(methodNotAllowedMiddleware)
 	s.router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+
+	uploadsDir := filepath.Join(".", "uploads", "tickets")
+	s.router.PathPrefix("/uploads/tickets/").Handler(http.StripPrefix("/uploads/tickets/", http.FileServer(http.Dir(uploadsDir))))
+
+	// mode := os.Getenv("SERVER_MODE")
+
+	// var staticDir string
+
+	// if mode == "" {
+	// 	staticDir = "./client"
+	// } else if mode == "test" {
+	// 	staticDir = "/app/client"
+	// } else {
+	// 	staticDir = "/app/client"
+	// }
+
+	// // Handle static files using Gorilla Mux
+	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+
+	// // Handle all other routes by serving index.html for the SPA
+	// s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	path := filepath.Join(staticDir, r.URL.Path)
+
+	// 	// If the requested file exists, serve it
+	// 	if _, err := os.Stat(path); err == nil {
+	// 		http.ServeFile(w, r, path)
+	// 		return
+	// 	}
+
+	// 	// Otherwise, serve index.html
+	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+	// })
+
 }
 
-func (s *Server) setupLogger() {
-	logger, err := utils.NewLogger("app.log", utils.INFO)
+func (s *Server) setupLogger() (*os.File, error) {
+	logFile, err := os.OpenFile("requests.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal("logger failed to load")
+		log.Fatal("Failed to open log file:", err)
+		return nil, err
 	}
-	defer logger.Close()
+
+	logger := log.New(logFile, "", log.LstdFlags)
+	s.router.Use(middleware.LoggingMiddleware(logger))
+	return logFile, nil
 }
 
 func (s *Server) Start() {
 	s.setupRoutes()
-	s.setupLogger()
+
+	logFile, err := s.setupLogger()
+	if err != nil {
+		log.Fatal("Failed to set up logger:", err)
+	}
+	defer logFile.Close()
+
+	c := cronjobs.SetupCronJobs(s.db)
+
+	go func() {
+		c.Start()
+		defer c.Stop()
+		select {}
+	}()
 
 	server := &http.Server{
 		Addr:    ":9000",
@@ -96,11 +138,13 @@ func (s *Server) Start() {
 	}
 
 	go func() {
-		fmt.Println("Server started on port 9000")
+		log.Println("Server started on port 9000")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe: %v", err)
 		}
 	}()
+
+	//graceful shutdown
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
@@ -120,9 +164,26 @@ func (s *Server) Start() {
 
 func enableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Check if the request is coming from the same origin as the server
+		if r.Header.Get("Origin") == "" {
+			// Same-origin request, no need for CORS headers
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		// For different-origin requests (e.g., during development)
+		allowedOrigins := []string{"http://localhost:5054", "*"}
+		origin := r.Header.Get("Origin")
+
+		for _, allowedOrigin := range allowedOrigins {
+			if origin == allowedOrigin {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				break
+			}
+		}
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)

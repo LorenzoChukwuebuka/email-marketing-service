@@ -19,6 +19,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		controllers.NewUserController,
 		services.NewUserService,
 		services.NewOTPService,
+		services.NewSenderServices,
 		repository.NewOTPRepository,
 		repository.NewUserRepository,
 		repository.NewPlanRepository,
@@ -26,6 +27,10 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 		repository.NewBillingRepository,
 		repository.NewMailUsageRepository,
 		repository.NewSMTPkeyRepository,
+		repository.NewSenderRepository,
+		repository.NewDomainRepository,
+		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
 	)
 
 	return nil, nil
@@ -129,17 +134,6 @@ func InitializeAdminController(db *gorm.DB) (*adminController.AdminController, e
 	return nil, nil
 }
 
-func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
-	wire.Build(
-		controllers.NewTicketController,
-		services.NewSupportTicketService,
-		repository.NewSupportRepository,
-		repository.NewUserRepository,
-	)
-
-	return nil, nil
-}
-
 func InitializeContactController(db *gorm.DB) (*controllers.ContactController, error) {
 	wire.Build(
 		controllers.NewContactController,
@@ -160,7 +154,6 @@ func InitializeTemplateController(db *gorm.DB) (*controllers.TemplateController,
 		repository.NewMailUsageRepository,
 		repository.NewSubscriptionRepository,
 		repository.NewUserRepository,
-		repository.NewPlanRepository,
 	)
 
 	return nil, nil
@@ -171,6 +164,91 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		controllers.NewCampaignController,
 		services.NewCampaignService,
 		repository.NewCampaignRepository,
+		repository.NewContactRepository,
+		repository.NewTemplateRepository,
+		repository.NewMailUsageRepository,
+		repository.NewSubscriptionRepository,
+		repository.NewUserRepository,
+		repository.NewDomainRepository,
+		repository.NewUserNotificationRepository,
+	)
+	return nil, nil
+}
+
+func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, error) {
+	wire.Build(
+		controllers.NewDomainController,
+		services.NewDomainService,
+		repository.NewDomainRepository,
+	)
+	return nil, nil
+}
+
+func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, error) {
+	wire.Build(
+		controllers.NewSenderController,
+		services.NewSenderServices,
+		repository.NewSenderRepository,
+		repository.NewDomainRepository,
+	)
+
+	return nil, nil
+}
+
+func InitializeSupportTicketController(db *gorm.DB) (*controllers.SupportTicketController, error) {
+	wire.Build(
+		controllers.NewSupportTicketController,
+		services.NewSupportTicketService,
+		repository.NewSupportRepository,
+		repository.NewUserRepository,
+		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
+		adminrepository.NewAdminRepository,
+	)
+
+	return nil, nil
+}
+
+func InitializeAdminUsersController(db *gorm.DB) (*adminController.AdminUsersController, error) {
+	wire.Build(
+		adminController.NewAdminUsersController,
+		adminservice.NewAdminUsersService,
+		adminrepository.NewAdminUsersRepository,
+		// repository.NewUserNotificationRepository,
+		// adminrepository.NewAdminNoficationRepository,
+	)
+
+	return nil, nil
+}
+
+func InitialiazeAdminSupportController(db *gorm.DB) (*adminController.AdminSupportTicketController, error) {
+	wire.Build(
+		adminController.NewAdminSupportTicketController,
+		adminservice.NewAdminSupportService,
+		adminrepository.NewAdminSupportRepository,
+		repository.NewUserNotificationRepository,
+		adminrepository.NewAdminNoficationRepository,
+		repository.NewSupportRepository,
+	)
+
+	return nil, nil
+}
+
+func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampaignController, error) {
+	wire.Build(
+		adminController.NewAdminCampaginController,
+		adminservice.NewAdminCampaignService,
+		adminrepository.NewAdminCampaignRepository,
+	)
+
+	return nil, nil
+}
+
+func InitializeAdminBillingController(db *gorm.DB)(*adminController.AdminBillingController,error){
+	wire.Build(
+		adminController.NewAdminBillingController,
+		adminservice.NewAdminBillingService,
+		adminrepository.NewAdminBillingRepository,
 	)
 	return nil, nil
 }

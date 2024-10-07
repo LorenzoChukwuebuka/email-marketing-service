@@ -15,6 +15,7 @@ func NewAPIkeyRepository(db *gorm.DB) *APIKeyRepository {
 	return &APIKeyRepository{
 		DB: db,
 	}
+
 }
 
 func (r *APIKeyRepository) createAPIKeyResponse(apiKey model.APIKey) model.APIKeyResponseModel {

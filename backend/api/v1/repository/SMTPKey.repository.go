@@ -2,9 +2,12 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
-	"gorm.io/gorm"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type SMTPKeyRepository struct {
@@ -133,4 +136,66 @@ func (r *SMTPKeyRepository) DeleteSMTPKey(smtpKeyId string) error {
 		return fmt.Errorf("no SMTP key found with UUID: %s", smtpKeyId)
 	}
 	return nil
+}
+
+func (r *SMTPKeyRepository) GetSMTPMasterKeyUserAndPass(username string, password string) (bool, error) {
+	var record model.SMTPMasterKey
+
+	if err := r.DB.Model(&model.SMTPMasterKey{}).Where("smtp_login = ? AND password = ?", username, password).First(&record).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil // Record not found
+		}
+		return false, fmt.Errorf("unable to retrieve master key: %w", err) // Other errors
+	}
+
+	return true, nil // Record found
+}
+
+/*
+these codes were purposely placed here for uniformity sake
+they are actually meant to be in the campaing
+*/
+
+func (r *SMTPKeyRepository) MarkEmailAsDelivered(from string, to []string) error {
+	// Logic to update the delivery status in the database
+	for _, recipient := range to {
+		if err := r.DB.Model(&model.EmailCampaignResult{}).
+			Where("recipient_email = ?", recipient).
+			Update("sent_at", time.Now()).
+			Update("bounce_status", "").Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *SMTPKeyRepository) UpdateBounceStatus(recipientEmail, status string) error {
+	return r.DB.Model(&model.EmailCampaignResult{}).
+		Where("recipient_email = ?", recipientEmail).
+		Update("bounce_status", status).Error
+}
+
+type Email struct {
+	ID      uint `gorm:"primaryKey"`
+	From    string
+	To      string
+	Content []byte
+}
+
+func (r *SMTPKeyRepository) StoreEmail(username string, mailbox, from string, to []string, content []byte) error {
+	email := &model.EmailBox{
+		From:    from,
+		To:      strings.Join(to, ","),
+		Content: content,
+	}
+	return r.DB.Create(email).Error
+
+}
+
+func (r *SMTPKeyRepository) GetEmails(username, mailbox string) ([]model.EmailBox, error) {
+	var emails []model.EmailBox
+	if err := r.DB.Where("username = ? AND mailbox = ?", username, mailbox).Find(&emails).Error; err != nil {
+		return nil, err
+	}
+	return emails, nil
 }

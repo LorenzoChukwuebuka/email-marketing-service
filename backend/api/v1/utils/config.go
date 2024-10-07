@@ -26,10 +26,25 @@ type Config struct {
 	MAIL_PROCESSOR        string `env:"MAIL_PROCESSOR"`
 	ADMIN_EMAIL           string `env:"ADMIN_EMAIL"`
 	ADMIN_PASSWORD        string `env:"ADMIN_PASSWORD"`
+	SERVER_URL            string `env:"SERVER_URL"`
+	SLACK_WEBHOOK_URL     string `env:"SLACK_WEBHOOK_URL"`
+	DOMAIN                string `env:"DOMAIN"`
 }
 
 var LoadEnv = func() *Config {
-	err := godotenv.Load()
+	mode := os.Getenv("SERVER_MODE")
+	var envFilePath string
+
+	switch mode {
+	case "production":
+		envFilePath = ".env"
+	case "test":
+		envFilePath = ".env.test"
+	default:
+		envFilePath = ".env.development"
+	}
+
+	err := godotenv.Load(envFilePath)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -54,6 +69,9 @@ var LoadEnv = func() *Config {
 		MAIL_PROCESSOR:        os.Getenv("MAIL_PROCESSOR"),
 		ADMIN_EMAIL:           os.Getenv("ADMIN_EMAIL"),
 		ADMIN_PASSWORD:        os.Getenv("ADMIN_PASSWORD"),
+		SERVER_URL:            os.Getenv("SERVER_URL"),
+		SLACK_WEBHOOK_URL:     os.Getenv("SLACK_WEBHOOK_URL"),
+		DOMAIN:                os.Getenv("DOMAIN"),
 	}
 
 	return config

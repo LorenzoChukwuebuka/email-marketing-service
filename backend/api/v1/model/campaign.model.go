@@ -1,42 +1,49 @@
 package model
 
 import (
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type CampaignStatus string
 
+type CampaignTrackType string
+
 const (
-	Draft     CampaignStatus = "draft"
-	Saved     CampaignStatus = "saved"
-	Scheduled CampaignStatus = "scheduled"
-	Sent      CampaignStatus = "sent"
+	Draft       CampaignStatus = "draft"
+	Saved       CampaignStatus = "saved"
+	Scheduled   CampaignStatus = "scheduled"
+	Sent        CampaignStatus = "sent"
+	FailedC     CampaignStatus = "failed"
+	Proccessing CampaignStatus = "proccessing"
+	Suspended   CampaignStatus = "suspended"
+)
+
+const (
+	Track CampaignTrackType = "track"
 )
 
 type Campaign struct {
 	gorm.Model
-	UUID           string          `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	Name           string          `json:"name"`
-	Subject        *string         `json:"subject" gorm:"type:text"`
-	PreviewText    *string         `json:"preview_text"`
-	SenderId       *string         `json:"sender_id"`
-	UserId         string          `json:"user_id"`
-	SenderFromName *string         `json:"senderFromName"`
-	TemplateId     *string         `json:"templateId"`
-	SentTemplateId *string         `json:"sentTemplateId"`
-	RecipientInfo  *string         `json:"recipientInfo"`
-	IsPublished    bool            `json:"isPublished"`
-	Status         CampaignStatus  `json:"status" gorm:"type:varchar(20);default:'draft';index"`
-	TrackType      string          `json:"trackType"`
-	IsArchived     bool            `json:"isArchived"`
-	SentAt         *time.Time      `json:"sentAt"`
-	CreatedBy      string          `json:"createdBy"`
-	LastEditedBy   string          `json:"lastEditedBy"`
-	Template       *string         `json:"template"`
-	Sender         *string         `json:"sender"`
-	ScheduledAt    *time.Time      `json:"scheduled_at" gorm:"index"`
-	CampaignGroups []CampaignGroup `json:"campaign_groups" gorm:"foreignKey:CampaignId"`
+	UUID           string            `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	Name           string            `json:"name"`
+	Subject        *string           `json:"subject" gorm:"type:text"`
+	PreviewText    *string           `json:"preview_text"`
+	UserId         string            `json:"user_id"`
+	SenderFromName *string           `json:"sender_from_name"`
+	TemplateId     *uint             `json:"template_id"`
+	Template       *Template         `json:"template"`
+	SentTemplateId *string           `json:"sent_template_id"`
+	RecipientInfo  *string           `json:"recipient_info"`
+	IsPublished    bool              `json:"is_published"`
+	Status         CampaignStatus    `json:"status" gorm:"type:varchar(20);default:'draft';index"`
+	TrackType      CampaignTrackType `json:"trackType"`
+	IsArchived     bool              `json:"isArchived"`
+	SentAt         *time.Time        `json:"sentAt"`
+	Sender         *string           `json:"sender"`
+	ScheduledAt    *time.Time        `json:"scheduled_at" gorm:"index"`
+	HasCustomLogo  bool              `json:"has_custom_logo"`
+	CampaignGroups []CampaignGroup   `json:"campaign_groups" gorm:"foreignKey:CampaignId"`
 }
 
 type CampaignGroup struct {
@@ -50,13 +57,23 @@ type CampaignGroup struct {
 
 type EmailCampaignResult struct {
 	gorm.Model
-	UserID       string `gorm:"index"`
-	CampaignID   string `gorm:"index"`
-	Version      string `gorm:"size:1"`
-	SentAt       time.Time
-	OpenedAt     *time.Time
-	ClickedAt    *time.Time
-	ConversionAt *time.Time
+	CampaignID      string     `json:"campaign_id" gorm:"index"`                     // Campaign identifier
+	RecipientEmail  string     `json:"recipient_email" gorm:"size:255;index"`        // Email of the recipient
+	RecipientName   *string    `json:"recipient_name" gorm:"size:255;default:null"`  // Name of the recipient
+	Version         string     `json:"version" gorm:"size:10"`                       // Version of the campaign (e.g., A/B testing)
+	SentAt          time.Time  `json:"sent_at" gorm:"type:TIMESTAMP;default:null"`   // Timestamp when the email was sent
+	OpenedAt        *time.Time `json:"opened_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when the email was opened
+	OpenCount       int        `json:"open_count" gorm:"default:0"`
+	ClickedAt       *time.Time `json:"clicked_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when a link in the email was clicked
+	ClickCount      int        `gorm:"default:0"`
+	ConversionAt    *time.Time `json:"conversion_at" gorm:"type:TIMESTAMP;default:null"`   // Timestamp when a conversion occurred (e.g., purchase)
+	BounceStatus    string     `gorm:"size:20"`                                            // Status if the email bounced (e.g., "soft", "hard")
+	UnsubscribeAt   *time.Time `json:"unsubscribed_at" gorm:"type:TIMESTAMP;default:null"` // Timestamp when the recipient unsubscribed
+	ComplaintStatus bool       `json:"complaint_status"`                                   // Whether the recipient marked the email as spam
+	DeviceType      string     `gorm:"size:50"`                                            // Type of device used to open the email
+	Location        string     `gorm:"size:100"`                                           // Geographic location of the recipient (if tracked)
+	RetryCount      int        `json:"retry_count"`                                        // Number of retry attempts for sending the email
+	Notes           string     `gorm:"type:text"`                                          // Additional notes or metadata
 }
 
 type CampaignResponse struct {
@@ -65,10 +82,9 @@ type CampaignResponse struct {
 	Name           string                  `json:"name"`
 	Subject        *string                 `json:"subject"`
 	PreviewText    *string                 `json:"preview_text"`
-	SenderId       *string                 `json:"sender_id"`
 	UserId         string                  `json:"user_id"`
 	SenderFromName *string                 `json:"sender_from_name"`
-	TemplateId     *string                 `json:"template_id"`
+	TemplateId     *uint                   `json:"template_id"`
 	SentTemplateId *string                 `json:"sent_template_id"`
 	RecipientInfo  *string                 `json:"recipient_info"`
 	IsPublished    bool                    `json:"is_published"`
@@ -78,7 +94,7 @@ type CampaignResponse struct {
 	SentAt         *time.Time              `json:"sent_at"`
 	CreatedBy      string                  `json:"created_by"`
 	LastEditedBy   string                  `json:"last_edited_by"`
-	Template       *string                 `json:"template"`
+	Template       *Template               `json:"template"`
 	Sender         *string                 `json:"sender"`
 	ScheduledAt    *string                 `json:"scheduled_at"`
 	CreatedAt      string                  `json:"created_at"`
@@ -98,15 +114,17 @@ type CampaignGroupResponse struct {
 }
 
 type EmailCampaignResultResponse struct {
-	ID           uint       `json:"-"`
-	UserID       string     `json:"user_id"`
-	CampaignID   string     `json:"campaign_id"`
-	Version      string     `json:"version"`
-	SentAt       time.Time  `json:"sent_at"`
-	OpenedAt     *time.Time `json:"opened_at,omitempty"`
-	ClickedAt    *time.Time `json:"clicked_at,omitempty"`
-	ConversionAt *time.Time `json:"conversion_at,omitempty"`
-	CreatedAt    string     `json:"created_at"`
-	UpdatedAt    string     `json:"updated_at"`
-	DeletedAt    *string    `json:"deleted_at"`
+	ID             uint       `json:"-"`
+	CampaignID     string     `json:"campaign_id"`
+	RecipientEmail string     `json:"recipient_email"`
+	Version        string     `json:"version"`
+	SentAt         time.Time  `json:"sent_at"`
+	OpenedAt       *time.Time `json:"opened_at"`
+	OpenCount      int        `json:"open_count"`
+	ClickedAt      *time.Time `json:"clicked_at"`
+	ClickCount     int        `json:"click_count"`
+	ConversionAt   *time.Time `json:"conversion_at"`
+	CreatedAt      string     `json:"created_at"`
+	UpdatedAt      string     `json:"updated_at"`
+	DeletedAt      *string    `json:"deleted_at"`
 }

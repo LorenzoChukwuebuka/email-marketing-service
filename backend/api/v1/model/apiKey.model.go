@@ -8,7 +8,7 @@ type KeyStatus string
 
 const (
 	KeyActive   KeyStatus = "active"
-	KeyInactive Status    = "inactive"
+	KeyInactive KeyStatus    = "inactive"
 )
 
 type APIKey struct {

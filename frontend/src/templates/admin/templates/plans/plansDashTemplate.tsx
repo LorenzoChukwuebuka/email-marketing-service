@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import CreatePlan from "../components/Plans/createPlan";
 import GetAllPlans from "../components/Plans/AllPlans";
 import usePlanStore from "../../../../store/admin/planStore";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 // Define the type for the component props if needed, but for now it's empty
 type PlansDashTemplateProps = {};
@@ -20,6 +21,10 @@ const PlansDashTemplate: React.FC<PlansDashTemplateProps> = () => {
 
     return (
         <>
+
+        <HelmetProvider>
+            <Helmet title="Plans" />
+            
             <h1 className="text-2xl font-bold mb-4">Plan</h1>
             <div className="flex justify-between items-center">
                 <div className="space-x-2">
@@ -45,6 +50,8 @@ const PlansDashTemplate: React.FC<PlansDashTemplateProps> = () => {
             <CreatePlan isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             <GetAllPlans />
+
+            </HelmetProvider>
         </>
     );
 };

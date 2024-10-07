@@ -16,6 +16,7 @@ interface DailyUserMailStore {
     mailData: MailData | null;
     setMailData: (newMailData: MailData | null) => void;
     getUserMailData: () => Promise<void>;
+    
 }
 
 const useDailyUserMailSentCalc = create<DailyUserMailStore>((set, get) => ({

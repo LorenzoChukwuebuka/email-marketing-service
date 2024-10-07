@@ -5,11 +5,12 @@ import Cookies from "js-cookie";
 const AdminDashLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [settingsDropdownOpen, setSettingsDropdownOpen] = useState<boolean>(false);
+    const [manageUsersDropdownOpen, setManageUsersDropdownOpen] = useState<boolean>(false);
     const location = useLocation();
     const navigate = useNavigate();
 
     const getLinkClassName = (path: string): string => {
-        const baseClass = "mb-4 text-center text-lg font-semibold";
+        const baseClass = "mb-2 text-center text-lg font-semibold";
         const activeClass = "text-white bg-[rgb(56,68,94)] p-2 px-2 rounded-md";
         const inactiveClass = "text-gray-300 hover:text-white hover:bg-[rgb(56,68,94)] px-2 p-2 rounded-md";
 
@@ -25,6 +26,15 @@ const AdminDashLayout: React.FC = () => {
     const toggleSettingsDropdown = () => {
         setSettingsDropdownOpen(prevState => !prevState);
     };
+
+    const toggleManageUsersDropdown = () => {
+        setManageUsersDropdownOpen(prevState => !prevState);
+    };
+
+    //for the name
+    const apiName = import.meta.env.VITE_API_NAME;
+    const firstFourLetters = apiName.slice(0, 4);
+    const remainingLetters = apiName.slice(4);
 
     const Logout = () => {
         const confirmResult = window.confirm("Do you want to logout?");
@@ -60,7 +70,8 @@ const AdminDashLayout: React.FC = () => {
                 {sidebarOpen && (
                     <nav className="p-4 text-white h-full">
                         <h2 className="text-xl font-bold mt-4 text-center mb-4">
-                            Mail Crib
+                            <span>{firstFourLetters}</span>
+                            <span className="text-blue-500">{remainingLetters}</span> <i className="bi bi-mailbox2-flag text-blue-500"></i>
                         </h2>
                         <ul className="mt-12 w-full">
                             <li className={getLinkClassName("/zen/dash")}>
@@ -68,7 +79,7 @@ const AdminDashLayout: React.FC = () => {
                                     to="/zen/dash"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-house mr-2"></i> DashBoard
+                                    <i className="bi bi-house-fill mr-2"></i> DashBoard
                                 </Link>
                             </li>
                             <li className={getLinkClassName("/zen/dash/plan")}>
@@ -76,60 +87,56 @@ const AdminDashLayout: React.FC = () => {
                                     to="/zen/dash/plan"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-bar-chart mr-2"></i> Plans
+                                    <i className="bi bi-bar-chart-fill mr-2"></i> Plans
                                 </Link>
                             </li>
-                            <li className={getLinkClassName("/zen/dash/users")}>
+                            <li className={`${getLinkClassName("/zen/dash/users")} relative`}>
+                                <button
+                                    onClick={toggleManageUsersDropdown}
+                                    className="flex font-semibold text-base items-center w-full"
+                                >
+                                    <i className="bi bi-people-fill"></i> &nbsp; Manage Users
+                                    <i className={`bi ${manageUsersDropdownOpen ? 'bi-chevron-up' : 'bi-chevron-down'} ml-auto`}></i>
+                                </button>
+                                {manageUsersDropdownOpen && (
+                                    <ul className="pl-4 mt-2">
+                                        <li className={getLinkClassName("/zen/dash/users")}>
+                                            <Link to="/zen/dash/users" className="flex font-semibold text-sm items-center">
+                                                Users
+                                            </Link>
+                                        </li>
+                                        <li className={getLinkClassName("/zen/dash/email-users")}>
+                                            <Link to="/zen/dash/email-users" className="flex font-semibold text-sm items-center">
+                                                Email All Users
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                )}
+                            </li>
+                            <li className={getLinkClassName("/zen/dash/support")}>
                                 <Link
-                                    to="/zen/dash/users"
+                                    to="/zen/dash/support"
                                     className="flex font-semibold text-base items-center"
                                 >
-                                    <i className="bi bi-wallet"></i> &nbsp; Users
+                                    <i className="bi bi-headset"></i> &nbsp; Support
                                 </Link>
                             </li>
-                            {/* <li className={`${getLinkClassName("")} relative`}>
-                <button
-                  onClick={toggleSettingsDropdown}
-                  className="flex items-center w-full justify-between"
-                >
-                  <span className="flex font-semibold text-base items-center">
-                    <i className="bi bi-gear mr-2"></i> Settings
-                  </span>
-                  <i
-                    className={`bi ${
-                      settingsDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
-                    } ml-2`}
-                  ></i>
-                </button>
-                {settingsDropdownOpen && (
-                  <ul className="mt-2 bg-[rgb(36,56,78)] rounded-md p-2">
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        User Management
-                      </Link>
-                    </li>
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        API Tokens
-                      </Link>
-                    </li>
-                    <li className={`py-1 ${getLinkClassName("")}`}>
-                      <Link
-                        to=""
-                        className="block  text-sm hover:bg-[rgb(56,68,94)] rounded"
-                      >
-                        Account Settings
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li> */}
+                            <li className={getLinkClassName("/zen/dash/analytics")}>
+                                <Link
+                                    to="/zen/dash/analytics"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-people-fill"></i> &nbsp; Analytics
+                                </Link>
+                            </li>
+                            <li className={getLinkClassName("/zen/dash/billing")}>
+                                <Link
+                                    to="/zen/dash/billing"
+                                    className="flex font-semibold text-base items-center"
+                                >
+                                    <i className="bi bi-credit-card"></i> &nbsp; Billing
+                                </Link>
+                            </li>
                         </ul>
                     </nav>
                 )}

@@ -50,6 +50,38 @@ func (r *AdminRepository) Login(email string) (*adminmodel.AdminResponse, error)
 
 }
 
-func (r *AdminRepository) ChangePassword() {
+// FindUserById finds an admin by UUID and returns the admin response
+func (r *AdminRepository) FindAdminById(uuid string) (adminmodel.AdminResponse, error) {
+	var admin adminmodel.Admin
 
+	if err := r.DB.Where("uuid = ?", uuid).First(&admin).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return adminmodel.AdminResponse{}, fmt.Errorf("admin not found")
+		}
+		return adminmodel.AdminResponse{}, fmt.Errorf("error querying database: %w", err)
+	}
+
+	adminResponse := r.createAdminResponse(admin)
+	return *adminResponse, nil
+}
+
+// ChangePassword updates the admin's password by UUID
+func (r *AdminRepository) ChangePassword(uuid string, newPassword string) error {
+	var admin adminmodel.Admin
+
+	// Find the admin by UUID
+	if err := r.DB.Where("uuid = ?", uuid).First(&admin).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("admin not found")
+		}
+		return fmt.Errorf("error querying database: %w", err)
+	}
+
+	// Update the password
+	admin.Password = newPassword
+	if err := r.DB.Save(&admin).Error; err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
 }

@@ -40,12 +40,13 @@ func (s *MailTrapProcessor) sendMailToRecipient(recipient dto.Recipient, emailRe
 
 	email := recipient.Email
 	subject := emailRequest.Subject
+	sender := emailRequest.Sender.Email
 
-	err := utils.SendMail(subject, email, mailContent)
+	err := utils.SendMail(subject, email, mailContent, sender,nil)
 	if err != nil {
 		fmt.Printf("Error sending mail to %s: %v\n", email, err)
 	} else {
-		//	eventBus.Notify(observers.Event{Type: "send_success", Message: "email sent successfully", Payload: emailRequest})
+
 		fmt.Printf("Mail sent to %s\n", email)
 	}
 }

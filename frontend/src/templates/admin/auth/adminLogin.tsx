@@ -1,6 +1,7 @@
 import * as Yup from "yup";
 import { useEffect, useState, FormEvent } from "react";
 import useAdminAuthStore from "../../../store/admin/AdminAuthStore";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 
 
@@ -54,6 +55,8 @@ const AdminLoginTemplate: React.FC = () => {
     }, [isLoggedIn]);
 
     return (
+        <HelmetProvider>
+            <Helmet title="Admin Login - CrabMailer" />
         <div className="flex justify-center items-center h-screen bg-gray-100">
             <div className="container mx-auto">
                 <h3 className="text-2xl font-bold text-center mb-4">MailCrib</h3>
@@ -127,6 +130,7 @@ const AdminLoginTemplate: React.FC = () => {
                 </div>
             </div>
         </div>
+        </HelmetProvider>
     );
 };
 

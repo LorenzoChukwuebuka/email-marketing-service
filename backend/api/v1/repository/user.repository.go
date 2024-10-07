@@ -101,6 +101,7 @@ func (r *UserRepository) Login(d *model.User) (model.UserResponse, error) {
 }
 
 func (r *UserRepository) FindUserById(d *model.User) (model.UserResponse, error) {
+
 	var user model.User
 	if err := r.DB.Where("uuid = ?", d.UUID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -205,4 +206,25 @@ func (r *UserRepository) UpdateUserRecords(d *model.User) error {
 	}
 
 	return nil
+}
+
+func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) error {
+	if err := r.DB.Create(&d).Error; err != nil {
+		return fmt.Errorf("failed to insert user: %w", err)
+	}
+	return nil
+
+}
+
+// AddCredential adds a new WebAuthn credential to the database
+func (repo *UserRepository) AddCredential(userID string, credential *model.WebAuthnCredential) error {
+	credential.UserID = userID
+	return repo.DB.Create(credential).Error
+}
+
+// GetCredentials retrieves WebAuthn credentials for a user
+func (repo *UserRepository) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
+	var credentials []model.WebAuthnCredential
+	err := repo.DB.Where("user_id = ?", userID).Find(&credentials).Error
+	return credentials, err
 }

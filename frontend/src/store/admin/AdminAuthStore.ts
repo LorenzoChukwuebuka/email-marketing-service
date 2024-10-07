@@ -9,6 +9,15 @@ interface LoginValues {
     password: string;
 }
 
+export type Admin = {
+    firstname: string;
+    middlename?: string
+    lastname:string
+    email: string;
+    type: "admin";  // Literal type for "admin"
+}
+
+
 interface AdminAuthState {
     loginValues: LoginValues;
     isLoading: boolean;
