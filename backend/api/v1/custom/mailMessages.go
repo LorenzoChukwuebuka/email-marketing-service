@@ -13,7 +13,7 @@ type Mail struct {
 
 var (
 	config = utils.LoadEnv()
-	sender = "noreply@crabmailer.app"
+	sender = "noreply@crabmailer.com"
 )
 
 func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
@@ -79,7 +79,35 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	return nil
 }
 
-func (m *Mail) VerifySenderMail() error {
+func (m *Mail) VerifySenderMail(username string, useremail string, domainemail string, otp string, userId string) error {
+	// Read the template file
+	templatePath := filepath.Join("api", "v1", "templates", "verifysender.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
+
+	replacements := map[string]string{
+		"{{Username}}":         username,
+		"{{UserEmail}}":        useremail,
+		"{{DomainEmail}}":      domainemail,
+		"{{VerificationLink}}": "http://localhost:5054/verifysender",
+		"{{Token}}":            otp,
+		"{{UserId}}":           userId,
+	}
+
+	formattedMail := string(mailTemplate)
+
+	for placeholder, value := range replacements {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+
+	err = utils.SendMail("Verify a new Sender [Crabmailer]", domainemail, formattedMail, sender, nil)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

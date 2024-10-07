@@ -49,14 +49,29 @@ const IndexLandingPage: React.FC = () => {
                     <section className="bg-blue-900 p-4 text-white space-x-5 py-20">
                         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
                             <div className="md:w-1/2 mb-10 md:mb-0">
-                                <h1 className="text-4xl md:text-7xl font-semibold mb-6">Supercharge Your Email Marketing</h1>
-                                <p className="text-xl">Reach your audience, drive conversions, and grow</p>
-                                <p className="text-xl mb-8"> your business with our powerful email marketing platform.</p>
-                                <Link to="/auth/sign-up" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3 rounded-md inline-flex items-center transition duration-300">
-                                    Sign Up
+                                <h1 className="text-4xl md:text-7xl font-semibold mb-6">Supercharge Your Email Strategy</h1>
+                                <p className="text-xl mb-4">Elevate your customer communications, drive conversions, and grow your business with our comprehensive email platform.</p>
+                                <ul className="text-lg mb-8 space-y-2">
+                                    <li className="flex items-start">
+                                        <ArrowRight className="mr-2 w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                        <span><strong>Marketing Campaigns:</strong> Reach and engage your audience effectively</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <ArrowRight className="mr-2 w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                        <span><strong>Transactional Emails:</strong> Deliver timely, personalized notifications</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <ArrowRight className="mr-2 w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                        <span><strong>Automated Workflows:</strong> Streamline your email campaigns for maximum impact</span>
+                                    </li>
+                                </ul>
+                                <p className="text-xl font-semibold mb-8">Power your entire email ecosystem with one robust solution.</p>
+                                <Link to="/auth/sign-up" className="bg-blue-600 text-white hover:bg-blue-700 text-lg px-8 py-3 rounded-md inline-flex items-center transition duration-300">
+                                    Get Started
                                     <ArrowRight className="ml-2 w-5 h-5" />
                                 </Link>
                             </div>
+
                             <div className="md:w-1/2">
                                 <img src={mailpicture} alt="Email marketing illustration" className="rounded-lg w-[80%] h-[70%] shadow-xl" />
                             </div>

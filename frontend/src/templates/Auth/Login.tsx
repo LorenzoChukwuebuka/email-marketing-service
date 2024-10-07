@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import useAuthStore from "../../store/userstore/AuthStore";
 import * as Yup from "yup";
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
+import renderApiName from "../../utils/name";
 
 const LoginTemplate: React.FC = () => {
     const {
@@ -52,7 +53,7 @@ const LoginTemplate: React.FC = () => {
             <div className="flex justify-center items-center h-screen bg-gray-100">
                 <div className="container mx-auto">
                     <h3 className="text-2xl font-bold text-center mb-4" >
-                        <a href="/">  {import.meta.env.VITE_API_NAME}  </a>
+                        <a href="/">  {renderApiName()}  </a>
                     </h3>
                     <div className="bg-white shadow-lg rounded-lg max-w-lg mx-auto mt-2 p-6">
                         <h3 className="text-2xl font-semibold text-center mb-4">Log in</h3>

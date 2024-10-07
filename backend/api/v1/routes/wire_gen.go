@@ -29,7 +29,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
 	domainRepository := repository.NewDomainRepository(db)
 	senderRepository := repository.NewSenderRepository(db)
-	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository, otpService, userRepository)
 	userNotificationRepository := repository.NewUserNotificationRepository(db)
 	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
 	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository, senderServices, userNotificationRepository, adminNotificationRepository)
@@ -157,7 +157,10 @@ func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, err
 func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, error) {
 	domainRepository := repository.NewDomainRepository(db)
 	senderRepository := repository.NewSenderRepository(db)
-	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	otpRepository := repository.NewOTPRepository(db)
+	otpService := services.NewOTPService(otpRepository)
+	userRepository := repository.NewUserRepository(db)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository, otpService, userRepository)
 	senderController := controllers.NewSenderController(senderServices)
 	return senderController, nil
 }
