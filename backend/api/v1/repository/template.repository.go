@@ -67,15 +67,26 @@ func (r *TemplateRepository) UpdateTemplate(d *model.Template) error {
 }
 
 func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {
-	if err := r.DB.Delete(d).Error; err != nil {
-		return fmt.Errorf("failed to delete template: %w", err)
+	result := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).Delete(&model.Template{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete template: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no template found with UUID: %s", d.UUID)
 	}
 	return nil
 }
 
-func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
+	query := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId)
+
+	// Add search parameter if provided
+	if search != "" {
+		query = query.Where("template_name ILIKE ?", "%"+search+"%")
+	}
+
+	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get transactional templates: %w", err)
 	}
 
@@ -87,9 +98,16 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string) ([]mode
 	return templateResponses, nil
 }
 
-func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search string) ([]model.TemplateResponse, error) {
 	var templates []model.Template
-	if err := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId).Order("created_at DESC").Find(&templates).Error; err != nil {
+	query := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId)
+
+	// Add search parameter if provided
+	if search != "" {
+		query = query.Where("template_name ILIKE ?", "%"+search+"%")
+	}
+
+	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
 		return nil, fmt.Errorf("failed to get marketing templates: %w", err)
 	}
 
@@ -101,13 +119,13 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string) ([]model.Te
 	return templateResponses, nil
 }
 
+
 func (r *TemplateRepository) GetSingleTemplate(templateId string) (*model.TemplateResponse, error) {
 	var template model.Template
-	result := r.DB.Where("  uuid = ?", templateId).First(&template)
-
+	result := r.DB.Where("uuid = ?", templateId).First(&template)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, fmt.Errorf("template with id %s not found", templateId)
 		}
 		return nil, result.Error
 	}
@@ -147,5 +165,3 @@ func convertToTemplateResponse(t *model.Template) *model.TemplateResponse {
 		EditorType:        t.EditorType,
 	}
 }
-
-

@@ -37,7 +37,7 @@ interface ContactGroupstore {
     setSelectedContactIds: (newId: string[]) => void
     setFormValues: (newformValue: FormValues) => void
     setEditValues: (newEditValues: EditGroupValues) => void
-    getAllGroups: (page?: number, pageSize?: number) => Promise<void>;
+    getAllGroups: (page?: number, pageSize?: number, query?: string) => Promise<void>;
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<ContactGroupData>, 'data'>) => void;
     setSelectedGroupIds: (newIds: string[]) => void;
     addContactToGroup: () => Promise<void>;
@@ -46,6 +46,7 @@ interface ContactGroupstore {
     createGroup: () => Promise<void>
     deleteGroup: () => Promise<void>
     updateGroup: () => Promise<void>
+    searchGroup: (query: string) => void
 
 }
 
@@ -71,12 +72,18 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
     setFormValues: (newformValue) => set({ formValues: newformValue }),
     setEditValues: (newEditValues) => set({ editValues: newEditValues }),
 
-    getAllGroups: async (page = 1, pageSize = 10): Promise<void> => {
+    getAllGroups: async (page = 1, pageSize = 10, query = ""): Promise<void> => {
         try {
             const { setContactGroupData, setPaginationInfo } = get()
             let response = await axiosInstance
                 .get<APIResponse<PaginatedResponse<ContactGroupData>>>
-                (`/contact/get-all-contact-groups?page=${page}&page_size=${pageSize}`)
+                (`/contact/get-all-contact-groups`, {
+                    params: {
+                        page: page || undefined,
+                        page_size: pageSize || undefined,
+                        search: query || undefined
+                    }
+                })
 
             const { data, ...paginationInfo } = response.data.payload
 
@@ -282,7 +289,19 @@ const useContactGroupStore = create<ContactGroupstore>((set, get) => ({
             get().setSelectedContactIds([])
             get().setSelectedGroupIds([])
         }
-    }
+    },
+
+    searchGroup: async (query: string) => {
+        const { getAllGroups } = get();
+
+        if (!query) {
+            await getAllGroups(); // If query is empty, reset to all groups
+            return;
+        }
+
+        await getAllGroups(1, 10, query)
+    },
+
 
 
 }))

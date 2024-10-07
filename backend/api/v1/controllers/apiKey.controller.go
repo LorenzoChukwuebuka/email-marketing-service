@@ -31,7 +31,10 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 
 	userId := claims["userId"].(string)
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 

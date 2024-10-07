@@ -38,10 +38,21 @@ func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello world")
 }
 
+func (c *UserController) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	health := map[string]interface{}{
+		"status":  200,
+		"message": "The application is working ....",
+	}
+	response.SuccessResponse(w, 200, health)
+}
+
 func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.User
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 	userCreateService, err := c.userService.CreateUser(reqdata)
 
 	if err != nil {
@@ -55,7 +66,10 @@ func (c *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	var reqdata *model.OTP
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	err := c.userService.VerifyUser(reqdata)
 
@@ -69,7 +83,10 @@ func (c *UserController) VerifyUser(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.Login
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	result, err := c.userService.Login(reqdata)
 
@@ -84,7 +101,10 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ResendOTP
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ResendOTP(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -97,7 +117,10 @@ func (c *UserController) ResendOTP(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ForgetPassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ForgetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -110,7 +133,10 @@ func (c *UserController) ForgetPassword(w http.ResponseWriter, r *http.Request) 
 func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ResetPassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	if err := c.userService.ResetPassword(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -131,7 +157,10 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 
 	var reqdata *dto.ChangePassword
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	err := c.userService.ChangePassword(userId, reqdata)
 	if err != nil {
@@ -152,7 +181,10 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	var reqdata *model.User
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	reqdata.UUID = userId
 
@@ -198,4 +230,40 @@ func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Requ
 	}
 
 	response.SuccessResponse(w, 200, result)
+}
+
+func (c *UserController) GetAllUserNotifications(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	result, err := c.userService.GetAllNotifications(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, result)
+}
+
+func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	err := c.userService.UpdateReadStatus(userId)
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "notifications updated")
 }

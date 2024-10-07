@@ -157,7 +157,7 @@ func (r *SubscriptionRepository) FindSubscriptionById(id string, userId int) (*m
 func (r *SubscriptionRepository) GetUsersCurrentSubscription(userId uint) (*model.SubscriptionResponseModel, error) {
 	var subscription model.Subscription
 
-	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ?", userId).First(&subscription).Error; err != nil {
+	if err := r.DB.Preload("Plan").Preload("User").Preload("Billing").Where("user_id = ? AND expired = ?", userId, false).First(&subscription).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("subscription not found: %w", err)
 		}

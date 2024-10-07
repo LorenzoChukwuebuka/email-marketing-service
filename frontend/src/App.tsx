@@ -13,11 +13,13 @@ import { AdminDashRoute } from "./layouts/adminDashRoute";
 import useTokenExpiration from './hooks/usetokenExpiration';
 import PaymentSuccessPage from "./pages/userDashboard/paymentSuccesspage";
 import EditorRouter from "./pages/editors/editorRouter";
+import PrivacyPolicy from "./pages/landingPage/privacypage";
+import TermsOfService from "./pages/landingPage/tos";
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
         toast.success(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -30,7 +32,7 @@ const App: React.FC = () => {
 
     const handleError = (message: string) => {
         toast.error(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -43,7 +45,7 @@ const App: React.FC = () => {
 
     const handleInfo = (message: string) => {
         toast.info(message, {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
@@ -75,11 +77,11 @@ const App: React.FC = () => {
 
     return (
         <>
-
-
             <ToastContainer />
             <Routes>
                 <Route index element={<IndexLandingPage />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/tos" element={<TermsOfService />} />
                 <Route path="/auth/*" element={<AuthRoute />} />
                 <Route path="/next/*" element={<AdminAuthRoute />} />
 

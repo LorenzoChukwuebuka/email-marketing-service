@@ -70,7 +70,10 @@ func (c *SMTPKeyController) CreateSMTPKey(w http.ResponseWriter, r *http.Request
 
 	var reqdata *dto.SMTPKeyDTO
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+        return
+    }
 
 	reqdata.UserId = userId
 

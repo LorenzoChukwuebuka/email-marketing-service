@@ -4,19 +4,20 @@ import { useLocation } from 'react-router-dom';
 import useTemplateStore from '../../store/userstore/templateStore';
 import { useNavigate } from 'react-router-dom';
 import SendTestEmail from '../user/components/templates/sendTestEmail';
+import useCampaignStore from '../../store/userstore/campaignStore';
 
 const DragAndDropEditor: React.FC = () => {
     const emailEditorRef = useRef<EditorRef>(null);
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { getSingleMarketingTemplate, getSingleTransactionalTemplate, currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore()
-
+    const { setCreateCampaignValues, updateCampaign, currentCampaignId, clearCurrentCampaignId } = useCampaignStore()
     const navigate = useNavigate()
-
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const uuid = queryParams.get('uuid');
     const _type = queryParams.get('type')
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -36,11 +37,6 @@ const DragAndDropEditor: React.FC = () => {
         }
     }, [uuid, _type]);
 
-
-    useEffect(() => {
-        console.log("Current template updated:", currentTemplate);
-    }, [currentTemplate]);
-
     useEffect(() => {
         return () => {
             setCurrentTemplate(null)
@@ -48,7 +44,14 @@ const DragAndDropEditor: React.FC = () => {
     }, [])
 
     const saveDesign = () => {
-        console.log("saveDesign function called");
+        if (currentCampaignId) {
+            setCreateCampaignValues({ template_id: uuid as string })
+
+            console.log({ campaignId: currentCampaignId, templateId: uuid })
+            new Promise(resolve => setTimeout(resolve, 3000));
+              updateCampaign(currentCampaignId)
+        }
+
         const unlayer = emailEditorRef.current?.editor;
 
         unlayer?.exportHtml(async (data) => {
@@ -89,11 +92,17 @@ const DragAndDropEditor: React.FC = () => {
 
 
     const handleNavigate = () => {
-        if (_type === "t") {
-            navigate("/user/dash/templates")
+        if (currentCampaignId) {
+            clearCurrentCampaignId();
+            navigate("/user/dash/campaign/edit/" + currentCampaignId);
         } else {
-            navigate("/user/dash/marketing")
+            if (_type === "t") {
+                navigate("/user/dash/templates");
+            } else {
+                navigate("/user/dash/marketing");
+            }
         }
+
     }
 
     return (

@@ -1,65 +1,67 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ContactsDashComponent from "../components/contacts/contactDashComponent";
 import ContactGroupDash from "../components/contactGroup/contactGroupDashComponent";
+import useMetadata from "../../../hooks/useMetaData";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+
+type TabType = "Contact" | "Contact Group" | "Segments";
 
 const ContactDashTemplate: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<"Contact" | "Contact Group">("Contact");
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        return (storedTab === "Contact" || storedTab === "Contact Group" || storedTab === "Segments") ? storedTab : "Contact";
+    });
 
-    useEffect(() => {
-        const storedActiveTab = localStorage.getItem("activeTab");
-        if (storedActiveTab) {
-            setActiveTab(storedActiveTab as "Contact" | "Contact Group");
-        }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem("activeTab", activeTab);
-    }, [activeTab]);
-
-    useEffect(() => {
-        return () => {
-            localStorage.removeItem("activeTab");
-        };
-    }, []);
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        localStorage.setItem("activeTab", tab);
+    };
 
 
-    return <>
-        <div className="p-6 max-w-full">
-            <nav className="flex space-x-8  border-b">
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
+    const metaData = useMetadata()("Contact")
+
+    return (
+        <HelmetProvider>
+            <Helmet {...metaData} title={activeTab === "Contact" ? "Contacts - CrabMailer" : "Contact Groups - CrabMailer"} />
+            <div className="p-6 max-w-full">
+                <nav className="flex space-x-8 border-b">
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Contact")}
+                    >
+                        Contact
+                    </button>
+                    <button
+                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact Group"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
+                            } transition-colors`}
+                        onClick={() => handleTabChange("Contact Group")}
+                    >
+                        Contact Group
+                    </button>
+
+                    {/* <button
+                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Segments"
+                            ? "border-blue-500 text-blue-500"
+                            : "border-transparent hover:border-gray-300"
                         } transition-colors`}
-                    onClick={() => setActiveTab("Contact")}
+                    onClick={() => handleTabChange("Segments")}
                 >
-                    Contact
-                </button>
+                    Segments
+                </button> */}
+                </nav>
 
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Contact Group"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => setActiveTab("Contact Group")}
-                >
-                    Contact Group
-                </button>
-            </nav>
+                {activeTab === "Contact" && <ContactsDashComponent />}
+                {activeTab === "Contact Group" && <ContactGroupDash />}
 
-            {activeTab === "Contact" && (
-                <>
-                    <ContactsDashComponent />
-                </>
-            )}
+                {activeTab === "Segments" && <> hello world </>}
+            </div>
+        </HelmetProvider>
+    );
+};
 
-            {activeTab === "Contact Group" && (
-                <>
-                    <ContactGroupDash />
-                </>
-            )}
-        </div>
-    </>
-}
-
-export default ContactDashTemplate
+export default ContactDashTemplate;

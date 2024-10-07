@@ -1,2 +1,2 @@
 
-export { default as SupportTicketDash } from "./supportAndTicketDashTemplate"
+export { default as SupportTicketDash } from "./HelpAndSupport"

@@ -53,7 +53,7 @@ type ContactResponse struct {
 }
 
 type ContactGroupResponse struct {
-	ID          uint              `json:"-"`
+	ID          uint              `json:"id"`
 	UUID        string            `json:"uuid"`
 	GroupName   string            `json:"group_name"`
 	UserId      string            `json:"user_id"`

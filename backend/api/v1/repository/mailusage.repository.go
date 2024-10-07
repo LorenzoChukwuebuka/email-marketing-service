@@ -2,6 +2,7 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"time"
@@ -27,8 +28,12 @@ func (r *MailUsageRepository) GetCurrentMailUsageRecord(subscriptionId int) (*mo
 
 	now := time.Now()
 
+	// Query to find the current mail usage record
 	if err := r.DB.Where("subscription_id = ? AND period_start <= ? AND period_end >= ?", subscriptionId, now, now).First(&record).Error; err != nil {
-		return nil, fmt.Errorf("error fetching record: %w", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("no active mail usage record found for subscription ID %d", subscriptionId)
+		}
+		return nil, fmt.Errorf("error fetching mail usage record: %w", err)
 	}
 
 	response := &model.MailUsageResponseModel{
@@ -71,8 +76,8 @@ func (r *MailUsageRepository) GetOrCreateCurrentMailUsageRecord(subscriptionId i
 		periodStart = now.Truncate(24 * time.Hour)
 		periodEnd = periodStart.Add(24 * time.Hour).Add(-time.Second)
 	} else {
-		periodStart = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		periodEnd = periodStart.AddDate(0, 1, 0).Add(-time.Nanosecond)
+		periodStart = now.Truncate(24 * time.Hour) // Start of the current day
+		periodEnd = periodStart.AddDate(0, 0, 30).Add(-time.Nanosecond)
 	}
 
 	var record model.MailUsage

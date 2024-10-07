@@ -10,6 +10,10 @@ export default defineConfig({
   build: {
     outDir: 'dist'
   },
+  optimizeDeps: {
+    include: ['react-helmet-async']
+  },
+
   server: {
     port: 3000
   }

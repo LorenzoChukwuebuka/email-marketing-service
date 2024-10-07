@@ -5,6 +5,7 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
+	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/api/v1/utils"
 	"errors"
 	"fmt"
@@ -32,25 +33,27 @@ var (
 
 const (
 	bcryptCost     = 14
-	otpLength      = 8
+	otpLength      = 20
 	successMessage = "Account created successfully. Kindly verify your account"
 	freePlanName   = "free"
 )
 
 var (
-	mailer     = &custom.Mail{}
-	config     = utils.LoadEnv()
-	smtpserver = config.SMTP_SERVER
+	mailer = &custom.Mail{}
+	config = utils.LoadEnv()
 )
 
 type UserService struct {
-	userRepo         *repository.UserRepository
-	otpService       *OTPService
-	planRepo         *repository.PlanRepository
-	subscriptionRepo *repository.SubscriptionRepository
-	billingRepo      *repository.BillingRepository
-	MailUsageRepo    *repository.MailUsageRepository
-	smtpKeyRepo      *repository.SMTPKeyRepository
+	userRepo              *repository.UserRepository
+	otpService            *OTPService
+	planRepo              *repository.PlanRepository
+	subscriptionRepo      *repository.SubscriptionRepository
+	billingRepo           *repository.BillingRepository
+	MailUsageRepo         *repository.MailUsageRepository
+	smtpKeyRepo           *repository.SMTPKeyRepository
+	SenderSVC             *SenderServices
+	UserNotificationRepo  *repository.UserNotificationRepository
+	AdminNotificationRepo *adminrepository.AdminNotificationRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository,
@@ -60,15 +63,21 @@ func NewUserService(userRepo *repository.UserRepository,
 	billingRepo *repository.BillingRepository,
 	mailUsageRepo *repository.MailUsageRepository,
 	smtpKeyRepo *repository.SMTPKeyRepository,
+	sendersvc *SenderServices,
+	userNotificationRepo *repository.UserNotificationRepository,
+	adminNotificationRepo *adminrepository.AdminNotificationRepository,
 ) *UserService {
 	return &UserService{
-		userRepo:         userRepo,
-		otpService:       otpSvc,
-		planRepo:         planRepo,
-		subscriptionRepo: subscriptionRepo,
-		billingRepo:      billingRepo,
-		MailUsageRepo:    mailUsageRepo,
-		smtpKeyRepo:      smtpKeyRepo,
+		userRepo:              userRepo,
+		otpService:            otpSvc,
+		planRepo:              planRepo,
+		subscriptionRepo:      subscriptionRepo,
+		billingRepo:           billingRepo,
+		MailUsageRepo:         mailUsageRepo,
+		smtpKeyRepo:           smtpKeyRepo,
+		SenderSVC:             sendersvc,
+		UserNotificationRepo:  userNotificationRepo,
+		AdminNotificationRepo: adminNotificationRepo,
 	}
 }
 
@@ -91,22 +100,50 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		Verified: false,
 	}
 
+	tx := s.userRepo.DB.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	if err := s.checkUserExists(user); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if err := s.createUserInDB(user); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	otp := utils.GenerateOTP(otpLength)
 
 	if err := s.createAndSendOTP(user, otp); err != nil {
+		tx.Rollback()
 		return nil, err
+	}
+
+	if err := s.createTempEmailForUser(user.UUID, user.Email); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	notificationTitle := fmt.Sprintf("A new member %s has registered", d.FullName)
+	link := fmt.Sprintf("/zen/dash/users/detail/%s", user.UUID)
+	if err := utils.CreateAdminNotifications(s.AdminNotificationRepo, user.UUID, link, notificationTitle); err != nil {
+		tx.Rollback()
+		fmt.Printf("Failed to create notification: %v\n", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return s.createSuccessResponse(user.UUID), nil
@@ -140,9 +177,19 @@ func (s *UserService) createAndSendOTP(user *model.User, otp string) error {
 		return fmt.Errorf("%w: %v", ErrCreatingOTP, err)
 	}
 
-	if err := mailer.SignUpMail(user.Email, user.FullName, user.UUID, otp); err != nil {
-		return fmt.Errorf("%w: %v", ErrSendingEmail, err)
+	errChan := make(chan error)
+
+	go func() {
+		if err := mailer.SignUpMail(user.Email, user.FullName, user.UUID, otp); err != nil {
+			errChan <- fmt.Errorf("%w: %v", ErrSendingEmail, err)
+		}
+		close(errChan)
+	}()
+
+	if err := <-errChan; err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -153,13 +200,40 @@ func (s *UserService) createSuccessResponse(userID string) map[string]interface{
 	}
 }
 
+func (s *UserService) createTempEmailForUser(userID string, UserEmail string) error {
+
+	parts := strings.Split(UserEmail, "@")
+
+	if len(parts) > 2 {
+		return fmt.Errorf("invalid email format")
+	}
+
+	tempMail := parts[0] + "@" + config.DOMAIN
+
+	tempModel := &model.UserTempEmail{UserId: userID, TemporaryEmail: tempMail}
+
+	if err := s.userRepo.CreateTempEmail(tempModel); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *UserService) VerifyUser(d *model.OTP) error {
 	if err := utils.ValidateData(d); err != nil {
 		return fmt.Errorf("invalid OTP data: %w", err)
 	}
 
+	tx := s.userRepo.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	otpData, err := s.otpService.RetrieveOTP(d)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("error retrieving OTP: %w", err)
 	}
 
@@ -173,11 +247,18 @@ func (s *UserService) VerifyUser(d *model.OTP) error {
 
 	userId, err := s.userRepo.VerifyUserAccount(user)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("unable to verify user: %w", err)
 	}
 
 	if err = s.otpService.DeleteOTP(int(otpData.ID)); err != nil {
+		tx.Rollback()
 		return fmt.Errorf("unable to delete OTP: %w", err)
+	}
+
+	if err = s.createSender(d.UserId); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("unable to create sender")
 	}
 
 	return s.createUserBasicPlan(userId)
@@ -260,6 +341,8 @@ func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, 
 		PlanId:        uint(plan.ID),
 		PaymentId:     paymentId,
 		TransactionId: transactionId,
+		StartDate:     time.Now(),
+		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
 	}
 
 	sub, err := s.subscriptionRepo.CreateSubscription(subscription)
@@ -282,7 +365,7 @@ func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error
 		UUID:      uuid.New().String(),
 		KeyName:   "Master",
 		UserId:    userId,
-		SMTPLogin: userEmail + "@" + smtpserver,
+		SMTPLogin: userEmail,
 		Password:  utils.GenerateOTP(15),
 		Status:    model.KeyStatus("active"),
 	}
@@ -293,6 +376,22 @@ func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error
 		return ErrCreatingSMTPKey
 	}
 
+	return nil
+}
+
+func (s *UserService) createSender(userId string) error {
+
+	userModel := &model.User{UUID: userId}
+
+	getUser, err := s.userRepo.FindUserById(userModel)
+
+	if err != nil {
+		return err
+	}
+
+	sender := &dto.SenderDTO{UserID: userId, Email: getUser.Email, Name: "my company"}
+
+	s.SenderSVC.CreateSender(sender)
 	return nil
 }
 
@@ -465,4 +564,30 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 	}
 
 	return &userDetails, nil
+}
+
+func (s *UserService) AddCredential(userID string, credential *model.WebAuthnCredential) error {
+	return s.userRepo.AddCredential(userID, credential)
+}
+
+func (s *UserService) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
+	return s.userRepo.GetCredentials(userID)
+}
+
+func (s *UserService) GetAllNotifications(userId string) ([]model.UserNotificationResponse, error) {
+	usernotifications, err := s.UserNotificationRepo.GetAllUserNotification(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return usernotifications, err
+}
+
+func (s *UserService) UpdateReadStatus(userId string) error {
+	if err := s.UserNotificationRepo.UpdateReadStatus(userId); err != nil {
+		return err
+	}
+
+	return nil
 }

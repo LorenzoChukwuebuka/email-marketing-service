@@ -4,8 +4,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"errors"
 	"fmt"
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type ContactRepository struct {
@@ -75,7 +75,7 @@ func (r *ContactRepository) GetAllContacts(userId string, params PaginationParam
 	query := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Order("created_at DESC").Preload("Groups")
 
 	if searchQuery != "" {
-		query = query.Where("name LIKE ? OR email LIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%")
+		query = query.Where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?", "%"+searchQuery+"%", "%"+searchQuery+"%", "%"+searchQuery+"%")
 	}
 
 	paginatedResult, err := Paginate(query, params, &contacts)
@@ -124,6 +124,7 @@ func mapContactToResponse(contact model.Contact) model.ContactResponse {
 
 func mapGroupToResponse(group model.ContactGroup) model.ContactGroupResponse {
 	groupResponse := model.ContactGroupResponse{
+		ID:          group.ID,
 		UUID:        group.UUID,
 		GroupName:   group.GroupName,
 		UserId:      group.UserId,
@@ -160,26 +161,47 @@ func (r *ContactRepository) DeleteContact(userId string, contactId string) error
 	return nil
 }
 
-func (r *ContactRepository) ToggleSubscription() error {
+func (r *ContactRepository) UpdateContact(d *model.Contact) error {
+	var existingContact model.Contact
+
+	if err := r.DB.Where("uuid = ? AND user_id = ?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to find contact for update: %w", err)
+	}
+
+	if d.FirstName != "" {
+		existingContact.FirstName = d.FirstName
+	}
+	if d.LastName != "" {
+		existingContact.LastName = d.LastName
+	}
+	if d.Email != "" {
+		existingContact.Email = d.Email
+	}
+	if d.From != "" {
+		existingContact.From = d.From
+	}
+
+	existingContact.IsSubscribed = d.IsSubscribed
+	existingContact.UpdatedAt = time.Now().UTC()
+
+	if err := r.DB.Save(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to update contact: %w", err)
+	}
+
 	return nil
 }
 
-func (r *ContactRepository) UpdateContact(d *model.Contact) error {
+func (r *ContactRepository) UpdateSubscriptionStatus(email string) error {
 	var existingContact model.Contact
-	if err := r.DB.Where("uuid = ? AND user_id =?", d.UUID, d.UserId).First(&existingContact).Error; err != nil {
-		return fmt.Errorf("failed to find plan for deletion: %w", err)
+
+	if err := r.DB.Where("email = ?", email).First(&existingContact).Error; err != nil {
+		return fmt.Errorf("failed to find contact for update: %w", err)
 	}
 
-	existingContact.FirstName = d.FirstName
-	existingContact.LastName = d.LastName
-	existingContact.Email = d.Email
-	existingContact.From = d.From
-	existingContact.IsSubscribed = d.IsSubscribed
-	htime := time.Now().UTC()
-	existingContact.UpdatedAt = htime
+	existingContact.IsSubscribed = false
 
 	if err := r.DB.Save(&existingContact).Error; err != nil {
-		return fmt.Errorf("failed to update plan: %w", err)
+		return fmt.Errorf("failed to update contact: %w", err)
 	}
 
 	return nil
@@ -261,7 +283,7 @@ func (r *ContactRepository) GetAllGroups(userId string, params PaginationParams,
 		Where("contact_groups.deleted_at IS NULL")
 
 	if searchQuery != "" {
-		query = query.Where("contact_groups.name LIKE ?", "%"+searchQuery+"%")
+		query = query.Where("contact_groups.group_name ILIKE ?", "%"+searchQuery+"%")
 	}
 
 	query = query.Order("contact_groups.created_at DESC")
@@ -301,6 +323,27 @@ func (r *ContactRepository) GetASingleGroupWithContacts(userId string, groupId s
 			Where("user_contact_groups.deleted_at IS NULL")
 	}).
 		Where("contact_groups.uuid = ?", groupId).
+		Where("contact_groups.deleted_at IS NULL").
+		First(&group).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := mapToContactGroupResponse(group)
+
+	return &response, nil
+}
+
+func (r *ContactRepository) GetGroupById(userId string, groupId int) (*model.ContactGroupResponse, error) {
+	var group model.ContactGroup
+	err := r.DB.Preload("Contacts", func(db *gorm.DB) *gorm.DB {
+		return db.Joins("JOIN user_contact_groups ON user_contact_groups.contact_id = contacts.id").
+			Where("user_contact_groups.user_id = ?", userId).
+			Where("contacts.deleted_at IS NULL").
+			Where("user_contact_groups.deleted_at IS NULL")
+	}).
+		Where("contact_groups.id = ?", groupId).
 		Where("contact_groups.deleted_at IS NULL").
 		First(&group).Error
 
@@ -422,4 +465,45 @@ func (r *ContactRepository) GetContactCount(userId string) (map[string]int64, er
 	contactCounts["recent"] = recentCount
 
 	return contactCounts, nil
+}
+
+func (r *ContactRepository) GetContactSubscriptionStatusForDashboard(userId string) (map[string]int64, error) {
+	result := make(map[string]int64)
+
+	// 1. Total counts of unsubscribed contacts
+	var unsubscribedCount int64
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND is_subscribed = ?", userId, false).Count(&unsubscribedCount).Error; err != nil {
+		return nil, err
+	}
+	result["unsubscribed"] = unsubscribedCount
+
+	// 2. Total counts of contacts
+	var totalCount int64
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ?", userId).Count(&totalCount).Error; err != nil {
+		return nil, err
+	}
+	result["total"] = totalCount
+
+	// 3. New contacts (contacts less than 10 days old)
+	var newContactsCount int64
+	tenDaysAgo := time.Now().AddDate(0, 0, -10)
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ? AND created_at >= ?", userId, tenDaysAgo).Count(&newContactsCount).Error; err != nil {
+		return nil, err
+	}
+	result["new"] = newContactsCount
+
+	// 4. Engaged subscribers (contacts who opened, clicked, or converted in any campaign)
+	var engagedCount int64
+	if err := r.DB.
+		Table("email_campaign_results").
+		Select("COUNT(DISTINCT contacts.id)").
+		Joins("JOIN contacts ON contacts.email = email_campaign_results.recipient_email").
+		Where("contacts.user_id = ?", userId).
+		Where("email_campaign_results.opened_at IS NOT NULL OR email_campaign_results.clicked_at IS NOT NULL OR email_campaign_results.conversion_at IS NOT NULL").
+		Count(&engagedCount).Error; err != nil {
+		return nil, err
+	}
+	result["engaged"] = engagedCount
+
+	return result, nil
 }

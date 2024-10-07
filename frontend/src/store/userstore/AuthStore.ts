@@ -26,7 +26,7 @@ type ResetPasswordValues = Pick<FormValues, 'email' | 'confirmPassword' | 'passw
 
 type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | 'token'>;
 
-type UserDetails = {
+export type UserDetails = {
     fullname: string
     email: string
     company: string
@@ -328,7 +328,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
             let response = await axiosInstance.post('/user-login', loginValues)
             if (response.data.message === 'success') {
                 Cookies.set('Cookies', JSON.stringify(response.data.payload), {
-                    expires: 7,
+                    expires: 3,
                     sameSite: 'Strict',
                     secure: true
                 })

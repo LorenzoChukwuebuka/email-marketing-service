@@ -9,14 +9,11 @@ export function isError(value: unknown): value is Error {
 }
 
 
-
-
 interface ErrorResponse {
     status: string;
     message: string;
     payload?: Record<string, any>
 }
-
 
 
 export function errResponse(error: any): error is AxiosError<ErrorResponse> {

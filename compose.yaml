@@ -1,10 +1,13 @@
-version: '3.8'
-
 services:
-  app:
-    build: .
+  go-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
     ports:
       - "9000:9000"
+      - "1025:1025"
+    environment:
+      SERVER_MODE: "production"
     env_file: ./backend/.env
     networks:
       - app-network
@@ -14,19 +17,31 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    volumes:
+      - ./backend:/app
+    cap_add:
+      - NET_BIND_SERVICE
+    privileged: true # Be cautious with this in production
 
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "8081:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      app:
+      go-backend:
         condition: service_healthy
     networks:
       - app-network
-    command: /bin/sh -c "nginx -g 'daemon off;'"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1026:1025" # SMTP
+      - "8025:8025" # Web UI
+    networks:
+      - app-network
 
 networks:
   app-network:

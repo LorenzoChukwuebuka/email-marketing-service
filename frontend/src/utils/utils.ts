@@ -86,3 +86,29 @@ export function copyToClipboard(text: string): void {
             console.error('Failed to copy text: ', err);
         });
 }
+
+
+export const parseDate = (dateString: string) => {
+    // Remove the timezone abbreviation (WAT)
+    dateString = dateString.replace(' WAT', '');
+
+    // If the time zone is already handled in the string (+0100), leave it as is
+    return new Date(dateString);
+};
+
+export const downloadFile = (content: any) => {
+    // Create a Blob with the file content
+    const blob = new Blob([content], { type: 'text/plain' });
+
+    // Create a URL for the Blob
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a link element and trigger a download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dns_records.txt'; // Specify the name for the downloaded file
+    a.click();
+
+    // Clean up the URL object
+    window.URL.revokeObjectURL(url);
+};

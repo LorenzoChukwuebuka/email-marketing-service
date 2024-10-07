@@ -35,7 +35,7 @@ type Template struct {
 }
 
 type TemplateResponse struct {
-	ID                uint             `json:"id"`
+	ID                uint             `json:"-"`
 	UUID              string           `json:"uuid"`
 	CreatedAt         string           `json:"created_at"`
 	UpdatedAt         string           `json:"updated_at"`
