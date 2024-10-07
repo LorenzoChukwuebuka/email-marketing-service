@@ -14,12 +14,16 @@ import (
 type SenderServices struct {
 	SenderRepo *repository.SenderRepository
 	DomainRepo *repository.DomainRepository
+	OTPSvc     *OTPService
+	UserRepo   *repository.UserRepository
 }
 
-func NewSenderServices(domainRepo *repository.DomainRepository, senderRepo *repository.SenderRepository) *SenderServices {
+func NewSenderServices(domainRepo *repository.DomainRepository, senderRepo *repository.SenderRepository, otpsvc *OTPService, userRepo *repository.UserRepository) *SenderServices {
 	return &SenderServices{
 		SenderRepo: senderRepo,
 		DomainRepo: domainRepo,
+		OTPSvc:     otpsvc,
+		UserRepo:   userRepo,
 	}
 }
 
@@ -57,7 +61,11 @@ func (s *SenderServices) CreateSender(d *dto.SenderDTO) error {
 
 			if s.HasMXRecord(domainName) {
 				senderModel.IsSigned = false
-				senderModel.Verified = true
+				senderModel.Verified = false
+
+				//trigger a email sending event here.
+				s.sendVerificationMail(d.UserID, d.Email)
+
 			} else {
 				senderModel.IsSigned = false
 				senderModel.Verified = false
@@ -90,6 +98,30 @@ func (s *SenderServices) CreateSender(d *dto.SenderDTO) error {
 func (s *SenderServices) HasMXRecord(domain string) bool {
 	mxRecords, err := net.LookupMX(domain)
 	return err == nil && len(mxRecords) > 0
+}
+
+func (s *SenderServices) sendVerificationMail(userId string, email string) error {
+
+	user, err := s.UserRepo.FindUserById(&model.User{UUID: userId})
+
+	if err != nil {
+		return err
+	}
+
+	otp := utils.GenerateOTP(20)
+
+	otpModel := &model.OTP{
+		UserId: userId,
+		Token:  otp,
+	}
+
+	if err := s.OTPSvc.CreateOTP(otpModel); err != nil {
+		return err
+	}
+
+	mailer.VerifySenderMail(user.FullName, user.Email, email, otp, userId)
+
+	return nil
 }
 
 func (s *SenderServices) GetAllSenders(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
@@ -142,7 +174,7 @@ func (s *SenderServices) UpdateSender(d *dto.SenderDTO) error {
 		if err.Error() == "domain not found" {
 			if s.HasMXRecord(domainName) {
 				existingSender.IsSigned = false
-				existingSender.Verified = true
+				existingSender.Verified = false
 			} else {
 				existingSender.IsSigned = false
 				existingSender.Verified = false
@@ -165,5 +197,9 @@ func (s *SenderServices) UpdateSender(d *dto.SenderDTO) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *SenderServices) VerifySender(userId string) error {
 	return nil
 }

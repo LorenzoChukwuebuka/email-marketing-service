@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"log"
 	//"os"
-	"time"
 	"github.com/emersion/go-smtp"
 	"gorm.io/gorm"
+	"time"
 )
 
 // StartSMTPServer starts the SMTP server and listens for shutdown signals

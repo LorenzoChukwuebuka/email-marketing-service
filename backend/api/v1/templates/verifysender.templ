@@ -358,85 +358,69 @@
     </style>
 </head>
 
-<body class="">
-    <span class="preheader">Please verify your email address to complete your account setup.</span>
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
-        <tr>
-            <td>&nbsp;</td>
-            <td class="container">
-                <div class="content">
-
-                    <!-- START CENTERED WHITE CONTAINER -->
-                    <table role="presentation" class="main">
-
-                        <!-- START MAIN CONTENT AREA -->
+<body class=""></body>
+<span class="preheader">Please verify your email address to complete your domain setup with CrabMailer.</span>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+    <tr>
+        <td>&nbsp;</td>
+        <td class="container">
+            <div class="content">
+                <table role="presentation" class="main">
+                    <tr>
+                        <td class="wrapper">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <h2>Hello,</h2>
+                                        <p>You are receiving this email because {{Username}} ({{UserEmail}}) has added
+                                            {{DomainEmail}} as a new sender domain on CrabMailer. We need your
+                                            authorization to verify this domain.</p>
+                                        <p>To allow the use of this new domain as a sender, please click the
+                                            verification link below:</p>
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0"
+                                            class="btn btn-primary">
+                                            <tbody>
+                                                <tr>
+                                                    <td align="left">
+                                                        <table role="presentation" border="0" cellpadding="0"
+                                                            cellspacing="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td> <a href="{{VerificationLink}}?email={{DomainEmail}}&token={{Token}}&userId={{UserId}}"
+                                                                            target="_blank">Verify Domain</a> </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <p>If you did not request to add this domain or do not want to allow its use as
+                                            a sender, simply ignore this email.</p>
+                                        <p>For more information or if you have any questions, please contact the user
+                                            who made the request directly at {{UserEmail}}.</p>
+                                        <p>(Not familiar with CrabMailer? Learn more at www.crabmailer.com)</p>
+                                        <p>Best regards,<br>The CrabMailer Team</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                <div class="footer">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                         <tr>
-                            <td class="wrapper">
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td>
-                                            <h2>Hi,</h2>
-                                            <p>
-
-                                                You are receiving this email because {{}} {{}}
-                                                has added {{}} as a new email sender. They need your
-                                                authorization to use it.
-                                            </p>
-                                            <p>To allow them to use this new email address as a sender, go to Crabmailer
-                                                and
-                                                use the following one-time verification code:
-
-                                                {{Token}} </p>
-                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0"
-                                                class="btn btn-primary">
-                                                <tbody>
-                                                    <tr>
-                                                        <td align="left">
-                                                            <table role="presentation" border="0" cellpadding="0"
-                                                                cellspacing="0">
-                                                                // <tbody>
-                                                                    // <tr>
-                                                                        // <td> <a
-                                                                                href="{{Link}}?email={{Email}}&token={{Token}}&userId={{UserId}}"
-                                                                                // target="_blank">Verify Account</a>
-                                                                        </td>
-                                                                        // </tr>
-                                                                    // </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <p>If you did not attempt to register with our service, please ignore this
-                                                email.</p>
-                                            <p>Regards,<br> {{AppName}}</p>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <td class="content-block">
+                                <span class="apple-link">CrabMailer, Your Trusted Email Marketing Platform</span>
                             </td>
                         </tr>
-
-                        <!-- END MAIN CONTENT AREA -->
                     </table>
-                    <!-- END CENTERED WHITE CONTAINER -->
-
-                    <!-- START FOOTER -->
-                    <div class="footer">
-                        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <td class="content-block">
-                                    <span class="apple-link">{{AppName}}, </span>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <!-- END FOOTER -->
-
                 </div>
-            </td>
-            <td>&nbsp;</td>
-        </tr>
-    </table>
+            </div>
+        </td>
+        <td>&nbsp;</td>
+    </tr>
+</table>
 </body>
 
 </html>

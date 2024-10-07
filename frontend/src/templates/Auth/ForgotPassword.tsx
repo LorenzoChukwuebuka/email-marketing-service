@@ -2,6 +2,7 @@ import React, { useState, ChangeEvent, FormEvent } from "react";
 import * as Yup from "yup";
 import useAuthStore from "../../store/userstore/AuthStore";
 import { Link } from "react-router-dom";
+import renderApiName from '../../utils/name';
 
 const ForgotPasswordTemplate: React.FC = () => {
     const {
@@ -40,17 +41,12 @@ const ForgotPasswordTemplate: React.FC = () => {
         }
     };
 
-    const apiName = import.meta.env.VITE_API_NAME;
-    const firstFourLetters = apiName.slice(0, 4);
-    const remainingLetters = apiName.slice(4);
-
     return (
         <>
             <div className="container mx-auto px-4">
                 <div className="max-w-lg mx-auto mt-[10em]">
                     <h3 className="text-2xl font-bold text-center mb-4">
-                        <span>{firstFourLetters}</span>
-                        <span className="text-blue-500">{remainingLetters}</span> <i className="bi bi-mailbox2-flag text-blue-500"></i>
+                        {renderApiName()}
                     </h3>
                     <div className="bg-white shadow-md rounded-lg p-8">
                         <h3 className="text-2xl font-bold text-center mb-4">

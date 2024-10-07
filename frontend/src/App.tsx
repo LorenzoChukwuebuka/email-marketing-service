@@ -84,6 +84,7 @@ const App: React.FC = () => {
                 <Route path="/tos" element={<TermsOfService />} />
                 <Route path="/auth/*" element={<AuthRoute />} />
                 <Route path="/next/*" element={<AdminAuthRoute />} />
+                
 
                 <Route element={<ProtectedRoute />}>
                     <Route path="/user/*" element={<UserDashRoute />} />

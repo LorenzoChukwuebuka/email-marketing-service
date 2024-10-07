@@ -188,8 +188,11 @@ func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, err
 	wire.Build(
 		controllers.NewSenderController,
 		services.NewSenderServices,
+		services.NewOTPService,
+		repository.NewOTPRepository,
 		repository.NewSenderRepository,
 		repository.NewDomainRepository,
+		repository.NewUserRepository,
 	)
 
 	return nil, nil
