@@ -89,6 +89,7 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 		repository.NewUserRepository,
 		repository.NewMailStatusRepository,
 		repository.NewPlanRepository,
+		repository.NewSMTPkeyRepository,
 	)
 
 	return nil, nil
@@ -111,6 +112,8 @@ func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionCon
 		repository.NewSubscriptionRepository,
 		repository.NewMailUsageRepository,
 		repository.NewPlanRepository,
+		repository.NewUserRepository,
+		repository.NewBillingRepository,
 	)
 	return nil, nil
 }
@@ -171,6 +174,7 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 		repository.NewUserRepository,
 		repository.NewDomainRepository,
 		repository.NewUserNotificationRepository,
+		repository.NewSMTPkeyRepository,
 	)
 	return nil, nil
 }
@@ -247,7 +251,7 @@ func InitializeAdminCampaignController(db *gorm.DB) (*adminController.AdminCampa
 	return nil, nil
 }
 
-func InitializeAdminBillingController(db *gorm.DB)(*adminController.AdminBillingController,error){
+func InitializeAdminBillingController(db *gorm.DB) (*adminController.AdminBillingController, error) {
 	wire.Build(
 		adminController.NewAdminBillingController,
 		adminservice.NewAdminBillingService,

@@ -222,7 +222,7 @@ func seedData(db *gorm.DB) {
 			UserId:    uuid.New().String(), // Use the existing user's ID
 			SMTPLogin: "adminuser",
 			KeyName:   "adminuser",
-			Password:  uuid.New().String(),
+			Password:  "abe6f7f6-f407-4ac2-9763-5de47a0ffee4",
 			Status:    model.KeyActive,
 		}
 

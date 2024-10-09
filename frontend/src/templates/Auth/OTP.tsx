@@ -57,8 +57,12 @@ const OTPTemplate: React.FC = () => {
     return (
         <div className="container mx-auto mt-[10em] px-4">
             <div className="max-w-lg mx-auto mt-5">
+
+                <h3 className="text-2xl font-bold text-center mb-4" >
+                    <a href="/">  {renderApiName()}  </a>
+                </h3>
                 <div className="bg-white shadow-md rounded-lg p-8">
-                  {renderApiName()}
+
 
                     <h3 className="text-2xl font-bold text-center mb-4">
                         Verify Email

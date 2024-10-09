@@ -114,9 +114,15 @@ func (s *Session) Data(r io.Reader) error {
 		debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
 		log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
 
+		messageStr := s.message.String()
+		// Check if the email is valid before proceeding
+		if err := isValidEmail(s.from, s.to, messageStr); err != nil {
+			return fmt.Errorf("invalid email: %w", err)
+		}
+
 		// Store the email for IMAP access
-		username := strings.Split(s.from, "@")[0] // Example: extract username from `from` address
-		mailbox := "INBOX"                        // Assume all emails go to INBOX
+		username := strings.Split(s.from, "@")[0]
+		mailbox := "INBOX"
 		err = s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b)
 		if err != nil {
 			return fmt.Errorf("error storing email: %w", err)
@@ -234,4 +240,35 @@ func debugLog(message string) {
 	if Debug {
 		log.Printf("[DEBUG] %s", message)
 	}
+}
+
+func isValidEmail(from string, to []string, message string) error {
+	// Check if the 'From' field is valid
+	if _, err := mail.ParseAddress(from); err != nil {
+		return errors.New("invalid 'From' address")
+	}
+
+	// Check if there is at least one valid 'To' recipient
+	if len(to) == 0 {
+		return errors.New("no 'To' recipients")
+	}
+
+	for _, recipient := range to {
+		if _, err := mail.ParseAddress(recipient); err != nil {
+			return errors.New("invalid 'To' recipient: " + recipient)
+		}
+	}
+
+	// Ensure the email message contains a subject (this is optional but recommended)
+	if !strings.Contains(strings.ToLower(message), "subject:") {
+		return errors.New("missing 'Subject' field in email")
+	}
+
+	// Check if the message body contains content
+	bodyStartIndex := strings.Index(message, "\r\n\r\n")
+	if bodyStartIndex == -1 || len(strings.TrimSpace(message[bodyStartIndex:])) == 0 {
+		return errors.New("email body is empty")
+	}
+
+	return nil
 }
