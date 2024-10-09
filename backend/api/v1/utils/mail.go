@@ -16,8 +16,8 @@ type SMTPConfig struct {
 func DefaultSMTPConfig() SMTPConfig {
 	config := LoadEnv()
 	return SMTPConfig{
-		Host:     "sandbox.smtp.mailtrap.io",
-		Port:     2525,
+		Host:     config.SMTP_SERVER,
+		Port:     1025,
 		Username: config.MailUsername,
 		Password: config.MailPassword,
 	}

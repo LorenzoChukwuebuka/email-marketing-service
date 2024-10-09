@@ -9,7 +9,8 @@ func MailFactory(mailhost string) (SmtpMethodInterface, error) {
 		sI = &MailTrapProcessor{}
 		return sI, nil
 	case "smtp":
-		return nil, nil
+		sI = &SMTPProcessor{}
+		return sI, nil
 	default:
 		return nil, fmt.Errorf("invalid mail processor: %s", mailhost)
 	}

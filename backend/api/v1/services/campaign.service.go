@@ -2,14 +2,15 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"email-marketing-service/api/v1/dto"
 	smtpfactory "email-marketing-service/api/v1/factory/smtpFactory"
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
-	"encoding/base64"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"log"
 	"net/url"
@@ -28,11 +29,12 @@ type CampaignService struct {
 	UserRepo         *repository.UserRepository
 	DomainRepo       *repository.DomainRepository
 	UserNotification *repository.UserNotificationRepository
+	SMTPKeyRepo      *repository.SMTPKeyRepository
 }
 
 func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo *repository.ContactRepository,
 	templateRepo *repository.TemplateRepository, mailusageRepo *repository.MailUsageRepository,
-	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository, domainRepo *repository.DomainRepository, userNotification *repository.UserNotificationRepository) *CampaignService {
+	subscriptionRepo *repository.SubscriptionRepository, userRepo *repository.UserRepository, domainRepo *repository.DomainRepository, userNotification *repository.UserNotificationRepository, smtpkeyRepo *repository.SMTPKeyRepository) *CampaignService {
 	return &CampaignService{
 		CampaignRepo:     campaignRepo,
 		ContactRepo:      contactRepo,
@@ -42,6 +44,7 @@ func NewCampaignService(campaignRepo *repository.CampaignRepository, contactRepo
 		SubscriptionRepo: subscriptionRepo,
 		DomainRepo:       domainRepo,
 		UserNotification: userNotification,
+		SMTPKeyRepo:      smtpkeyRepo,
 	}
 }
 
@@ -236,9 +239,9 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 		return err
 	}
 
-	if campaignG.SentAt != nil {
-		return ErrCampaignAlreadySent
-	}
+	// if campaignG.SentAt != nil {
+	// 	return ErrCampaignAlreadySent
+	// }
 
 	// Check if the campaign is scheduled and not due yet
 	if isScheduled && campaignG.ScheduledAt != nil {
@@ -450,6 +453,17 @@ func (s *CampaignService) sendEmail(recipient string, emailContent string, subje
 		return nil
 	}
 
+	authUser, err := s.SMTPKeyRepo.GetSMTPMasterKey(userId)
+
+	if err != nil {
+		return err
+	}
+
+	authModel := &dto.SMTPAuthUser{
+		Username: authUser.SMTPLogin,
+		Password: authUser.Password,
+	}
+
 	receiver := dto.Recipient{Email: recipient}
 	sender := &dto.Sender{Email: from, Name: &fromName}
 	request := &dto.EmailRequest{
@@ -458,6 +472,7 @@ func (s *CampaignService) sendEmail(recipient string, emailContent string, subje
 		Subject:     subject,
 		HtmlContent: &emailContent,
 		PreviewText: &previewText,
+		AuthUser:    *authModel,
 	}
 
 	// mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
@@ -525,13 +540,15 @@ func (s *CampaignService) signEmail(sender *model.Sender, emailBody []byte) ([]b
 	}
 
 	// Load the DKIM private key
-	privateKey, err := base64.StdEncoding.DecodeString(domain.DKIMPrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode DKIM private key: %v", err)
-	}
+	// privateKey, err := base64.StdEncoding.DecodeString(domain.DKIMPrivateKey)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to decode DKIM private key: %v", err)
+	// }
+
+	utils.ValidatePrivateKey(domain.DKIMPrivateKey)
 
 	// DKIM signing process
-	signedEmail, err := utils.SignEmail(&emailBody, domain.Domain, domain.DKIMSelector, string(privateKey))
+	signedEmail, err := utils.SignEmail(&emailBody, domain.Domain, domain.DKIMSelector, string(domain.DKIMPrivateKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign email: %v", err)
 	}
@@ -540,6 +557,31 @@ func (s *CampaignService) signEmail(sender *model.Sender, emailBody []byte) ([]b
 }
 
 func (s *CampaignService) sendEmailWithSMTP(request *dto.EmailRequest) error {
+
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	analyzer, err := utils.NewContentAnalyzer("config.json", logger)
+	if err != nil {
+		return fmt.Errorf("failed to create content analyzer: %w", err)
+	}
+
+	// Analyze the content before sending the email
+	analysisResult, err := analyzer.AnalyzeContent(context.TODO(), *request.HtmlContent, nil)
+	if err != nil {
+		return fmt.Errorf("failed to analyze content: %w", err)
+	}
+
+	// Check if the content is flagged as spam or contains suspicious patterns
+	if !analysisResult.IsSafe {
+		logger.Warn("Email content flagged as unsafe",
+			zap.Float64("spam_score", analysisResult.SpamScore),
+			zap.String("message", analysisResult.Message),
+			zap.Strings("suspicious_patterns", analysisResult.SuspiciousPatterns),
+		)
+		return fmt.Errorf("email content flagged as unsafe: %s", analysisResult.Message)
+	}
+
 	mailS, err := smtpfactory.MailFactory(config.MAIL_PROCESSOR)
 	if err != nil {
 		return fmt.Errorf("failed to create mail factory: %w", err)
