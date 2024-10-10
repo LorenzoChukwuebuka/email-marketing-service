@@ -8,7 +8,7 @@ type KeyStatus string
 
 const (
 	KeyActive   KeyStatus = "active"
-	KeyInactive KeyStatus    = "inactive"
+	KeyInactive KeyStatus = "inactive"
 )
 
 type APIKey struct {
@@ -41,11 +41,12 @@ type SMTPMasterKey struct {
 
 type SMTPKey struct {
 	gorm.Model
-	UUID     string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	UserId   string    `json:"user_id" gorm:"type:uuid"`
-	KeyName  string    `json:"key_name" gorm:"index"`
-	Password string    `json:"password"`
-	Status   KeyStatus `json:"status"`
+	UUID      string    `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	UserId    string    `json:"user_id" gorm:"type:uuid"`
+	KeyName   string    `json:"key_name" gorm:"index"`
+	Password  string    `json:"password"`
+	Status    KeyStatus `json:"status"`
+	SMTPLogin string    `json:"smtp_login"`
 }
 
 type SMTPDetailsResponse struct {
