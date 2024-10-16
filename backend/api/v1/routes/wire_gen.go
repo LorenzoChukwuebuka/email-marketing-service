@@ -210,3 +210,10 @@ func InitializeAdminBillingController(db *gorm.DB) (*adminController.AdminBillin
 	adminBillingController := adminController.NewAdminBillingController(adminBillingService)
 	return adminBillingController, nil
 }
+
+func InitializeSystemController(db *gorm.DB) (*adminController.SystemsController, error) {
+	systemRepository := adminrepository.NewSystemRepository(db)
+	systemsService := adminservice.NewSystemsService(systemRepository)
+	systemsController := adminController.NewSystemsController(systemsService)
+	return systemsController, nil
+}

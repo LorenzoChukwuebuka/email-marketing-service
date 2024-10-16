@@ -1,6 +1,7 @@
 package adminmodel
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -33,4 +34,24 @@ type AdminChangePassword struct {
 	AdminId     int    `json:"admin_id" `
 	OldPassword []byte `json:"old_password"`
 	NewPassword []byte `json:"new_password"`
+}
+
+type AdminMailLog struct {
+	gorm.Model
+	UUID string `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	Mail string `json:"mail"`
+}
+
+type SystemsSMTPSetting struct {
+	gorm.Model
+	UUID           string `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
+	TXTRecord      string `json:"txt_record"`
+	DMARCRecord    string `json:"dmarc_record"`
+	DKIMSelector   string `json:"dkim_selector"`
+	DKIMPublicKey  string `json:"dkim_public_key"`
+	DKIMPrivateKey string `json:"dkim_private_key"`
+	SPFRecord      string `json:"spf_record"`
+	Verified       bool   `json:"verified"`
+	MXRecord       string `gorm:"type:text"`
+	Domain         string `json:"domain"`
 }

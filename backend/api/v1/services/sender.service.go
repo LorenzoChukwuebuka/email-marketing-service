@@ -200,6 +200,34 @@ func (s *SenderServices) UpdateSender(d *dto.SenderDTO) error {
 	return nil
 }
 
-func (s *SenderServices) VerifySender(userId string) error {
+func (s *SenderServices) VerifySender(d *dto.VerifySenderDTO) error {
+
+	if err := utils.ValidateData(d); err != nil {
+		return fmt.Errorf("invalid sender data: %w", err)
+	}
+
+	// Initialize the OTP model with the token and userId
+	otpModel := &model.OTP{
+		Token: d.Token,
+	}
+
+	// Retrieve the OTP associated with the provided token and userId
+	otp, err := s.OTPSvc.RetrieveOTP(otpModel)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve OTP: %w", err)
+	}
+
+	// If the OTP exists and is valid, proceed to verify the sender
+	if otp != nil {
+		// Update the 'verified' field to true for the sender with matching userId and email
+		result := s.SenderRepo.UpdateSenderVerified(d.UserID, d.Email)
+		if result != nil {
+			return fmt.Errorf("failed to verify sender: %w", result)
+		}
+	}
+
+	s.OTPSvc.DeleteOTP(int(otp.ID))
+
+	// Return nil if the verification is successful
 	return nil
 }

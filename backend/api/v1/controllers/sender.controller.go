@@ -4,10 +4,10 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-	"strconv"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
+	"strconv"
 )
 
 type SenderController struct {
@@ -132,5 +132,20 @@ func (c *SenderController) UpdateSender(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.SuccessResponse(w, 200, "sender updated successfully")
+}
 
+func (c *SenderController) VerifySender(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.VerifySenderDTO
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
+
+	if err := c.SenderSVC.VerifySender(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "sender verified successfully")
 }

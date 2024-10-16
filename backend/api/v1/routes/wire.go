@@ -259,3 +259,13 @@ func InitializeAdminBillingController(db *gorm.DB) (*adminController.AdminBillin
 	)
 	return nil, nil
 }
+
+func InitializeSystemController(db *gorm.DB) (*adminController.SystemsController, error) {
+	wire.Build(
+		adminController.NewSystemsController,
+		adminservice.NewSystemsService,
+		adminrepository.NewSystemRepository,
+	)
+
+	return nil, nil
+}

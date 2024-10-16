@@ -92,6 +92,8 @@ func autoMigrateModels() {
 		&model.EmailBox{},
 		&model.UserNotification{},
 		&adminmodel.AdminNotification{},
+		&adminmodel.AdminMailLog{},
+		&adminmodel.SystemsSMTPSetting{},
 	)
 
 	if err != nil {

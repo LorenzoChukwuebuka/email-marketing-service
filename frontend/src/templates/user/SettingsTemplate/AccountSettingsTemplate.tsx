@@ -18,13 +18,6 @@ const AccountSettingsTemplate: React.FC = () => {
     const metaData = useMetadata()("Settings")
 
     useEffect(() => {
-        const storedActiveTab = localStorage.getItem("activeTab");
-        if (storedActiveTab) {
-            setActiveTab(storedActiveTab as "Account Details" | "Change Password" | "Delete Account");
-        }
-    }, []);
-
-    useEffect(() => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
