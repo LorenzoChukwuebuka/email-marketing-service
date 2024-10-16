@@ -239,9 +239,9 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 		return err
 	}
 
-	// if campaignG.SentAt != nil {
-	// 	return ErrCampaignAlreadySent
-	// }
+	if campaignG.SentAt != nil {
+		return ErrCampaignAlreadySent
+	}
 
 	// Check if the campaign is scheduled and not due yet
 	if isScheduled && campaignG.ScheduledAt != nil {

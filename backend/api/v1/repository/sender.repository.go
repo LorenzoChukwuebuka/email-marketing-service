@@ -133,3 +133,20 @@ func (r *SenderRepository) UpdateSender(d *model.Sender) error {
 
 	return nil
 }
+
+func (r *SenderRepository) UpdateSenderVerified(userId string, senderEmail string) error {
+	// Perform the update using GORM's Updates method
+	result := r.DB.Model(&model.Sender{}).Where("user_id = ? AND email = ?", userId, senderEmail).Update("verified", true)
+
+	// Check for any errors during the update
+	if result.Error != nil {
+		return fmt.Errorf("failed to update sender verification: %w", result.Error)
+	}
+
+	// If no rows were affected, return an error indicating no record was found
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no sender record found to update")
+	}
+
+	return nil
+}
