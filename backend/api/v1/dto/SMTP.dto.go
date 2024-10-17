@@ -7,12 +7,13 @@ import (
 )
 
 type EmailRequest struct {
-	Sender      Sender      `json:"sender"`
-	To          interface{} `json:"to"`
-	Subject     string      `json:"subject"`
-	HtmlContent *string     `json:"htmlContent"`
-	Text        *string     `json:"text"`
-	PreviewText *string `json:"preview_text"`
+	Sender      Sender       `json:"sender"`
+	To          interface{}  `json:"to"`
+	Subject     string       `json:"subject"`
+	HtmlContent *string      `json:"htmlContent"`
+	Text        *string      `json:"text"`
+	PreviewText *string      `json:"preview_text"`
+	AuthUser    SMTPAuthUser `json:"smtp_auth_user"`
 }
 
 type Sender struct {
@@ -20,7 +21,10 @@ type Sender struct {
 	Name  *string `json:"name"`
 }
 
- 
+type SMTPAuthUser struct {
+	Username string 
+	Password string
+}
 
 type Recipient struct {
 	Email string `json:"email"`

@@ -14,7 +14,9 @@ func NewUpdateExpiredSubscriptionJob(db *gorm.DB) *UpdateExpiredSubscriptionJob 
 	subscriptionRepo := repository.NewSubscriptionRepository(db)
 	planRepo := repository.NewPlanRepository(db)
 	dailyRepo := repository.NewMailUsageRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepo, dailyRepo, planRepo)
+	userRepo := repository.NewUserRepository(db)
+	billingRepo := repository.NewBillingRepository(db)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo, dailyRepo, planRepo, userRepo, billingRepo)
 
 	return &UpdateExpiredSubscriptionJob{
 		subscriptionService: subscriptionService,

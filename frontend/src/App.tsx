@@ -15,6 +15,7 @@ import PaymentSuccessPage from "./pages/userDashboard/paymentSuccesspage";
 import EditorRouter from "./pages/editors/editorRouter";
 import PrivacyPolicy from "./pages/landingPage/privacypage";
 import TermsOfService from "./pages/landingPage/tos";
+import VerifySenderComponent from './templates/user/components/senders/verifySenderComponent';
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
@@ -84,6 +85,8 @@ const App: React.FC = () => {
                 <Route path="/tos" element={<TermsOfService />} />
                 <Route path="/auth/*" element={<AuthRoute />} />
                 <Route path="/next/*" element={<AdminAuthRoute />} />
+                <Route path="/verifysender" element={<VerifySenderComponent />} />
+
 
                 <Route element={<ProtectedRoute />}>
                     <Route path="/user/*" element={<UserDashRoute />} />

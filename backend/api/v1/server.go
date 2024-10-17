@@ -58,6 +58,7 @@ func (s *Server) setupRoutes() {
 		"admin/users":    routes.NewAdminUsersRoute(s.db),
 		"admin/support":  routes.NewAdminSupportRoute(s.db),
 		"admin/campaign": routes.NewAdminCampaignRoute(s.db),
+		"system":         routes.NewSystemRoute(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -172,7 +173,7 @@ func enableCORS(handler http.Handler) http.Handler {
 		}
 
 		// For different-origin requests (e.g., during development)
-		allowedOrigins := []string{"http://localhost:5054", "*"}
+		allowedOrigins := []string{"http://localhost:5054", "http://localhost:5000", "*"}
 		origin := r.Header.Get("Origin")
 
 		for _, allowedOrigin := range allowedOrigins {

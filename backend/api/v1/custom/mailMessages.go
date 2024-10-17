@@ -6,14 +6,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
+
+var wg sync.WaitGroup
 
 type Mail struct {
 }
 
 var (
 	config = utils.LoadEnv()
-	sender = "noreply@crabmailer.app"
+	sender = "noreply@crabmailer.com"
 )
 
 func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
@@ -39,7 +42,7 @@ func (m *Mail) SignUpMail(email string, username string, userId string, otp stri
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail, sender, nil)
+	err = utils.AsyncSendMail("Email Verification", email, formattedMail, sender, nil, &wg)
 
 	if err != nil {
 		return err
@@ -71,7 +74,7 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Password Reset", email, formattedMail, sender, nil)
+	err = utils.AsyncSendMail("Password Reset", email, formattedMail, sender, nil, &wg)
 
 	if err != nil {
 		return err
@@ -79,7 +82,35 @@ func (m *Mail) ResetPasswordMail(email string, username string, otp string) erro
 	return nil
 }
 
-func (m *Mail) VerifySenderMail() error {
+func (m *Mail) VerifySenderMail(username string, useremail string, domainemail string, otp string, userId string) error {
+	// Read the template file
+	templatePath := filepath.Join("api", "v1", "templates", "verifysender.templ")
+	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return err
+	}
+
+	replacements := map[string]string{
+		"{{Username}}":         username,
+		"{{UserEmail}}":        useremail,
+		"{{DomainEmail}}":      domainemail,
+		"{{VerificationLink}}": "http://localhost:5054/verifysender",
+		"{{Token}}":            otp,
+		"{{UserId}}":           userId,
+	}
+
+	formattedMail := string(mailTemplate)
+
+	for placeholder, value := range replacements {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+
+	err = utils.AsyncSendMail("Verify a new Sender [Crabmailer]", domainemail, formattedMail, sender, nil, &wg)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -107,7 +138,7 @@ func (m *Mail) DeviceVerificationMail(username string, email string, d *model.Us
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Email Verification", email, formattedMail, sender, nil)
+	err = utils.AsyncSendMail("Email Verification", email, formattedMail, sender, nil, &wg)
 
 	if err != nil {
 		return err
@@ -135,7 +166,7 @@ func (m *Mail) SubscriptionExpiryMail(username string, email string, planName st
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err = utils.SendMail("Subscription Expiry Notification", email, formattedMail, sender, nil)
+	err = utils.AsyncSendMail("Subscription Expiry Notification", email, formattedMail, sender, nil, &wg)
 
 	if err != nil {
 		return err
@@ -166,7 +197,7 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
 	}
 
-	err := utils.SendMail("Service expiry reminder", email, formattedMail, sender, nil)
+	err := utils.AsyncSendMail("Service expiry reminder", email, formattedMail, sender, nil, &wg)
 
 	if err != nil {
 		return err

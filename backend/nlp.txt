@@ -322,3 +322,22 @@ func main() {
 			zap.Int("email_count", result.EmailCount))
 	}
 }
+
+
+
+Great question. When setting up email authentication records for a domain and subdomain, you'll need to add records to both, but in slightly different ways. Let's break it down:
+
+For the main domain (hello.com):
+
+SPF record: Add to hello.com
+DKIM record: Add to hello.com
+DMARC record: Add to hello.com
+MX record: Add to hello.com
+
+
+For the subdomain (smtp.hello.com):
+
+SPF record: Add to smtp.hello.com
+DKIM record: Typically not needed, but if used, add to smtp.hello.com
+DMARC record: Typically inherits from the main domain, but can be added to smtp.hello.com if needed
+MX record: Add to smtp.hello.com if it will receive email directly

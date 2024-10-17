@@ -2,6 +2,7 @@ import * as Yup from "yup";
 import useAuthStore from "../../store/userstore/AuthStore";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
+import renderApiName from "../../utils/name";
 
 
 const SignUpTemplate: React.FC = () => {
@@ -43,17 +44,11 @@ const SignUpTemplate: React.FC = () => {
         }
     };
 
-    const apiName = import.meta.env.VITE_API_NAME;
-    const firstFourLetters = apiName.slice(0, 4);
-    const remainingLetters = apiName.slice(4);
-
     return (
         <main className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
             <div className="py-4">
                 <h1 className="text-center text-3xl font-bold">
-                    <span className="text-indigo-700">{firstFourLetters}</span>
-                    <span className="text-gray-700">{remainingLetters}</span>
-                    <i className="bi bi-mailbox2-flag text-indigo-700 ml-2"></i>
+                    {renderApiName()}
                 </h1>
             </div>
 

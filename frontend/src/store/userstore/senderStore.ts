@@ -13,6 +13,13 @@ export interface Sender extends BaseEntity {
     is_signed: boolean
 }
 
+
+export interface VerifySender {
+    email: string,
+    token: string,
+    user_id: string
+}
+
 export interface SenderFormValues {
     name: string;
     email: string;
@@ -20,6 +27,7 @@ export interface SenderFormValues {
 
 interface SenderStore {
     senderData: Sender[] | Sender;
+    verifySenderForm: VerifySender
     isLoading: boolean;
     error: string | null;
     senderFormValues: SenderFormValues;
@@ -27,12 +35,14 @@ interface SenderStore {
     totalPages: number;
     paginationInfo: Omit<PaginatedResponse<Sender>, 'data'>;
     setSenderFormValues: (values: SenderFormValues) => void;
+    setVerifySender: (values: VerifySender) => void
     createSender: () => Promise<void>;
     setSenders: (newData: Sender | Sender[]) => void
     setPaginationInfo: (newPaginationInfo: Omit<PaginatedResponse<Sender>, 'data'>) => void;
     getSenders: (page?: number, pageSize?: number, search?: string) => Promise<void>;
     updateSender: (id: string, data: Partial<Sender>) => Promise<void>;
     deleteSender: (id: string) => Promise<void>;
+    verifySender: () => Promise<void>
 }
 
 const useSenderStore = create<SenderStore>((set, get) => ({
@@ -42,6 +52,9 @@ const useSenderStore = create<SenderStore>((set, get) => ({
     senderFormValues: {
         name: '',
         email: '',
+    },
+    verifySenderForm: {
+        email: "", token: "", user_id: ""
     },
     currentPage: 1,
     totalPages: 1,
@@ -56,6 +69,7 @@ const useSenderStore = create<SenderStore>((set, get) => ({
     setSenderFormValues: (newData) => set({ senderFormValues: newData }),
     setSenders: (newData) => set({ senderData: newData }),
     setPaginationInfo: (newPaginationInfo) => set({ paginationInfo: newPaginationInfo }),
+    setVerifySender: (newData) => set({ verifySenderForm: newData }),
 
     createSender: async () => {
         set({ isLoading: true, error: null });
@@ -139,6 +153,22 @@ const useSenderStore = create<SenderStore>((set, get) => ({
             }
         }
     },
+    verifySender: async () => {
+        try {
+            let response = await axiosInstance.post<ResponseT>("/sender/verify-sender", get().verifySenderForm)
+            if (response.data.status === true) {
+                eventBus.emit("success", "Sender has been verified successfully")
+            }
+        } catch (error) {
+            if (errResponse(error)) {
+                eventBus.emit('error', error?.response?.data.payload)
+            } else if (error instanceof Error) {
+                eventBus.emit('error', error.message);
+            } else {
+                console.error("Unknown error:", error);
+            }
+        }
+    }
 }));
 
 export default useSenderStore;
