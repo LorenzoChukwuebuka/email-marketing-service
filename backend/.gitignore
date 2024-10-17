@@ -30,3 +30,4 @@ tmp
 
 requests.log
 uploads
+smtp_settings

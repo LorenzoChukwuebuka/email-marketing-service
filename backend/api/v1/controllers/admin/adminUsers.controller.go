@@ -1,7 +1,9 @@
 package adminController
 
 import (
+	"email-marketing-service/api/v1/dto"
 	adminservice "email-marketing-service/api/v1/services/admin"
+	"email-marketing-service/api/v1/utils"
 	"net/http"
 	"strconv"
 	//"github.com/golang-jwt/jwt"
@@ -166,4 +168,21 @@ func (c *AdminUsersController) GetUserStats(w http.ResponseWriter, r *http.Reque
 	}
 
 	response.SuccessResponse(w, 200, userResponse)
+}
+
+func (c *AdminUsersController) SendEmailToUsers(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.AdminEmailLogDTO
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
+
+	if err := c.AdminUserService.SendEmailToUsers(reqdata); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "mails sent successfully")
+
 }

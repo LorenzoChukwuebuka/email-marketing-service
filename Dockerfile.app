@@ -1,38 +1,40 @@
-# Stage 1: Build the Go backend
+# Stage 1: Build the React frontend
+FROM node:16 as frontend-builder
+WORKDIR /app/frontend
+COPY ./frontend/ ./
+RUN npm install
+RUN npm run build
+
+# Stage 2: Build the Go backend
 FROM golang:1.20 as backend-builder
-
-WORKDIR /app
-
-# Copy the backend source code
+WORKDIR /app/backend
 COPY ./backend/ ./
-
-# Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Final Stage: Production image
-FROM alpine:3.17
-
-RUN apk update && apk add --no-cache \
-    bash \
-    curl 
-
+# Stage 3: Final image
+FROM nginx:alpine
 WORKDIR /root/
 
-# Copy the Go binary from the build stage
-COPY --from=backend-builder /app/main .
+# Copy the frontend build from frontend-builder
+COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
-# Copy .env file from the current directory in the build context
-COPY ./backend/.env .env
+# Copy the Go binary from the backend-builder
+COPY --from=backend-builder /app/backend/main /root/
+
+# Copy .env file for the backend
+COPY ./backend/.env /root/.env
 
 # Copy healthcheck script
 COPY ./healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
 
-# Expose port
-EXPOSE 9000 1025
+# Copy Nginx configuration
+COPY ./config/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80 9000 1025
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh
 
-# Start the Go application
-CMD ["sh", "-c", ". .env && ./main"]
+# Start Nginx and the Go application
+CMD ["sh", "-c", "nginx && . /root/.env && /root/main"]

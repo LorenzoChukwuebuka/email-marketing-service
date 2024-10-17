@@ -22,6 +22,8 @@ type Sender struct {
 }
 
 type SMTPAuthUser struct {
+	Username string 
+	Password string
 }
 
 type Recipient struct {

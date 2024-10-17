@@ -1,10 +1,13 @@
 package adminservice
 
 import (
+	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	adminrepository "email-marketing-service/api/v1/repository/admin"
-	"errors"
+	"email-marketing-service/api/v1/utils"
+	"fmt"
+	"sync"
 )
 
 type AdminUsers struct {
@@ -93,14 +96,56 @@ func (s *AdminUsers) GetUserStats(userId string) (*adminrepository.AdminUserStat
 	return &stats, nil
 }
 
-func (s *AdminUsers) SendEmailToUsers(content string) error {
+func (s *AdminUsers) SendEmailToUsers(d *dto.AdminEmailLogDTO) error {
 
-	if content == "" {
-		return errors.New("the content of the mail is empty")
+	if err := utils.ValidateData(d); err != nil {
+		return fmt.Errorf("invalid data: %w", err)
 	}
 
-	
+	// Fetch all users' emails from the repository
+	users, err := s.AdminUserRepo.AllUsersEmail()
+	if err != nil {
+		return err
+	}
 
+	// Initialize a wait group to manage goroutines
+	var wg sync.WaitGroup
 
+	// Channel to collect errors from goroutines
+	errChan := make(chan error, len(users))
+
+	// Loop through the users to send emails concurrently
+	for _, user := range users {
+		wg.Add(1) // Increment the wait group counter for each goroutine
+
+		// Launch a goroutine to send emails
+		go func(email string) {
+			defer wg.Done() // Decrement the counter when goroutine finishes
+
+			// Print user email (for logging/debugging purposes)
+			print(email)
+
+			// Call the SendMail utility to send the email
+			if err := utils.AsyncSendMail(d.Subject, email, d.Content, "info@crabmailer.com", nil, &wg); err != nil {
+				// Send error to the channel if sending fails
+				errChan <- err
+			}
+		}(user.Email)
+	}
+
+	// Close the error channel once all goroutines finish
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+
+	// Collect any errors from the channel
+	for err := range errChan {
+		if err != nil {
+			return err // Return the first error encountered
+		}
+	}
+
+	// Return nil if no errors occurred
 	return nil
 }
