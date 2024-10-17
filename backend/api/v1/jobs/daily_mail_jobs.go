@@ -20,7 +20,8 @@ func NewDailMailCalculationJob(db *gorm.DB) *DailyFreeMailCalcJob {
 	userRepository := repository.NewUserRepository(db)
 	mailStatusRepository := repository.NewMailStatusRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, mailUsageRepository, userRepository, mailStatusRepository, planRepository)
+	smtpkeyRepo := repository.NewSMTPkeyRepository(db)
+	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, mailUsageRepository, userRepository, mailStatusRepository, planRepository, smtpkeyRepo)
 
 	return &DailyFreeMailCalcJob{
 		SMTPMailSVC: smtpMailService,

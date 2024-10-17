@@ -4,7 +4,10 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"sync"
 )
+
+var wg sync.WaitGroup
 
 type MailTrapProcessor struct {
 }
@@ -42,7 +45,7 @@ func (s *MailTrapProcessor) sendMailToRecipient(recipient dto.Recipient, emailRe
 	subject := emailRequest.Subject
 	sender := emailRequest.Sender.Email
 
-	err := utils.SendMail(subject, email, mailContent, sender,nil)
+	err := utils.AsyncSendMail(subject, email, mailContent, sender, nil, &wg)
 	if err != nil {
 		fmt.Printf("Error sending mail to %s: %v\n", email, err)
 	} else {

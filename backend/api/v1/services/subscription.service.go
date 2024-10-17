@@ -4,6 +4,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"fmt"
+	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -11,6 +13,8 @@ type SubscriptionService struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 	MailUsageRepo    *repository.MailUsageRepository
 	PlanRepo         *repository.PlanRepository
+	UserRepo         *repository.UserRepository
+	BillingRepo      *repository.BillingRepository
 }
 
 type CurrentSubscription struct {
@@ -24,8 +28,8 @@ type CurrentSubscription struct {
 	Expired   bool
 }
 
-func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, mailUsageRepo *repository.MailUsageRepository, planRepo *repository.PlanRepository) *SubscriptionService {
-	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, MailUsageRepo: mailUsageRepo}
+func NewSubscriptionService(subscriptionRepo *repository.SubscriptionRepository, mailUsageRepo *repository.MailUsageRepository, planRepo *repository.PlanRepository, userRepo *repository.UserRepository, billingRepo *repository.BillingRepository) *SubscriptionService {
+	return &SubscriptionService{SubscriptionRepo: subscriptionRepo, PlanRepo: planRepo, MailUsageRepo: mailUsageRepo, UserRepo: userRepo, BillingRepo: billingRepo}
 }
 
 func (s *SubscriptionService) CreateSubscription(d *model.Subscription) (*model.Subscription, error) {
@@ -179,6 +183,14 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 			if err != nil {
 				return nil, err
 			}
+
+			// Downgrade the user to the free plan
+			err = s.createUserBasicPlan(subscription.UserId)
+			if err != nil {
+				fmt.Printf("Failed to assign basic plan to user %d: %v\n", subscription.UserId, err)
+				return nil, err
+			}
+
 		} else {
 			fmt.Printf("Subscription ID %d has not expired.\n", subscription.ID)
 		}
@@ -187,6 +199,101 @@ func (s *SubscriptionService) UpdateExpiredSubscription() ([]model.Subscription,
 	//for all expired subscriptions, return set them back to Free plan
 
 	return subscriptions, err
+}
+
+func (s *SubscriptionService) createUserBasicPlan(userId uint) error {
+	// Start a database transaction
+	tx := s.UserRepo.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	basicPlan, err := s.findBasicPlan()
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to find basic plan: %w", err)
+	}
+
+	transactionId := uuid.New().String()
+
+	billing, err := s.createBilling(userId, basicPlan, transactionId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to create billing: %w", err)
+	}
+
+	err = s.createSubscription(userId, basicPlan, transactionId, int(billing.ID))
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	// Commit the transaction if everything is successful
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SubscriptionService) findBasicPlan() (*model.PlanResponse, error) {
+	plans, err := s.PlanRepo.GetAllPlans()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch plans: %w", err)
+	}
+
+	for _, plan := range plans {
+		if strings.ToLower(plan.PlanName) == freePlanName {
+			return &plan, nil
+		}
+	}
+
+	return nil, ErrNoBasicPlan
+}
+
+func (s *SubscriptionService) createBilling(userId uint, plan *model.PlanResponse, transactionId string) (*model.Billing, error) {
+	billing := &model.Billing{
+		UUID:          uuid.New().String(),
+		UserId:        userId,
+		AmountPaid:    plan.Price,
+		PlanId:        uint(plan.ID),
+		ExpiryDate:    time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
+		TransactionId: transactionId,
+	}
+
+	bill, err := s.BillingRepo.CreateBilling(billing)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrCreatingBilling, err)
+	}
+
+	return bill, nil
+}
+
+func (s *SubscriptionService) createSubscription(userId uint, plan *model.PlanResponse, transactionId string, paymentId int) error {
+	subscription := &model.Subscription{
+		UUID:          uuid.New().String(),
+		UserId:        userId,
+		PlanId:        uint(plan.ID),
+		PaymentId:     paymentId,
+		TransactionId: transactionId,
+		StartDate:     time.Now(),
+		EndDate:       time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC),
+	}
+
+	sub, err := s.SubscriptionRepo.CreateSubscription(subscription)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrCreatingSubscription, err)
+	}
+
+	isPeriodDaily := strings.ToLower(plan.PlanName) == freePlanName
+	_, err = s.MailUsageRepo.GetOrCreateCurrentMailUsageRecord(int(sub), plan.MailingLimit.LimitAmount, isPeriodDaily)
+	if err != nil {
+		return fmt.Errorf("failed to create mail usage record: %w", err)
+	}
+
+	return nil
 }
 
 func (s *SubscriptionService) SendSubscriptionExpiryNotificationReminder() error {

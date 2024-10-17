@@ -6,8 +6,14 @@ import (
 	"fmt"
 )
 
+ 
+
 type SMTPProcessor struct {
 }
+
+var (
+	config = utils.LoadEnv()
+)
 
 func (s *SMTPProcessor) HandleSendMail(emailRequest *dto.EmailRequest) error {
 	switch to := emailRequest.To.(type) {
@@ -36,13 +42,18 @@ func (s *SMTPProcessor) sendMailToRecipient(recipient dto.Recipient, emailReques
 		return
 	}
 
-	//eventBus := utils.GetEventBus()
-
 	email := recipient.Email
 	subject := emailRequest.Subject
 	sender := emailRequest.Sender.Email
 
-	err := utils.SendMail(subject, email, mailContent, sender,nil)
+	smtpConfig := utils.SMTPConfig{
+		Host:     config.SMTP_SERVER,
+		Port:     1025,
+		Username: emailRequest.AuthUser.Username,
+		Password: emailRequest.AuthUser.Password,
+	}
+
+	err := utils.AsyncSendMail(subject, email, mailContent, sender, &smtpConfig,&wg)
 	if err != nil {
 		fmt.Printf("Error sending mail to %s: %v\n", email, err)
 	} else {

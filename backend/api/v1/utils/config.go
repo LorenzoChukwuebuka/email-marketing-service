@@ -29,6 +29,7 @@ type Config struct {
 	SERVER_URL            string `env:"SERVER_URL"`
 	SLACK_WEBHOOK_URL     string `env:"SLACK_WEBHOOK_URL"`
 	DOMAIN                string `env:"DOMAIN"`
+	FRONTEND_URL          string `env:"FRONTEND_URL"`
 }
 
 var LoadEnv = func() *Config {
@@ -72,6 +73,7 @@ var LoadEnv = func() *Config {
 		SERVER_URL:            os.Getenv("SERVER_URL"),
 		SLACK_WEBHOOK_URL:     os.Getenv("SLACK_WEBHOOK_URL"),
 		DOMAIN:                os.Getenv("DOMAIN"),
+		FRONTEND_URL:          os.Getenv("FRONTEND_URL"),
 	}
 
 	return config

@@ -4,10 +4,9 @@ import (
 	"email-marketing-service/api/v1/model"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type SMTPKeyRepository struct {
@@ -89,6 +88,22 @@ func (r *SMTPKeyRepository) UpdateSMTPKeyMasterPasswordAndLogin(userId string, p
 	return nil
 }
 
+func (r *SMTPKeyRepository) UpdateSMTPKeyLogin(userId string, smtpLogin string) error {
+	var smtpKey model.SMTPKey
+	if err := r.DB.Where("user_id = ?", userId).First(&smtpKey).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("no SMTPKey found for user_id: %s", userId)
+		}
+		return fmt.Errorf("failed to fetch SMTPKey: %w", err)
+	}
+
+	if err := r.DB.Model(&smtpKey).Update("smtp_login", smtpLogin).Error; err != nil {
+		return fmt.Errorf("failed to update SMTP login for SMTPKey: %w", err)
+	}
+
+	return nil
+}
+
 func (r *SMTPKeyRepository) GetSMTPMasterKey(userId string) (*model.SMTPMasterKey, error) {
 
 	var record model.SMTPMasterKey
@@ -151,9 +166,23 @@ func (r *SMTPKeyRepository) GetSMTPMasterKeyUserAndPass(username string, passwor
 	return true, nil // Record found
 }
 
+
+func (r *SMTPKeyRepository) GetSMTPKeyUserAndPass(username string, password string) (bool, error) {
+	var record model.SMTPKey
+
+	if err := r.DB.Model(&model.SMTPKey{}).Where("smtp_login = ? AND password = ?", username, password).First(&record).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil // Record not found
+		}
+		return false, fmt.Errorf("unable to retrieve master key: %w", err) // Other errors
+	}
+
+	return true, nil // Record found
+}
+
 /*
 these codes were purposely placed here for uniformity sake
-they are actually meant to be in the campaing
+they are actually meant to be in the campaign repository
 */
 
 func (r *SMTPKeyRepository) MarkEmailAsDelivered(from string, to []string) error {

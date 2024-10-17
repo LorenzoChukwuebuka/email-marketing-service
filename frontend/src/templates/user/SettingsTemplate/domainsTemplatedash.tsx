@@ -65,7 +65,7 @@ const DomainTemplateDash: React.FC = () => {
                 await createSender();
                 setModalContent({
                     title: "New Sender Added",
-                    content: "Your new sender has been added successfully.",
+                    content: "Your new sender has been added successfully.An email has been sent to you to verify your sender",
                 });
                 await getSenders()
             }

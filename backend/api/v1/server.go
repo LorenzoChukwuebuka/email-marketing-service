@@ -58,6 +58,7 @@ func (s *Server) setupRoutes() {
 		"admin/users":    routes.NewAdminUsersRoute(s.db),
 		"admin/support":  routes.NewAdminSupportRoute(s.db),
 		"admin/campaign": routes.NewAdminCampaignRoute(s.db),
+		"system":         routes.NewSystemRoute(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -72,34 +73,34 @@ func (s *Server) setupRoutes() {
 	uploadsDir := filepath.Join(".", "uploads", "tickets")
 	s.router.PathPrefix("/uploads/tickets/").Handler(http.StripPrefix("/uploads/tickets/", http.FileServer(http.Dir(uploadsDir))))
 
-	mode := os.Getenv("SERVER_MODE")
+	// mode := os.Getenv("SERVER_MODE")
 
-	var staticDir string
+	// var staticDir string
 
-	if mode == "" {
-		staticDir = "./client"
-	} else if mode == "test" {
-		staticDir = "/app/client"
-	} else {
-		staticDir = "/app/client"
-	}
+	// if mode == "" {
+	// 	staticDir = "./client"
+	// } else if mode == "test" {
+	// 	staticDir = "/app/client"
+	// } else {
+	// 	staticDir = "/app/client"
+	// }
 
-	// Handle static files using Gorilla Mux
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+	// // Handle static files using Gorilla Mux
+	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
-	// Handle all other routes by serving index.html for the SPA
-	s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := filepath.Join(staticDir, r.URL.Path)
+	// // Handle all other routes by serving index.html for the SPA
+	// s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	path := filepath.Join(staticDir, r.URL.Path)
 
-		// If the requested file exists, serve it
-		if _, err := os.Stat(path); err == nil {
-			http.ServeFile(w, r, path)
-			return
-		}
+	// 	// If the requested file exists, serve it
+	// 	if _, err := os.Stat(path); err == nil {
+	// 		http.ServeFile(w, r, path)
+	// 		return
+	// 	}
 
-		// Otherwise, serve index.html
-		http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
-	})
+	// 	// Otherwise, serve index.html
+	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+	// })
 
 }
 
@@ -172,7 +173,7 @@ func enableCORS(handler http.Handler) http.Handler {
 		}
 
 		// For different-origin requests (e.g., during development)
-		allowedOrigins := []string{"http://localhost:5054", "*"}
+		allowedOrigins := []string{"http://localhost:5054", "http://localhost:5000", "*"}
 		origin := r.Header.Get("Origin")
 
 		for _, allowedOrigin := range allowedOrigins {

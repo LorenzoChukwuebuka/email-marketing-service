@@ -22,4 +22,6 @@ func (ur *SenderRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-all-senders", middleware.JWTMiddleware(senderController.GetAllSenders)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/delete-sender/{senderId}", middleware.JWTMiddleware(senderController.DeleteSender)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/update-sender/{senderId}", middleware.JWTMiddleware(senderController.UpdateSender)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/verify-sender", senderController.VerifySender).Methods("POST", "OPTIONS")
+
 }
