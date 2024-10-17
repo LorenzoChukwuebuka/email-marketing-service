@@ -2,11 +2,13 @@ package adminrepository
 
 import (
 	"email-marketing-service/api/v1/model"
+	adminmodel "email-marketing-service/api/v1/model/admin"
 	"email-marketing-service/api/v1/repository"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // AdminUsersRepository handles database operations related to Admin and User management
@@ -272,4 +274,11 @@ func (r *AdminUsersRepository) AllUsersEmail() ([]model.UserResponse, error) {
 	}
 
 	return userResponses, nil
+}
+
+func (r *AdminUsersRepository) SaveMailLog(d adminmodel.AdminMailLog) error {
+	if err := r.DB.Create(&d).Error; err != nil {
+		return fmt.Errorf("failed to insert key: %w", err)
+	}
+	return nil
 }

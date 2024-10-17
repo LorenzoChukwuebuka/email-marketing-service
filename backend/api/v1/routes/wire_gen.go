@@ -29,7 +29,7 @@ func InitializeUserController(db *gorm.DB) (*controllers.UserController, error) 
 	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
 	domainRepository := repository.NewDomainRepository(db)
 	senderRepository := repository.NewSenderRepository(db)
-	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository, otpService, userRepository)
 	userNotificationRepository := repository.NewUserNotificationRepository(db)
 	adminNotificationRepository := adminrepository.NewAdminNoficationRepository(db)
 	userService := services.NewUserService(userRepository, otpService, planRepository, subscriptionRepository, billingRepository, mailUsageRepository, smtpKeyRepository, senderServices, userNotificationRepository, adminNotificationRepository)
@@ -64,8 +64,8 @@ func InitializeTransactionController(db *gorm.DB) (*controllers.TransactionContr
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	mailUsageRepository := repository.NewMailUsageRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository)
 	userRepository := repository.NewUserRepository(db)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository, userRepository, billingRepository)
 	billingService := services.NewBillingService(billingRepository, subscriptionService, userRepository, subscriptionRepository, planRepository)
 	transactionController := controllers.NewTransactionController(billingService)
 	return transactionController, nil
@@ -79,7 +79,8 @@ func InitializeSMTPController(db *gorm.DB) (*controllers.SMTPMailController, err
 	userRepository := repository.NewUserRepository(db)
 	mailStatusRepository := repository.NewMailStatusRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, mailUsageRepository, userRepository, mailStatusRepository, planRepository)
+	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
+	smtpMailService := services.NewSMTPMailService(apiKeyService, subscriptionRepository, mailUsageRepository, userRepository, mailStatusRepository, planRepository, smtpKeyRepository)
 	smtpMailController := controllers.NewSMTPMailController(apiKeyService, smtpMailService)
 	return smtpMailController, nil
 }
@@ -95,7 +96,9 @@ func InitializeSubscriptionController(db *gorm.DB) (*controllers.SubscriptionCon
 	subscriptionRepository := repository.NewSubscriptionRepository(db)
 	mailUsageRepository := repository.NewMailUsageRepository(db)
 	planRepository := repository.NewPlanRepository(db)
-	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository)
+	userRepository := repository.NewUserRepository(db)
+	billingRepository := repository.NewBillingRepository(db)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepository, mailUsageRepository, planRepository, userRepository, billingRepository)
 	subscriptionController := controllers.NewSubscriptionController(subscriptionService)
 	return subscriptionController, nil
 }
@@ -142,7 +145,8 @@ func InitalizeCampaignController(db *gorm.DB) (*controllers.CampaignController, 
 	userRepository := repository.NewUserRepository(db)
 	domainRepository := repository.NewDomainRepository(db)
 	userNotificationRepository := repository.NewUserNotificationRepository(db)
-	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository, userNotificationRepository)
+	smtpKeyRepository := repository.NewSMTPkeyRepository(db)
+	campaignService := services.NewCampaignService(campaignRepository, contactRepository, templateRepository, mailUsageRepository, subscriptionRepository, userRepository, domainRepository, userNotificationRepository, smtpKeyRepository)
 	campaignController := controllers.NewCampaignController(campaignService)
 	return campaignController, nil
 }
@@ -157,7 +161,10 @@ func InitializeDomainController(db *gorm.DB) (*controllers.DomainController, err
 func InitializeSenderController(db *gorm.DB) (*controllers.SenderController, error) {
 	domainRepository := repository.NewDomainRepository(db)
 	senderRepository := repository.NewSenderRepository(db)
-	senderServices := services.NewSenderServices(domainRepository, senderRepository)
+	otpRepository := repository.NewOTPRepository(db)
+	otpService := services.NewOTPService(otpRepository)
+	userRepository := repository.NewUserRepository(db)
+	senderServices := services.NewSenderServices(domainRepository, senderRepository, otpService, userRepository)
 	senderController := controllers.NewSenderController(senderServices)
 	return senderController, nil
 }
@@ -202,4 +209,11 @@ func InitializeAdminBillingController(db *gorm.DB) (*adminController.AdminBillin
 	adminBillingService := adminservice.NewAdminBillingService(adminBillingRepository)
 	adminBillingController := adminController.NewAdminBillingController(adminBillingService)
 	return adminBillingController, nil
+}
+
+func InitializeSystemController(db *gorm.DB) (*adminController.SystemsController, error) {
+	systemRepository := adminrepository.NewSystemRepository(db)
+	systemsService := adminservice.NewSystemsService(systemRepository)
+	systemsController := adminController.NewSystemsController(systemsService)
+	return systemsController, nil
 }

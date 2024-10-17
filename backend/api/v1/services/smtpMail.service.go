@@ -6,8 +6,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"fmt"
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type SMTPMailService struct {
@@ -17,13 +17,14 @@ type SMTPMailService struct {
 	UserRepo         *repository.UserRepository
 	MailStatusRepo   *repository.MailStatusRepository
 	PlanRepo         *repository.PlanRepository
+	SMTPKeyRepo      *repository.SMTPKeyRepository
 	//mu               sync.Mutex
 }
 
 func NewSMTPMailService(apikeyservice *APIKeyService,
 	subscriptionRepository *repository.SubscriptionRepository,
 	mailUsageRepo *repository.MailUsageRepository,
-	userRepo *repository.UserRepository, mailStatusRepo *repository.MailStatusRepository, planRepo *repository.PlanRepository) *SMTPMailService {
+	userRepo *repository.UserRepository, mailStatusRepo *repository.MailStatusRepository, planRepo *repository.PlanRepository, smtpkeyRepo *repository.SMTPKeyRepository) *SMTPMailService {
 	return &SMTPMailService{
 		APIKeySVC:        apikeyservice,
 		SubscriptionRepo: subscriptionRepository,
@@ -31,6 +32,7 @@ func NewSMTPMailService(apikeyservice *APIKeyService,
 		UserRepo:         userRepo,
 		MailStatusRepo:   mailStatusRepo,
 		PlanRepo:         planRepo,
+		SMTPKeyRepo:      smtpkeyRepo,
 	}
 }
 
@@ -57,6 +59,19 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 	mailUsageRepo, err := s.MailUsageRepo.GetCurrentMailUsageRecord(int(subscription.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error fetching mail usage record")
+	}
+
+	//get the master key from the db
+
+	authUser, err := s.SMTPKeyRepo.GetSMTPMasterKey(userUUID)
+
+	if err != nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	authModel := &dto.SMTPAuthUser{
+		Username: authUser.SMTPLogin,
+		Password: authUser.Password,
 	}
 
 	// Check type of d.To and convert it to a slice of Recipient if necessary
@@ -102,6 +117,7 @@ func (s *SMTPMailService) PrepareMail(d *dto.EmailRequest, apiKey string) (map[s
 				Subject:     d.Subject,
 				HtmlContent: d.HtmlContent,
 				Text:        d.Text,
+				AuthUser:    *authModel,
 			}, userId.ID)
 		}()
 

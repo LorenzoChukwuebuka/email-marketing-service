@@ -25,4 +25,5 @@ func (ar *AdminUsersRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/user/{userId}", middleware.AdminJWTMiddleware(adminUserConroller.GetSingleUser)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/verify/{userId}", middleware.AdminJWTMiddleware(adminUserConroller.VerifyUser)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/stats/{userId}", middleware.AdminJWTMiddleware(adminUserConroller.GetUserStats)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/mail", middleware.AdminJWTMiddleware(adminUserConroller.SendEmailToUsers)).Methods("POST", "OPTIONS")
 }
