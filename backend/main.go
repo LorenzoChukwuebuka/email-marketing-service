@@ -10,9 +10,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	
 )
-
 
 func main() {
 	dbConn, err := database.InitDB()
