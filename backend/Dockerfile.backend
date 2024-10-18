@@ -8,16 +8,19 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 # Stage 2: Final backend image
 FROM alpine
 
-WORKDIR /root/
+WORKDIR /app/backend  # Changed from /root/ to match the structure
 
 # Install bash and nano
 RUN apk update && apk add bash nano
 
 # Copy the Go binary from the builder stage
-COPY --from=backend-builder /app/backend/main /root/
+COPY --from=backend-builder /app/backend/main ./
+
+# Copy templates directory
+COPY --from=backend-builder /app/backend/api/v1/templates ./api/v1/templates
 
 # Copy .env file for the backend
-COPY .env /root/.env
+COPY .env ./
 
 # Copy healthcheck script
 COPY ./healthcheck.sh /healthcheck.sh
@@ -30,4 +33,4 @@ EXPOSE 9000 1025
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh
 
 # Start the Go application
-CMD ["/root/main"]
+CMD ["./main"]
