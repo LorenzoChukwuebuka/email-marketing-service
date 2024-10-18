@@ -9,6 +9,11 @@ import (
 	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/disk"
+	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/mem"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
@@ -16,6 +21,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -24,6 +30,41 @@ type Server struct {
 	router  *mux.Router
 	db      *gorm.DB
 	logRepo *repository.LogRepository
+}
+
+type SystemData struct {
+	OperatingSystem   string `json:"operating_system"`
+	Platform          string `json:"platform"`
+	Hostname          string `json:"hostname"`
+	NumProcesses      uint64 `json:"num_processes"`
+	TotalMemory       string `json:"total_memory"`
+	FreeMemory        string `json:"free_memory"`
+	UsedMemoryPercent string `json:"used_memory_percent"`
+}
+
+type DiskData struct {
+	TotalDiskSpace  string `json:"total_disk_space"`
+	UsedDiskSpace   string `json:"used_disk_space"`
+	FreeDiskSpace   string `json:"free_disk_space"`
+	UsedDiskPercent string `json:"used_disk_percent"`
+}
+
+type CpuData struct {
+	ModelName string   `json:"model_name"`
+	Family    string   `json:"family"`
+	Speed     string   `json:"speed"`
+	CpuUsage  []string `json:"cpu_usage"`
+}
+
+const (
+	megabyteDiv uint64 = 1024 * 1024
+	gigabyteDiv uint64 = megabyteDiv * 1024
+)
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Be careful with this in production
+	},
 }
 
 func NewServer(db *gorm.DB) *Server {
@@ -101,6 +142,8 @@ func (s *Server) setupRoutes() {
 	// 	// Otherwise, serve index.html
 	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
 	// })
+
+	s.router.HandleFunc("/api/v1/system/monitor", s.handleWebSocket)
 
 }
 
@@ -250,4 +293,130 @@ type responseWriterWrapper struct {
 func (w *responseWriterWrapper) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+// WebSocket handler method
+func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("WebSocket upgrade error: %v", err)
+		return
+	}
+	defer ws.Close()
+
+	// Create a done channel to signal goroutine termination
+	done := make(chan bool)
+	defer close(done)
+
+	// Handle client disconnection
+	go func() {
+		_, _, err := ws.ReadMessage()
+		if err != nil {
+			done <- true
+		}
+	}()
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			systemData, err := getSystemSection()
+			if err != nil {
+				log.Printf("Error getting system data: %v", err)
+				continue
+			}
+
+			diskData, err := getDiskSection()
+			if err != nil {
+				log.Printf("Error getting disk data: %v", err)
+				continue
+			}
+
+			cpuData, err := getCpuSection()
+			if err != nil {
+				log.Printf("Error getting CPU data: %v", err)
+				continue
+			}
+
+			message := map[string]interface{}{
+				"system": systemData,
+				"disk":   diskData,
+				"cpu":    cpuData,
+			}
+
+			if err := ws.WriteJSON(message); err != nil {
+				log.Printf("WebSocket write error: %v", err)
+				return
+			}
+		}
+	}
+}
+
+// Helper functions for getting system information
+func getSystemSection() (SystemData, error) {
+	runTimeOS := runtime.GOOS
+
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return SystemData{}, err
+	}
+
+	hostStat, err := host.Info()
+	if err != nil {
+		return SystemData{}, err
+	}
+
+	return SystemData{
+		OperatingSystem:   runTimeOS,
+		Platform:          hostStat.Platform,
+		Hostname:          hostStat.Hostname,
+		NumProcesses:      hostStat.Procs,
+		TotalMemory:       strconv.FormatUint(vmStat.Total/megabyteDiv, 10) + " MB",
+		FreeMemory:        strconv.FormatUint(vmStat.Free/megabyteDiv, 10) + " MB",
+		UsedMemoryPercent: strconv.FormatFloat(vmStat.UsedPercent, 'f', 2, 64) + "%",
+	}, nil
+}
+
+func getDiskSection() (DiskData, error) {
+	diskStat, err := disk.Usage("/")
+	if err != nil {
+		return DiskData{}, err
+	}
+
+	return DiskData{
+		TotalDiskSpace:  strconv.FormatUint(diskStat.Total/gigabyteDiv, 10) + " GB",
+		UsedDiskSpace:   strconv.FormatUint(diskStat.Used/gigabyteDiv, 10) + " GB",
+		FreeDiskSpace:   strconv.FormatUint(diskStat.Free/gigabyteDiv, 10) + " GB",
+		UsedDiskPercent: strconv.FormatFloat(diskStat.UsedPercent, 'f', 2, 64) + "%",
+	}, nil
+}
+
+func getCpuSection() (CpuData, error) {
+	cpuStat, err := cpu.Info()
+	if err != nil {
+		return CpuData{}, err
+	}
+
+	percentage, err := cpu.Percent(0, true)
+	if err != nil {
+		return CpuData{}, err
+	}
+
+	var cpuUsage []string
+	for idx, cpupercent := range percentage {
+		cpuUsage = append(cpuUsage, "CPU ["+strconv.Itoa(idx)+"]: "+strconv.FormatFloat(cpupercent, 'f', 2, 64)+"%")
+	}
+
+	data := CpuData{
+		ModelName: cpuStat[0].ModelName,
+		Family:    cpuStat[0].Family,
+		Speed:     strconv.FormatFloat(cpuStat[0].Mhz, 'f', 2, 64) + " MHz",
+		CpuUsage:  cpuUsage,
+	}
+
+	return data, nil
 }
