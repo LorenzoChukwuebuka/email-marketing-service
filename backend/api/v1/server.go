@@ -8,13 +8,6 @@ import (
 	"email-marketing-service/api/v1/routes"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
-	"github.com/shirou/gopsutil/v4/cpu"
-	"github.com/shirou/gopsutil/v4/disk"
-	"github.com/shirou/gopsutil/v4/host"
-	"github.com/shirou/gopsutil/v4/mem"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -24,6 +17,14 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/disk"
+	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/mem"
+	"gorm.io/gorm"
 )
 
 type Server struct {
@@ -216,7 +217,7 @@ func enableCORS(handler http.Handler) http.Handler {
 		}
 
 		// For different-origin requests (e.g., during development)
-		allowedOrigins := []string{"http://localhost:5054", "http://localhost:5000", "*"}
+		allowedOrigins := []string{"http://localhost:5054", "http://localhost:5000", "https://crabmailer.com", "https://beta.crabmailer.com", "*"}
 		origin := r.Header.Get("Origin")
 
 		for _, allowedOrigin := range allowedOrigins {
