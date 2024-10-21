@@ -2,7 +2,7 @@ package smtp_server
 
 import (
 	"context"
-	//"crypto/tls"
+	"crypto/tls"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
@@ -36,13 +36,13 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 	if mode == "" {
 
 	} else {
-		// cert, err := tls.LoadX509KeyPair("/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem", "/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem")
-		// if err != nil {
-		// 	log.Fatalf("Failed to load TLS certificate: %v", err)
-		// }
-		// s.TLSConfig = &tls.Config{
-		// 	Certificates: []tls.Certificate{cert},
-		// }
+		cert, err := tls.LoadX509KeyPair("/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem", "/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem")
+		if err != nil {
+			log.Fatalf("Failed to load TLS certificate: %v", err)
+		}
+		s.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
 
 		print("hello")
 	}
