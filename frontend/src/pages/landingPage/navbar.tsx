@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Menu, X } from 'lucide-react';
 import Cookies from "js-cookie";
+import renderApiName from '../../utils/name';
 
 const NavBar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,17 +30,12 @@ const NavBar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollY]);
 
-    const apiName = import.meta.env.VITE_API_NAME;
-    const firstFourLetters = apiName.slice(0, 4);
-    const remainingLetters = apiName.slice(4);
-
     return (
         <header className={`bg-white shadow-sm sticky top-0 z-50 transition-all duration-300 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
             <div className="container mx-auto px-4 flex justify-between items-center h-16">
                 <h1 className="text-center text-2xl font-bold">
                     <Link to="/">
-                        <span className="text-indigo-700">{firstFourLetters}</span>
-                        <span className="text-gray-700">{remainingLetters}</span>
+                        {renderApiName()}
                     </Link>
                 </h1>
                 <nav className="hidden md:flex space-x-6">

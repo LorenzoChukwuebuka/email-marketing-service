@@ -15,9 +15,7 @@ import (
 
 // StartSMTPServer starts the SMTP server and listens for shutdown signals
 func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
-
 	smtpKeyRepo := repository.NewSMTPkeyRepository(db)
-
 	be := NewBackend(smtpKeyRepo)
 	s := smtp.NewServer(be)
 
