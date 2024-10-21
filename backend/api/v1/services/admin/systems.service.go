@@ -26,39 +26,32 @@ func NewSystemsService(systemRepo *adminrepository.SystemRepository) *SystemsSer
 }
 
 func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmodel.SystemsSMTPSetting, error) {
-	// Generate RSA key pair
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate RSA key pair: %w", err)
 	}
 
-	// Encode private key to PEM
 	privateKeyPEM := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	}
 	privateKeyString := string(pem.EncodeToMemory(privateKeyPEM))
 
-	// Encode public key
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal public key: %w", err)
 	}
 
-	// Base64 encode the public key and format it for DKIM
 	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKeyBytes)
 	formattedPublicKey := formatPublicKeyForDKIM(publicKeyBase64)
 
-	// Generate DKIM selector with domain and timestamp
 	selector := fmt.Sprintf("dkim%d", privateKey.N.Int64()%1000000)
 
-	// Generate DNS records
 	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", formattedPublicKey)
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)
 	mxRecord := fmt.Sprintf("%s. 10 mail.%s.", domain, domain)
 
-	// Create SystemsSMTPSetting
 	smtpSetting := &adminmodel.SystemsSMTPSetting{
 		Domain:         domain,
 		TXTRecord:      txtRecord,
@@ -71,12 +64,10 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 		Verified:       false,
 	}
 
-	// Save to database
 	if err := s.SystemsRepo.CreateSMTPSettings(smtpSetting); err != nil {
 		return nil, fmt.Errorf("failed to save SMTP settings to database: %w", err)
 	}
 
-	// Save to file
 	if err := saveSMTPSettingsToFile(smtpSetting); err != nil {
 		return nil, fmt.Errorf("failed to save SMTP settings to file: %w", err)
 	}
@@ -84,21 +75,19 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	return smtpSetting, nil
 }
 
-// Function to format the public key for DKIM by splitting it into 253-character chunks
 func formatPublicKeyForDKIM(publicKey string) string {
-	// Remove any newlines
 	publicKey = strings.ReplaceAll(publicKey, "\n", "")
 
-	// Split the key into chunks of 253 characters (DNS TXT record limit)
+	// Split the key into chunks of 255 characters (2 less than 257 to account for quotes)
 	var chunks []string
-	for len(publicKey) > 253 {
-		chunks = append(chunks, publicKey[:253])
-		publicKey = publicKey[253:]
+	for len(publicKey) > 255 {
+		chunks = append(chunks, publicKey[:255])
+		publicKey = publicKey[255:]
 	}
 	chunks = append(chunks, publicKey)
 
-	// Join the chunks with double quotes and spaces, ensuring no backslashes
-	return "\"" + strings.Join(chunks, "\" \"") + "\""
+	// Join the chunks with parentheses and no spaces
+	return "(" + strings.Join(chunks, ")(") + ")"
 }
 
 func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
