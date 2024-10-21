@@ -45,15 +45,15 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 		return nil, fmt.Errorf("failed to marshal public key: %w", err)
 	}
 
-	// Break the base64-encoded public key into chunks
+	// Base64 encode the public key and format it for DKIM
 	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKeyBytes)
-	chunkedPublicKey := chunkString(publicKeyBase64, 255)
+	formattedPublicKey := formatPublicKeyForDKIM(publicKeyBase64)
 
 	// Generate DKIM selector with domain and timestamp
 	selector := fmt.Sprintf("dkim%d", privateKey.N.Int64()%1000000)
 
 	// Generate DNS records
-	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", strings.Join(chunkedPublicKey, " "))
+	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=\"%s\"", formattedPublicKey)
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)
 	mxRecord := fmt.Sprintf("%s. 10 mail.%s.", domain, domain)
@@ -84,17 +84,21 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	return smtpSetting, nil
 }
 
-// Break up a long string into chunks of size chunkSize
-func chunkString(s string, chunkSize int) []string {
+// Function to format the public key for DKIM by splitting it into 253-character chunks
+func formatPublicKeyForDKIM(publicKey string) string {
+	// Remove any newlines
+	publicKey = strings.ReplaceAll(publicKey, "\n", "")
+
+	// Split the key into chunks of 253 characters (DNS TXT record limit)
 	var chunks []string
-	for i := 0; i < len(s); i += chunkSize {
-		end := i + chunkSize
-		if end > len(s) {
-			end = len(s)
-		}
-		chunks = append(chunks, s[i:end])
+	for len(publicKey) > 253 {
+		chunks = append(chunks, publicKey[:253])
+		publicKey = publicKey[253:]
 	}
-	return chunks
+	chunks = append(chunks, publicKey)
+
+	// Join the chunks with double quotes and spaces
+	return strings.Join(chunks, "\" \"")
 }
 
 func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
