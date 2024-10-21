@@ -18,4 +18,5 @@ func (ur *SystemRoute) InitRoutes(router *mux.Router) {
 	systemsController, _ := InitializeSystemController(ur.db)
 	router.HandleFunc("/create-dns-records", middleware.AdminJWTMiddleware(systemsController.CreateRecords)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-dns-records/{domain}", middleware.AdminJWTMiddleware(systemsController.GetDNSRecords)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/delete-dns-records/{domain}", middleware.AdminJWTMiddleware(systemsController.DeleteDNSRecords)).Methods("DELETE", "OPTIONS")
 }

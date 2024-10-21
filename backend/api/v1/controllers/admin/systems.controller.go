@@ -4,8 +4,8 @@ import (
 	"email-marketing-service/api/v1/dto"
 	adminservice "email-marketing-service/api/v1/services/admin"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type SystemsController struct {
@@ -51,7 +51,17 @@ func (c *SystemsController) GetDNSRecords(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, result)
 }
 
+func (c *SystemsController) DeleteDNSRecords(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 
-func (c *SystemController) DeleteDNSRecords(w http.ResponseWriter, r *http.Request){
-	
+	domainName := vars["domain"]
+
+	err := c.SystemsService.DeleteDNSRecords(domainName)
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+	response.SuccessResponse(w, 200, "deleted successfully")
 }

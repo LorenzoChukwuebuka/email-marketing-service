@@ -130,3 +130,28 @@ func (s *SystemsService) GetDNSRecords(domain string) (map[string]string, error)
 
 	return records, nil
 }
+
+func (s *SystemsService) DeleteDNSRecords(domain string) error {
+	// Create the file path
+	dir := "./smtp_settings"
+	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
+
+	// Check if the file exists
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File doesn't exist, so we skip without error
+			return nil
+		}
+		// For any other error, return it
+		return fmt.Errorf("failed to check file existence: %w", err)
+	}
+
+	// Remove the file
+	err = os.Remove(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to delete SMTP settings file: %w", err)
+	}
+
+	return s.SystemsRepo.DeleteSettings(domain)
+}

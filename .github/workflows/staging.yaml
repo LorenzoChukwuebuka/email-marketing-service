@@ -1,36 +1,31 @@
+
 name: CI
 
 on:
   push:
     branches:
-      - main
+    - staging
   pull_request:
     branches:
-      - main
+    - staging
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v3
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # Set up the environment (for example, Node.js)
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    # Copy project contents to /home/ubuntu/apps/email-marketing-service
+    - name: Copy project to target directory
+      run: |
+        sudo mkdir -p /home/ubuntu/apps/email-marketing-service
+        sudo cp -r ${{ github.workspace }}/* /home/ubuntu/apps/email-marketing-service/
 
-      # Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Run tests
-      - name: Run tests
-        run: npm test
-
-      # Build the project
-      - name: Build the project
-        run: npm run build
+    - name: Run docker-restart
+      # Run make docker-restart in the target directory
+      working-directory: /home/ubuntu/apps/email-marketing-service
+      run: |
+        sudo make docker-restart
