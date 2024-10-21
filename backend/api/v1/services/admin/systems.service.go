@@ -53,7 +53,7 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	selector := fmt.Sprintf("dkim%d", privateKey.N.Int64()%1000000)
 
 	// Generate DNS records
-	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=\"%s\"", formattedPublicKey)
+	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", formattedPublicKey)
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)
 	mxRecord := fmt.Sprintf("%s. 10 mail.%s.", domain, domain)
@@ -97,8 +97,8 @@ func formatPublicKeyForDKIM(publicKey string) string {
 	}
 	chunks = append(chunks, publicKey)
 
-	// Join the chunks with double quotes and spaces
-	return strings.Join(chunks, "\" \"")
+	// Join the chunks with double quotes and spaces, ensuring no backslashes
+	return "\"" + strings.Join(chunks, "\" \"") + "\""
 }
 
 func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
