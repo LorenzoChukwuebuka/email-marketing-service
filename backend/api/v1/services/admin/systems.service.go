@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type SystemsService struct {
@@ -44,11 +45,15 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 		return nil, fmt.Errorf("failed to marshal public key: %w", err)
 	}
 
-	// Generate selector
+	// Break the base64-encoded public key into chunks
+	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKeyBytes)
+	chunkedPublicKey := chunkString(publicKeyBase64, 255)
+
+	// Generate DKIM selector with domain and timestamp
 	selector := fmt.Sprintf("dkim%d", privateKey.N.Int64()%1000000)
 
 	// Generate DNS records
-	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", base64.StdEncoding.EncodeToString(publicKeyBytes))
+	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", strings.Join(chunkedPublicKey, " "))
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)
 	mxRecord := fmt.Sprintf("%s. 10 mail.%s.", domain, domain)
@@ -59,7 +64,7 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 		TXTRecord:      txtRecord,
 		DMARCRecord:    dmarcRecord,
 		DKIMSelector:   selector,
-		DKIMPublicKey:  base64.StdEncoding.EncodeToString(publicKeyBytes),
+		DKIMPublicKey:  publicKeyBase64,
 		DKIMPrivateKey: privateKeyString,
 		SPFRecord:      spfRecord,
 		MXRecord:       mxRecord,
@@ -77,6 +82,19 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	}
 
 	return smtpSetting, nil
+}
+
+// Break up a long string into chunks of size chunkSize
+func chunkString(s string, chunkSize int) []string {
+	var chunks []string
+	for i := 0; i < len(s); i += chunkSize {
+		end := i + chunkSize
+		if end > len(s) {
+			end = len(s)
+		}
+		chunks = append(chunks, s[i:end])
+	}
+	return chunks
 }
 
 func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
