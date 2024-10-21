@@ -2,8 +2,6 @@ import { useMemo } from 'react';
 import { HelmetProps } from 'react-helmet-async';
 import { metadataConfig } from '../utils/metadata.config';
 
-
-
 // Create a custom hook to handle the metadata configuration
 const useMetadata = () => {
     // Return a function that can be called with a specific key
@@ -16,10 +14,22 @@ const useMetadata = () => {
             // Return the metadata in the format expected by the Helmet component
             return {
                 title: metadata.title,
-                meta: Object.entries(metadata).reduce((acc, [key, value]) => {
-                    if (key.startsWith('og') || key.startsWith('twitter') || key === 'description' || key === 'keywords') {
+                meta: Object.entries(metadata).reduce((acc, [metaKey, value]) => {
+                    // Convert camelCase to colon-case for Open Graph and Twitter tags
+                    if (metaKey.startsWith('og')) {
+                        const formattedKey = metaKey.replace(/([A-Z])/g, ':$1').toLowerCase(); // Convert ogImage -> og:image
                         acc.push({
-                            name: key.startsWith('og') ? 'property' : 'name',
+                            property: formattedKey,
+                            content: String(value),
+                        });
+                    } else if (metaKey.startsWith('twitter')) {
+                        acc.push({
+                            name: metaKey,
+                            content: String(value),
+                        });
+                    } else if (metaKey === 'description' || metaKey === 'keywords') {
+                        acc.push({
+                            name: metaKey,
                             content: String(value),
                         });
                     }
