@@ -2,8 +2,8 @@ package adminrepository
 
 import (
 	adminmodel "email-marketing-service/api/v1/model/admin"
-
 	"gorm.io/gorm"
+	"fmt"
 )
 
 type SystemRepository struct {
@@ -32,4 +32,11 @@ func (r *SystemRepository) GetSMTPSettings(domain string) (*adminmodel.SystemsSM
 
 func (r *SystemRepository) UpdateSMTPSettings(settings *adminmodel.SystemsSMTPSetting) error {
 	return r.DB.Save(settings).Error
+}
+
+func (r SystemRepository) DeleteSettings(domain string) error {
+	if err := r.DB.Where("domain = ?", domain).Delete(&adminmodel.SystemsSMTPSetting{}).Error; err != nil {
+		return fmt.Errorf("failed to delete domain: %w", err)
+	}
+	return nil
 }
