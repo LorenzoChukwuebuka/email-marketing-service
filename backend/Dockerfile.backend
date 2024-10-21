@@ -1,5 +1,5 @@
 # Stage 1: Build the Go backend
-FROM golang:1.20 as backend-builder
+FROM golang:1.20 AS backend-builder
 
 WORKDIR /app/backend
 COPY . ./
@@ -27,7 +27,7 @@ COPY ./healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
 
 # Expose backend ports
-EXPOSE 9000 1025
+EXPOSE 9000 1025 465
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh

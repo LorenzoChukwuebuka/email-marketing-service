@@ -73,7 +73,7 @@ const IndexLandingPage: React.FC = () => {
                             </div>
 
                             <div className="md:w-1/2">
-                                <img src={mailpicture} alt="Email marketing illustration" className="rounded-lg w-[80%] h-[70%] shadow-xl" />
+                                <img src={mailpicture} alt="Email marketing illustration" className="rounded-lg w-[100%] h-[100%] shadow-xl" />
                             </div>
                         </div>
                     </section>
