@@ -50,3 +50,8 @@ func (c *SystemsController) GetDNSRecords(w http.ResponseWriter, r *http.Request
 
 	response.SuccessResponse(w, 200, result)
 }
+
+
+func (c *SystemController) DeleteDNSRecords(w http.ResponseWriter, r *http.Request){
+	
+}
