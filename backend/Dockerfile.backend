@@ -26,6 +26,9 @@ COPY .env ./
 COPY ./healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
 
+# Ensure smtp_settings and uploads directories exist
+RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads
+
 # Expose backend ports
 EXPOSE 9000 1025 465
 
