@@ -26,7 +26,7 @@ func NewSystemsService(systemRepo *adminrepository.SystemRepository) *SystemsSer
 }
 
 func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmodel.SystemsSMTPSetting, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate RSA key pair: %w", err)
 	}
