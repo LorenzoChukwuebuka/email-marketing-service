@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 # Stage 2: Final backend image
 FROM alpine
 
-WORKDIR /app/backend  # Changed from /root/ to match the structure
+WORKDIR /app/backend  
 
 # Install bash and nano
 RUN apk update && apk add bash nano
@@ -27,11 +27,15 @@ COPY ./healthcheck.sh /healthcheck.sh
 RUN chmod +x /healthcheck.sh
 
 # Create directories for dynamic folders
-RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads
+# RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads
 
-# Apply read, write, and execute permissions to the directories
-RUN chmod -R 777 /app/backend/smtp_settings /app/backend/uploads
+# # Apply read, write, and execute permissions to the directories
+# RUN chmod -R 777 /app/backend/smtp_settings /app/backend/uploads
 
+# After creating directories
+RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads && \
+    chmod -R 777 /app/backend/smtp_settings /app/backend/uploads && \
+    chown -R nobody:nobody /app/backend/smtp_settings /app/backend/uploads
 
 # Expose backend ports
 EXPOSE 9000 1025 465

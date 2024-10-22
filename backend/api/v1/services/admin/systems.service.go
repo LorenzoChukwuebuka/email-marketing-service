@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	adminmodel "email-marketing-service/api/v1/model/admin"
 	adminrepository "email-marketing-service/api/v1/repository/admin"
+	"email-marketing-service/api/v1/utils"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -67,8 +68,8 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	if err := s.SystemsRepo.CreateSMTPSettings(smtpSetting); err != nil {
 		return nil, fmt.Errorf("failed to save SMTP settings to database: %w", err)
 	}
-
-	if err := saveSMTPSettingsToFile(smtpSetting); err != nil {
+	// In GenerateAndSaveSMTPCredentials
+	if err := utils.SaveSMTPSettingsToFile(smtpSetting); err != nil {
 		return nil, fmt.Errorf("failed to save SMTP settings to file: %w", err)
 	}
 
@@ -162,7 +163,7 @@ func (s *SystemsService) DeleteDNSRecords(domain string) error {
 		// Use the relative path in development
 		dir = "./smtp_settings"
 	}
-	
+
 	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
 
 	// Check if the file exists

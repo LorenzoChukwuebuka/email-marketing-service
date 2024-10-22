@@ -4,6 +4,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"encoding/json"
 	"errors"
+
+	"gorm.io/gorm"
 )
 
 type EmailRequest struct {
@@ -14,6 +16,7 @@ type EmailRequest struct {
 	Text        *string      `json:"text"`
 	PreviewText *string      `json:"preview_text"`
 	AuthUser    SMTPAuthUser `json:"smtp_auth_user"`
+	DB          gorm.DB
 }
 
 type Sender struct {
@@ -22,7 +25,7 @@ type Sender struct {
 }
 
 type SMTPAuthUser struct {
-	Username string 
+	Username string
 	Password string
 }
 

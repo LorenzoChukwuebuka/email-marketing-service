@@ -3,12 +3,10 @@ package utils
 import (
 	"bytes"
 	adminmodel "email-marketing-service/api/v1/model/admin"
-	"encoding/json"
+	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"fmt"
 	"gopkg.in/gomail.v2"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -93,41 +91,16 @@ func sendMail(subject, email, message, sender string, smtpConfig *SMTPConfig) er
 	return nil
 }
 
-// ReadSMTPSettingsFromFile reads SMTP settings from a JSON file
-func ReadSMTPSettingsFromFile(domain string) (*adminmodel.SystemsSMTPSetting, error) {
-	var dir string
-	if os.Getenv("SERVER_MODE") == "production" {
-		dir = "/app/backend/smtp_settings" // Absolute path for production
-	} else {
-		dir = "./smtp_settings" // Relative path for development
-	}
+ 
 
-	// Create the file path
-	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
-
-	data, err := os.ReadFile(filePath)
+func ReadSMTPSettingsFromDB(domain string, repo adminrepository.SystemRepository) (*adminmodel.SystemsSMTPSetting, error) {
+	// Fetch the SMTP settings for the given domain
+	settings, err := repo.GetSMTPSettings(domain)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read SMTP settings file: %w", err)
+		return nil, fmt.Errorf("failed to read SMTP settings from the database: %w", err)
 	}
 
-	var settingsMap map[string]interface{}
-	if err := json.Unmarshal(data, &settingsMap); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SMTP settings: %w", err)
-	}
-
-	// Convert map back to struct
-	smtpSetting := &adminmodel.SystemsSMTPSetting{
-		Domain:         settingsMap["Domain"].(string),
-		TXTRecord:      settingsMap["TXTRecord"].(string),
-		DMARCRecord:    settingsMap["DMARCRecord"].(string),
-		DKIMSelector:   settingsMap["DKIMSelector"].(string),
-		DKIMPublicKey:  settingsMap["DKIMPublicKey"].(string),
-		DKIMPrivateKey: settingsMap["DKIMPrivateKey"].(string),
-		SPFRecord:      settingsMap["SPFRecord"].(string),
-		MXRecord:       settingsMap["MXRecord"].(string),
-	}
-
-	return smtpSetting, nil
+	return settings, nil
 }
 
 // extractDomain extracts the domain from an email address
