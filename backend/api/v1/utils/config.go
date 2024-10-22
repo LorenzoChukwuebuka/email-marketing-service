@@ -30,7 +30,7 @@ type Config struct {
 	SLACK_WEBHOOK_URL     string `env:"SLACK_WEBHOOK_URL"`
 	DOMAIN                string `env:"DOMAIN"`
 	FRONTEND_URL          string `env:"FRONTEND_URL"`
-	SENDER                string `env:SENDER`
+	SENDER                string `env:"SENDER"`
 }
 
 var LoadEnv = func() *Config {
