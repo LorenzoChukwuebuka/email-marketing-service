@@ -34,8 +34,8 @@ const Footer: React.FC = () => {
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Legal</h3>
                             <ul className="space-y-2">
-                                <li><Link to="/privacy" className="hover:text-gray-300 transition duration-300">Privacy Policy</Link></li>
-                                <li><Link to="/tos" className="hover:text-gray-300 transition duration-300">Terms of Service </Link> </li>
+                                <li><a href="/privacy" className="hover:text-gray-300 transition duration-300">Privacy Policy</a></li>
+                                <li><a href="/tos" className="hover:text-gray-300 transition duration-300">Terms of Service </a> </li>
                                 <li><a href="#" className="hover:text-gray-300 transition duration-300">GDPR</a></li>
                             </ul>
                         </div>

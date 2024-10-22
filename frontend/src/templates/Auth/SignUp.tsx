@@ -102,11 +102,11 @@ const SignUpTemplate: React.FC = () => {
 
                     <div className="mt-4 text-center text-sm text-gray-600">
                         By signing up, you agree to our{" "}
-                        <a href="#" className="text-indigo-600 hover:underline">
+                        <a href="/tos" className="text-indigo-600 hover:underline">
                             Terms of Service
                         </a>{" "}
                         and{" "}
-                        <a href="#" className="text-indigo-600 hover:underline">
+                        <a href="/privacy" className="text-indigo-600 hover:underline">
                             Privacy Policy
                         </a>
                     </div>
