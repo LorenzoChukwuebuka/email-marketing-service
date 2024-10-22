@@ -16,7 +16,7 @@ type Mail struct {
 
 var (
 	config = utils.LoadEnv()
-	sender = "noreply@crabmailer.com"
+	sender =  config.SENDER
 )
 
 func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
