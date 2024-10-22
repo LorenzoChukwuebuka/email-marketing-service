@@ -76,18 +76,19 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 }
 
 func formatPublicKeyForDKIM(publicKey string) string {
+	// Remove any newlines
 	publicKey = strings.ReplaceAll(publicKey, "\n", "")
 
-	// Split the key into chunks of 255 characters (2 less than 257 to account for quotes)
+	// Split the key into chunks of 255 characters
 	var chunks []string
 	for len(publicKey) > 255 {
 		chunks = append(chunks, publicKey[:255])
 		publicKey = publicKey[255:]
 	}
-	chunks = append(chunks, publicKey)
+	chunks = append(chunks, publicKey) // Add the last remaining part
 
-	// Join the chunks with parentheses and no spaces
-	return "(" + strings.Join(chunks, ")(") + ")"
+	// Join the chunks with double quotes and spaces
+	return fmt.Sprintf("\"%s\"", strings.Join(chunks, "\" \""))
 }
 
 func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
