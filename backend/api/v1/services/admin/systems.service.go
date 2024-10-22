@@ -110,8 +110,17 @@ func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
 		return fmt.Errorf("failed to marshal SMTP settings to JSON: %w", err)
 	}
 
+	// Determine the directory based on environment
+	var dir string
+	if os.Getenv("SERVER_MODE") == "production" {
+		// Use the Docker-specific directory
+		dir = "/app/backend/smtp_settings"
+	} else {
+		// Use the relative path in development
+		dir = "./smtp_settings"
+	}
+
 	// Create the directory if it doesn't exist
-	dir := "./smtp_settings"
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
