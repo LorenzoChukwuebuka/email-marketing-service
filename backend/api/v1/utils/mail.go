@@ -33,7 +33,7 @@ func DefaultSMTPConfig() SMTPConfig {
 }
 
 // AsyncSendMail sends an email asynchronously using goroutines
-func AsyncSendMail(subject, email, message, sender string, smtpConfig *SMTPConfig, wg *sync.WaitGroup)error {
+func AsyncSendMail(subject, email, message, sender string, smtpConfig *SMTPConfig, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -95,7 +95,15 @@ func sendMail(subject, email, message, sender string, smtpConfig *SMTPConfig) er
 
 // ReadSMTPSettingsFromFile reads SMTP settings from a JSON file
 func ReadSMTPSettingsFromFile(domain string) (*adminmodel.SystemsSMTPSetting, error) {
-	filePath := filepath.Join("./smtp_settings", fmt.Sprintf("%s_smtp_settings.json", domain))
+	var dir string
+	if os.Getenv("SERVER_MODE") == "production" {
+		dir = "/app/backend/smtp_settings" // Absolute path for production
+	} else {
+		dir = "./smtp_settings" // Relative path for development
+	}
+
+	// Create the file path
+	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
