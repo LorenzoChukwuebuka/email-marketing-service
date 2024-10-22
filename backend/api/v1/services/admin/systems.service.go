@@ -154,7 +154,15 @@ func (s *SystemsService) GetDNSRecords(domain string) (map[string]string, error)
 
 func (s *SystemsService) DeleteDNSRecords(domain string) error {
 	// Create the file path
-	dir := "./smtp_settings"
+	var dir string
+	if os.Getenv("SERVER_MODE") == "production" {
+		// Use the Docker-specific directory
+		dir = "/app/backend/smtp_settings"
+	} else {
+		// Use the relative path in development
+		dir = "./smtp_settings"
+	}
+	
 	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
 
 	// Check if the file exists
