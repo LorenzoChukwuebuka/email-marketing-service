@@ -26,7 +26,7 @@ type DNSRecord struct {
 	Priority   int
 }
 
-const Keysize int = 2048
+const Keysize int = 1024
 
 type DomainService struct {
 	DomainRepo *repository.DomainRepository
