@@ -189,34 +189,6 @@ func (s *SupportTicketService) ReplyToTicket(ticketID string, userID string, req
 	}, nil
 }
 
-func (s *SupportTicketService) saveFile(file *multipart.FileHeader, userID string) (string, error) {
-	src, err := file.Open()
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-
-	uploadFolder := filepath.Join("uploads", "tickets", userID)
-	if err := os.MkdirAll(uploadFolder, os.ModePerm); err != nil {
-		return "", fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
-	filePath := filepath.Join(uploadFolder, fileName)
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to create file: %w", err)
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return "", fmt.Errorf("failed to copy file: %w", err)
-	}
-
-	return filePath, nil
-}
-
 func (s *SupportTicketService) GetTicketWithDetails(ticketID string) (*model.SupportTicketResponse, error) {
 	ticket, err := s.SupportRepository.GetTicketWithDetails(ticketID)
 	if err != nil {
@@ -276,6 +248,90 @@ func (s *SupportTicketService) CloseTicket(ticketId string) error {
 
 	if err := s.SupportRepository.CloseTicket(ticketId); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *SupportTicketService) getUploadBasePath() string {
+	if os.Getenv("SERVER_MODE") == "production" {
+		return "/app/backend/uploads"
+	}
+	return "./uploads"
+}
+
+func (s *SupportTicketService) ensureUploadDirectory(userID string) (string, error) {
+	basePath := s.getUploadBasePath()
+	uploadFolder := filepath.Join(basePath, "tickets", userID)
+
+	// Create all necessary directories with proper permissions
+	if err := os.MkdirAll(uploadFolder, 0777); err != nil {
+		return "", fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Ensure proper permissions on the created directory
+	if err := os.Chmod(uploadFolder, 0777); err != nil {
+		return "", fmt.Errorf("failed to set directory permissions: %w", err)
+	}
+
+	return uploadFolder, nil
+}
+
+func (s *SupportTicketService) saveFile(file *multipart.FileHeader, userID string) (string, error) {
+	// Open source file
+	src, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("failed to open uploaded file: %w", err)
+	}
+	defer src.Close()
+
+	// Ensure upload directory exists with proper permissions
+	uploadFolder, err := s.ensureUploadDirectory(userID)
+	if err != nil {
+		return "", err
+	}
+
+	// Generate unique filename with timestamp
+	fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+	filePath := filepath.Join(uploadFolder, fileName)
+
+	// Create destination file
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dst.Close()
+
+	// Set proper file permissions
+	if err := os.Chmod(filePath, 0666); err != nil {
+		return "", fmt.Errorf("failed to set file permissions: %w", err)
+	}
+
+	// Copy file contents
+	if _, err = io.Copy(dst, src); err != nil {
+		return "", fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	// Return relative path from base directory
+	basePath := s.getUploadBasePath()
+	relativePath, err := filepath.Rel(basePath, filePath)
+	if err != nil {
+		// Fallback to full path if relative path calculation fails
+		return filePath, nil
+	}
+
+	return relativePath, nil
+}
+
+// Helper method to get full file path from relative path
+func (s *SupportTicketService) getFullFilePath(relativePath string) string {
+	return filepath.Join(s.getUploadBasePath(), relativePath)
+}
+
+// Add this method to help with file deletion if needed
+func (s *SupportTicketService) deleteFile(relativePath string) error {
+	fullPath := s.getFullFilePath(relativePath)
+	if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil
 }

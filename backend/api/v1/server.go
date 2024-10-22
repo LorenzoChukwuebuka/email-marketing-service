@@ -8,6 +8,13 @@ import (
 	"email-marketing-service/api/v1/routes"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/disk"
+	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/mem"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -17,13 +24,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
-	"github.com/shirou/gopsutil/v4/cpu"
-	"github.com/shirou/gopsutil/v4/disk"
-	"github.com/shirou/gopsutil/v4/host"
-	"github.com/shirou/gopsutil/v4/mem"
-	"gorm.io/gorm"
 )
 
 type Server struct {
