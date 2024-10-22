@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/shirou/gopsutil/v4/cpu"

@@ -41,7 +41,7 @@ func (c *SystemsController) GetDNSRecords(w http.ResponseWriter, r *http.Request
 
 	domainName := vars["domain"]
 
-	result, err := utils.ReadSMTPSettingsFromFile(domainName)
+	result, err :=c.SystemsService.GetDNSRecords(domainName)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
