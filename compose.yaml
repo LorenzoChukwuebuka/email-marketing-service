@@ -39,6 +39,7 @@ services:
       - uploads:/app/backend/uploads
       - templates:/app/backend/api/v1/templates
       - /etc/letsencrypt:/etc/letsencrypt:ro # Commented SSL certs
+    user: "appuser:appgroup"  # Use the non-root user we created
     cap_add:
       - NET_BIND_SERVICE
     privileged: true # Consider removing if possible for security
