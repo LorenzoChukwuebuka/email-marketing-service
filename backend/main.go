@@ -45,6 +45,14 @@ func main() {
 		}
 	}()
 
+
+	wg.Add(1)
+	go func ()  {
+		defer wg.Done()
+
+		  v1.StartSocketServer() 
+	}()
+
 	// Wait for shutdown signal
 	<-sigChan
 	log.Println("Received shutdown signal")
