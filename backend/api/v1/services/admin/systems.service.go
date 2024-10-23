@@ -8,9 +8,9 @@ import (
 	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/api/v1/utils"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,6 +27,19 @@ func NewSystemsService(systemRepo *adminrepository.SystemRepository) *SystemsSer
 }
 
 func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmodel.SystemsSMTPSetting, error) {
+
+	//check if domain already exists
+
+	domainExists, err := s.SystemsRepo.DomainExists(domain)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if domainExists {
+		return nil, fmt.Errorf("domain already exists")
+	}
+
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate RSA key pair: %w", err)
@@ -92,51 +105,6 @@ func formatPublicKeyForDKIM(publicKey string) string {
 	return fmt.Sprintf("\"%s\"", strings.Join(chunks, "\" \""))
 }
 
-func saveSMTPSettingsToFile(smtpSetting *adminmodel.SystemsSMTPSetting) error {
-	// Create a map to store the settings
-	settingsMap := map[string]interface{}{
-		"Domain":         smtpSetting.Domain,
-		"TXTRecord":      smtpSetting.TXTRecord,
-		"DMARCRecord":    smtpSetting.DMARCRecord,
-		"DKIMSelector":   smtpSetting.DKIMSelector,
-		"DKIMPublicKey":  smtpSetting.DKIMPublicKey,
-		"DKIMPrivateKey": smtpSetting.DKIMPrivateKey,
-		"SPFRecord":      smtpSetting.SPFRecord,
-		"MXRecord":       smtpSetting.MXRecord,
-	}
-
-	// Convert the map to JSON
-	jsonData, err := json.MarshalIndent(settingsMap, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal SMTP settings to JSON: %w", err)
-	}
-
-	// Determine the directory based on environment
-	var dir string
-	if os.Getenv("SERVER_MODE") == "production" {
-		// Use the Docker-specific directory
-		dir = "/app/backend/smtp_settings"
-	} else {
-		// Use the relative path in development
-		dir = "./smtp_settings"
-	}
-
-	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	// Create the file path
-	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", smtpSetting.Domain))
-
-	// Write the JSON data to the file
-	if err := os.WriteFile(filePath, jsonData, 0644); err != nil {
-		return fmt.Errorf("failed to write SMTP settings to file: %w", err)
-	}
-
-	return nil
-}
-
 func (s *SystemsService) GetDNSRecords(domain string) (map[string]string, error) {
 	smtpSetting, err := s.SystemsRepo.GetSMTPSettings(domain)
 	if err != nil {
@@ -154,26 +122,31 @@ func (s *SystemsService) GetDNSRecords(domain string) (map[string]string, error)
 }
 
 func (s *SystemsService) DeleteDNSRecords(domain string) error {
+	// Add validation for domain parameter
+	if domain == "" {
+		return fmt.Errorf("domain cannot be empty")
+	}
+
+	// Log or debug the domain value
+	log.Printf("Attempting to delete DNS records for domain: %s", domain)
+
 	// Create the file path
 	var dir string
 	if os.Getenv("SERVER_MODE") == "production" {
-		// Use the Docker-specific directory
 		dir = "/app/backend/smtp_settings"
 	} else {
-		// Use the relative path in development
 		dir = "./smtp_settings"
 	}
 
 	filePath := filepath.Join(dir, fmt.Sprintf("%s_smtp_settings.json", domain))
-
 	// Check if the file exists
 	_, err := os.Stat(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// File doesn't exist, so we skip without error
-			return nil
+
+			// Even if file doesn't exist, we should still try to delete DB record
+			return s.SystemsRepo.DeleteSettings(domain)
 		}
-		// For any other error, return it
 		return fmt.Errorf("failed to check file existence: %w", err)
 	}
 
@@ -183,5 +156,13 @@ func (s *SystemsService) DeleteDNSRecords(domain string) error {
 		return fmt.Errorf("failed to delete SMTP settings file: %w", err)
 	}
 
-	return s.SystemsRepo.DeleteSettings(domain)
+	log.Printf("Successfully deleted file for domain: %s, proceeding with DB deletion", domain)
+
+	// Call repository method and capture error
+	if err := s.SystemsRepo.DeleteSettings(domain); err != nil {
+
+		return fmt.Errorf("failed to delete settings in database: %w", err)
+	}
+
+	return nil
 }
