@@ -8,6 +8,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 # Stage 2: Final backend image
 FROM alpine
 
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app/backend  
 
 # Install bash and nano
@@ -29,14 +32,20 @@ RUN chmod +x /healthcheck.sh
 # Create directories for dynamic folders
 RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads
 
-# Apply read, write, and execute permissions to the directories
-RUN chmod -R 777 /app/backend/smtp_settings /app/backend/uploads
+# Set proper ownership and permissions
+RUN chown -R appuser:appgroup /app/backend && \
+    chmod -R 755 /app/backend && \
+    chmod -R 775 /app/backend/smtp_settings /app/backend/uploads
 
 # Expose backend ports
 EXPOSE 9000 9001 1025 465
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh
+
+# Switch to non-root user
+USER appuser
+
 
 # Start the Go application
 CMD ["./main"]
