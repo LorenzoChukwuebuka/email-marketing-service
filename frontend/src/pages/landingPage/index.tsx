@@ -6,6 +6,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import useMetadata from '../../hooks/useMetaData';
 import Footer from './footer';
 import NavBar from './navbar';
+import { Slider } from '@mui/material';
 
 const IndexLandingPage: React.FC = () => {
 
@@ -19,7 +20,7 @@ const IndexLandingPage: React.FC = () => {
     ];
 
     const faqs = [
-        { question: 'How does the free trial work?', answer: 'Our 14-day free trial gives you full access to all features. No credit card required.' },
+        { question: 'How does the free trial work?', answer: 'Our free plan lets you send up to 200 emails per day (3,000 monthly). You`ll get full access to all features, and the best part? No credit card required to get started!' },
         { question: 'Can I integrate with my existing tools?', answer: 'Yes, we offer integrations with popular CRMs, e-commerce platforms, and more.' },
         { question: 'What kind of support do you offer?', answer: '24/7 email support for all plans, with phone and chat support for higher tiers.' },
         { question: 'Is there a limit on subscribers or emails?', answer: 'Plans vary, but we have options for businesses of all sizes, from startups to enterprises.' },
@@ -29,11 +30,29 @@ const IndexLandingPage: React.FC = () => {
         setActiveAccordion(activeAccordion === index ? null : index);
     };
 
+    const [plan, setPlan] = useState<number>(1); // 1 = Basic, 2 = Pro, 3 = Enterprise
+    const [subscriberCount, setSubscriberCount] = useState<number>(1000); // Default number of subscribers
+
+    const pricingData = {
+        basic: { basePrice: 7000, perThousandSubscribers: 200 },
+        pro: { basePrice: 15000, perThousandSubscribers: 300 },
+        enterprise: { basePrice: 30000, perThousandSubscribers: 500 },
+    };
+
     const plans = [
-        { name: 'Basic', price: '29', features: ['Feature 1', 'Feature 2', 'Feature 3'] },
-        { name: 'Pro', price: '79', features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'] },
-        { name: 'Enterprise', price: '199', features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'] }
+        { name: 'Basic', value: 1, basePrice: pricingData.basic.basePrice, description: 'Basic plan description.' },
+        { name: 'Pro', value: 2, basePrice: pricingData.pro.basePrice, description: 'Pro plan description.' },
+        { name: 'Enterprise', value: 3, basePrice: pricingData.enterprise.basePrice, description: 'Enterprise plan description.' }
     ];
+
+    const calculatePrice = (basePrice: number, subscriberCount: number, perThousandRate: number) => {
+        const extraCost = Math.ceil(subscriberCount / 1000) * perThousandRate;
+        return basePrice + extraCost;
+    };
+
+    const handleSliderChange = (event: any, newValue: number | number[]) => {
+        setSubscriberCount(newValue as number);
+    };
 
 
     const metaData = useMetadata()("LandingPage")
@@ -115,33 +134,76 @@ const IndexLandingPage: React.FC = () => {
                     </div>
                 </section> */}
 
-                    {/* Pricing Section */}
-                    <section id="pricing" className="py-20 bg-white">
-                        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Simple, Transparent Pricing</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {plans.map((plan, index) => (
-                                    <div key={index} className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-                                        <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
-                                        <p className="text-4xl font-bold mb-6">
-                                            &#8358;{plan.price}<span className="text-lg font-normal text-gray-500">/mo</span>
-                                        </p>
-                                        <ul className="mb-8 space-y-2">
-                                            {plan.features.map((feature, featureIndex) => (
-                                                <li key={featureIndex} className="flex items-center">
-                                                    <ArrowRight className="w-4 h-4 mr-2 text-green-500" />
-                                                    {feature}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <button className="w-full bg-blue-900 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-300">
-                                            Choose Plan
-                                        </button>
+                    <main className="flex-grow">
+                        {/* Pricing Section */}
+                        <section id="pricing" className="py-20 bg-white">
+                            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                                <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Simple, Transparent Pricing</h2>
+
+                                {/* Plan Selector */}
+                                <div className="text-center mb-8">
+                                    <div className="inline-flex rounded-md shadow-sm" role="group">
+                                        {plans.map((p) => (
+                                            <button
+                                                key={p.value}
+                                                className={`px-4 py-2 border text-lg font-medium ${plan === p.value ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'
+                                                    } focus:outline-none`}
+                                                onClick={() => setPlan(p.value)}
+                                            >
+                                                {p.name}
+                                            </button>
+                                        ))}
                                     </div>
-                                ))}
+                                </div>
+
+                                {/* Subscriber Count Slider */}
+                                <div className="text-center mb-12">
+                                    <h3 className="text-xl font-semibold mb-4">Select Subscriber Count</h3>
+                                    <Slider
+                                        value={subscriberCount}
+                                        onChange={handleSliderChange}
+                                        aria-labelledby="subscriber-slider"
+                                        min={1000}
+                                        max={100000}
+                                        step={1000}
+                                        valueLabelDisplay="auto"
+                                        marks={[
+                                            { value: 1000, label: '1k' },
+                                            { value: 50000, label: '50k' },
+                                            { value: 100000, label: '100k' },
+                                        ]}
+                                    />
+                                    <p className="text-lg font-semibold mt-4">Subscribers: {subscriberCount.toLocaleString()}</p>
+                                </div>
+
+                                {/* Display Price */}
+                                <div className="text-center">
+                                    {plan === 1 && (
+                                        <p className="text-2xl font-bold">
+                                            Price: &#8358;{calculatePrice(pricingData.basic.basePrice, subscriberCount, pricingData.basic.perThousandSubscribers).toLocaleString()}
+                                        </p>
+                                    )}
+                                    {plan === 2 && (
+                                        <p className="text-2xl font-bold">
+                                            Price: &#8358;{calculatePrice(pricingData.pro.basePrice, subscriberCount, pricingData.pro.perThousandSubscribers).toLocaleString()}
+                                        </p>
+                                    )}
+                                    {plan === 3 && (
+                                        <p className="text-2xl font-bold">
+                                            Price: &#8358;{calculatePrice(pricingData.enterprise.basePrice, subscriberCount, pricingData.enterprise.perThousandSubscribers).toLocaleString()}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="text-center mt-8">
+                                    <Link to="/auth/sign-up" className="bg-blue-600 text-white hover:bg-blue-700 text-lg px-8 py-3 rounded-md inline-flex items-center transition duration-300">
+                                        Choose Plan
+                                        <ArrowRight className="ml-2 w-5 h-5" />
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    </main>
 
                     {/* FAQ Section */}
                     <section id="faq" className="py-20 bg-gray-50">
