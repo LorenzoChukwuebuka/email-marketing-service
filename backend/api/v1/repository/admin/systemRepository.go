@@ -2,8 +2,9 @@ package adminrepository
 
 import (
 	adminmodel "email-marketing-service/api/v1/model/admin"
-	"gorm.io/gorm"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 )
 
 type SystemRepository struct {
@@ -20,6 +21,19 @@ func (r *SystemRepository) CreateSMTPSettings(settings *adminmodel.SystemsSMTPSe
 	return r.DB.Create(settings).Error
 }
 
+func (r *SystemRepository) DomainExists(domain string) (bool, error) {
+	var exists bool
+	err := r.DB.Model(&adminmodel.SystemsSMTPSetting{}).
+		Select("count(*) > 0").
+		Where("domain = ?", domain).
+		Find(&exists).Error
+
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (r *SystemRepository) GetSMTPSettings(domain string) (*adminmodel.SystemsSMTPSetting, error) {
 	var settings adminmodel.SystemsSMTPSetting
 	err := r.DB.Where("domain = ?", domain).First(&settings).Error
@@ -34,9 +48,28 @@ func (r *SystemRepository) UpdateSMTPSettings(settings *adminmodel.SystemsSMTPSe
 	return r.DB.Save(settings).Error
 }
 
-func (r SystemRepository) DeleteSettings(domain string) error {
-	if err := r.DB.Where("domain = ?", domain).Delete(&adminmodel.SystemsSMTPSetting{}).Error; err != nil {
-		return fmt.Errorf("failed to delete domain: %w", err)
+func (r *SystemRepository) DeleteSettings(domain string) error {
+
+
+	fmt.Printf("%s",domain)
+
+	
+	// Use Unscoped() to find the record even if it's soft deleted
+	var setting adminmodel.SystemsSMTPSetting
+	result := r.DB.Where("domain = ?", domain).First(&setting)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("domain not found: %s", domain)
+		}
+		return fmt.Errorf("failed to find domain: %w", result.Error)
 	}
+
+	// Use Delete() without Unscoped() to perform soft delete
+	result = r.DB.Delete(&setting)
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete domain: %w", result.Error)
+	}
+
 	return nil
 }
