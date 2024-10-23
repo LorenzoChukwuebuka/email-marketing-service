@@ -32,10 +32,14 @@ RUN chmod +x /healthcheck.sh
 # Create directories for dynamic folders
 RUN mkdir -p /app/backend/smtp_settings /app/backend/uploads
 
-# Set proper ownership and permissions
-RUN chown -R appuser:appgroup /app/backend && \
-    chmod -R 755 /app/backend && \
-    chmod -R 775 /app/backend/smtp_settings /app/backend/uploads
+# Change ownership of these directories to the non-root user
+RUN chown -R appuser:appgroup /app/backend
+
+# Apply read, write, and execute permissions to the directories
+RUN chmod -R 777 /app/backend/smtp_settings /app/backend/uploads
+
+# Switch to the non-root user
+USER appuser
 
 # Expose backend ports
 EXPOSE 9000 9001 1025 465
