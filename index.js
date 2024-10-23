@@ -22,3 +22,7 @@
 const str = "ho, hoo, hooo";
 const regex = /ho*/g;
 console.log(str.match(regex)); // ['ho', 'hoo', 'hooo']
+
+
+
+
