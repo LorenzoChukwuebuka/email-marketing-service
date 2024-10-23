@@ -6,8 +6,8 @@ services:
     ports:
       - "5000:80"
     volumes:
-      - ./frontend:/app/frontend
       - ./frontend/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx # Add persistent logs
     networks:
       - app-network
     depends_on:
@@ -20,7 +20,7 @@ services:
     ports:
       - "9000:9000"
       - "1025:1025"
-      - "465:465" # Production SMTP (STARTTLS)
+      - "465:465"
     environment:
       SERVER_MODE: "production"
     env_file: ./backend/.env
@@ -33,40 +33,25 @@ services:
       retries: 3
       start_period: 40s
     volumes:
-      - ./backend:/app/backend
-      - ./backend/smtp_settings:/app/backend/smtp_settings # Mount smtp_settings folder
-      - ./backend/uploads:/app/backend/uploads # Mount uploads folder
-      - /etc/letsencrypt:/etc/letsencrypt:ro # Mount certificate from host
+      # Specific named volumes for different data types
+      - smtp_settings:/app/backend/smtp_settings
+      - uploads:/app/backend/uploads
+      - templates:/app/backend/api/v1/templates
+      #- /etc/letsencrypt:/etc/letsencrypt:ro # Commented SSL certs
     cap_add:
       - NET_BIND_SERVICE
-    privileged: true # Be cautious with this in production
-
-  # certbot:
-  #   image: certbot/certbot
-  #   command: certonly --standalone -d smtp.crabmailer.com --agree-tos --non-interactive --email enzobyte.tech@gmail.com
-  #   volumes:
-  #     - /etc/letsencrypt:/etc/letsencrypt
-  #     - /var/lib/letsencrypt:/var/lib/letsencrypt
-  #   networks:
-  #     - app-network
-
-  # certbot-renew:
-  #   image: certbot/certbot
-  #   command: renew --quiet
-  #   volumes:
-  #     - /etc/letsencrypt:/etc/letsencrypt
-  #     - /var/lib/letsencrypt:/var/lib/letsencrypt
-  #   networks:
-  #     - app-network
-
-#   mailhog:
-#     image: mailhog/mailhog
-#     ports:
-#       - "1027:1025" # SMTP
-#       - "8025:8025" # Web UI
-#     networks:
-#       - app-network
+    privileged: true # Consider removing if possible for security
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  nginx_logs:
+    driver: local
+  smtp_settings:
+    driver: local
+  uploads:
+    driver: local
+  templates:
+    driver: local
