@@ -55,6 +55,9 @@ vet:
 	docker exec -it $(ARGS) bash
 
 docker-restart:
+    @echo "stopping container"
+    docker-compose stop
+	@echo "removing container"
 	docker-compose down
 	$(MAKE) docker
 
