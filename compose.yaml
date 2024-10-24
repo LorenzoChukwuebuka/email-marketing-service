@@ -1,5 +1,7 @@
 services:
+  
   nginx:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
@@ -14,6 +16,7 @@ services:
       - go-backend
 
   go-backend:
+    container_name: api
     build:
       context: ./backend
       dockerfile: Dockerfile.backend

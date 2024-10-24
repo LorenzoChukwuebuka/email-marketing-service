@@ -18,59 +18,61 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 	smtpKeyRepo := repository.NewSMTPkeyRepository(db)
 	be := NewBackend(smtpKeyRepo)
 	s := smtp.NewServer(be)
-
 	config := utils.LoadEnv()
+	mode := os.Getenv("SERVER_MODE")
 
-	s.Addr = config.SMTP_PORT
+	// Base server configuration
 	s.Domain = config.SMTP_SERVER
 	s.WriteTimeout = 600 * time.Second
 	s.ReadTimeout = 600 * time.Second
 	s.MaxMessageBytes = 1024 * 1024
 	s.MaxRecipients = 50
-	s.AllowInsecureAuth = true
 
-	// Determine the server mode (development/production)
-	mode := os.Getenv("SERVER_MODE")
-
-	// Enable TLS only in production mode
 	if mode == "production" {
-		cert, err := tls.LoadX509KeyPair("/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem", "/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem")
+		// Production configuration
+		s.Addr = config.SMTP_PORT // STARTTLS port
+
+		// Load TLS certificate
+		cert, err := tls.LoadX509KeyPair(
+			"/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem",
+			"/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem",
+		)
 		if err != nil {
-			log.Fatalf("Failed to load TLS certificate: %v", err)
+			return fmt.Errorf("failed to load TLS certificate: %v", err)
 		}
 
+		// TLS configuration for STARTTLS
 		s.TLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS12, // Ensure that TLS 1.2 or higher is used
+			MinVersion:   tls.VersionTLS12,
+			ClientAuth:   tls.VerifyClientCertIfGiven,
 		}
 
-		// Secure SMTP (SMTPS) port 465
-		go func() {
-			log.Println("Starting secure SMTP server on port 465")
-			errChan := make(chan error, 1)
-			go func() {
-				errChan <- s.ListenAndServeTLS()
-			}()
-		}()
+		// Allow unencrypted auth because STARTTLS will be used
+		s.AllowInsecureAuth = true
+
+		log.Printf("Starting production SMTP server with STARTTLS on port 587")
 	} else {
-		log.Println("Running in development mode: Insecure SMTP server on port", s.Addr)
+		// Development configuration
+		s.Addr = config.SMTP_PORT // Use port from config (typically 1025)
+		s.AllowInsecureAuth = true
+		log.Printf("Starting development SMTP server on port %s", s.Addr)
 	}
 
-	// Start the insecure SMTP server (Port 1025 for testing)
-	log.Println("Starting SMTP server at", s.Addr)
-
+	// Start the server
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- s.ListenAndServe()
 	}()
 
+	// Wait for shutdown signal or error
 	select {
 	case <-ctx.Done():
 		log.Println("Shutting down SMTP server...")
 		return s.Close()
 	case err := <-errChan:
 		if err != smtp.ErrServerClosed {
-			return utils.TraceError(fmt.Errorf("SMTP server error:%v", err))
+			return utils.TraceError(fmt.Errorf("SMTP server error: %v", err))
 		}
 		return nil
 	}

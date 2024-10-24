@@ -2,11 +2,10 @@ package utils
 
 import (
 	"bytes"
-	adminmodel "email-marketing-service/api/v1/model/admin"
-	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"fmt"
 	"gopkg.in/gomail.v2"
 	"log"
+	"os"
 	"strings"
 	"sync"
 )
@@ -22,9 +21,15 @@ type SMTPConfig struct {
 // DefaultSMTPConfig returns the default SMTP configuration
 func DefaultSMTPConfig() SMTPConfig {
 	config := LoadEnv()
+
+	port := 1025 // Default development port
+	if os.Getenv("SERVER_MODE") == "production" {
+		port = 587 // Production STARTTLS port
+	}
+
 	return SMTPConfig{
 		Host:     config.SMTP_SERVER,
-		Port:     1025,
+		Port:     port,
 		Username: config.MailUsername,
 		Password: config.MailPassword,
 	}
@@ -83,24 +88,16 @@ func sendMail(subject, email, message, sender string, smtpConfig *SMTPConfig) er
 	// Initialize the SMTP sender
 	d := gomail.NewDialer(smtpConfig.Host, smtpConfig.Port, smtpConfig.Username, smtpConfig.Password)
 
+	if os.Getenv("SERVER_MODE") == "production" {
+		d.SSL = false // Disable SSL since we're using STARTTLS
+	}
+
 	// Send the email
 	if err := d.DialAndSend(msg); err != nil {
 		return err
 	}
 
 	return nil
-}
-
- 
-
-func ReadSMTPSettingsFromDB(domain string, repo adminrepository.SystemRepository) (*adminmodel.SystemsSMTPSetting, error) {
-	// Fetch the SMTP settings for the given domain
-	settings, err := repo.GetSMTPSettings(domain)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read SMTP settings from the database: %w", err)
-	}
-
-	return settings, nil
 }
 
 // extractDomain extracts the domain from an email address
