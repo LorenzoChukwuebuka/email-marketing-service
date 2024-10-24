@@ -57,7 +57,7 @@ func (s *Session) Auth(mech string) (sasl.Server, error) {
 	switch mech {
 	case "LOGIN":
 		s.authState = 1
-		return nil, nil
+		return sasl.NewLoginServer(s.handleLoginAuth), nil
 	case "PLAIN":
 		return sasl.NewPlainServer(s.authenticateUser), nil
 	default:
@@ -87,6 +87,10 @@ func (s *Session) authenticateUser(identity, username, password string) error {
 
 	debugLog("Authentication successful")
 	return nil
+}
+
+func (s *Session) handleLoginAuth(username, password string) error {
+	return s.authenticateUser("", username, password)
 }
 
 // Mail handles the MAIL FROM command

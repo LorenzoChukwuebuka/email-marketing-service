@@ -55,17 +55,9 @@ vet:
 	docker exec -it $(ARGS) bash
 
 docker-restart:
-    @echo "stopping container"
-    docker-compose stop
-	@echo "removing container"
+	docker-compose stop
 	docker-compose down
 	$(MAKE) docker
 
 docker-dev:
 	docker-compose -f docker-compose.dev.yaml up --build -d
- 
-
- 
-
-
-	

@@ -64,7 +64,7 @@ func (s *SystemsService) GenerateAndSaveSMTPCredentials(domain string) (*adminmo
 	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", formattedPublicKey)
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)
-	mxRecord := fmt.Sprintf("%s. 10 mail.%s.", domain, domain)
+	mxRecord := fmt.Sprintf("%s. 10 %s.", domain, domain)
 
 	smtpSetting := &adminmodel.SystemsSMTPSetting{
 		Domain:         domain,
