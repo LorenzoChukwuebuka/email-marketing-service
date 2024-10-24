@@ -65,6 +65,12 @@ func StartSMTPServer(ctx context.Context, db *gorm.DB) error {
 		errChan <- s.ListenAndServe()
 	}()
 
+	// if mode == "production" {
+	// 	go func() {
+	// 		errChan <- s.ListenAndServeTLS()
+	// 	}()
+	// }
+
 	// Wait for shutdown signal or error
 	select {
 	case <-ctx.Done():
