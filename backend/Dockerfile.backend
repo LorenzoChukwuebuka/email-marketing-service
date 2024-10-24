@@ -11,7 +11,7 @@ FROM alpine
 WORKDIR /app/backend  
 
 # Install bash and nano
-RUN apk update && apk add bash nano
+RUN apk update && apk add bash nano vim 
 
 # Copy the Go binary from the builder stage
 COPY --from=backend-builder /app/backend/main .

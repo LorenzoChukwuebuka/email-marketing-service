@@ -4,7 +4,6 @@ import (
 	"email-marketing-service/api/v1/model"
 	//"errors"
 	"time"
-
 	"gorm.io/gorm"
 )
 

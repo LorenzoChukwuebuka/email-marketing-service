@@ -4,10 +4,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"strings"
-	"net"
 	"github.com/toorop/go-dkim"
 	"log"
+	"net"
+	"strings"
+	"time"
 )
 
 func ValidatePrivateKeyComprehensive(privateKeyPEM string) error {
@@ -47,24 +48,35 @@ func VerifyDomainAndSelector(domain, selector string) error {
 	// Construct the DNS record name
 	recordName := fmt.Sprintf("%s._domainkey.%s", selector, domain)
 
-	// Look up TXT records
-	txtRecords, err := net.LookupTXT(recordName)
-	if err != nil {
-		return fmt.Errorf("failed to lookup TXT records: %v", err)
-	}
+	// Add retry logic for DNS lookup
+	maxRetries := 3
+	retryDelay := time.Second * 2
 
-	// Check if any record contains the expected content
-	for _, record := range txtRecords {
-		if strings.Contains(record, "v=DKIM1") {
-			fmt.Printf("DKIM record found for %s\n", recordName)
-			return nil
+	var lastErr error
+	for i := 0; i < maxRetries; i++ {
+		// Look up TXT records
+		txtRecords, err := net.LookupTXT(recordName)
+		if err != nil {
+			lastErr = fmt.Errorf("attempt %d: failed to lookup TXT records: %v", i+1, err)
+			log.Printf("DNS lookup attempt %d failed: %v", i+1, err)
+			time.Sleep(retryDelay)
+			continue
 		}
+
+		// Check if any record contains the expected content
+		for _, record := range txtRecords {
+			if strings.Contains(record, "v=DKIM1") {
+				log.Printf("DKIM record found for %s", recordName)
+				return nil
+			}
+		}
+
+		lastErr = fmt.Errorf("no valid DKIM record found for %s", recordName)
+		time.Sleep(retryDelay)
 	}
 
-	return fmt.Errorf("no valid DKIM record found for %s", recordName)
+	return fmt.Errorf("verification failed after %d attempts: %v", maxRetries, lastErr)
 }
-
-
 
 func SignEmail(email *[]byte, domain, selector, privateKey string) ([]byte, error) {
 	log.Println("Starting SignEmail function")
