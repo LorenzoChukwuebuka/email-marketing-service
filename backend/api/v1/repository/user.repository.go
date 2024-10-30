@@ -2,6 +2,7 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"time"
@@ -14,6 +15,13 @@ type UserRepository struct {
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
+
+const (
+	DeletionGracePeriod   = 30 * 24 * time.Hour // 30 days
+	StatusActive          = "active"
+	StatusPendingDeletion = "pending_deletion"
+	StatusDeleted         = "deleted"
+)
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
 
@@ -37,6 +45,8 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 		formatted := user.DeletedAt.Time.Format(time.RFC3339)
 		response.DeletedAt = &formatted
 	}
+
+	
 
 	return response
 }
@@ -165,7 +175,6 @@ func (r *UserRepository) ChangeUserPassword(d *model.User) error {
 		if err == gorm.ErrRecordNotFound {
 			return nil
 		}
-
 		return err
 	}
 
@@ -216,15 +225,193 @@ func (r *UserRepository) CreateTempEmail(d *model.UserTempEmail) error {
 
 }
 
-// AddCredential adds a new WebAuthn credential to the database
-func (repo *UserRepository) AddCredential(userID string, credential *model.WebAuthnCredential) error {
-	credential.UserID = userID
-	return repo.DB.Create(credential).Error
+func (r *UserRepository) MarkUserForDeletion(userId string) error {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var user model.User
+	if err := tx.Where("uuid = ?", userId).First(&user).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Check if user is already scheduled for deletion
+	if user.ScheduledForDeletion {
+		tx.Rollback()
+		return errors.New("user is already scheduled for deletion")
+	}
+
+	scheduledDeletion := time.Now().Add(DeletionGracePeriod)
+	updates := map[string]interface{}{
+		"scheduled_for_deletion": true,
+		"scheduled_deletion_at":  scheduledDeletion,
+		"status":                 StatusPendingDeletion,
+	}
+
+	if err := tx.Model(&user).Updates(updates).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to mark user for deletion: %w", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
-// GetCredentials retrieves WebAuthn credentials for a user
-func (repo *UserRepository) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
-	var credentials []model.WebAuthnCredential
-	err := repo.DB.Where("user_id = ?", userID).Find(&credentials).Error
-	return credentials, err
+// CancelUserDeletion allows users to cancel their scheduled deletion
+func (r *UserRepository) CancelUserDeletion(userId string) error {
+	result := r.DB.Model(&model.User{}).
+		Where("uuid = ? AND scheduled_for_deletion = ?", userId, true).
+		Updates(map[string]interface{}{
+			"scheduled_for_deletion": false,
+			"scheduled_deletion_at":  nil,
+			"status":                 StatusActive,
+		})
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to cancel deletion: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("user not found or not scheduled for deletion")
+	}
+
+	return nil
+}
+
+// PermanentlyDeleteUser handles the actual deletion of a user
+func (r *UserRepository) PermanentlyDeleteUser(userId string) error {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Find and verify user status
+	var user model.User
+	if err := tx.Where("uuid = ? AND scheduled_for_deletion = ? AND scheduled_deletion_at <= ?",
+		userId, true, time.Now()).First(&user).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found or not scheduled for deletion")
+		}
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Get user statistics for archiving
+	userStats, err := r.GetUserStats(userId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to get user stats for archiving: %w", err)
+	}
+
+	// Create archive record
+	archiveData := model.UserArchive{
+		UserID:           user.UUID,
+		Email:            user.Email,
+		FullName:         user.FullName,
+		Company:          user.Company,
+		DeletedAt:        time.Now(),
+		AccountCreatedAt: user.CreatedAt,
+		VerifiedAt:       user.VerifiedAt,
+		LastLoginAt:      user.LastLoginAt,
+		DeletionReason:   "user_requested",
+		AccountStats: model.AccountStats{
+			TotalContacts:      userStats.TotalContacts,
+			TotalCampaigns:     userStats.TotalCampaigns,
+			TotalTemplates:     userStats.TotalTemplates,
+			TotalCampaignsSent: userStats.TotalCampaignsSent,
+			TotalGroups:        userStats.TotalGroups,
+		},
+	}
+
+	if err := tx.Create(&archiveData).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to create archive record: %w", err)
+	}
+
+	// Delete associated records
+	deletions := []struct {
+		model interface{}
+		name  string
+	}{
+		{&model.Contact{}, "contacts"},
+		{&model.ContactGroup{}, "contact groups"},
+		{&model.Template{}, "templates"},
+		{&model.Campaign{}, "campaigns"},
+	}
+
+	for _, deletion := range deletions {
+		if err := tx.Where("user_id = ?", userId).Delete(deletion.model).Error; err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to delete %s: %w", deletion.name, err)
+		}
+	}
+
+	// Delete the user
+	if err := tx.Delete(&user).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+type UserStats struct {
+	TotalContacts      int64 `json:"total_contacts"`
+	TotalCampaigns     int64 `json:"total_campaigns"`
+	TotalTemplates     int64 `json:"total_templates"`
+	TotalCampaignsSent int64 `json:"total_campaigns_sent"`
+	//	TotalSubscriptions int64 `json:"total_subscriptions"`
+	TotalGroups int64 `json:"total_groups"`
+}
+
+func (r *UserRepository) GetUserStats(userID string) (UserStats, error) {
+	var stats UserStats
+
+	// Count total contacts for the user
+	if err := r.DB.Model(&model.Contact{}).Where("user_id = ?", userID).Count(&stats.TotalContacts).Error; err != nil {
+		return stats, fmt.Errorf("failed to count contacts: %w", err)
+	}
+
+	// Count total campaigns for the user
+	if err := r.DB.Model(&model.Campaign{}).Where("user_id = ?", userID).Count(&stats.TotalCampaigns).Error; err != nil {
+		return stats, fmt.Errorf("failed to count campaigns: %w", err)
+	}
+
+	if err := r.DB.Model(&model.Template{}).Where("user_id = ?", userID).Count(&stats.TotalTemplates).Error; err != nil {
+		return stats, fmt.Errorf("failed to count templates: %w", err)
+	}
+
+	if err := r.DB.Model(&model.Campaign{}).Where("user_id = ? AND status = ?", userID, model.Sent).Count(&stats.TotalCampaignsSent).Error; err != nil {
+		return stats, fmt.Errorf("failed to count campaigns: %w", err)
+	}
+
+	if err := r.DB.Model(&model.ContactGroup{}).Where("user_id = ? ", userID).Count(&stats.TotalGroups).Error; err != nil {
+		return stats, fmt.Errorf("failed to count groups: %w", err)
+	}
+
+	return stats, nil
 }
