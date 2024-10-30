@@ -24,8 +24,8 @@ type RelayConfig struct {
 func DefaultRelayConfig() *RelayConfig {
 	return &RelayConfig{
 		Debug:          true,
-		DialTimeout:    30 * time.Second,
-		RetryAttempts:  3,
+		DialTimeout:    5 * time.Second,
+		RetryAttempts:  1,
 		RetryDelay:     5 * time.Second,
 		PreferredPorts: []string{"587", "465", "25"},
 	}

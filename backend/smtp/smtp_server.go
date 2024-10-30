@@ -17,8 +17,6 @@ import (
 // Debug flag to enable/disable debug logging
 const Debug = true
 
-
-
 // Backend implements SMTP server methods
 type Backend struct {
 	SMTPKeyRepo  *repository.SMTPKeyRepository
