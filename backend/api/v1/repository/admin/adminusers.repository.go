@@ -6,9 +6,8 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"errors"
 	"fmt"
-	"time"
-
 	"gorm.io/gorm"
+	"time"
 )
 
 // AdminUsersRepository handles database operations related to Admin and User management
@@ -281,4 +280,77 @@ func (r *AdminUsersRepository) SaveMailLog(d adminmodel.AdminMailLog) error {
 		return fmt.Errorf("failed to insert key: %w", err)
 	}
 	return nil
+}
+
+func (r *AdminUsersRepository) DeleteUser(userId string) error {
+	// Start a transaction to ensure data consistency
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+
+	// Define cleanup in case of error
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// First verify the user exists
+	var user model.User
+	if err := tx.Where("uuid = ?", userId).First(&user).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// Delete associated records in order to maintain referential integrity
+	// Delete user's contacts
+	if err := tx.Where("user_id = ?", userId).Delete(&model.Contact{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete contacts: %w", err)
+	}
+
+	// Delete user's contact groups
+	if err := tx.Where("user_id = ?", userId).Delete(&model.ContactGroup{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete contact groups: %w", err)
+	}
+
+	// Delete user's templates
+	if err := tx.Where("user_id = ?", userId).Delete(&model.Template{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete templates: %w", err)
+	}
+
+	// Delete user's campaigns
+	if err := tx.Where("user_id = ?", userId).Delete(&model.Campaign{}).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete campaigns: %w", err)
+	}
+
+	// Finally, delete the user
+	if err := tx.Delete(&user).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (r *AdminUsersRepository) GetPendingDeletions() ([]model.User, error) {
+	var users []model.User
+	err := r.DB.Where("scheduled_for_deletion = ? AND scheduled_deletion_at <= ?",
+		true, time.Now()).Find(&users).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pending deletions: %w", err)
+	}
+	return users, nil
 }

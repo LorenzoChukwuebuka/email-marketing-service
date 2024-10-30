@@ -19,30 +19,49 @@ const Debug = true
 
 // Backend implements SMTP server methods
 type Backend struct {
-	SMTPKeyRepo *repository.SMTPKeyRepository
+	SMTPKeyRepo  *repository.SMTPKeyRepository
+	SPFValidator Validator
+	relayService *RelayService
 }
 
 func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
 	return &Backend{
-		SMTPKeyRepo: smtpKeyRepo,
+		SMTPKeyRepo:  smtpKeyRepo,
+		SPFValidator: *New(DefaultConfig()),
+		relayService: NewRelayService(true),
 	}
 }
 
 // NewSession is called when a new SMTP session is initiated
-func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
-	debugLog("New session started")
-	return &Session{smtpKeyRepo: bkd.SMTPKeyRepo}, nil
-}
+// func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+// 	debugLog("New session started")
+// 	return &Session{smtpKeyRepo: bkd.SMTPKeyRepo}, nil
+// }
 
 // Session represents an SMTP session
 type Session struct {
-	from        string
-	to          []string
-	message     strings.Builder
-	authState   int
-	username    string
-	password    string
-	smtpKeyRepo *repository.SMTPKeyRepository
+	from         string
+	to           []string
+	message      strings.Builder
+	authState    int
+	username     string
+	password     string
+	smtpKeyRepo  *repository.SMTPKeyRepository
+	spfValidator *Validator
+	remoteIP     string
+	relayService *RelayService
+}
+
+// Update NewSession
+func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+	debugLog("New session started")
+	remoteIP := strings.Split(c.Conn().RemoteAddr().String(), ":")[0]
+	return &Session{
+		smtpKeyRepo:  bkd.SMTPKeyRepo,
+		spfValidator: &bkd.SPFValidator,
+		remoteIP:     remoteIP,
+		relayService: bkd.relayService,
+	}, nil
 }
 
 // AuthMechanisms returns the list of supported authentication mechanisms
@@ -100,6 +119,35 @@ func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
 		return errors.New("501 5.1.1 Syntax error in parameters or arguments")
 	}
 
+	// Extract domain from sender address
+	parts := strings.Split(from, "@")
+	if len(parts) != 2 {
+		return errors.New("501 5.1.7 Invalid sender address")
+	}
+	domain := parts[1]
+
+	// Perform SPF validation
+	result, err := s.spfValidator.CheckHost(s.remoteIP, domain, from)
+	if err != nil {
+		debugLog(fmt.Sprintf("SPF error for %s: %v", from, err))
+		return fmt.Errorf("450 4.4.4 Temporary SPF validation error: %v", err)
+	}
+
+	// Handle SPF result
+	switch result {
+	case Pass:
+		debugLog(fmt.Sprintf("SPF passed for %s", from))
+	case Fail:
+		return errors.New("550 5.7.1 SPF authentication failed")
+	case SoftFail:
+		debugLog(fmt.Sprintf("SPF soft fail for %s", from))
+		// You might want to accept or reject soft fails based on your policy
+	case TempError:
+		return errors.New("451 4.4.3 Temporary SPF lookup error")
+	case PermError:
+		return errors.New("550 5.5.2 SPF record could not be correctly interpreted")
+	}
+
 	s.from = from
 	return nil
 }
@@ -118,38 +166,47 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 // Data handles the DATA command and receives the email content
 func (s *Session) Data(r io.Reader) error {
 	debugLog("Receiving message data")
-	if b, err := io.ReadAll(r); err != nil {
+
+	// Read all message data into a byte slice
+	b, err := io.ReadAll(r)
+	if err != nil {
 		return fmt.Errorf("error reading message data: %w", err)
-	} else {
-		s.message.Write(b)
-		debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
-		log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
-
-		messageStr := s.message.String()
-		// Check if the email is valid before proceeding
-		if err := isValidEmail(s.from, s.to, messageStr); err != nil {
-			return fmt.Errorf("invalid email: %w", err)
-		}
-
-		// Store the email for IMAP access
-		username := strings.Split(s.from, "@")[0]
-		mailbox := "INBOX"
-		err = s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b)
-		if err != nil {
-			return fmt.Errorf("error storing email: %w", err)
-		}
-
-		err = s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to)
-		if err != nil {
-			return fmt.Errorf("error logging delivery: %w", err)
-		}
-
-		// Handle bounce detection or email processing here
-
-		if err := s.processEmailBounce(b); err != nil {
-			return fmt.Errorf("error processing bounce: %w", err)
-		}
 	}
+
+	// Write the received message data to the session's message buffer
+	s.message.Write(b)
+	debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
+	log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
+
+	// Check if the email is valid before proceeding
+	if err := isValidEmail(s.from, s.to, s.message.String()); err != nil {
+		return fmt.Errorf("invalid email: %w", err)
+	}
+
+	// Relay email to external service
+	if err := s.relayService.RelayEmail(s.from, s.to, b); err != nil {
+		debugLog(fmt.Sprintf("Relay failed: %v", err))
+		// Returning an error here can give immediate feedback about relaying issues
+		return fmt.Errorf("relay email failed: %w", err)
+	}
+
+	// Store the email for IMAP access
+	username := strings.SplitN(s.from, "@", 2)[0] // Avoid split if '@' is missing
+	const mailbox = "INBOX"
+	if err := s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b); err != nil {
+		return fmt.Errorf("error storing email: %w", err)
+	}
+
+	// Log email delivery status
+	if err := s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to); err != nil {
+		return fmt.Errorf("error logging delivery: %w", err)
+	}
+
+	// Process email bounce handling, if applicable
+	if err := s.processEmailBounce(b); err != nil {
+		return fmt.Errorf("error processing bounce: %w", err)
+	}
+
 	return nil
 }
 

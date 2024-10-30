@@ -267,3 +267,37 @@ func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request
 
 	response.SuccessResponse(w, 200, "notifications updated")
 }
+
+func (c *UserController) MarkUserForDeletion(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	if err := c.userService.MarkUserForDeletion(userId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+
+}
+
+
+func (c *UserController) CancelUserDeletion (w http.ResponseWriter, r *http.Request){
+	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
+
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+		return
+	}
+
+	userId := claims["userId"].(string)
+
+	if err := c.userService.CancelUserDeletion(userId); err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+}

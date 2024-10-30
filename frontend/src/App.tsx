@@ -16,6 +16,7 @@ import EditorRouter from "./pages/editors/editorRouter";
 import PrivacyPolicy from "./pages/landingPage/privacypage";
 import TermsOfService from "./pages/landingPage/tos";
 import VerifySenderComponent from './templates/user/components/senders/verifySenderComponent';
+import GDPRExplanation from "./pages/landingPage/gdpr";
 
 const App: React.FC = () => {
     const handleSuccess = (message: string) => {
@@ -83,6 +84,7 @@ const App: React.FC = () => {
                 <Route index element={<IndexLandingPage />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/tos" element={<TermsOfService />} />
+                <Route path="/gdpr" element={<GDPRExplanation />} />
                 <Route path="/auth/*" element={<AuthRoute />} />
                 <Route path="/next/*" element={<AdminAuthRoute />} />
                 <Route path="/verifysender" element={<VerifySenderComponent />} />

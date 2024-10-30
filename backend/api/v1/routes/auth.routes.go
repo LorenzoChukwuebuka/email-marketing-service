@@ -34,6 +34,8 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/resend-otp", userController.ResendOTP).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-user-details", middleware.JWTMiddleware(userController.GetUserDetails)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/edit-user-details", middleware.JWTMiddleware(userController.EditUser)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/delete-user", middleware.JWTMiddleware(userController.MarkUserForDeletion)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/cancel-delete", middleware.JWTMiddleware(userController.CancelUserDeletion)).Methods("PUT", "OPTIONS")
 
 	//user notifications
 	router.HandleFunc("/user-notifications", middleware.JWTMiddleware(userController.GetAllUserNotifications)).Methods("GET", "OPTIONS")

@@ -566,14 +566,6 @@ func (s *UserService) GetUserDetails(userId string) (*model.UserResponse, error)
 	return &userDetails, nil
 }
 
-func (s *UserService) AddCredential(userID string, credential *model.WebAuthnCredential) error {
-	return s.userRepo.AddCredential(userID, credential)
-}
-
-func (s *UserService) GetCredentials(userID string) ([]model.WebAuthnCredential, error) {
-	return s.userRepo.GetCredentials(userID)
-}
-
 func (s *UserService) GetAllNotifications(userId string) ([]model.UserNotificationResponse, error) {
 	usernotifications, err := s.UserNotificationRepo.GetAllUserNotification(userId)
 
@@ -591,3 +583,32 @@ func (s *UserService) UpdateReadStatus(userId string) error {
 
 	return nil
 }
+
+func (s *UserService) MarkUserForDeletion(userId string) error {
+	if err := s.userRepo.MarkUserForDeletion(userId); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *UserService) CancelUserDeletion(userId string) error {
+	if err := s.userRepo.CancelUserDeletion(userId); err != nil {
+		return err
+	}
+	return nil
+}
+
+// func processPendingDeletions() {
+//     users, err := adminRepo.GetPendingDeletions()
+//     if err != nil {
+//         log.Printf("Failed to get pending deletions: %v", err)
+//         return
+//     }
+
+//     for _, user := range users {
+//         if err := adminRepo.PermanentlyDeleteUser(user.UUID); err != nil {
+//             log.Printf("Failed to delete user %s: %v", user.UUID, err)
+//             continue
+//         }
+//     }
+// }

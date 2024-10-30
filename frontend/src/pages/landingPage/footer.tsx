@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
                             <ul className="space-y-2">
                                 <li><a href="/privacy" className="hover:text-gray-300 transition duration-300">Privacy Policy</a></li>
                                 <li><a href="/tos" className="hover:text-gray-300 transition duration-300">Terms of Service </a> </li>
-                                <li><a href="#" className="hover:text-gray-300 transition duration-300">GDPR</a></li>
+                                <li><a href="/gdpr" className="hover:text-gray-300 transition duration-300">GDPR</a></li>
                             </ul>
                         </div>
                     </div>
