@@ -141,23 +141,21 @@ func (v *Validator) getSPFRecord(domain string) (string, error) {
 
 // evaluateRecord processes an SPF record and returns the result
 func (v *Validator) evaluateRecord(record string, ip net.IP, domain string) Result {
-	// Split record into terms
-	terms := strings.Fields(record)
+	debugLog(fmt.Sprintf("Evaluating SPF record: %s for IP: %s and domain: %s", record, ip, domain))
 
-	// Process each mechanism
-	for _, term := range terms[1:] { // Skip v=spf1
-		// Default qualifier is "+" (Pass)
+	terms := strings.Fields(record)
+	for _, term := range terms[1:] {
 		qualifier := "+"
 		mechanism := term
 
-		// Extract qualifier if present
 		if strings.ContainsAny(term[0:1], "+-?~") {
 			qualifier = term[0:1]
 			mechanism = term[1:]
 		}
 
-		// Check if mechanism matches
+		debugLog(fmt.Sprintf("Checking mechanism: %s with qualifier: %s", mechanism, qualifier))
 		if v.checkMechanism(mechanism, ip, domain) {
+			debugLog(fmt.Sprintf("Mechanism matched! Returning result for qualifier: %s", qualifier))
 			switch qualifier {
 			case "+":
 				return Pass
@@ -171,7 +169,7 @@ func (v *Validator) evaluateRecord(record string, ip net.IP, domain string) Resu
 		}
 	}
 
-	// Default to Neutral if no mechanisms match
+	debugLog("No mechanisms matched, returning Neutral")
 	return Neutral
 }
 
@@ -210,6 +208,7 @@ func (v *Validator) checkMechanism(mechanism string, ip net.IP, domain string) b
 
 // checkIP validates if an IP matches a CIDR range
 func (v *Validator) checkIP(cidr string, ip net.IP) bool {
+	debugLog(fmt.Sprintf("Checking IP %s against CIDR %s", ip, cidr))
 	// Add /32 if no prefix specified
 	if !strings.Contains(cidr, "/") {
 		if ip.To4() != nil {
@@ -221,10 +220,12 @@ func (v *Validator) checkIP(cidr string, ip net.IP) bool {
 
 	_, network, err := net.ParseCIDR(cidr)
 	if err != nil {
+		debugLog(fmt.Sprintf("Error parsing CIDR: %v", err))
 		return false
 	}
-
-	return network.Contains(ip)
+	result := network.Contains(ip)
+	debugLog(fmt.Sprintf("IP check result: %v", result))
+	return result
 }
 
 // checkA validates if an IP matches domain's A/AAAA records

@@ -22,6 +22,7 @@ type Backend struct {
 	SMTPKeyRepo  *repository.SMTPKeyRepository
 	SPFValidator Validator
 	relayService *RelayService
+	rateLimiter  *RateLimiter
 }
 
 func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
@@ -29,6 +30,7 @@ func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
 		SMTPKeyRepo:  smtpKeyRepo,
 		SPFValidator: *New(DefaultConfig()),
 		relayService: NewRelayService(true),
+		rateLimiter:  NewRateLimiter(DefaultRateLimiterConfig()),
 	}
 }
 
@@ -50,17 +52,26 @@ type Session struct {
 	spfValidator *Validator
 	remoteIP     string
 	relayService *RelayService
+	rateLimiter  *RateLimiter
 }
 
 // Update NewSession
 func (bkd *Backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
 	debugLog("New session started")
 	remoteIP := strings.Split(c.Conn().RemoteAddr().String(), ":")[0]
+
+	// Check connection rate limit
+	if err := bkd.rateLimiter.CheckConnection(remoteIP); err != nil {
+		debugLog(fmt.Sprintf("Rate limit exceeded for IP %s: %v", remoteIP, err))
+		return nil, err
+	}
+
 	return &Session{
 		smtpKeyRepo:  bkd.SMTPKeyRepo,
 		spfValidator: &bkd.SPFValidator,
 		remoteIP:     remoteIP,
 		relayService: bkd.relayService,
+		rateLimiter:  bkd.rateLimiter,
 	}, nil
 }
 
@@ -115,6 +126,7 @@ func (s *Session) handleLoginAuth(username, password string) error {
 // Mail handles the MAIL FROM command
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
 	debugLog(fmt.Sprintf("Mail from: %s", from))
+	debugLog(fmt.Sprintf("Mail from: %s using IP: %s", from, s.remoteIP))
 	if from == "" {
 		return errors.New("501 5.1.1 Syntax error in parameters or arguments")
 	}
@@ -166,6 +178,11 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 // Data handles the DATA command and receives the email content
 func (s *Session) Data(r io.Reader) error {
 	debugLog("Receiving message data")
+
+	if err := s.rateLimiter.CheckMessage(s.remoteIP, s.from, s.to); err != nil {
+		debugLog(fmt.Sprintf("Rate limit exceeded: %v", err))
+		return fmt.Errorf("452 4.5.3 %v", err)
+	}
 
 	// Read all message data into a byte slice
 	b, err := io.ReadAll(r)
