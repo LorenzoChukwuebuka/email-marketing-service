@@ -17,6 +17,15 @@ import (
 // Debug flag to enable/disable debug logging
 const Debug = true
 
+// var config = &RateLimiterConfig{
+//     ConnectionsPerIP:   50,                 // 50 connections
+//     ConnectionWindow:   30 * time.Minute,   // per 30 minutes
+//     MessagesPerIP:     500,                // 500 messages
+//     MessageWindow:     time.Hour,          // per hour
+//     RecipientsPerMsg:  100,               // 100 recipients per message
+//     DefaultMonthQuota: 50000,             // 50,000 messages per month
+// }
+
 // Backend implements SMTP server methods
 type Backend struct {
 	SMTPKeyRepo  *repository.SMTPKeyRepository
@@ -125,7 +134,6 @@ func (s *Session) handleLoginAuth(username, password string) error {
 
 // Mail handles the MAIL FROM command
 func (s *Session) Mail(from string, opts *smtp.MailOptions) error {
-	debugLog(fmt.Sprintf("Mail from: %s", from))
 	debugLog(fmt.Sprintf("Mail from: %s using IP: %s", from, s.remoteIP))
 	if from == "" {
 		return errors.New("501 5.1.1 Syntax error in parameters or arguments")
