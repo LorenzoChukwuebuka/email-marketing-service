@@ -17,14 +17,7 @@ import (
 // Debug flag to enable/disable debug logging
 const Debug = true
 
-// var config = &RateLimiterConfig{
-//     ConnectionsPerIP:   50,                 // 50 connections
-//     ConnectionWindow:   30 * time.Minute,   // per 30 minutes
-//     MessagesPerIP:     500,                // 500 messages
-//     MessageWindow:     time.Hour,          // per hour
-//     RecipientsPerMsg:  100,               // 100 recipients per message
-//     DefaultMonthQuota: 50000,             // 50,000 messages per month
-// }
+
 
 // Backend implements SMTP server methods
 type Backend struct {
@@ -38,7 +31,7 @@ func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
 	return &Backend{
 		SMTPKeyRepo:  smtpKeyRepo,
 		SPFValidator: *New(DefaultConfig()),
-		relayService: NewRelayService(true),
+		relayService: NewRelayService(nil),
 		rateLimiter:  NewRateLimiter(DefaultRateLimiterConfig()),
 	}
 }
