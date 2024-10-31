@@ -1,6 +1,7 @@
 package smtp_server
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -25,7 +26,7 @@ func DefaultRelayConfig() *RelayConfig {
 	return &RelayConfig{
 		Debug:          true,
 		DialTimeout:    5 * time.Second,
-		RetryAttempts:  1,
+		RetryAttempts:  3,
 		RetryDelay:     5 * time.Second,
 		PreferredPorts: []string{"587", "465", "25"},
 	}
@@ -52,11 +53,14 @@ func NewRelayService(config *RelayConfig) *RelayService {
 	}
 }
 
-// RelayEmail handles the email relay process
-func (s *RelayService) RelayEmail(from string, to []string, data []byte) error {
+// RelayEmail handles the email relay process with a dynamic subject
+func (s *RelayService) RelayEmail(from string, to []string, subject string, data []byte) error {
 	if len(to) == 0 {
 		return fmt.Errorf("no recipients provided")
 	}
+
+	// Add headers to the email data with the provided subject
+	messageWithHeaders := s.addHeaders(from, to, subject, data)
 
 	// Group recipients by domain
 	domainRecipients := make(map[string][]string)
@@ -73,7 +77,7 @@ func (s *RelayService) RelayEmail(from string, to []string, data []byte) error {
 	// Process each domain separately
 	var errors []error
 	for domain, recipients := range domainRecipients {
-		err := s.relayToDomain(domain, from, recipients, data)
+		err := s.relayToDomain(domain, from, recipients, messageWithHeaders)
 		if err != nil {
 			s.debugLog(fmt.Sprintf("Failed to relay to domain %s: %v", domain, err))
 			errors = append(errors, fmt.Errorf("domain %s: %w", domain, err))
@@ -86,6 +90,27 @@ func (s *RelayService) RelayEmail(from string, to []string, data []byte) error {
 	return nil
 }
 
+// addHeaders adds necessary headers to the email, including a dynamic subject
+func (s *RelayService) addHeaders(from string, to []string, subject string, data []byte) []byte {
+	var buffer bytes.Buffer
+
+	// Add standard headers with the provided subject
+	buffer.WriteString(fmt.Sprintf("From: %s\r\n", from))
+	buffer.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(to, ", ")))
+	buffer.WriteString(fmt.Sprintf("Subject: %s\r\n", subject))
+	buffer.WriteString(fmt.Sprintf("Date: %s\r\n", time.Now().Format(time.RFC1123Z)))
+	buffer.WriteString("MIME-Version: 1.0\r\n")
+	buffer.WriteString("Content-Type: text/plain; charset=\"utf-8\"\r\n")
+	buffer.WriteString(fmt.Sprintf("Message-ID: <%d@%s>\r\n", time.Now().UnixNano(), strings.Split(from, "@")[1]))
+
+	// Additional headers can be added here if needed
+	buffer.WriteString("\r\n") // Separate headers from body
+	buffer.Write(data)
+
+	return buffer.Bytes()
+}
+
+// relayToDomain relays email to the MX server for the target domain
 func (s *RelayService) relayToDomain(domain, from string, recipients []string, data []byte) error {
 	mxRecords, err := s.lookupMXRecords(domain)
 	if err != nil {
@@ -94,7 +119,6 @@ func (s *RelayService) relayToDomain(domain, from string, recipients []string, d
 
 	var lastError error
 	for _, mx := range mxRecords {
-		// Try multiple times with exponential backoff
 		for attempt := 0; attempt < s.config.RetryAttempts; attempt++ {
 			if attempt > 0 {
 				backoff := s.config.RetryDelay * time.Duration(attempt)
@@ -115,10 +139,10 @@ func (s *RelayService) relayToDomain(domain, from string, recipients []string, d
 	return fmt.Errorf("failed to deliver to any MX server after retries: %w", lastError)
 }
 
+// lookupMXRecords fetches MX records for the domain
 func (s *RelayService) lookupMXRecords(domain string) ([]MXRecord, error) {
 	mxs, err := net.LookupMX(domain)
 	if err != nil {
-		// Try A record as fallback
 		s.debugLog(fmt.Sprintf("MX lookup failed for %s, trying A record", domain))
 		_, err := net.LookupHost(domain)
 		if err != nil {
@@ -135,7 +159,6 @@ func (s *RelayService) lookupMXRecords(domain string) ([]MXRecord, error) {
 		}
 	}
 
-	// Sort by preference (lower is better)
 	sort.Slice(records, func(i, j int) bool {
 		return records[i].Preference < records[j].Preference
 	})
@@ -143,6 +166,7 @@ func (s *RelayService) lookupMXRecords(domain string) ([]MXRecord, error) {
 	return records, nil
 }
 
+// sendToMXServer connects and relays the email to the MX server
 func (s *RelayService) sendToMXServer(mxHost, from string, to []string, data []byte) error {
 	var lastErr error
 
@@ -150,7 +174,6 @@ func (s *RelayService) sendToMXServer(mxHost, from string, to []string, data []b
 		addr := fmt.Sprintf("%s:%s", mxHost, port)
 		s.debugLog(fmt.Sprintf("Attempting connection to %s", addr))
 
-		// Set up dialer with timeout
 		dialer := &net.Dialer{
 			Timeout: s.config.DialTimeout,
 		}
@@ -158,9 +181,7 @@ func (s *RelayService) sendToMXServer(mxHost, from string, to []string, data []b
 		var conn net.Conn
 		var err error
 
-		// Handle connection based on port
 		if port == "465" {
-			// Implicit TLS
 			conn, err = tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{
 				ServerName:         mxHost,
 				InsecureSkipVerify: false,
@@ -185,6 +206,7 @@ func (s *RelayService) sendToMXServer(mxHost, from string, to []string, data []b
 	return lastErr
 }
 
+// handleSMTPSession manages the SMTP session for sending an email
 func (s *RelayService) handleSMTPSession(conn net.Conn, mxHost, from string, to []string, data []byte, port string) (bool, error) {
 	defer conn.Close()
 
@@ -194,13 +216,11 @@ func (s *RelayService) handleSMTPSession(conn net.Conn, mxHost, from string, to 
 	}
 	defer c.Close()
 
-	// EHLO/HELO
 	hostname := s.getLocalHostname()
 	if err = c.Hello(hostname); err != nil {
 		return false, fmt.Errorf("HELO failed: %w", err)
 	}
 
-	// Handle STARTTLS for ports 587 and 25
 	if port != "465" {
 		if ok, _ := c.Extension("STARTTLS"); ok {
 			config := &tls.Config{
@@ -215,12 +235,10 @@ func (s *RelayService) handleSMTPSession(conn net.Conn, mxHost, from string, to 
 		}
 	}
 
-	// MAIL FROM
 	if err = c.Mail(from); err != nil {
 		return false, fmt.Errorf("MAIL FROM failed: %w", err)
 	}
 
-	// RCPT TO
 	successfulRcpts := 0
 	for _, addr := range to {
 		if err = c.Rcpt(addr); err != nil {
@@ -234,7 +252,6 @@ func (s *RelayService) handleSMTPSession(conn net.Conn, mxHost, from string, to 
 		return false, fmt.Errorf("no valid recipients")
 	}
 
-	// DATA
 	w, err := c.Data()
 	if err != nil {
 		return false, fmt.Errorf("DATA command failed: %w", err)
@@ -249,7 +266,6 @@ func (s *RelayService) handleSMTPSession(conn net.Conn, mxHost, from string, to 
 		return false, fmt.Errorf("data close failed: %w", err)
 	}
 
-	// QUIT
 	if err = c.Quit(); err != nil {
 		return false, fmt.Errorf("QUIT failed: %w", err)
 	}

@@ -189,10 +189,20 @@ func (s *Session) Data(r io.Reader) error {
 		return fmt.Errorf("error reading message data: %w", err)
 	}
 
+	// Parse the message using net/mail
+	msg, err := mail.ReadMessage(bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("error parsing message: %w", err)
+	}
+
+	// Extract the Subject from the headers
+	subject := msg.Header.Get("Subject")
+	debugLog(fmt.Sprintf("Subject extracted: %s", subject))
+
 	// Write the received message data to the session's message buffer
 	s.message.Write(b)
 	debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
-	log.Printf("Email processed:\nFrom: %s\nTo: %s\nMessage: %s\n", s.from, s.to, s.message.String())
+	log.Printf("Email processed:\nFrom: %s\nTo: %s\nSubject: %s\nMessage: %s\n", s.from, s.to, subject, s.message.String())
 
 	// Check if the email is valid before proceeding
 	if err := isValidEmail(s.from, s.to, s.message.String()); err != nil {
@@ -200,14 +210,13 @@ func (s *Session) Data(r io.Reader) error {
 	}
 
 	// Relay email to external service
-	if err := s.relayService.RelayEmail(s.from, s.to, b); err != nil {
+	if err := s.relayService.RelayEmail(s.from, s.to, subject, b); err != nil {
 		debugLog(fmt.Sprintf("Relay failed: %v", err))
-		// Returning an error here can give immediate feedback about relaying issues
 		return fmt.Errorf("relay email failed: %w", err)
 	}
 
 	// Store the email for IMAP access
-	username := strings.SplitN(s.from, "@", 2)[0] // Avoid split if '@' is missing
+	username := strings.SplitN(s.from, "@", 2)[0]
 	const mailbox = "INBOX"
 	if err := s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b); err != nil {
 		return fmt.Errorf("error storing email: %w", err)
