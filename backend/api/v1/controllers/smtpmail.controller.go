@@ -23,7 +23,10 @@ func (c *SMTPMailController) SendSMTPMail(w http.ResponseWriter, r *http.Request
 
 	var reqdata *dto.EmailRequest
 
-	utils.DecodeRequestBody(r, &reqdata)
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
 
 	// Get the value of the "api-key" header
 	apiKey := r.Header.Get("api-key")

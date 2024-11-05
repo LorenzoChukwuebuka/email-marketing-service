@@ -44,7 +44,7 @@ func NewBackend(smtpKeyRepo *repository.SMTPKeyRepository) *Backend {
 type Session struct {
 	from         string
 	to           []string
-	message      strings.Builder
+	message      bytes.Buffer
 	authState    int
 	username     string
 	password     string
@@ -175,54 +175,64 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 }
 
 // Data handles the DATA command and receives the email content
+// Modified Data function to work with our relay service
 func (s *Session) Data(r io.Reader) error {
 	debugLog("Receiving message data")
 
+	// Rate limiting check
 	if err := s.rateLimiter.CheckMessage(s.remoteIP, s.from, s.to); err != nil {
 		debugLog(fmt.Sprintf("Rate limit exceeded: %v", err))
 		return fmt.Errorf("452 4.5.3 %v", err)
 	}
 
-	// Read all message data into a byte slice
+	// Read message data
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("error reading message data: %w", err)
 	}
 
-	// Parse the message using net/mail
+	// Parse the message
 	msg, err := mail.ReadMessage(bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("error parsing message: %w", err)
 	}
 
-	// Extract the Subject from the headers
+	// Extract subject
 	subject := msg.Header.Get("Subject")
 	debugLog(fmt.Sprintf("Subject extracted: %s", subject))
 
-	// Write the received message data to the session's message buffer
+	// Store in session buffer
 	s.message.Write(b)
 	debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
-	log.Printf("Email processed:\nFrom: %s\nTo: %s\nSubject: %s\nMessage: %s\n", s.from, s.to, subject, s.message.String())
 
-	// Check if the email is valid before proceeding
+	// Validation
 	if err := isValidEmail(s.from, s.to, s.message.String()); err != nil {
 		return fmt.Errorf("invalid email: %w", err)
 	}
 
-	// Relay email to external service
-	if err := s.relayService.RelayEmail(s.from, s.to, subject, b); err != nil {
+	// Create email object for relay
+	email := &Email{
+		From:    s.from,
+		To:      s.to,
+		Subject: subject,
+		Body:    b,
+		Headers: map[string]string{}, // You could add additional headers here
+	}
+
+	// Relay the email using our relay service
+	if err := s.relayService.RelayEmail(email); err != nil {
 		debugLog(fmt.Sprintf("Relay failed: %v", err))
 		return fmt.Errorf("relay email failed: %w", err)
 	}
 
-	// Store the email for IMAP access
+	// Store for IMAP access
 	username := strings.SplitN(s.from, "@", 2)[0]
 	const mailbox = "INBOX"
 	if err := s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b); err != nil {
 		return fmt.Errorf("error storing email: %w", err)
 	}
 
-	// Log email delivery status
+	// Mark as delivered
 	if err := s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to); err != nil {
 		return fmt.Errorf("error logging delivery: %w", err)
 	}

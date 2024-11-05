@@ -39,7 +39,7 @@ const (
 )
 
 var (
-	mailer = &custom.Mail{}
+	mailer = custom.NewEmailService()
 	config = utils.LoadEnv()
 )
 

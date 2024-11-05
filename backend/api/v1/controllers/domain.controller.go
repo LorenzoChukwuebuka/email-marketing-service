@@ -5,10 +5,8 @@ import (
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"net/http"
-	"strconv"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type DomainController struct {
@@ -23,29 +21,21 @@ func NewDomainController(domainSVC *services.DomainService) *DomainController {
 
 func (c *DomainController) CreateDomain(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.DomainDTO
-
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
-
 	reqdata.UserId = userId
-
 	result, err := c.DomainService.CreateDomain(reqdata)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
@@ -98,29 +88,18 @@ func (c *DomainController) GetDomain(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *DomainController) GetAllDomains(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
 
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-	searchQuery := r.URL.Query().Get("search")
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
 
-	page, err := strconv.Atoi(page1)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
+		HandleControllerError(w, err)
 		return
 	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.DomainService.GetAllDomains(userId, page, pageSize, searchQuery)
 

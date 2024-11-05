@@ -4,7 +4,6 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -22,12 +21,11 @@ func NewTemplateController(templateSvc *services.TemplateService) *TemplateContr
 func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.TemplateDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-	userId := claims["userId"].(string)
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
@@ -42,15 +40,14 @@ func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *h
 }
 
 func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
 
 	searchQuery := r.URL.Query().Get("search")
-
-	userId := claims["userId"].(string)
 
 	result, err := c.TemplateSVC.GetAllMarketingTemplates(userId, searchQuery)
 
@@ -64,15 +61,14 @@ func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *
 }
 
 func (c *TemplateController) GetAllTransactionalTemplates(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
 
 	searchQuery := r.URL.Query().Get("search")
 
-	userId := claims["userId"].(string)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
+		return
+	}
 
 	result, err := c.TemplateSVC.GetAllTransactionalTemplates(userId, searchQuery)
 
@@ -85,13 +81,11 @@ func (c *TemplateController) GetAllTransactionalTemplates(w http.ResponseWriter,
 }
 
 func (c *TemplateController) GetTransactionalTemplate(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	vars := mux.Vars(r)
 
@@ -108,14 +102,12 @@ func (c *TemplateController) GetTransactionalTemplate(w http.ResponseWriter, r *
 }
 
 func (c *TemplateController) GetMarketingTemplate(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	vars := mux.Vars(r)
 
 	templateId := vars["templateId"]
@@ -132,13 +124,11 @@ func (c *TemplateController) GetMarketingTemplate(w http.ResponseWriter, r *http
 
 func (c *TemplateController) UpdateTemplate(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.TemplateDTO
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	vars := mux.Vars(r)
 
@@ -159,13 +149,11 @@ func (c *TemplateController) UpdateTemplate(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *TemplateController) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	vars := mux.Vars(r)
 
@@ -181,13 +169,11 @@ func (c *TemplateController) DeleteTemplate(w http.ResponseWriter, r *http.Reque
 
 func (c *TemplateController) SendTestMail(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.SendTestMailDTO
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return

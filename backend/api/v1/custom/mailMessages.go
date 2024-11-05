@@ -1,180 +1,166 @@
 package custom
 
 import (
-	"email-marketing-service/api/v1/model"
-	"email-marketing-service/api/v1/utils"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"email-marketing-service/api/v1/model"
+	"email-marketing-service/api/v1/utils"
 )
 
-var wg sync.WaitGroup
-
-type Mail struct {
+// EmailConfig holds configuration for email service
+type EmailConfig struct {
+	Sender  string
+	AppName string
+	BaseURL string
 }
 
-var (
-	config = utils.LoadEnv()
-	sender =  config.SENDER
-)
+// TemplateData represents a generic structure for email template replacements
+type TemplateData map[string]string
 
-func (m *Mail) SignUpMail(email string, username string, userId string, otp string) error {
-	// Read the template file
-	templatePath := filepath.Join("api", "v1", "templates", "verifyuser.templ")
+// EmailService manages email-related operations
+type EmailService struct {
+	config EmailConfig
+	wg     *sync.WaitGroup
+}
+
+// NewEmailService creates a new instance of EmailService
+func NewEmailService() *EmailService {
+	config := utils.LoadEnv()
+	return &EmailService{
+		config: EmailConfig{
+			Sender:  config.SENDER,
+			AppName: config.APPName,
+			BaseURL: "http://localhost:5054",
+		},
+		wg: &sync.WaitGroup{},
+	}
+}
+
+// loadTemplate reads and returns the content of an email template
+func (s *EmailService) loadTemplate(templateName string) (string, error) {
+	templatePath := filepath.Join("api", "v1", "templates", templateName)
 	mailTemplate, err := os.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template %s: %v", templateName, err)
+	}
+	return string(mailTemplate), nil
+}
+
+// formatEmailTemplate replaces placeholders in the email template
+func formatEmailTemplate(template string, data TemplateData) string {
+	formattedMail := template
+	for placeholder, value := range data {
+		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
+	}
+	return formattedMail
+}
+
+// sendEmail sends an email asynchronously
+func (s *EmailService) sendEmail(subject, recipient, body string) error {
+	return utils.AsyncSendMail(subject, recipient, body, s.config.Sender, nil, s.wg)
+}
+
+// SignUpMail sends a sign-up verification email
+func (s *EmailService) SignUpMail(email, username, userID, otp string) error {
+	template, err := s.loadTemplate("verifyuser.templ")
 	if err != nil {
 		return err
 	}
 
-	replacements := map[string]string{
-		"{{Link}}":     "http://localhost:5054/auth/account-verification",
+	templateData := TemplateData{
+		"{{Link}}":     fmt.Sprintf("%s/auth/account-verification", s.config.BaseURL),
 		"{{Username}}": username,
 		"{{Token}}":    otp,
-		"{{AppName}}":  config.APPName,
-		"{{UserId}}":   userId,
+		"{{AppName}}":  s.config.AppName,
+		"{{UserId}}":   userID,
 		"{{Email}}":    email,
 	}
 
-	formattedMail := string(mailTemplate)
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err = utils.AsyncSendMail("Email Verification", email, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	formattedMail := formatEmailTemplate(template, templateData)
+	return s.sendEmail("Email Verification", email, formattedMail)
 }
 
-func (m *Mail) ResetPasswordMail(email string, username string, otp string) error {
-
-	// Read the template file
-	templatePath := filepath.Join("api", "v1", "templates", "resetpassword.templ")
-	mailTemplate, err := os.ReadFile(templatePath)
+// ResetPasswordMail sends a password reset email
+func (s *EmailService) ResetPasswordMail(email, username, otp string) error {
+	template, err := s.loadTemplate("resetpassword.templ")
 	if err != nil {
 		return err
 	}
 
-	replacements := map[string]string{
-		"{{Link}}":     "http://localhost:5054/auth/reset-password",
+	templateData := TemplateData{
+		"{{Link}}":     fmt.Sprintf("%s/auth/reset-password", s.config.BaseURL),
 		"{{Username}}": username,
 		"{{Token}}":    otp,
 		"{{Email}}":    email,
-		"{{AppName}}":  config.APPName,
+		"{{AppName}}":  s.config.AppName,
 	}
 
-	formattedMail := string(mailTemplate)
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err = utils.AsyncSendMail("Password Reset", email, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-	return nil
+	formattedMail := formatEmailTemplate(template, templateData)
+	return s.sendEmail("Password Reset", email, formattedMail)
 }
 
-func (m *Mail) VerifySenderMail(username string, useremail string, domainemail string, otp string, userId string) error {
-	// Read the template file
-	templatePath := filepath.Join("api", "v1", "templates", "verifysender.templ")
-	mailTemplate, err := os.ReadFile(templatePath)
+// VerifySenderMail sends a sender verification email
+func (s *EmailService) VerifySenderMail(username, userEmail, domainEmail, otp, userID string) error {
+	template, err := s.loadTemplate("verifysender.templ")
 	if err != nil {
 		return err
 	}
 
-	replacements := map[string]string{
+	templateData := TemplateData{
 		"{{Username}}":         username,
-		"{{UserEmail}}":        useremail,
-		"{{DomainEmail}}":      domainemail,
-		"{{VerificationLink}}": "http://localhost:5054/verifysender",
+		"{{UserEmail}}":        userEmail,
+		"{{DomainEmail}}":      domainEmail,
+		"{{VerificationLink}}": fmt.Sprintf("%s/verifysender", s.config.BaseURL),
 		"{{Token}}":            otp,
-		"{{UserId}}":           userId,
+		"{{UserId}}":           userID,
 	}
 
-	formattedMail := string(mailTemplate)
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err = utils.AsyncSendMail("Verify a new Sender [Crabmailer]", domainemail, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	formattedMail := formatEmailTemplate(template, templateData)
+	return s.sendEmail("Verify a new Sender [Crabmailer]", domainEmail, formattedMail)
 }
 
-func (m *Mail) DeviceVerificationMail(username string, email string, d *model.UserSession, code string) error {
-
-	templatePath := filepath.Join("api", "v1", "templates", "planexpiry.templ")
-	mailTemplate, err := os.ReadFile(templatePath)
+// DeviceVerificationMail sends a device verification email
+func (s *EmailService) DeviceVerificationMail(username, email string, session *model.UserSession, code string) error {
+	template, err := s.loadTemplate("planexpiry.templ")
 	if err != nil {
 		return err
 	}
-	//replace placeholders
 
-	replacements := map[string]string{
+	templateData := TemplateData{
 		".Username":   username,
 		".Token":      code,
-		".Device":     *d.Device,
-		".Browser":    *d.Browser,
-		".IP Address": *d.IPAddress,
-		".AppName":    config.APPName,
+		".Device":     *session.Device,
+		".Browser":    *session.Browser,
+		".IP Address": *session.IPAddress,
+		".AppName":    s.config.AppName,
 	}
 
-	formattedMail := string(mailTemplate)
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err = utils.AsyncSendMail("Email Verification", email, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	formattedMail := formatEmailTemplate(template, templateData)
+	return s.sendEmail("Email Verification", email, formattedMail)
 }
 
-func (m *Mail) SubscriptionExpiryMail(username string, email string, planName string) error {
-	templatePath := filepath.Join("api", "v1", "templates", "planexpiry.templ")
-	mailTemplate, err := os.ReadFile(templatePath)
+// SubscriptionExpiryMail sends a subscription expiry notification
+func (s *EmailService) SubscriptionExpiryMail(username, email, planName string) error {
+	template, err := s.loadTemplate("planexpiry.templ")
 	if err != nil {
 		return err
 	}
 
-	replacements := map[string]string{
+	templateData := TemplateData{
 		"{{Username}}": username,
 		"{{PlanName}}": planName,
-		"{{AppName}}":  config.APPName,
+		"{{AppName}}":  s.config.AppName,
 	}
 
-	formattedMail := string(mailTemplate)
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err = utils.AsyncSendMail("Subscription Expiry Notification", email, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-	return nil
+	formattedMail := formatEmailTemplate(template, templateData)
+	return s.sendEmail("Subscription Expiry Notification", email, formattedMail)
 }
 
-func (m *Mail) SubscriptionExpiryReminder(username string, email string, planName string) error {
+// SubscriptionExpiryReminder sends a subscription expiry reminder
+func (s *EmailService) SubscriptionExpiryReminder(username, email, planName string) error {
 	mailTemplate := `
 	<html>
 		<body style="font-family: Arial, sans-serif;">
@@ -182,25 +168,15 @@ func (m *Mail) SubscriptionExpiryReminder(username string, email string, planNam
 			<p>Please note that your .PlanName will expire in 5 days</p>
 			<p>Regards,<br>  .Appname </p>
 		</body>
-		</html>
+	</html>
 	`
 
-	replacements := map[string]string{
+	templateData := TemplateData{
 		".Username": username,
 		".PlanName": planName,
-		".AppName":  config.APPName,
+		".AppName":  s.config.AppName,
 	}
 
-	formattedMail := mailTemplate
-
-	for placeholder, value := range replacements {
-		formattedMail = strings.Replace(formattedMail, placeholder, value, -1)
-	}
-
-	err := utils.AsyncSendMail("Service expiry reminder", email, formattedMail, sender, nil, &wg)
-
-	if err != nil {
-		return err
-	}
-	return nil
+	formattedMail := formatEmailTemplate(mailTemplate, templateData)
+	return s.sendEmail("Service expiry reminder", email, formattedMail)
 }
