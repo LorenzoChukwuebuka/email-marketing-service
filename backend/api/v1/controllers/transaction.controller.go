@@ -8,7 +8,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type TransactionController struct {
@@ -32,8 +31,8 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
-        return
-    }
+		return
+	}
 
 	userId := claims["userId"].(string)
 	email := claims["email"].(string)
@@ -56,47 +55,13 @@ func (c *TransactionController) InitiateNewTransaction(w http.ResponseWriter, r 
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *TransactionController) ChargeTransaction(w http.ResponseWriter, r *http.Request) {
-	_, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
 	vars := mux.Vars(r)
-
 	reference := vars["reference"]
 	paymentmethod := vars["paymentmethod"]
-
 	result, err := c.BillingSVC.ConfirmPayment(paymentmethod, reference)
-
-	if err != nil {
-		response.ErrorResponse(w, err.Error())
-		return
-	}
-
-	response.SuccessResponse(w, 200, result)
-
-}
-
-func (c *TransactionController) GetSingleBillingRecord(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	vars := mux.Vars(r)
-
-	billingId := vars["billingId"]
-
-	userId := claims["userId"].(float64)
-
-	result, err := c.BillingSVC.GetSingleBillingRecord(billingId, int(userId))
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -106,37 +71,21 @@ func (c *TransactionController) GetSingleBillingRecord(w http.ResponseWriter, r 
 }
 
 func (c *TransactionController) GetAllUserBilling(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	userId := claims["userId"].(string)
-
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-
-	page, err := strconv.Atoi(page1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
+		HandleControllerError(w, err)
 		return
 	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
+	page, pageSize, _, err := ParsePaginationParams(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
-
 	result, err := c.BillingSVC.GetAllBillingForAUser(userId, page, pageSize)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 

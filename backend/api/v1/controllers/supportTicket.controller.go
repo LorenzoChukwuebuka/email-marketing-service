@@ -4,8 +4,8 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"github.com/golang-jwt/jwt"
-	"net/http"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type SupportTicketController struct {
@@ -68,7 +68,6 @@ func (c *SupportTicketController) CreateTicket(w http.ResponseWriter, r *http.Re
 
 	response.SuccessResponse(w, http.StatusCreated, res)
 }
-
 
 func (c *SupportTicketController) ReplyTicket(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)

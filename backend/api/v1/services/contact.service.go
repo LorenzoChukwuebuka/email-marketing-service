@@ -18,107 +18,117 @@ type ContactService struct {
 }
 
 func NewContactService(contactRepo *repository.ContactRepository) *ContactService {
-	return &ContactService{
-		ContactRepo: contactRepo,
-	}
-
+	return &ContactService{ContactRepo: contactRepo}
 }
 
+// CreateContact creates a new contact based on the provided DTO.
 func (s *ContactService) CreateContact(d *dto.ContactDTO) (map[string]interface{}, error) {
-
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid data: %w", err)
 	}
 
-	contactModel := &model.Contact{
-		UUID:      uuid.New().String(),
-		FirstName: d.FirstName,
-		LastName:  d.LastName,
-		Email:     d.Email,
-		From: func() string {
-			if d.From != "" {
-				return d.From
-			}
-			return "web"
-		}(),
-		UserId:       d.UserId,
-		IsSubscribed: d.IsSubscribed,
-	}
+	contactModel := s.createContactModel(d)
 
-	checkIfUserExists, err := s.ContactRepo.CheckIfEmailExists(contactModel)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if checkIfUserExists {
+	if exists, err := s.ContactRepo.CheckIfEmailExists(contactModel); err != nil {
+		return nil, fmt.Errorf("error checking contact existence: %w", err)
+	} else if exists {
 		return nil, fmt.Errorf("contact already exists")
 	}
 
 	if err := s.ContactRepo.CreateContact(contactModel); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating contact: %w", err)
 	}
 
 	return map[string]interface{}{
 		"data":    contactModel,
 		"message": "contact added successfully",
 	}, nil
-
 }
 
-func (s *ContactService) UploadContactViaCSV(file multipart.File, filename string, userId string) error {
-	// Create a CSV reader
+// createContactModel generates a Contact model from DTO.
+func (s *ContactService) createContactModel(d *dto.ContactDTO) *model.Contact {
+	return &model.Contact{
+		UUID:         uuid.New().String(),
+		FirstName:    d.FirstName,
+		LastName:     d.LastName,
+		Email:        d.Email,
+		From:         s.getContactSource(d.From),
+		UserId:       d.UserId,
+		IsSubscribed: d.IsSubscribed,
+	}
+}
+
+// getContactSource determines the source of contact with a default value.
+func (s *ContactService) getContactSource(source string) string {
+	if source == "" {
+		return "web"
+	}
+	return source
+}
+
+// UploadContactViaCSV reads a CSV file and uploads contacts in bulk.
+func (s *ContactService) UploadContactViaCSV(file multipart.File, filename, userId string) error {
 	reader := csv.NewReader(file)
 
-	// Read the header
-	header, err := reader.Read()
+	columnMap, err := s.parseCSVHeader(reader)
 	if err != nil {
-		return fmt.Errorf("error reading CSV header: %w", err)
+		return err
 	}
 
-	// Create a map of column indices
+	newContacts, err := s.processCSVRecords(reader, columnMap, userId)
+	if err != nil {
+		return err
+	}
+
+	if len(newContacts) > 0 {
+		if err := s.ContactRepo.BulkCreateContacts(newContacts); err != nil {
+			return fmt.Errorf("error bulk inserting contacts: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// parseCSVHeader reads and validates CSV header, returning a column map.
+func (s *ContactService) parseCSVHeader(reader *csv.Reader) (map[string]int, error) {
+	header, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("error reading CSV header: %w", err)
+	}
+
 	columnMap := make(map[string]int)
 	for i, column := range header {
 		columnMap[strings.ToLower(strings.TrimSpace(column))] = i
 	}
 
-	// Validate required columns
 	requiredColumns := []string{"first name", "last name", "email"}
 	for _, col := range requiredColumns {
 		if _, exists := columnMap[col]; !exists {
-			return fmt.Errorf("required column '%s' is missing from the CSV", col)
+			return nil, fmt.Errorf("required column '%s' is missing from the CSV", col)
 		}
 	}
 
-	// Process the records
+	return columnMap, nil
+}
+
+// processCSVRecords reads each record and creates a new contact list for bulk insert.
+func (s *ContactService) processCSVRecords(reader *csv.Reader, columnMap map[string]int, userId string) ([]model.Contact, error) {
 	var newContacts []model.Contact
+
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("error reading CSV record: %w", err)
+			return nil, fmt.Errorf("error reading CSV record: %w", err)
 		}
 
-		contact := model.Contact{
-			UUID:         uuid.New().String(),
-			FirstName:    record[columnMap["first name"]],
-			LastName:     record[columnMap["last name"]],
-			Email:        record[columnMap["email"]],
-			From:         "web",
-			UserId:       userId,
-			IsSubscribed: true,
-		}
+		contact := s.createContactFromRecord(record, columnMap, userId)
 
-		if idx, exists := columnMap["from"]; exists && idx < len(record) {
-			contact.From = record[idx]
-		}
-
-		// Check if email already exists
 		exists, err := s.ContactRepo.CheckIfEmailExists(&contact)
 		if err != nil {
-			return fmt.Errorf("error checking email existence: %w", err)
+			return nil, fmt.Errorf("error checking email existence: %w", err)
 		}
 
 		if !exists {
@@ -126,15 +136,26 @@ func (s *ContactService) UploadContactViaCSV(file multipart.File, filename strin
 		}
 	}
 
-	// Batch insert new contacts
-	if len(newContacts) > 0 {
-		err = s.ContactRepo.BulkCreateContacts(newContacts)
-		if err != nil {
-			return fmt.Errorf("error bulk inserting contacts: %w", err)
-		}
+	return newContacts, nil
+}
+
+// createContactFromRecord generates a contact from a CSV record.
+func (s *ContactService) createContactFromRecord(record []string, columnMap map[string]int, userId string) model.Contact {
+	contact := model.Contact{
+		UUID:         uuid.New().String(),
+		FirstName:    record[columnMap["first name"]],
+		LastName:     record[columnMap["last name"]],
+		Email:        record[columnMap["email"]],
+		From:         "web",
+		UserId:       userId,
+		IsSubscribed: true,
 	}
 
-	return nil
+	if idx, exists := columnMap["from"]; exists && idx < len(record) {
+		contact.From = record[idx]
+	}
+
+	return contact
 }
 
 func (s *ContactService) UpdateContact(d *dto.EditContactDTO) error {

@@ -4,9 +4,8 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"net/http"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type ApiKeyController struct {
@@ -20,64 +19,46 @@ func NewAPIKeyController(apiKeyService *services.APIKeyService) *ApiKeyControlle
 }
 
 func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request) {
-
 	var reqdata *dto.APIkeyDTO
-
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
-        return
-    }
-
+		return
+	}
 	reqdata.UserId = userId
-
 	result, err := c.APIkeySVC.GenerateAPIKey(reqdata)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 201, result)
 }
 
 func (c *ApiKeyController) GetAPIKey(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-	userId := claims["userId"].(string)
-
 	result, err := c.APIkeySVC.GetAPIKey(userId)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
 func (c *ApiKeyController) DeleteAPIKey(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
 	apikeyId := vars["apiKeyId"]
-
 	err := c.APIkeySVC.DeleteAPIKey(apikeyId)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, "api key deleted successfully")
-
 }

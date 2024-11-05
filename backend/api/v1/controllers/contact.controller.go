@@ -6,17 +6,14 @@ import (
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type ContactController struct {
 	ContactService   *services.ContactService
 	UserRepo         *repository.UserRepository
 	SubscriptionRepo *repository.SubscriptionRepository
-	
 }
 
 func NewContactController(contactsvc *services.ContactService, userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *ContactController {
@@ -24,20 +21,29 @@ func NewContactController(contactsvc *services.ContactService, userRepo *reposit
 		ContactService:   contactsvc,
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
-		
 	}
+}
+
+func (c *ContactController) getFileSizeLimit(plan string) int64 {
+	limits := map[string]int64{
+		"free":    2 << 20,  // 2 MB
+		"basic":   5 << 20,  // 5 MB
+		"premium": 10 << 20, // 10 MB
+	}
+	if limit, ok := limits[plan]; ok {
+		return limit
+	}
+	return 2 << 20 // default 2 MB
 }
 
 func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request) {
 	var reqdata dto.ContactDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -53,14 +59,12 @@ func (c *ContactController) CreateContact(w http.ResponseWriter, r *http.Request
 	response.SuccessResponse(w, 200, result)
 }
 
-
 func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		response.ErrorResponse(w, "Invalid claims")
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-	userId := claims["userId"].(string)
 
 	userModel := &model.User{UUID: userId}
 	user, err := c.UserRepo.FindUserById(userModel)
@@ -75,17 +79,7 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	var fileSizeLimit int64
-	switch sub.Plan.PlanName {
-	case "free":
-		fileSizeLimit = 2 << 20 // 2 MB
-	case "basic":
-		fileSizeLimit = 5 << 20 // 5 MB
-	case "premium":
-		fileSizeLimit = 10 << 20 // 10 MB
-	default:
-		fileSizeLimit = 2 << 20 // 2 MB default
-	}
+	fileSizeLimit := c.getFileSizeLimit(sub.Plan.PlanName)
 
 	// Set a reasonable limit for the entire form, separate from file size limit
 	err = r.ParseMultipartForm(15 << 20) // 32 MB
@@ -118,31 +112,15 @@ func (c *ContactController) UploadContactViaCSV(w http.ResponseWriter, r *http.R
 }
 
 func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		response.ErrorResponse(w, "Invalid claims")
-		return
-	}
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
 
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-	searchQuery := r.URL.Query().Get("search")
-
-	page, err := strconv.Atoi(page1)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
-		return
+		HandleControllerError(w, err)
 	}
 
-	pageSize, err := strconv.Atoi(pageSize1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
-		return
-	}
-
-	userId, ok := claims["userId"].(string)
-	if !ok {
-		response.ErrorResponse(w, "Invalid user ID")
+		HandleControllerError(w, err)
 		return
 	}
 
@@ -163,13 +141,11 @@ func (c *ContactController) UpdateContact(w http.ResponseWriter, r *http.Request
 
 	contactId := vars["contactId"]
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -194,13 +170,11 @@ func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request
 
 	contactId := vars["contactId"]
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := c.ContactService.DeleteContact(userId, contactId); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -214,13 +188,11 @@ func (c *ContactController) DeleteContact(w http.ResponseWriter, r *http.Request
 func (c *ContactController) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.ContactGroupDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -244,13 +216,11 @@ func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Req
 
 	var reqdata *dto.AddContactsToGroupDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -273,13 +243,11 @@ func (c *ContactController) AddContactToGroup(w http.ResponseWriter, r *http.Req
 func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.AddContactsToGroupDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -288,7 +256,7 @@ func (c *ContactController) RemoveContactFromGroup(w http.ResponseWriter, r *htt
 
 	reqdata.UserId = userId
 
-	err := c.ContactService.RemoveContactFromGroup(reqdata)
+	err = c.ContactService.RemoveContactFromGroup(reqdata)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -306,15 +274,9 @@ func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Re
 
 	groupId := vars["groupId"]
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	userId, ok := claims["userId"].(string)
-	if !ok {
-		response.ErrorResponse(w, "invalid user id in claims")
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
 
@@ -325,7 +287,7 @@ func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Re
 
 	reqdata.UserId = userId
 
-	err := c.ContactService.UpdateContactGroup(reqdata, groupId)
+	err = c.ContactService.UpdateContactGroup(reqdata, groupId)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -336,13 +298,11 @@ func (c *ContactController) UpdateContactGroup(w http.ResponseWriter, r *http.Re
 }
 
 func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	vars := mux.Vars(r)
 
@@ -357,27 +317,16 @@ func (c *ContactController) DeleteContactGroup(w http.ResponseWriter, r *http.Re
 }
 
 func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
 
-	userId := claims["userId"].(string)
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
 
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-	searchQuery := r.URL.Query().Get("search")
-
-	page, err := strconv.Atoi(page1)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
-		return
-	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
-	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
 	result, err := c.ContactService.GetAllContactGroups(userId, page, pageSize, searchQuery)
@@ -389,17 +338,16 @@ func (c *ContactController) GetAllContactGroups(w http.ResponseWriter, r *http.R
 }
 
 func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
 
 	vars := mux.Vars(r)
 
 	groupId := vars["groupId"]
 
-	userId := claims["userId"].(string)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
+		return
+	}
 
 	result, err := c.ContactService.GetASingleGroupWithContacts(userId, groupId)
 
@@ -413,13 +361,11 @@ func (c *ContactController) GetASingleGroupWithContacts(w http.ResponseWriter, r
 }
 
 func (c *ContactController) GetContactCount(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.ContactService.GetContactCount(userId)
 
@@ -432,13 +378,11 @@ func (c *ContactController) GetContactCount(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *ContactController) GetContactSubscriptionStatusForDashboard(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.ContactService.GetContactSubscriptionStatusForDashboard(userId)
 

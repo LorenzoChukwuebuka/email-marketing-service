@@ -4,10 +4,8 @@ import (
 	"email-marketing-service/api/v1/dto"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type SenderController struct {
@@ -23,13 +21,11 @@ func NewSenderController(senderservice *services.SenderServices) *SenderControll
 func (c *SenderController) CreateSender(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.SenderDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -47,29 +43,17 @@ func (c *SenderController) CreateSender(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *SenderController) GetAllSenders(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-	searchQuery := r.URL.Query().Get("search")
-
-	page, err := strconv.Atoi(page1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
+		HandleControllerError(w, err)
 		return
 	}
 
-	pageSize, err := strconv.Atoi(pageSize1)
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.SenderSVC.GetAllSenders(userId, page, pageSize, searchQuery)
 
@@ -82,14 +66,11 @@ func (c *SenderController) GetAllSenders(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *SenderController) DeleteSender(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	vars := mux.Vars(r)
 
 	senderId := vars["senderId"]
@@ -105,13 +86,11 @@ func (c *SenderController) DeleteSender(w http.ResponseWriter, r *http.Request) 
 func (c *SenderController) UpdateSender(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.SenderDTO
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	vars := mux.Vars(r)
 

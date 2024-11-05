@@ -5,13 +5,11 @@ import (
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/mssola/user_agent"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 type CampaignController struct {
@@ -26,111 +24,70 @@ func NewCampaignController(campaignSVC *services.CampaignService) *CampaignContr
 
 func (c *CampaignController) CreateCampaign(w http.ResponseWriter, r *http.Request) {
 	var reqdata dto.CampaignDTO
-
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
-
 	reqdata.UserId = userId
-
 	result, err := c.CampaignSVC.CreateCampaign(&reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *CampaignController) GetAllCampaigns(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	userId := claims["userId"].(string)
-
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-	searchQuery := r.URL.Query().Get("search")
-
-	page, err := strconv.Atoi(page1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
+		HandleControllerError(w, err)
 		return
 	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
-
 	result, err := c.CampaignSVC.GetAllCampaigns(userId, page, pageSize, searchQuery)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
 func (c *CampaignController) GetAllScheduledCampaigns(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
-		return
-	}
-
-	userId := claims["userId"].(string)
-	page1 := r.URL.Query().Get("page")
-	pageSize1 := r.URL.Query().Get("page_size")
-
-	page, err := strconv.Atoi(page1)
+	userId, err := ExtractUserId(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page number")
+		HandleControllerError(w, err)
 		return
 	}
-
-	pageSize, err := strconv.Atoi(pageSize1)
+	page, pageSize, _, err := ParsePaginationParams(r)
 	if err != nil {
-		response.ErrorResponse(w, "Invalid page size")
+		HandleControllerError(w, err)
 		return
 	}
-
 	result, err := c.CampaignSVC.GetScheduledCampaigns(userId, page, pageSize)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
 func (c *CampaignController) GetSingleCampaign(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	campaignId := vars["campaignId"]
-
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.CampaignSVC.GetSingleCampaign(userId, campaignId)
 
@@ -147,13 +104,11 @@ func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	campaignId := vars["campaignId"]
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -174,14 +129,11 @@ func (c *CampaignController) EditCampaign(w http.ResponseWriter, r *http.Request
 
 func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.CampaignGroupDTO
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
@@ -199,14 +151,11 @@ func (c *CampaignController) AddOrEditCampaignGroup(w http.ResponseWriter, r *ht
 
 func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request) {
 	var reqdata *dto.SendCampaignDTO
-
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
@@ -228,13 +177,11 @@ func (c *CampaignController) DeleteCampaign(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	campaignId := vars["campaignId"]
 
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := c.CampaignSVC.DeleteCampaign(campaignId, userId); err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -335,33 +282,26 @@ func (c *CampaignController) GetAllRecipientsForACampaign(w http.ResponseWriter,
 }
 
 func (c *CampaignController) GetUserCampaignStats(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	result, err := c.CampaignSVC.GetUserCampaignStats(userId)
-
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *CampaignController) GetUserCampaignsStats(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.CampaignSVC.GetUserCampaignsStats(userId)
 

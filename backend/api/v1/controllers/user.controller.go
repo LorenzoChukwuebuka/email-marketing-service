@@ -147,13 +147,11 @@ func (c *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	var reqdata *dto.ChangePassword
 
@@ -162,7 +160,7 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err := c.userService.ChangePassword(userId, reqdata)
+	err = c.userService.ChangePassword(userId, reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -171,13 +169,11 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	var reqdata *model.User
 
@@ -197,13 +193,11 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
+		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.userService.GetUserDetails(userId)
 	if err != nil {
@@ -215,13 +209,11 @@ func (c *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.userService.GetUserCurrentRunningSubscriptionWithMailsRemaining(userId)
 	if err != nil {
@@ -233,13 +225,11 @@ func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *UserController) GetAllUserNotifications(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	result, err := c.userService.GetAllNotifications(userId)
 	if err != nil {
@@ -251,15 +241,13 @@ func (c *UserController) GetAllUserNotifications(w http.ResponseWriter, r *http.
 }
 
 func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
 
-	userId := claims["userId"].(string)
-
-	err := c.userService.UpdateReadStatus(userId)
+	err = c.userService.UpdateReadStatus(userId)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -269,15 +257,11 @@ func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request
 }
 
 func (c *UserController) MarkUserForDeletion(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
-
 	if err := c.userService.MarkUserForDeletion(userId); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
@@ -285,16 +269,12 @@ func (c *UserController) MarkUserForDeletion(w http.ResponseWriter, r *http.Requ
 
 }
 
-
-func (c *UserController) CancelUserDeletion (w http.ResponseWriter, r *http.Request){
-	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
-
-	if !ok {
-		http.Error(w, "Invalid claims", http.StatusInternalServerError)
+func (c *UserController) CancelUserDeletion(w http.ResponseWriter, r *http.Request) {
+	userId, err := ExtractUserId(r)
+	if err != nil {
+		HandleControllerError(w, err)
 		return
 	}
-
-	userId := claims["userId"].(string)
 
 	if err := c.userService.CancelUserDeletion(userId); err != nil {
 		response.ErrorResponse(w, err.Error())
