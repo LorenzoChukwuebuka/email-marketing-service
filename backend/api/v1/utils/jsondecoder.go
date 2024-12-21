@@ -13,7 +13,6 @@ func DecodeRequestBody(r *http.Request, v interface{}) error {
 	return nil
 }
 
-
 func EncodeToJson(v interface{}) (map[string]interface{}, error) {
 	// Marshal the input value into JSON
 	jsonData, err := json.Marshal(v)

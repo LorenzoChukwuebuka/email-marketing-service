@@ -5,7 +5,6 @@ import { errResponse } from '../../utils/isError';
 import { APIResponse, ResponseT } from '../../interface/api.interface';
 import { PaginatedResponse } from '../../interface/pagination.interface';
 import { BaseEntity } from '../../interface/baseentity.interface';
-import Cookies from 'js-cookie'
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Template } from './templateStore';
 import { StateStorage } from 'zustand/middleware';
