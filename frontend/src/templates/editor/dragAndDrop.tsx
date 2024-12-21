@@ -47,7 +47,7 @@ const DragAndDropEditor: React.FC = () => {
         if (currentCampaignId) {
             setCreateCampaignValues({ template_id: uuid as string })
             new Promise(resolve => setTimeout(resolve, 3000));
-              updateCampaign(currentCampaignId)
+            updateCampaign(currentCampaignId)
         }
 
         const unlayer = emailEditorRef.current?.editor;
