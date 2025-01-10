@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+import eventBus from "./utils/eventbus";
+import { useEffect } from "react";
+import { queryClient } from "./utils/queryclient";
+import AppRouter from "./routes";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const handleSuccess = (message: string) => {
+        toast.success(message, {
+            position: "bottom-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+        });
+    };
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const handleError = (message: string) => {
+        toast.error(message, {
+            position: "bottom-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+        });
+    };
+
+    const handleInfo = (message: string) => {
+        toast.info(message, {
+            position: "bottom-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+        });
+    };
+
+    useEffect(() => {
+        const successListener = (message: string) => handleSuccess(message);
+        const errorListener = (message: string) => handleError(message);
+        const infoListener = (message: string) => handleInfo(message);
+
+        eventBus.on("success", successListener);
+        eventBus.on("error", errorListener);
+        eventBus.on("message", infoListener);
+
+        // Clean up the event listeners on unmount
+        return () => {
+            eventBus.off("success", successListener);
+            eventBus.off("error", errorListener);
+            eventBus.off("message", infoListener);
+        };
+    }, [])
+
+
+    return (
+        <QueryClientProvider client={queryClient}>
+            <ToastContainer />
+            <AppRouter />
+        </QueryClientProvider>
+    )
+
 }
+
+
 
 export default App

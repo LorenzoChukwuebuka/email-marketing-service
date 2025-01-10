@@ -40,6 +40,7 @@ type ChangePasswordValues = {
     new_password: string;
     confirm_password: string;
 }
+
 type AuthStore = {
     formValues: Omit<FormValues, 'token' | 'phonenumber'>;
     error: boolean;

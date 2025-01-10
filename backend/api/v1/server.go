@@ -104,7 +104,7 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) setupLogger() (*os.File, error) {
-	logFile, err := os.OpenFile("requests.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("logs/requests.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open log file:", err)
 		return nil, err

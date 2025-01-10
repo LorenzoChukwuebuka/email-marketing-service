@@ -4,10 +4,11 @@ import eventBus from "./eventbus";
 interface ErrorResponse {
     status: string;
     message: string;
-    errors?: Record<string, any>
+    payload?: Record<string, string>;
+    errors?: Record<string, string>;
 }
 
-export function errResponse(error: any): error is AxiosError<ErrorResponse> {
+export function errResponse(error: unknown): error is AxiosError<ErrorResponse> {
     return axios.isAxiosError(error) && error.response?.data !== undefined;
 }
 
@@ -15,7 +16,7 @@ export function errResponse(error: any): error is AxiosError<ErrorResponse> {
 // Error handler utility
 export const handleError = (error: unknown): void => {
     if (errResponse(error)) {
-        eventBus.emit('error', error?.response?.data.message);
+        eventBus.emit('error', error?.response?.data?.payload);
     } else if (error instanceof Error) {
         eventBus.emit('error', error.message);
     } else {
