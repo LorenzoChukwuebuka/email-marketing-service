@@ -6,9 +6,8 @@ import useContactGroupStore from "../../../../store/userstore/contactGroupStore"
 import EmptyState from "../../../../components/emptyStateComponent";
 
 
-
 const GetAllContacts: React.FC = () => {
-    const { getAllContacts, contactData, selectedIds, setSelectedId, paginationInfo, setEditContactValues, editContact } = useContactStore();
+    const { getAllContacts, contactData, selectedIds, setSelectedId, paginationInfo } = useContactStore();
     const { setSelectedContactIds } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);

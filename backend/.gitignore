@@ -28,6 +28,6 @@ go.work
 #air
 tmp
 
-requests.log
+logs/*
 uploads
 smtp_settings
