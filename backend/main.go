@@ -4,7 +4,7 @@ import (
 	"context"
 	"email-marketing-service/api/v1"
 	"email-marketing-service/api/v1/database"
-	smtp_server "email-marketing-service/smtp"
+	smtp_server "email-marketing-service/internals/smtp"
 	"log"
 	"os"
 	"os/signal"

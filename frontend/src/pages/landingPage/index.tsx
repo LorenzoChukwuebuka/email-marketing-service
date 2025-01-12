@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-import { ArrowRight, Mail, Zap, Shield, Users, ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowRight, Mail, Zap, Shield, Users, ChevronDown } from 'lucide-react';
 import mailpicture from "./../../assets/dashboard.jpg"
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import useMetadata from '../../hooks/useMetaData';
-import Footer from './footer';
-import NavBar from './navbar';
+import Footer from '../../components/landingpage/footer';
+import NavBar from '../../components/landingpage/navbar';
 import { Slider } from '@mui/material';
 
 const IndexLandingPage: React.FC = () => {
 
-    const [activeAccordion, setActiveAccordion] = useState(null);
+    const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
 
     const features = [
         { icon: <Mail className="w-8 h-8" />, title: 'Powerful Email Campaigns', description: 'Create and send beautiful, responsive emails that drive results.' },
@@ -26,9 +26,11 @@ const IndexLandingPage: React.FC = () => {
         { question: 'Is there a limit on subscribers or emails?', answer: 'Plans vary, but we have options for businesses of all sizes, from startups to enterprises.' },
     ];
 
-    const toggleAccordion = (index: any) => {
-        setActiveAccordion(activeAccordion === index ? null : index);
+    const toggleAccordion = (index: unknown) => {
+        const safeIndex = index as number; // Assuming index is a number
+        setActiveAccordion(activeAccordion === safeIndex ? null : safeIndex);
     };
+
 
     const [plan, setPlan] = useState<number>(1); // 1 = Basic, 2 = Pro, 3 = Enterprise
     const [subscriberCount, setSubscriberCount] = useState<number>(1000); // Default number of subscribers
@@ -50,12 +52,12 @@ const IndexLandingPage: React.FC = () => {
         return basePrice + extraCost;
     };
 
-    const handleSliderChange = (event: any, newValue: number | number[]) => {
+    const handleSliderChange = (_event: unknown, newValue: number | number[]) => {
         setSubscriberCount(newValue as number);
     };
 
 
-    const metaData = useMetadata()("LandingPage")
+    const metaData = useMetadata("LandingPage")
 
     return (
 

@@ -40,6 +40,11 @@ func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *h
 }
 
 func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *http.Request) {
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
+	
+	if err != nil {
+		HandleControllerError(w, err)
+	}
 
 	userId, err := ExtractUserId(r)
 	if err != nil {
@@ -47,9 +52,7 @@ func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *
 		return
 	}
 
-	searchQuery := r.URL.Query().Get("search")
-
-	result, err := c.TemplateSVC.GetAllMarketingTemplates(userId, searchQuery)
+	result, err := c.TemplateSVC.GetAllMarketingTemplates(userId, page, pageSize, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -57,12 +60,15 @@ func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *
 	}
 
 	response.SuccessResponse(w, 200, result)
-
 }
 
 func (c *TemplateController) GetAllTransactionalTemplates(w http.ResponseWriter, r *http.Request) {
 
-	searchQuery := r.URL.Query().Get("search")
+	page, pageSize, searchQuery, err := ParsePaginationParams(r)
+
+	if err != nil {
+		HandleControllerError(w, err)
+	}
 
 	userId, err := ExtractUserId(r)
 	if err != nil {
@@ -70,7 +76,7 @@ func (c *TemplateController) GetAllTransactionalTemplates(w http.ResponseWriter,
 		return
 	}
 
-	result, err := c.TemplateSVC.GetAllTransactionalTemplates(userId, searchQuery)
+	result, err := c.TemplateSVC.GetAllTransactionalTemplates(userId, page, pageSize, searchQuery)
 
 	if err != nil {
 		response.ErrorResponse(w, err.Error())

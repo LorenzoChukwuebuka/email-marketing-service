@@ -1,21 +1,26 @@
 import axios, { AxiosError } from "axios";
-
-export function isError(value: unknown): value is Error {
-    return value instanceof Error ||
-        (typeof value === "object" &&
-            value !== null &&
-            'message' in value &&
-            typeof (value as any).message === 'string');
-}
-
+import eventBus from "./eventbus";
 
 interface ErrorResponse {
     status: string;
     message: string;
-    payload?: Record<string, any>
+    payload?: Record<string, string>;
+    errors?: Record<string, string>;
 }
 
-
-export function errResponse(error: any): error is AxiosError<ErrorResponse> {
+export function errResponse(error: unknown): error is AxiosError<ErrorResponse> {
     return axios.isAxiosError(error) && error.response?.data !== undefined;
 }
+
+
+// Error handler utility
+export const handleError = (error: unknown): void => {
+    if (errResponse(error)) {
+        eventBus.emit('error', error?.response?.data?.payload);
+    } else if (error instanceof Error) {
+        eventBus.emit('error', error.message);
+    } else {
+        console.error("Unknown error:", error);
+    }
+};
+

@@ -1,7 +1,6 @@
-import React from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import NavBar from "./navbar";
-import Footer from "./footer";
+import NavBar from "../../components/landingpage/navbar";
+import Footer from "../../components/landingpage/footer";
 
 const GDPRExplanation = () => {
     return (
@@ -10,7 +9,7 @@ const GDPRExplanation = () => {
                 <title>Understanding GDPR - Your Data Rights</title>
                 <meta name="description" content="Learn about GDPR and your data protection rights" />
             </Helmet>
-            <NavBar/>
+            <NavBar />
             <div className="bg-gray-50 py-10 px-5">
                 <div className="max-w-4xl mx-auto bg-white p-10 rounded-lg shadow-md">
                     <h1 className="text-3xl font-bold mb-5 text-gray-800">Understanding GDPR</h1>
@@ -130,7 +129,7 @@ const GDPRExplanation = () => {
                     </div>
                 </div>
             </div>
-            <Footer/>
+            <Footer />
         </HelmetProvider>
     );
 };

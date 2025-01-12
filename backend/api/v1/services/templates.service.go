@@ -35,13 +35,10 @@ const (
 )
 
 func (s *TemplateService) CreateTemplate(d *dto.TemplateDTO) (map[string]interface{}, error) {
-
 	if err := utils.ValidateData(d); err != nil {
 		return nil, fmt.Errorf("invalid data: %w", err)
 	}
-
 	id := uuid.New().String()
-
 	templateModel := &model.Template{
 		UUID:              id,
 		UserId:            d.UserId,
@@ -64,7 +61,6 @@ func (s *TemplateService) CreateTemplate(d *dto.TemplateDTO) (map[string]interfa
 	}
 
 	checkIfTempleExists, err := s.TemplateRepo.CheckMarketingNameExists(templateModel)
-
 	if err != nil {
 		return nil, err
 	}
@@ -113,30 +109,31 @@ func (s *TemplateService) GetMarketingTemplate(userId string, templateId string)
 	return result, nil
 }
 
-func (s *TemplateService) GetAllTransactionalTemplates(userId string, searchQuery string) ([]model.TemplateResponse, error) {
-
-	result, err := s.TemplateRepo.GetAllTransactionalTemplates(userId, searchQuery)
+func (s *TemplateService) GetAllTransactionalTemplates(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	result, err := s.TemplateRepo.GetAllTransactionalTemplates(userId, paginationParams, searchQuery)
 
 	if err != nil {
-		return []model.TemplateResponse{}, err
+		return repository.PaginatedResult{}, err
 	}
 
-	if len(result) < 1 {
-		return []model.TemplateResponse{}, nil
+	if result.TotalCount == 0 {
+		return repository.PaginatedResult{}, nil
 	}
 
 	return result, nil
 }
 
-func (s *TemplateService) GetAllMarketingTemplates(userId string, searchQuery string) ([]model.TemplateResponse, error) {
-	result, err := s.TemplateRepo.GetAllMarketingTemplates(userId, searchQuery)
+func (s *TemplateService) GetAllMarketingTemplates(userId string, page int, pageSize int, searchQuery string) (repository.PaginatedResult, error) {
+	paginationParams := repository.PaginationParams{Page: page, PageSize: pageSize}
+	result, err := s.TemplateRepo.GetAllMarketingTemplates(userId, paginationParams, searchQuery)
 
 	if err != nil {
-		return []model.TemplateResponse{}, err
+		return repository.PaginatedResult{}, err
 	}
 
-	if len(result) < 1 {
-		return []model.TemplateResponse{}, nil
+	if result.TotalCount == 0 {
+		return repository.PaginatedResult{}, nil
 	}
 
 	return result, nil

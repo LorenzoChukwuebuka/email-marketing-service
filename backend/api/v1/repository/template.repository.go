@@ -77,7 +77,7 @@ func (r *TemplateRepository) DeleteTemplate(d *model.Template) error {
 	return nil
 }
 
-func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, params PaginationParams, search string) (PaginatedResult, error) {
 	var templates []model.Template
 	query := r.DB.Where("type = ? AND user_id = ?", model.Transactional, userId)
 
@@ -87,7 +87,12 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search 
 	}
 
 	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
-		return nil, fmt.Errorf("failed to get transactional templates: %w", err)
+		return PaginatedResult{}, fmt.Errorf("failed to get transactional templates: %w", err)
+	}
+
+	paginatedResult, err := Paginate(query, params, &templates)
+	if err != nil {
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
 	}
 
 	var templateResponses []model.TemplateResponse
@@ -95,10 +100,12 @@ func (r *TemplateRepository) GetAllTransactionalTemplates(userId string, search 
 		templateResponses = append(templateResponses, *convertToTemplateResponse(&template))
 	}
 
-	return templateResponses, nil
+	paginatedResult.Data = templateResponses
+
+	return paginatedResult, nil
 }
 
-func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search string) ([]model.TemplateResponse, error) {
+func (r *TemplateRepository) GetAllMarketingTemplates(userId string, params PaginationParams, search string) (PaginatedResult, error) {
 	var templates []model.Template
 	query := r.DB.Where("type = ? AND user_id = ?", model.Marketing, userId)
 
@@ -108,7 +115,12 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search stri
 	}
 
 	if err := query.Order("created_at DESC").Find(&templates).Error; err != nil {
-		return nil, fmt.Errorf("failed to get marketing templates: %w", err)
+		return PaginatedResult{}, fmt.Errorf("failed to get marketing templates: %w", err)
+	}
+
+	paginatedResult, err := Paginate(query, params, &templates)
+	if err != nil {
+		return PaginatedResult{}, fmt.Errorf("failed to paginate contacts: %w", err)
 	}
 
 	var templateResponses []model.TemplateResponse
@@ -116,9 +128,10 @@ func (r *TemplateRepository) GetAllMarketingTemplates(userId string, search stri
 		templateResponses = append(templateResponses, *convertToTemplateResponse(&template))
 	}
 
-	return templateResponses, nil
-}
+	paginatedResult.Data = templateResponses
 
+	return paginatedResult, nil
+}
 
 func (r *TemplateRepository) GetSingleTemplate(templateId string) (*model.TemplateResponse, error) {
 	var template model.Template

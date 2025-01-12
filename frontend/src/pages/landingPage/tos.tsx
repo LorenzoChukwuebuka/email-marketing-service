@@ -1,13 +1,11 @@
-// src/pages/TermsOfService.tsx
-
 import React from 'react';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import useMetadata from '../../hooks/useMetaData';
-import NavBar from './navbar';
-import Footer from './footer';
+import NavBar from '../../components/landingpage/navbar';
+import Footer from '../../components/landingpage/footer';
 
 const TermsOfService: React.FC = () => {
-    const metaData = useMetadata()("TermsAndConditions")
+    const metaData = useMetadata("TermsAndConditions")
     return (
         <HelmetProvider>
             <Helmet {...metaData} />
