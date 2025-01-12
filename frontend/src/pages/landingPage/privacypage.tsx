@@ -1,11 +1,10 @@
-import React from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import useMetadata from "../../hooks/useMetaData";
-import Footer from "./footer";
-import NavBar from "./navbar";
+import Footer from "../../components/landingpage/footer";
+import NavBar from "../../components/landingpage/navbar";
 
 const PrivacyPolicy = () => {
-    const metaData = useMetadata()("PrivacyPolicy")
+    const metaData = useMetadata("PrivacyPolicy")
     return (
         <HelmetProvider>
             <Helmet {...metaData} />

@@ -1,24 +1,13 @@
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Route, Routes } from "react-router-dom";
-import { AuthRoute } from "./pages/Auth";
-import IndexLandingPage from "./pages/landingPage/index";
-import { useEffect } from "react";
-import eventBus from "./utils/eventBus";
 import { toast } from "react-toastify";
-import { UserDashRoute } from "./layouts/userDashRoute";
-import { ProtectedRoute } from "./utils/protectedRoute";
-import { AdminAuthRoute } from "./pages/admin";
-import { AdminDashRoute } from "./layouts/adminDashRoute";
-import useTokenExpiration from './hooks/usetokenExpiration';
-import PaymentSuccessPage from "./pages/userDashboard/paymentSuccesspage";
-import EditorRouter from "./pages/editors/editorRouter";
-import PrivacyPolicy from "./pages/landingPage/privacypage";
-import TermsOfService from "./pages/landingPage/tos";
-import VerifySenderComponent from './templates/user/components/senders/verifySenderComponent';
-import GDPRExplanation from "./pages/landingPage/gdpr";
+import eventBus from "./utils/eventbus";
+import { useEffect } from "react";
+import { queryClient } from "./utils/queryclient";
+import AppRouter from "./routes";
+import { QueryClientProvider } from "@tanstack/react-query";
 
-const App: React.FC = () => {
+function App() {
     const handleSuccess = (message: string) => {
         toast.success(message, {
             position: "bottom-right",
@@ -73,32 +62,18 @@ const App: React.FC = () => {
             eventBus.off("error", errorListener);
             eventBus.off("message", infoListener);
         };
-    }, []);
+    }, [])
 
-    useTokenExpiration()
 
     return (
-        <>
+        <QueryClientProvider client={queryClient}>
             <ToastContainer />
-            <Routes>
-                <Route index element={<IndexLandingPage />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/tos" element={<TermsOfService />} />
-                <Route path="/gdpr" element={<GDPRExplanation />} />
-                <Route path="/auth/*" element={<AuthRoute />} />
-                <Route path="/next/*" element={<AdminAuthRoute />} />
-                <Route path="/verifysender" element={<VerifySenderComponent />} />
+            <AppRouter />
+        </QueryClientProvider>
+    )
 
-
-                <Route element={<ProtectedRoute />}>
-                    <Route path="/user/*" element={<UserDashRoute />} />
-                    <Route path="/zen/*" element={<AdminDashRoute />} />
-                    <Route path="/payment" element={<PaymentSuccessPage />} />
-                    <Route path="/editor/:editorType" element={<EditorRouter />} />
-                </Route>
-            </Routes>
-        </>
-    );
 }
 
-export default App;
+
+
+export default App
