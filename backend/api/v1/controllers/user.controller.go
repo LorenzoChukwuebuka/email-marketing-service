@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+var (
+	config = utils.Config{}
+	key    = config.JWTKey
+)
+
 type UserController struct {
 	userService *services.UserService
 }
@@ -280,4 +285,36 @@ func (c *UserController) CancelUserDeletion(w http.ResponseWriter, r *http.Reque
 		response.ErrorResponse(w, err.Error())
 		return
 	}
+}
+
+// RefreshTokenHandler handles refreshing access tokens using the refresh token
+func (c *UserController) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+
+	var reqdata *dto.RefreshAccessToken
+
+	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
+		response.ErrorResponse(w, "unable to decode request body")
+		return
+	}
+
+	// Parse and validate the refresh token
+	claims, err := utils.ParseToken(reqdata.RefreshToken, []byte(key))
+	if err != nil {
+		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	// Generate a new access token using the claims (same user info)
+	accessToken, err := utils.GenerateAccessToken(claims["userId"].(string), claims["uuid"].(string), claims["username"].(string), claims["email"].(string))
+	if err != nil {
+		http.Error(w, "Error generating access token", http.StatusInternalServerError)
+		return
+	}
+
+	// Send the new access token to the client
+	res := map[string]string{
+		"access_token": accessToken,
+	}
+
+	response.SuccessResponse(w, 200, res)
 }

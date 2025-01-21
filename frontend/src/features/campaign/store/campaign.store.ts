@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from 'zustand/middleware';
-import { CreateCampaignValues, CampaignGroupValues } from '../interface/campaign.interface';
-import { Campaign } from '../../../../../frontend/src/store/userstore/campaignStore';
+import { CreateCampaignValues, CampaignGroupValues, Campaign } from '../interface/campaign.interface';
 import campaignApi from "../api/campaign.api";
 import eventBus from "../../../utils/eventbus";
 import { invalidateCampaign } from "../hooks/useCampaignQuery";
@@ -224,7 +223,7 @@ const useCampaignStore = create<CampaignStore>()(
         }),
         {
             name: 'campaign-store',
-            partialize: (state) => ({ selectedCampaign: state.selectedCampaign,currentCampaignId:state.currentCampaignId })
+            partialize: (state) => ({ selectedCampaign: state.selectedCampaign, currentCampaignId: state.currentCampaignId })
         }
     )
 );

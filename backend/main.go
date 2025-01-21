@@ -5,6 +5,8 @@ import (
 	"email-marketing-service/api/v1"
 	"email-marketing-service/api/v1/database"
 	smtp_server "email-marketing-service/internals/smtp"
+	//"email-marketing-service/internals/workers/tasks"
+	"email-marketing-service/pkg/asynqpkg"
 	"log"
 	"os"
 	"os/signal"
@@ -17,6 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
+
+	//initializes the asynq client
+	//if the init is empty... then that means that the default redis address is being used
+	//else add any custom address to it
+	asynqpkg.Init()
+	client := asynqpkg.GetClient()
+	defer client.Close()
+
+	//simulating mail sending
+	//_ = tasks.EnqueueWelcomeEmail(client, "hello@hello.com", "obi")
 
 	server := v1.NewServer(dbConn)
 
@@ -45,11 +57,21 @@ func main() {
 		}
 	}()
 
+	// Start the Asynq server
 	wg.Add(1)
-	go func ()  {
+	go func() {
+		defer wg.Done()
+		if err := asynqpkg.StartAsynqServer("localhost:6379", dbConn); err != nil {
+			log.Printf("Asynq server error: %v", err)
+			cancel()
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
 		defer wg.Done()
 
-		  v1.StartSocketServer() 
+		v1.StartSocketServer()
 	}()
 
 	// Wait for shutdown signal

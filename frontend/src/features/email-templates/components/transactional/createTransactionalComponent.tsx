@@ -16,7 +16,7 @@ const CreateTransactionalTemplateComponent: React.FC<Props> = ({ isOpen, onClose
         try {
             const formData = {
                 ...values,
-                type: "marketing",
+                type: "transactional",
                 editor_type: editorType,
                 is_editable: true,
                 is_gallery_template: false,

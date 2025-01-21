@@ -1,4 +1,5 @@
 import { BaseEntity } from '../../../interface/baseentity.interface';
+
 type Feature = BaseEntity & {
     plan_Id: number;
     name: string;

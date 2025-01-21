@@ -417,15 +417,22 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 		return nil, ErrInvalidCredentials
 	}
 
-	token, err := utils.JWTEncode(user.UUID, user.UUID, user.FullName, user.Email)
+	token, err := utils.GenerateAccessToken(user.UUID, user.UUID, user.FullName, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
+	// Generate refresh token
+	refreshToken, err := utils.GenerateRefreshToken(user.UUID, user.UUID, user.FullName, user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
 	}
 
 	return map[string]interface{}{
-		"status":  "login successful",
-		"token":   token,
-		"details": user,
+		"status":        "login successful",
+		"token":         token,
+		"details":       user,
+		"refresh_token": refreshToken,
 	}, nil
 }
 

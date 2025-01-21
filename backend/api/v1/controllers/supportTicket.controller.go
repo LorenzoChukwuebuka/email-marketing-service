@@ -169,3 +169,12 @@ func (c *SupportTicketController) CloseTicket(w http.ResponseWriter, r *http.Req
 	}
 	response.SuccessResponse(w, 200, "you have successfully closed this ticket")
 }
+
+func (c *SupportTicketController) AutoCloseTickets(w http.ResponseWriter, r *http.Request) {
+	err := c.TicketService.AutomaticallyCloseTickets()
+
+	if err != nil {
+		response.ErrorResponse(w, err.Error())
+		return
+	}
+}

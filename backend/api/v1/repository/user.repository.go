@@ -45,9 +45,7 @@ func (r *UserRepository) createUserResponse(user model.User) model.UserResponse 
 		formatted := user.DeletedAt.Time.Format(time.RFC3339)
 		response.DeletedAt = &formatted
 	}
-
 	
-
 	return response
 }
 

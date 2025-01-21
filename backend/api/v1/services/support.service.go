@@ -252,6 +252,45 @@ func (s *SupportTicketService) CloseTicket(ticketId string) error {
 	return nil
 }
 
+/** this function automatically closes out a support if it has been open for more than 48 hours without any reply
+1. Get all the tickets
+2. loop through to get all open tickets
+3 check if the current time is 48hrs or more greater than the time the ticket was created...
+4. send a mail or notify them of this
+5. if it is more than 72 hours and unanswered. Close the ticket.
+**/
+
+func (s *SupportTicketService) AutomaticallyCloseTickets() error {
+	tickets, err := s.SupportRepository.GetAllTickets()
+	if err != nil {
+		return nil
+	}
+	for _, ticket := range tickets {
+
+		// Convert ticket.CreatedAt to ISO 8601 format
+		isoTime := ticket.CreatedAt.Format("2006-01-02T15:04:05Z07:00")
+
+		// Print the ISO 8601 formatted time
+		fmt.Println("ISO 8601 Time:", isoTime)
+
+		// Check if the ticket is older than 48 hours
+		if time.Since(ticket.CreatedAt) > 48*time.Hour && ticket.Status != model.CloseTicket  {
+			// Send a mail about the current status of their ticket
+			fmt.Printf("Ticket created at %s is older than 48 hours\n", isoTime)
+			// Add your mail sending logic here
+		}
+
+		//check if ticket is older than 72 hours
+		if time.Since(ticket.CreatedAt) > 72*time.Hour && ticket.Status != model.CloseTicket {
+			//get the ticket id, userId and all and send them a mail
+
+			fmt.Printf("Ticket created at %s is older than 72 hours\n", isoTime)
+		}
+	}
+
+	return nil
+}
+
 func (s *SupportTicketService) getUploadBasePath() string {
 	if os.Getenv("SERVER_MODE") == "production" {
 		return "/app/backend/uploads"
