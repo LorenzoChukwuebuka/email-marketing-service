@@ -8,6 +8,7 @@ interface CookieData {
     token: string;
     refresh_token: string;
     credentials?: any;
+    type?: string
 }
 
 // Function to update only the access token in cookies
@@ -30,7 +31,6 @@ const updateAccessToken = (newAccessToken: string) => {
 const refreshToken = async () => {
     const cookies = Cookies.get('Cookies');
     if (!cookies) throw new Error('No refresh token available');
-    
 
     const { refresh_token } = JSON.parse(cookies) as CookieData;
 
@@ -39,16 +39,24 @@ const refreshToken = async () => {
     }
 
     try {
-        const response = await axiosInstance.post('/refresh-access-token',
-            data
-        );
-
-      //  console.log(response.data.payload.access_token)
-
-        if (response.data?.payload?.access_token) {
-            updateAccessToken(response.data.payload.access_token);
-            return response.data.payload;
+        if (cookies.includes('type')) {
+            const response = await axiosInstance.post('/admin/refresh-admin-token',
+                data
+            );
+            if (response.data?.payload?.access_token) {
+                updateAccessToken(response.data.payload.access_token);
+                return response.data.payload;
+            }
+        } else {
+            const response = await axiosInstance.post('/refresh-access-token',
+                data
+            );
+            if (response.data?.payload?.access_token) {
+                updateAccessToken(response.data.payload.access_token);
+                return response.data.payload;
+            }
         }
+
     } catch (error) {
         // If refresh fails, throw error for query to handle
         console.log(error)

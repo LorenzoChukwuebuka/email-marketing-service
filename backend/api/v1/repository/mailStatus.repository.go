@@ -47,5 +47,3 @@ func (r *MailStatusRepository) GetSentEmailByRecipient(email string) (*model.Sen
 	}
 	return &sentEmail, nil
 }
-
-

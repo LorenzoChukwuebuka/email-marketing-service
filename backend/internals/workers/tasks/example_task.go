@@ -2,7 +2,7 @@ package tasks
 
 import (
 	"context"
-	  "email-marketing-service/internals/workers/payloads"
+	"email-marketing-service/internals/workers/payloads"
 	"encoding/json"
 	"fmt"
 	"github.com/hibiken/asynq"

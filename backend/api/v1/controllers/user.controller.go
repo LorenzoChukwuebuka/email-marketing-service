@@ -5,15 +5,37 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"net/http"
 )
 
 var (
-	config = utils.Config{}
-	key    = config.JWTKey
+	config   = utils.LoadEnv()
+	key      = config.JWTKey
+	response = &utils.ApiResponse{}
 )
+
+// Define at package level
+var googleOauthConfig *oauth2.Config
+
+// Initialize in init() function
+func init() {
+	googleOauthConfig = &oauth2.Config{
+		ClientID:     config.GOOGLE_CLIENT_ID,
+		ClientSecret: config.GOOGLE_CLIENT_SECRET,
+		RedirectURL:  config.GOOGLE_CLIENT_REDIRECT_URL,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
+	}
+
+}
 
 type UserController struct {
 	userService *services.UserService
@@ -24,10 +46,6 @@ func NewUserController(userService *services.UserService) *UserController {
 		userService: userService,
 	}
 }
-
-var (
-	response = &utils.ApiResponse{}
-)
 
 func (c *UserController) Welcome(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("authclaims").(jwt.MapClaims)
@@ -157,14 +175,11 @@ func (c *UserController) ChangeUserPassword(w http.ResponseWriter, r *http.Reque
 		HandleControllerError(w, err)
 		return
 	}
-
 	var reqdata *dto.ChangePassword
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
-
 	err = c.userService.ChangePassword(userId, reqdata)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
@@ -289,32 +304,86 @@ func (c *UserController) CancelUserDeletion(w http.ResponseWriter, r *http.Reque
 
 // RefreshTokenHandler handles refreshing access tokens using the refresh token
 func (c *UserController) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
-
 	var reqdata *dto.RefreshAccessToken
-
 	if err := utils.DecodeRequestBody(r, &reqdata); err != nil {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
-
 	// Parse and validate the refresh token
 	claims, err := utils.ParseToken(reqdata.RefreshToken, []byte(key))
 	if err != nil {
 		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
 		return
 	}
-
 	// Generate a new access token using the claims (same user info)
 	accessToken, err := utils.GenerateAccessToken(claims["userId"].(string), claims["uuid"].(string), claims["username"].(string), claims["email"].(string))
 	if err != nil {
 		http.Error(w, "Error generating access token", http.StatusInternalServerError)
 		return
 	}
-
 	// Send the new access token to the client
 	res := map[string]string{
 		"access_token": accessToken,
 	}
-
 	response.SuccessResponse(w, 200, res)
+}
+
+func (c *UserController) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	// Generate the Google OAuth2 URL and redirect to it
+	authURL := googleOauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+// GoogleCallback handles the Google OAuth callback
+func (c *UserController) GoogleCallback(w http.ResponseWriter, r *http.Request) {
+	// Get the code from the callback
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Code not found", http.StatusBadRequest)
+		return
+	}
+
+	// Exchange the code for a token
+	token, err := googleOauthConfig.Exchange(r.Context(), code)
+	if err != nil {
+		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get user info
+	client := googleOauthConfig.Client(r.Context(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	if err != nil {
+		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	userData := struct {
+		ID            string `json:"id"`
+		Email         string `json:"email"`
+		Name          string `json:"name"`
+		VerifiedEmail bool   `json:"verified_email"`
+	}{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&userData); err != nil {
+		http.Error(w, "Failed to decode user data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Generate JWT token
+	jwtToken, err := utils.GenerateAccessToken(
+		userData.ID,
+		"google",
+		userData.Name,
+		userData.Email,
+	)
+	if err != nil {
+		http.Error(w, "Failed to generate token: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to frontend with the token
+	redirectURL := fmt.Sprintf("%s/auth/callback?token=%s", config.FRONTEND_URL, jwtToken)
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }

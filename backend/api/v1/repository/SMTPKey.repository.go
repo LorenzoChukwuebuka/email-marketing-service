@@ -166,7 +166,6 @@ func (r *SMTPKeyRepository) GetSMTPMasterKeyUserAndPass(username string, passwor
 	return true, nil // Record found
 }
 
-
 func (r *SMTPKeyRepository) GetSMTPKeyUserAndPass(username string, password string) (bool, error) {
 	var record model.SMTPKey
 

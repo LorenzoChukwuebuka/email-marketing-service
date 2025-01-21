@@ -41,7 +41,7 @@ func (c *TemplateController) CreateAndUpdateTemplate(w http.ResponseWriter, r *h
 
 func (c *TemplateController) GetAllMarketingTemplates(w http.ResponseWriter, r *http.Request) {
 	page, pageSize, searchQuery, err := ParsePaginationParams(r)
-	
+
 	if err != nil {
 		HandleControllerError(w, err)
 	}

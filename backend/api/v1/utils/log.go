@@ -72,7 +72,7 @@ func (l *Logger) logStruct(level LogLevel, msg string, data interface{}) {
 	}
 
 	_, file, line, _ := runtime.Caller(2)
-	logLine := fmt.Sprintf("[%s] [%s] %s:%d - %s\nData: %s\n", 
+	logLine := fmt.Sprintf("[%s] [%s] %s:%d - %s\nData: %s\n",
 		now, levelStr, file, line, msg, string(jsonData))
 	l.out.WriteString(logLine)
 

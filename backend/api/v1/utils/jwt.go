@@ -84,8 +84,6 @@ func GenerateRefreshToken(userId string, user_uuid string, username string, emai
 	return tokenString, nil
 }
 
-
-
 func ParseToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Ensure the token's signing method is correct
@@ -108,11 +106,7 @@ func ParseToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
 
 }
 
-
-
-
-
-func AdminJWTEncode(userId string, user_uuid string, admintype string, email string) (string, error) {
+func GenerateAdminAccessToken(userId string, user_uuid string, admintype string, email string) (string, error) {
 	LoadEnv()
 	// Create a new token object with claims
 	claims := jwt.MapClaims{
@@ -126,6 +120,26 @@ func AdminJWTEncode(userId string, user_uuid string, admintype string, email str
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign the token with a secret key
+
+	tokenString, err := token.SignedString([]byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// GenerateRefreshToken generates a refresh token with a long expiration time
+func GenerateAdminRefreshToken(userId string, user_uuid string, admintype string, email string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":    "The server",
+		"exp":    time.Now().Add(refreshTokenExpiration).Unix(), // 7 days expiration
+		"type":   admintype,
+		"email":  email,
+		"uuid":   user_uuid,
+		"userId": userId,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString([]byte(key))
 	if err != nil {

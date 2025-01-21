@@ -2,8 +2,8 @@ package repository
 
 import (
 	"email-marketing-service/api/v1/model"
-	"log"
 	"gorm.io/gorm"
+	"log"
 )
 
 type LogRepository struct {

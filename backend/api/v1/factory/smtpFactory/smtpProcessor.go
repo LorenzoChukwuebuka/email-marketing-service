@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
- 
-
 type SMTPProcessor struct {
 }
 
@@ -53,7 +51,7 @@ func (s *SMTPProcessor) sendMailToRecipient(recipient dto.Recipient, emailReques
 		Password: emailRequest.AuthUser.Password,
 	}
 
-	err := utils.AsyncSendMail(subject, email, mailContent, sender, &smtpConfig,&wg)
+	err := utils.AsyncSendMail(subject, email, mailContent, sender, &smtpConfig, &wg)
 	if err != nil {
 		fmt.Printf("Error sending mail to %s: %v\n", email, err)
 	} else {

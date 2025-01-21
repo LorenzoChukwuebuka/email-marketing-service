@@ -1,2 +1,1 @@
-package adminservice 
-
+package adminservice
