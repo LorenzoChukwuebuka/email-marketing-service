@@ -5,7 +5,7 @@ import useAdminAuthStore from '../../store/admin.auth.store';
 import renderApiName from '../../../../utils/render-name';
 import { AdminLoginValues } from '../../interface/admin.auth.interface';
 
- 
+
 
 const AdminLoginComponent: React.FC = () => {
     const [form] = Form.useForm();
@@ -31,7 +31,7 @@ const AdminLoginComponent: React.FC = () => {
 
     useEffect(() => {
         if (isLoggedIn) {
-            location.href = "/zen/dash";
+            location.href = "/zen";
         }
     }, [isLoggedIn]);
 

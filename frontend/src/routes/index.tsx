@@ -18,6 +18,9 @@ import VerifySenderTemplate from '../features/settings/templates/verifySenderTem
 import billingRoutes from '../features/billing/routes/billing.route';
 import adminAuthRoute from '../features/auth/routes/admin.auth.route';
 import supportRoute from '../features/support/routes/support.route';
+import AdminDashTemplate from '../templates/AdminDashTemplate';
+import AdminDashIndexTemplate from '../templates/AdminDashIndex';
+import planRoute from '../features/plans/routes/plan.route';
 
 const router = createBrowserRouter([
     {
@@ -46,12 +49,40 @@ const router = createBrowserRouter([
         ]
     },
 
+    //admin auth route
     {
         path: "/next",
         children: [
             ...adminAuthRoute
         ]
     },
+
+    //for admin routes
+
+    {
+        path: "/zen",
+        element: <ProtectedRoute />,
+        children: [
+            {
+                element: <AdminDashTemplate />,
+                children: [
+                    {
+                        index: true,
+                        element: <AdminDashIndexTemplate />
+                    },
+                    {
+                        path: "plan",
+                        children: [
+                            ...planRoute
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+
+    //editor route
+
     {
         path: "/editor/:editorType",
         element: <ProtectedRoute />,

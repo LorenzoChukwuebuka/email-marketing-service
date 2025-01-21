@@ -42,3 +42,8 @@ type UserSession struct {
 	IPAddress *string `json:"ip_address"`
 	Browser   *string `json:"browser"`
 }
+
+
+type RefreshAccessToken struct {
+	RefreshToken string `json:"refresh_token"`
+}

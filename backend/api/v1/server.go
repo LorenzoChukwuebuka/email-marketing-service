@@ -223,9 +223,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 func methodNotAllowedMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wrappedWriter := &responseWriterWrapper{ResponseWriter: w, statusCode: http.StatusOK}
-
 		next.ServeHTTP(wrappedWriter, r)
-
 		if wrappedWriter.statusCode == http.StatusNotFound {
 			var match mux.RouteMatch
 			if mux.NewRouter().Match(r, &match) {

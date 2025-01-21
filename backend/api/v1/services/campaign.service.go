@@ -8,6 +8,8 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/repository"
 	"email-marketing-service/api/v1/utils"
+	"email-marketing-service/internals/workers/tasks"
+	"email-marketing-service/pkg/asynqpkg"
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
@@ -92,9 +94,15 @@ func (s *CampaignService) CreateCampaign(d *dto.CampaignDTO) (map[string]interfa
 	}
 
 	notificationTitle := fmt.Sprintf("Campaign %s has been successfully saved as draft", d.Name)
-	if err := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); err != nil {
-		fmt.Printf("Failed to create notification: %v\n", err)
-	}
+	// if err := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); err != nil {
+	// 	fmt.Printf("Failed to create notification: %v\n", err)
+	// }
+
+	client := asynqpkg.GetClient()
+
+	tasks.EnqueueUserNotification(client, d.UserId, notificationTitle)
+
+	//_ = tasks.EnqueueUserNotification(AClie)
 
 	return map[string]interface{}{
 		"campaignId": saveCampaign,
@@ -279,6 +287,7 @@ func (s *CampaignService) SendCampaign(d *dto.SendCampaignDTO, isScheduled bool)
 			}
 
 			notificationTitle := fmt.Sprintf("Campaign '%s' was sent successfully", campaignG.Name)
+
 			if notifErr := utils.CreateNotification(s.UserNotification, d.UserId, notificationTitle); notifErr != nil {
 				log.Printf("Failed to create notification: %v", notifErr)
 			}
@@ -595,7 +604,6 @@ func (s *CampaignService) sendEmailWithSMTP(request *dto.EmailRequest) error {
 }
 
 func (s *CampaignService) updateCampaignStatus(campaignId string, status string, userId string) error {
-
 	htime := time.Now().UTC()
 
 	campaignModel := &model.Campaign{UUID: campaignId, UserId: userId, Status: model.CampaignStatus(status), SentAt: &htime, IsPublished: true}
@@ -603,7 +611,6 @@ func (s *CampaignService) updateCampaignStatus(campaignId string, status string,
 	if err := s.CampaignRepo.UpdateCampaign(campaignModel); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -628,9 +635,9 @@ func (s *CampaignService) addTrackingToTemplate(template string, campaignId stri
 	}
 
 	// Create tracking pixel and unsubscribe link
-	trackingPixel := fmt.Sprintf(`<img src="%s/campaigns/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, config.SERVER_URL,
-		campaignId, url.QueryEscape(recipientEmail))
-	unsubscribeLink := fmt.Sprintf(`<div style="margin-top: 20px; font-size: 12px; color: #666666; text-align: center;">
+	trackingPixel := fmt.Sprintf(`<img src="%s/campaigns/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, config.SERVER_URL, campaignId, url.QueryEscape(recipientEmail))
+	unsubscribeLink := fmt.Sprintf(
+		`<div style="margin-top: 20px; font-size: 12px; color: #666666; text-align: center;">
         <a href="%s/campaigns/unsubscribe?email=%s&campaign=%s" target="_blank" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
     </div>`, config.SERVER_URL, url.QueryEscape(recipientEmail), url.QueryEscape(campaignId))
 
@@ -735,24 +742,18 @@ func (s *CampaignService) UnsubscribeFromCampaign(campaignId string, email strin
 
 func (s *CampaignService) TrackClickedCampaignsEmails(campaignId string, email string) error {
 	htime := time.Now().UTC()
-
 	existingEmailResult, err := s.CampaignRepo.GetEmailCampaignResult(campaignId, email)
 	if err != nil {
 		return err
 	}
-
 	clickCount := 1
-
 	if existingEmailResult != nil {
 		clickCount = existingEmailResult.OpenCount + 1
 	}
-
 	emailResultModel := &model.EmailCampaignResult{CampaignID: campaignId, RecipientEmail: email, ClickCount: clickCount, ClickedAt: &htime}
-
 	if err := s.CampaignRepo.UpdateEmailCampaignResult(emailResultModel); err != nil {
 		return err
 	}
-
 	return nil
 }
 

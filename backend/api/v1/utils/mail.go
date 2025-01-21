@@ -40,7 +40,7 @@ func AsyncSendMail(subject, email, message, sender string, smtpConfig *SMTPConfi
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := sendMail(subject, email, message, sender, smtpConfig)
+		err := SendMail(subject, email, message, sender, smtpConfig)
 		if err != nil {
 			log.Printf("Error sending email: %v", err)
 		}
@@ -49,7 +49,7 @@ func AsyncSendMail(subject, email, message, sender string, smtpConfig *SMTPConfi
 	return nil
 }
 
-func sendMail(subject, email, message, sender string, smtpConfig *SMTPConfig) error {
+func SendMail(subject, email, message, sender string, smtpConfig *SMTPConfig) error {
 	// Use default config if not provided
 	defaultConfig := DefaultSMTPConfig()
 	if smtpConfig == nil {

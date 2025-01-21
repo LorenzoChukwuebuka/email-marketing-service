@@ -32,6 +32,8 @@ interface AuthAsyncActions {
     changePassword: () => Promise<void>;
     loginUser: () => Promise<void>;
     editUserDetails: () => Promise<void>;
+    deleteUser:()=>Promise<void>
+    cancelDelete:()=>Promise<void>
 }
 
 interface AuthActions {
@@ -214,6 +216,27 @@ const useAuthStore = create<AuthStore>()(
                     console.error("Error editing user details:", error);
                 }
             },
+
+            deleteUser:async()=>{
+                try {
+                    const response = await authApi.deleteUserAccount()
+                    if(response){
+                        eventBus.emit('success','Your account has been scheduled for deletion')
+                    }
+                } catch (error) {
+                    handleError(error)
+                }
+            },
+            cancelDelete:async()=>{
+                try {
+                    const response = await authApi.cancelDeleteUserAccount()
+                    if(response){
+                        eventBus.emit('success', 'The delete proces has been cancelled?')
+                    }
+                } catch (error) {
+                    handleError(error)
+                }
+            }
         }),
 
         {

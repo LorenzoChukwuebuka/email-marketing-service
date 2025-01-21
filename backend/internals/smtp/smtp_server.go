@@ -176,72 +176,171 @@ func (s *Session) Rcpt(to string, opts *smtp.RcptOptions) error {
 
 // Data handles the DATA command and receives the email content
 // Modified Data function to work with our relay service
-func (s *Session) Data(r io.Reader) error {
-	debugLog("Receiving message data")
+// func (s *Session) Data(r io.Reader) error {
+// 	debugLog("Receiving message data")
 
-	// Rate limiting check
+// 	// Rate limiting check
+// 	if err := s.rateLimiter.CheckMessage(s.remoteIP, s.from, s.to); err != nil {
+// 		debugLog(fmt.Sprintf("Rate limit exceeded: %v", err))
+// 		return fmt.Errorf("452 4.5.3 %v", err)
+// 	}
+
+// 	// Read message data
+// 	b, err := io.ReadAll(r)
+// 	if err != nil {
+// 		return fmt.Errorf("error reading message data: %w", err)
+// 	}
+
+// 	// Parse the message
+// 	msg, err := mail.ReadMessage(bytes.NewReader(b))
+// 	if err != nil {
+// 		return fmt.Errorf("error parsing message: %w", err)
+// 	}
+
+// 	// Extract subject
+// 	subject := msg.Header.Get("Subject")
+// 	debugLog(fmt.Sprintf("Subject extracted: %s", subject))
+
+// 	// Store in session buffer
+// 	s.message.Write(b)
+// 	debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
+
+// 	// Validation
+// 	if err := isValidEmail(s.from, s.to, s.message.String()); err != nil {
+// 		return fmt.Errorf("invalid email: %w", err)
+// 	}
+
+// 	// Create email object for relay
+// 	email := &Email{
+// 		From:    s.from,
+// 		To:      s.to,
+// 		Subject: subject,
+// 		Body:    b,
+// 		Headers: map[string]string{}, // You could add additional headers here
+// 	}
+
+// 	// Relay the email using our relay service
+// 	if err := s.relayService.RelayEmail(email); err != nil {
+// 		debugLog(fmt.Sprintf("Relay failed: %v", err))
+// 		return fmt.Errorf("relay email failed: %w", err)
+// 	}
+
+// 	// Store for IMAP access
+// 	username := strings.SplitN(s.from, "@", 2)[0]
+// 	const mailbox = "INBOX"
+// 	if err := s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b); err != nil {
+// 		return fmt.Errorf("error storing email: %w", err)
+// 	}
+
+// 	// Mark as delivered
+// 	if err := s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to); err != nil {
+// 		return fmt.Errorf("error logging delivery: %w", err)
+// 	}
+
+// 	// Process email bounce handling, if applicable
+// 	if err := s.processEmailBounce(b); err != nil {
+// 		return fmt.Errorf("error processing bounce: %w", err)
+// 	}
+
+// 	return nil
+// }
+
+func (s *Session) Data(r io.Reader) error {
+	debugLog("Starting to process email data")
+
+	// Rate limiting check with logging
+	debugLog(fmt.Sprintf("Checking rate limits for IP: %s, From: %s", s.remoteIP, s.from))
 	if err := s.rateLimiter.CheckMessage(s.remoteIP, s.from, s.to); err != nil {
 		debugLog(fmt.Sprintf("Rate limit exceeded: %v", err))
 		return fmt.Errorf("452 4.5.3 %v", err)
 	}
+	debugLog("Rate limit check passed")
 
-	// Read message data
+	// Read message data with logging
+	debugLog("Reading message data")
 	b, err := io.ReadAll(r)
 	if err != nil {
+		debugLog(fmt.Sprintf("Error reading message data: %v", err))
 		return fmt.Errorf("error reading message data: %w", err)
 	}
+	debugLog(fmt.Sprintf("Message data read successfully, size: %d bytes", len(b)))
 
-	// Parse the message
+	// Parse the message with logging
+	debugLog("Parsing message")
 	msg, err := mail.ReadMessage(bytes.NewReader(b))
 	if err != nil {
+		debugLog(fmt.Sprintf("Error parsing message: %v", err))
 		return fmt.Errorf("error parsing message: %w", err)
 	}
+	debugLog("Message parsed successfully")
 
-	// Extract subject
+	// Extract subject with logging
 	subject := msg.Header.Get("Subject")
 	debugLog(fmt.Sprintf("Subject extracted: %s", subject))
 
 	// Store in session buffer
 	s.message.Write(b)
-	debugLog(fmt.Sprintf("Message received:\n%s", s.message.String()))
+	debugLog(fmt.Sprintf("Message stored in buffer, size: %d bytes", s.message.Len()))
 
-	// Validation
+	// Validation with logging
+	debugLog("Validating email")
 	if err := isValidEmail(s.from, s.to, s.message.String()); err != nil {
+		debugLog(fmt.Sprintf("Email validation failed: %v", err))
 		return fmt.Errorf("invalid email: %w", err)
 	}
+	debugLog("Email validation passed")
 
-	// Create email object for relay
+	// Create email object for relay with logging
+	debugLog("Creating email object for relay")
 	email := &Email{
 		From:    s.from,
 		To:      s.to,
 		Subject: subject,
 		Body:    b,
-		Headers: map[string]string{}, // You could add additional headers here
+		Headers: map[string]string{
+			"X-Mailer":    "CustomSMTPServer",
+			"X-Source-IP": s.remoteIP,
+		},
 	}
+	debugLog(fmt.Sprintf("Email object created - From: %s, To: %v, Subject: %s",
+		email.From, email.To, email.Subject))
 
-	// Relay the email using our relay service
+	// Relay the email with detailed logging
+	debugLog("Starting email relay process")
 	if err := s.relayService.RelayEmail(email); err != nil {
-		debugLog(fmt.Sprintf("Relay failed: %v", err))
-		return fmt.Errorf("relay email failed: %w", err)
+		debugLog(fmt.Sprintf("Relay failed with detailed error: %+v", err))
+		// Return immediately on relay failure
+		return fmt.Errorf("550 5.7.0 Relay email failed: %w", err)
 	}
+	debugLog("Email relay completed successfully")
 
-	// Store for IMAP access
+	// Store for IMAP access with logging
+	debugLog("Storing email for IMAP access")
 	username := strings.SplitN(s.from, "@", 2)[0]
 	const mailbox = "INBOX"
 	if err := s.smtpKeyRepo.StoreEmail(username, mailbox, s.from, s.to, b); err != nil {
+		debugLog(fmt.Sprintf("Error storing email: %v", err))
 		return fmt.Errorf("error storing email: %w", err)
 	}
+	debugLog("Email stored successfully")
 
-	// Mark as delivered
+	// Mark as delivered with logging
+	debugLog("Marking email as delivered")
 	if err := s.smtpKeyRepo.MarkEmailAsDelivered(s.from, s.to); err != nil {
+		debugLog(fmt.Sprintf("Error marking email as delivered: %v", err))
 		return fmt.Errorf("error logging delivery: %w", err)
 	}
+	debugLog("Email marked as delivered")
 
-	// Process email bounce handling, if applicable
+	// Process email bounce handling with logging
+	debugLog("Processing potential email bounce")
 	if err := s.processEmailBounce(b); err != nil {
+		debugLog(fmt.Sprintf("Error processing bounce: %v", err))
 		return fmt.Errorf("error processing bounce: %w", err)
 	}
+	debugLog("Bounce processing completed")
 
+	debugLog("Data processing completed successfully")
 	return nil
 }
 

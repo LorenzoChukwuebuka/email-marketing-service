@@ -1,8 +1,23 @@
+import useAuthStore from "../../../auth/store/auth.store";
+
 const DeleteAccountComponent: React.FC = () => {
-    const handleDeleteAccount = () => {
-        // Logic for deleting the account
-        alert("Account deletion initiated!");
+    const { deleteUser, cancelDelete } = useAuthStore()
+    const handleDeleteAccount = async () => {
+        try {
+            await deleteUser()
+        } catch (error) {
+            console.log(error)
+        }
     };
+
+    const handleCancelDelete = async () => {
+        try {
+            await cancelDelete()
+            
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     return (
         <div className="max-w-2xl  p-6 bg-white ml-5  rounded-md">
@@ -12,7 +27,7 @@ const DeleteAccountComponent: React.FC = () => {
             </p>
             <div className="border border-red-400 p-4 rounded-md bg-red-50">
                 <div className="flex items-center mb-4">
-                   
+
 
                     <i className="bi bi-info-circle text-red-600 mr-2 font-semibold text-xl"></i>
                     <p className="text-gray-700">
@@ -22,16 +37,24 @@ const DeleteAccountComponent: React.FC = () => {
                         &quot; Delete Account &quot;, we send you a confirmation email.
                     </p>
                 </div>
+                <div className="mt-4 space-x-4">
                 <button
                     onClick={handleDeleteAccount}
                     className="bg-transparent hover:bg-red-600 text-red-600 font-semibold hover:text-white py-2 px-4 border border-red-600 hover:border-transparent rounded"
                 >
                     Delete Account
                 </button>
-                <p className="text-gray-600 mt-4">
+                <button
+                    onClick={handleCancelDelete}
+                    className="bg-transparent hover:bg-blue-600 text-blue-600 font-semibold hover:text-white py-2 px-4 border border-blue-600 hover:border-transparent rounded"
+                >
+                    Cancel Delete
+                </button>
+                </div>
+                {/* <p className="text-gray-600 mt-4">
                     <strong>Note:</strong> To delete your profile completely, go to the My
                     Profile menu in the upper right corner.
-                </p>
+                </p> */}
             </div>
         </div>
     );

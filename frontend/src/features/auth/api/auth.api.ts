@@ -73,6 +73,16 @@ class AuthApi {
         return response.data;
 
     }
+
+    async deleteUserAccount() {
+        const response = await axiosInstance.delete("/delete-user")
+        return response.data
+    }
+
+    async cancelDeleteUserAccount() {
+        const response = await axiosInstance.put("/cancel-delete")
+        return response.data
+    }
 }
 
 export default new AuthApi()

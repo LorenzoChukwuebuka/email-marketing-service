@@ -1,7 +1,6 @@
 import axiosInstance from "../../../utils/api";
 import { APIResponse } from '../../../../../frontend/src/interface/api.interface';
-import { PlanData } from '../../../../../frontend/src/store/admin/planStore';
-import { EditPlanValues, PlanValues } from "../interface/plan.interface";
+import { EditPlanValues, PlanValues, PlanData } from '../interface/plan.interface';
 import { ResponseT } from "../../../interface/api.interface";
 
 class PlanAPI {

@@ -34,9 +34,7 @@ func (r *SupportRepository) FindTicketByID(id string) (*model.SupportTicketRespo
 }
 
 func (r *SupportRepository) UpdateTicket(ticket *model.SupportTicket) (*model.SupportTicketResponse, error) {
-
 	var existingTicket model.SupportTicket
-
 	if err := r.DB.Where("id = ?", ticket.ID).First(&existingTicket).Error; err != nil {
 		return nil, fmt.Errorf("failed to find contact for update: %w", err)
 	}
@@ -129,6 +127,14 @@ func (r *SupportRepository) CloseTicket(ticketId string) error {
 	}
 
 	return nil
+}
+
+func (r *SupportRepository) GetAllTickets() ([]model.SupportTicketResponse, error) {
+	var tickets []model.SupportTicket
+	if err := r.DB.Preload("Messages.Files").Order("created_at DESC").Find(&tickets).Error; err != nil {
+		return nil, err
+	}
+	return r.modelsToResponses(tickets), nil
 }
 
 func (r *SupportRepository) modelToResponse(ticket *model.SupportTicket) *model.SupportTicketResponse {

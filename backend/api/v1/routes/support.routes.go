@@ -22,4 +22,5 @@ func (ur *SupportRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-tickets", middleware.JWTMiddleware(supportTicketController.GetTicketsByUserID)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-ticket/{ticketId}", middleware.JWTMiddleware(supportTicketController.GetSingleTicket)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/close/{ticketId}", middleware.JWTMiddleware(supportTicketController.CloseTicket)).Methods("PUT", "OPTIONS")
+	router.HandleFunc("/auto-close",supportTicketController.AutoCloseTickets).Methods("GET","OPTIONS")
 }

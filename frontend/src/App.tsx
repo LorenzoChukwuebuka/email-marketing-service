@@ -6,6 +6,12 @@ import { useEffect } from "react";
 import { queryClient } from "./utils/queryclient";
 import AppRouter from "./routes";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { tokenRefreshOptions } from "./features/auth/hooks/useTokenRefreshQuery";
+import { TokenRefreshProvider } from "./features/auth/hooks/useTokenRefreshProvider";
+import Cookies from "js-cookie";
+
+
+queryClient.setQueryDefaults(tokenRefreshOptions.queryKey, tokenRefreshOptions); // Pre-configure the token refresh query
 
 function App() {
     const handleSuccess = (message: string) => {
@@ -47,6 +53,12 @@ function App() {
         });
     };
 
+    const handleRefreshError = (error: Error) => {
+        console.error('Token refresh failed:', error);
+        Cookies.remove('Cookies', { path: '/' });
+        window.location.href = "/auth/login"
+    };
+
     useEffect(() => {
         const successListener = (message: string) => handleSuccess(message);
         const errorListener = (message: string) => handleError(message);
@@ -68,7 +80,9 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <ToastContainer />
+            <TokenRefreshProvider onRefreshError={handleRefreshError}>
             <AppRouter />
+            </TokenRefreshProvider>
         </QueryClientProvider>
     )
 
