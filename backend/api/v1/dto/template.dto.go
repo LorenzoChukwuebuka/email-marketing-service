@@ -30,5 +30,3 @@ type SendTestMailDTO struct {
 	TemplateId   string `json:"template_id" validate:"required"`
 	Subject      string `json:"subject" validate:"required"`
 }
-
-

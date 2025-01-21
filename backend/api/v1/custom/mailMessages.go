@@ -1,13 +1,13 @@
 package custom
 
 import (
+	"email-marketing-service/api/v1/model"
+	"email-marketing-service/api/v1/utils"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"email-marketing-service/api/v1/model"
-	"email-marketing-service/api/v1/utils"
 )
 
 // EmailConfig holds configuration for email service

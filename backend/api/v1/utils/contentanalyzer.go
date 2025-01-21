@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"unicode"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 // ContentAnalyzer represents the main structure for content analysis

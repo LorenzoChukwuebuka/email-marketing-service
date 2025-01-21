@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import {  useState, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { Form, Input, Button, Typography } from "antd";
 import useAuthStore from "../store/auth.store";
 import renderApiName from "../../../utils/render-name";
+
 
 const { Title, Text } = Typography;
 
@@ -11,13 +12,13 @@ const LoginComponent: React.FC = () => {
         loginValues,
         setLoginValues,
         loginUser,
-      
+
     } = useAuthStore();
 
     const [form] = Form.useForm();
     const [isLoading, setIsLoading] = useState(false);
 
-    
+
 
     const handleLogin = async (values: { email: string; password: string }) => {
         try {
@@ -29,6 +30,12 @@ const LoginComponent: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleGoogleLogin = () => {
+        // Redirect to your backend's Google login endpoint
+        window.location.href = `${import.meta.env.VITE_API_URL}/google/login`;
+
     };
 
     return (
@@ -93,6 +100,12 @@ const LoginComponent: React.FC = () => {
                             </Button>
                         </Form.Item>
                     </Form>
+
+                    <button onClick={() => handleGoogleLogin()}>
+                        Sign in with Google
+                    </button>
+
+
                     <div className="text-center mt-4">
                         <Text>
                             <Link to="/auth/forgot-password">Forgot Password</Link>

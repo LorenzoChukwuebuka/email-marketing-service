@@ -3,8 +3,8 @@ package repository
 import (
 	"email-marketing-service/api/v1/model"
 	//"errors"
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type UserNotificationRepository struct {
@@ -27,25 +27,25 @@ func (r *UserNotificationRepository) CreateNotification(d *model.UserNotificatio
 
 // GetAllUserNotification retrieves all notifications for a specific user.
 func (r *UserNotificationRepository) GetAllUserNotification(userId string) ([]model.UserNotificationResponse, error) {
-    var notifications []model.UserNotification
-    if err := r.DB.Where("user_id = ?", userId).Order("created_at DESC").Find(&notifications).Error; err != nil {
-        return nil, err
-    }
+	var notifications []model.UserNotification
+	if err := r.DB.Where("user_id = ?", userId).Order("created_at DESC").Find(&notifications).Error; err != nil {
+		return nil, err
+	}
 
-    notificationResponses := make([]model.UserNotificationResponse, 0)
-    for _, notification := range notifications {
-        notificationResponses = append(notificationResponses, model.UserNotificationResponse{
-            UUID:       notification.UUID,
-            UserId:     notification.UserId,
-            Title:      notification.Title,
-            ReadStatus: notification.ReadStatus,
-            CreatedAt:  notification.CreatedAt.Format(time.RFC3339),
-            UpdatedAt:  notification.UpdatedAt.Format(time.RFC3339),
-            DeletedAt:  nil,
-        })
-    }
+	notificationResponses := make([]model.UserNotificationResponse, 0)
+	for _, notification := range notifications {
+		notificationResponses = append(notificationResponses, model.UserNotificationResponse{
+			UUID:       notification.UUID,
+			UserId:     notification.UserId,
+			Title:      notification.Title,
+			ReadStatus: notification.ReadStatus,
+			CreatedAt:  notification.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:  notification.UpdatedAt.Format(time.RFC3339),
+			DeletedAt:  nil,
+		})
+	}
 
-    return notificationResponses, nil
+	return notificationResponses, nil
 }
 
 // UpdateReadStatus updates the read status of all notifications for a user to true.

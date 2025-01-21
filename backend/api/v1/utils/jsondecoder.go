@@ -22,7 +22,7 @@ func EncodeToJson(v interface{}) (map[string]interface{}, error) {
 
 	// Create a map to hold the JSON data
 	var result map[string]interface{}
-	
+
 	// Unmarshal the JSON data into the result map
 	if err := json.Unmarshal(jsonData, &result); err != nil {
 		return nil, err
@@ -30,6 +30,3 @@ func EncodeToJson(v interface{}) (map[string]interface{}, error) {
 
 	return result, nil
 }
-
-
-

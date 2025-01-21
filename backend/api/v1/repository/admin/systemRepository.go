@@ -50,10 +50,8 @@ func (r *SystemRepository) UpdateSMTPSettings(settings *adminmodel.SystemsSMTPSe
 
 func (r *SystemRepository) DeleteSettings(domain string) error {
 
+	fmt.Printf("%s", domain)
 
-	fmt.Printf("%s",domain)
-
-	
 	// Use Unscoped() to find the record even if it's soft deleted
 	var setting adminmodel.SystemsSMTPSetting
 	result := r.DB.Where("domain = ?", domain).First(&setting)

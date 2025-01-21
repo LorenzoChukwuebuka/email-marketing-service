@@ -9,6 +9,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { tokenRefreshOptions } from "./features/auth/hooks/useTokenRefreshQuery";
 import { TokenRefreshProvider } from "./features/auth/hooks/useTokenRefreshProvider";
 import Cookies from "js-cookie";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 
 queryClient.setQueryDefaults(tokenRefreshOptions.queryKey, tokenRefreshOptions); // Pre-configure the token refresh query
@@ -81,7 +82,9 @@ function App() {
         <QueryClientProvider client={queryClient}>
             <ToastContainer />
             <TokenRefreshProvider onRefreshError={handleRefreshError}>
-            <AppRouter />
+                <GoogleOAuthProvider clientId={import.meta.env.VITE_CLIENT_ID}>
+                    <AppRouter />
+                </GoogleOAuthProvider>
             </TokenRefreshProvider>
         </QueryClientProvider>
     )

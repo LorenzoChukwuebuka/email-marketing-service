@@ -9,10 +9,10 @@ type User struct {
 }
 
 type EditUserDTO struct {
-	UUID     string `json:"uuid"`
-	FullName string `json:"fullname"`
-	Company  string `json:"company"`
-	Email    string `json:"email"`
+	UUID        string `json:"uuid"`
+	FullName    string `json:"fullname"`
+	Company     string `json:"company"`
+	Email       string `json:"email"`
 	PhoneNumber string `json:"phonenumber"`
 }
 
@@ -42,7 +42,6 @@ type UserSession struct {
 	IPAddress *string `json:"ip_address"`
 	Browser   *string `json:"browser"`
 }
-
 
 type RefreshAccessToken struct {
 	RefreshToken string `json:"refresh_token"`

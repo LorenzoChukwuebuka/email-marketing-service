@@ -14,7 +14,7 @@ type SentEmails struct {
 	Id             uint        `json:"-" gorm:"primaryKey;index"`
 	UUID           string      `json:"uuid" gorm:"type:uuid;index"`
 	Sender         uint        `json:"sender_id" gorm:"index"`
-	Recipient      string       `json:"recipient"`
+	Recipient      string      `json:"recipient"`
 	MessageContent string      `json:"message_content"`
 	Status         EmailStatus `json:"status"`
 	CreatedAt      time.Time   `json:"created_at" gorm:"type:TIMESTAMP;null;default:CURRENT_TIMESTAMP"`

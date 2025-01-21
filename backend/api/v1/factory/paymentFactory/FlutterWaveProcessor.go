@@ -2,7 +2,7 @@ package paymentmethodFactory
 
 import (
 	"email-marketing-service/api/v1/dto"
-	 
+
 	"fmt"
 )
 
@@ -10,8 +10,8 @@ type FlutterwavePaymentProcessor struct {
 	paid bool
 }
 
-func (c *FlutterwavePaymentProcessor) OpenDeposit(d *dto.BasePaymentModelData)(map[string]interface{},error) {
-	return nil,nil
+func (c *FlutterwavePaymentProcessor) OpenDeposit(d *dto.BasePaymentModelData) (map[string]interface{}, error) {
+	return nil, nil
 }
 
 func (c *FlutterwavePaymentProcessor) ProcessDeposit(amount float64) {

@@ -23,5 +23,5 @@ func (ur *TemplateRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-marketing-template/{templateId}", middleware.JWTMiddleware(templateController.GetMarketingTemplate)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/update-template/{templateId}", middleware.JWTMiddleware(templateController.UpdateTemplate)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/send-test-mails", middleware.JWTMiddleware(templateController.SendTestMail)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/delete-template/{templateId}",middleware.JWTMiddleware(templateController.DeleteTemplate)).Methods("DELETE","OPTIONS")
+	router.HandleFunc("/delete-template/{templateId}", middleware.JWTMiddleware(templateController.DeleteTemplate)).Methods("DELETE", "OPTIONS")
 }

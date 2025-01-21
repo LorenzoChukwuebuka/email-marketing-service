@@ -36,7 +36,11 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/edit-user-details", middleware.JWTMiddleware(userController.EditUser)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-user", middleware.JWTMiddleware(userController.MarkUserForDeletion)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/cancel-delete", middleware.JWTMiddleware(userController.CancelUserDeletion)).Methods("PUT", "OPTIONS")
-	router.HandleFunc("/refresh-access-token",userController.RefreshTokenHandler).Methods("POST","OPTIONS")
+	router.HandleFunc("/refresh-access-token", userController.RefreshTokenHandler).Methods("POST", "OPTIONS")
+
+	//google login
+	router.HandleFunc("/google/login", userController.GoogleLogin).Methods("GET", "OPTIONS")
+	router.HandleFunc("/google/callback", userController.GoogleCallback).Methods("GET", "OPTIONS")
 
 	//user notifications
 	router.HandleFunc("/user-notifications", middleware.JWTMiddleware(userController.GetAllUserNotifications)).Methods("GET", "OPTIONS")

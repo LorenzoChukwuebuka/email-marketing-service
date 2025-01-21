@@ -1,7 +1,5 @@
 package model
 
- 
-
 // Campaign represents an email campaign
 // type Campaign struct {
 //     ID           uint `gorm:"primary_key"`

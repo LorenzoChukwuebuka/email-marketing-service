@@ -5,10 +5,13 @@ import (
 	adminmodel "email-marketing-service/api/v1/model/admin"
 	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/api/v1/utils"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var ErrGeneratingToken = errors.New("error generating JWT token")
 
 type AdminService struct {
 	AdminRepo *adminrepository.AdminRepository
@@ -61,16 +64,24 @@ func (s *AdminService) AdminLogin(d *dto.AdminLogin) (map[string]interface{}, er
 		return nil, fmt.Errorf("passwords do not match:%w", err)
 	}
 
-	token, err := utils.AdminJWTEncode(adminDetails.UUID, adminDetails.UUID, adminDetails.Type, adminDetails.Email)
+	token, err := utils.GenerateAdminAccessToken(adminDetails.UUID, adminDetails.UUID, adminDetails.Type, adminDetails.Email)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// Generate refresh token
+	refreshToken, err := utils.GenerateAdminRefreshToken(adminDetails.UUID, adminDetails.UUID, adminDetails.Type, adminDetails.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
 	successMap := map[string]interface{}{
-		"status":  "login successful",
-		"token":   token,
-		"details": adminDetails,
+		"status":        "login successful",
+		"token":         token,
+		"details":       adminDetails,
+		"refresh_token": refreshToken,
+		"type":          adminDetails.Type,
 	}
 
 	return successMap, nil

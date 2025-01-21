@@ -35,7 +35,7 @@ type BillingResponse struct {
 	PaymentMethod string        `json:"payment_method"`
 	Status        string        `json:"status"`
 	CreatedAt     string        `json:"created_at"`
-	UpdatedAt     string       `json:"updated_at"`
+	UpdatedAt     string        `json:"updated_at"`
 	DeletedAt     *string       `json:"deleted_at"`
 	User          *UserResponse `json:"user,omitempty"`
 	Plan          *PlanResponse `json:"plan,omitempty"`

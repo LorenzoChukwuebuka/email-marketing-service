@@ -274,7 +274,7 @@ func (s *SupportTicketService) AutomaticallyCloseTickets() error {
 		fmt.Println("ISO 8601 Time:", isoTime)
 
 		// Check if the ticket is older than 48 hours
-		if time.Since(ticket.CreatedAt) > 48*time.Hour && ticket.Status != model.CloseTicket  {
+		if time.Since(ticket.CreatedAt) > 48*time.Hour && ticket.Status != model.CloseTicket {
 			// Send a mail about the current status of their ticket
 			fmt.Printf("Ticket created at %s is older than 48 hours\n", isoTime)
 			// Add your mail sending logic here

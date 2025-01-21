@@ -32,27 +32,19 @@ func InitDB() (*gorm.DB, error) {
 }
 
 func initializeDatabase() {
-	config := utils.LoadEnv()
-
 	host, port, user, password, dbname := config.DBHost, config.DBPort, config.DB_User, config.DBPassword, config.DBName
-
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
 	var err error
-
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{SkipDefaultTransaction: true})
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Enable the uuid-ossp extension
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";").Error; err != nil {
 		log.Fatal(err)
 	}
-
 	autoMigrateModels()
 	log.Println("Connected to the database")
-
 	seedData(db)
 }
 

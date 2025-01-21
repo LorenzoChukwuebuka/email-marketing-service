@@ -6,6 +6,6 @@ type APIkeyDTO struct {
 }
 
 type SMTPKeyDTO struct {
-	UserId string `json:"user_id"`
+	UserId  string `json:"user_id"`
 	KeyName string `json:"key_name" validate:"required"`
 }

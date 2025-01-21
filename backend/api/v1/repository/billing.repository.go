@@ -184,7 +184,6 @@ func (r *BillingRepository) GetAllPayments(userID int, params PaginationParams) 
 		Preload("User").
 		Preload("Plan").
 		Where("user_id = ?", userID).
-		
 		Order("created_at DESC").
 		Find(&billingRecords)
 

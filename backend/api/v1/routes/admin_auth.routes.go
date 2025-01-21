@@ -28,4 +28,5 @@ func (ar *AdminRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/get-single-plan/{id}", middleware.AdminJWTMiddleware(planController.GetSinglePlan)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/edit-plan/{id}", middleware.AdminJWTMiddleware(planController.UpdatePlan)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/delete-plan/{id}", middleware.AdminJWTMiddleware(planController.DeletePlan)).Methods("DELETE", "OPTIONS")
+	router.HandleFunc("/refresh-admin-token", adminController.RefreshTokenHandler).Methods("POST", "OPTIONS")
 }

@@ -10,4 +10,3 @@ type UserNotificationPayload struct {
 	UserId           string
 	NotifcationTitle string
 }
-
