@@ -1,16 +1,16 @@
 package utils
 
 import (
+	 
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
-
 	"github.com/golang-jwt/jwt"
 )
 
 var (
-	config = Config{}
+	config = LoadEnv()
 	key    = config.JWTKey
 )
 
@@ -43,6 +43,7 @@ const refreshTokenExpiration = time.Hour * 24 * 7 // 7 days
 
 // 	return tokenString, nil
 // }
+
 
 // GenerateAccessToken generates an access token with a short expiration time
 func GenerateAccessToken(userId string, user_uuid string, username string, email string) (string, error) {

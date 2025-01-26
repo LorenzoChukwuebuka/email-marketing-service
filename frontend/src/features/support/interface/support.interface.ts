@@ -1,6 +1,6 @@
 import { AdminData } from '../../auth/interface/admin.auth.interface';
-import { UserDetails } from '../../../../../frontend/src/store/userstore/AuthStore';
 import { BaseEntity } from '../../../../../frontend/src/interface/baseentity.interface';
+import { UserDetails } from '../../auth/interface/auth.interface';
 
 export type TicketFile = {
     file_name: string

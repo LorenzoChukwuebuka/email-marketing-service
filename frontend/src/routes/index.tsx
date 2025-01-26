@@ -21,6 +21,10 @@ import supportRoute from '../features/support/routes/support.route';
 import AdminDashTemplate from '../templates/AdminDashTemplate';
 import AdminDashIndexTemplate from '../templates/AdminDashIndex';
 import planRoute from '../features/plans/routes/plan.route';
+import adminAnalyticsRoute from '../features/analytics/routes/admin.analytics.route';
+import adminUsersRoute from '../features/[admin]users/routes/adminusers.route';
+import adminSupportRoute from '../features/support/routes/adminsupport.route';
+import adminCampaignRoute from '../features/campaign/routes/admincampaign.route';
 
 const router = createBrowserRouter([
     {
@@ -74,6 +78,30 @@ const router = createBrowserRouter([
                         path: "plan",
                         children: [
                             ...planRoute
+                        ]
+                    },
+                    {
+                        path: "analytics",
+                        children: [
+                            ...adminAnalyticsRoute
+                        ]
+                    },
+                    {
+                        path: "users",
+                        children: [
+                            ...adminUsersRoute
+                        ]
+                    },
+                    {
+                        path: "support",
+                        children: [
+                            ...adminSupportRoute
+                        ]
+                    },
+                    {
+                        path:"campaigns",
+                        children:[
+                            ...adminCampaignRoute
                         ]
                     }
                 ]

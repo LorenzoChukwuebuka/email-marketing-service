@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import useBillingStore from '../store/billing.store';
-import { PlanData } from '../../../../../frontend/src/store/admin/planStore';
 import { usePlansQuery } from '../../plans/hooks/usePlanQuery';
 import { useMailCalcQuery } from '../../../hooks/useMailDataQuery';
+import { PlanData } from '../../plans/interface/plan.interface';
 
 
 const PricingPlans = () => {

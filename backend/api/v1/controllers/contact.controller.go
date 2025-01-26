@@ -16,7 +16,9 @@ type ContactController struct {
 	SubscriptionRepo *repository.SubscriptionRepository
 }
 
-func NewContactController(contactsvc *services.ContactService, userRepo *repository.UserRepository, subscriptionRepo *repository.SubscriptionRepository) *ContactController {
+func NewContactController(contactsvc *services.ContactService,
+	userRepo *repository.UserRepository,
+	subscriptionRepo *repository.SubscriptionRepository) *ContactController {
 	return &ContactController{
 		ContactService:   contactsvc,
 		UserRepo:         userRepo,
@@ -131,7 +133,6 @@ func (c *ContactController) GetAllContacts(w http.ResponseWriter, r *http.Reques
 	}
 
 	response.SuccessResponse(w, http.StatusOK, result)
-
 }
 
 func (c *ContactController) UpdateContact(w http.ResponseWriter, r *http.Request) {

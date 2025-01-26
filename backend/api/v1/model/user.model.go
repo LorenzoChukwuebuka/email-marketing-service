@@ -8,11 +8,13 @@ import (
 type User struct {
 	gorm.Model
 	UUID                 string     `json:"uuid" gorm:"type:uuid;default:uuid_generate_v4();index"`
-	FullName             string     `json:"fullname" `
-	Company              string     `json:"company" `
-	Email                string     `json:"email"  gorm:"index"`
+	FullName             string     `json:"fullname"`
+	Company              string     `json:"company"`
+	Email                string     `json:"email" gorm:"uniqueIndex"`
 	PhoneNumber          string     `json:"phonenumber" gorm:"type:varchar(255);default:null"`
-	Password             string     `json:"password"  gorm:"index"`
+	Password             *string    `json:"password" gorm:"default:null"` // Made optional
+	GoogleID             string     `json:"google_id" gorm:"uniqueIndex"` // Added for OAuth
+	Picture              string     `json:"picture" gorm:"default:null"`  // For Google profile picture
 	Verified             bool       `json:"verified"`
 	Blocked              bool       `json:"blocked" gorm:"default:false"`
 	VerifiedAt           *time.Time `json:"verified_at" gorm:"type:TIMESTAMP;null;default:null"`
@@ -29,7 +31,9 @@ type UserResponse struct {
 	Email                string  `json:"email"`
 	Company              string  `json:"company"`
 	PhoneNumber          string  `json:"phonenumber"`
-	Password             string  `json:"-"`
+	Password             *string `json:"-" ` // Made optional
+	GoogleID             string  `json:"google_id"`
+	Picture              string  `json:"picture"`
 	Verified             bool    `json:"verified"`
 	Blocked              bool    `json:"blocked"`
 	Status               bool    `json:"status"`

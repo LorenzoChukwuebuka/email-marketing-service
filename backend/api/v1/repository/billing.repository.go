@@ -133,10 +133,16 @@ func mapBillingToResponse(billing model.Billing) model.BillingResponse {
 					Email:       billing.User.Email,
 					Company:     billing.User.Company,
 					PhoneNumber: billing.User.PhoneNumber,
-					Password:    billing.User.Password,
-					Verified:    billing.User.Verified,
-					Blocked:     billing.User.Blocked,
-					CreatedAt:   billing.User.CreatedAt.Format(time.RFC3339),
+					Password: func() *string {
+						if billing.User != nil && billing.User.Password != nil {
+							buser := billing.User.Password
+							return buser
+						}
+						return nil
+					}(),
+					Verified:  billing.User.Verified,
+					Blocked:   billing.User.Blocked,
+					CreatedAt: billing.User.CreatedAt.Format(time.RFC3339),
 
 					UpdatedAt: billing.User.UpdatedAt.Format(time.RFC3339),
 					DeletedAt: func() *string {

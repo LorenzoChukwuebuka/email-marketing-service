@@ -30,6 +30,9 @@ const authRoute: RouteObject[] = [
     {
         path: "callback",
         element: <GoogleAuthCallbackTemplate />
+    },
+    {
+        path:"signup/callback"
     }
 ]
 

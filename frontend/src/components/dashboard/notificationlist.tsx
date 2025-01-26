@@ -1,5 +1,6 @@
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { useNotificationQuery } from '../../hooks/useNotificationQuery';
+import Cookies from 'js-cookie';
 
 const NotificationList = () => {
     const { data: notificationsData } = useNotificationQuery()
@@ -19,6 +20,12 @@ const NotificationList = () => {
         return acc;
     }, {});
 
+    const cookies = Cookies.get('Cookies')
+
+    console.log(cookies)
+
+    console.log("Notifications Data", ndata)
+
 
     return (
         <HelmetProvider>
@@ -32,8 +39,7 @@ const NotificationList = () => {
                         <h3 className="text-lg font-semibold mb-2">{date}</h3>
 
                         {/* Notification Items */}
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {(notifications as any).map((notification) => (  // Changed from ndata to notifications
+                        {(notifications as any).map((notification) => (  
                             <div
                                 key={notification.id}
                                 className="flex items-start mb-4 p-4 bg-white shadow-sm rounded-md"

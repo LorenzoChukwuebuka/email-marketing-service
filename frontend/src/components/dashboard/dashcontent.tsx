@@ -6,6 +6,7 @@ import LoadingSpinnerComponent from "./../../components/loadingSpinnerComponent"
 import eventBus from "../../utils/eventbus";
 import { useMailCalcQuery } from "../../hooks/useMailDataQuery";
 import useUserNotificationStore from "../../store/notification.store";
+import { Modal } from "antd";
 
 interface ContentProps {
     sidebarOpen: boolean;
@@ -47,24 +48,19 @@ const DashContent: React.FC<ContentProps> = ({ sidebarOpen, setSidebarOpen }) =>
     };
 
     const Logout = (): void => {
-        const confirmResult = confirm("Do you want to logout?");
-
-        if (confirmResult) {
-            const cookies = Cookies.get("Cookies");
-            if (cookies) {
-                Cookies.remove("Cookies");
-                navigate("/auth/login");
-            }
-        }
-
-        const confirmDialog = document.querySelector("div[role='dialog']");
-        if (confirmDialog) {
-            (confirmDialog as HTMLElement).style.backgroundColor = "white";
-            (confirmDialog as HTMLElement).style.color = "black";
-            (confirmDialog as HTMLElement).style.padding = "20px";
-            (confirmDialog as HTMLElement).style.borderRadius = "5px";
-            (confirmDialog as HTMLElement).style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
-        }
+        Modal.confirm({
+            title: "Are you sure?",
+            content: "Do you want to logout?",
+            okText: "Yes",
+            cancelText: "No",
+            onOk: () => {
+                const cookies = Cookies.get("Cookies");
+                if (cookies) {
+                    Cookies.remove("Cookies");
+                    navigate("/auth/login");
+                }
+            },
+        })
     };
 
     useEffect(() => {

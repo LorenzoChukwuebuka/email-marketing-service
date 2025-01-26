@@ -63,7 +63,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ apiName }) => {
                                     </Link>
                                 </li>
                                 <li className={getLinkClassName("/zen/email-users")}>
-                                    <Link to="/zen/email-users" className="flex font-semibold text-sm items-center">
+                                    <Link to="/zen/users/email" className="flex font-semibold text-sm items-center">
                                         Email All Users
                                     </Link>
                                 </li>

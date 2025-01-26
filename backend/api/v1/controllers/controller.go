@@ -5,6 +5,8 @@ import (
 	"github.com/golang-jwt/jwt"
 	"net/http"
 	"strconv"
+	"fmt"
+	"encoding/json"
 )
 
 var (
@@ -55,3 +57,21 @@ func HandleControllerError(w http.ResponseWriter, err error) {
 		response.ErrorResponse(w, err.Error())
 	}
 }
+
+
+func WriteSSEError(w http.ResponseWriter, err error) {
+    fmt.Fprintf(w, "event: error\ndata: %s\n\n", err.Error())
+    if f, ok := w.(http.Flusher); ok {
+        f.Flush()
+    }
+}
+
+func ToJSON(v interface{}) string {
+    data, err := json.Marshal(v)
+    if err != nil {
+        return err.Error()
+    }
+    return string(data)
+}
+
+
