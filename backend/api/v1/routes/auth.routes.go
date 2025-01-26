@@ -21,7 +21,6 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	smtpController, _ := InitializeSMTPController(ur.db)
 	supportTicketController, _ := InitializeSupportTicketController(ur.db)
 	subscriptionController, _ := InitializeSubscriptionController(ur.db)
-
 	// auth routes
 	router.HandleFunc("/greet", middleware.JWTMiddleware(userController.Welcome)).Methods("GET")
 	router.HandleFunc("/health", userController.HealthCheck).Methods("GET")
@@ -37,36 +36,30 @@ func (ur *AuthRoute) InitRoutes(router *mux.Router) {
 	router.HandleFunc("/delete-user", middleware.JWTMiddleware(userController.MarkUserForDeletion)).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/cancel-delete", middleware.JWTMiddleware(userController.CancelUserDeletion)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/refresh-access-token", userController.RefreshTokenHandler).Methods("POST", "OPTIONS")
-
 	//google login
 	router.HandleFunc("/google/login", userController.GoogleLogin).Methods("GET", "OPTIONS")
 	router.HandleFunc("/google/callback", userController.GoogleCallback).Methods("GET", "OPTIONS")
-
+	router.HandleFunc("/google/signup", userController.GoogleSignup).Methods("GET", "OPTIONS")
+	router.HandleFunc("/signup/callback", userController.GoogleSignUpCallback).Methods("GET", "OPTIONS")
 	//user notifications
 	router.HandleFunc("/user-notifications", middleware.JWTMiddleware(userController.GetAllUserNotifications)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/update-read-status", middleware.JWTMiddleware(userController.UpdateReadStatus)).Methods("PUT", "OPTIONS")
-
+	router.HandleFunc("/user-notify-sse", middleware.JWTMiddleware(userController.SSEGetAllUserNotifications)).Methods("GET", "OPTIONS")
 	// Plan routes
 	router.HandleFunc("/get-all-plans", planController.GetAllPlans).Methods("GET", "OPTIONS")
 	router.HandleFunc("/get-single-plan/{id}", planController.GetSinglePlan).Methods("GET", "OPTIONS")
-
 	// Subscription routes
 	router.HandleFunc("/cancel-subscription/{subscriptionId}", middleware.JWTMiddleware(subscriptionController.CancelSubscription)).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/get-user-current-sub", middleware.JWTMiddleware(userController.GetUserSubscription)).Methods("GET", "OPTIONS")
-
 	// SMTP routes
 	router.HandleFunc("/smtp/email", smtpController.SendSMTPMail).Methods("POST", "OPTIONS")
-
 	// Session routes
 	router.HandleFunc("/create-session", sessionController.CreateSessions).Methods("POST", "OPTIONS")
 	router.HandleFunc("/get-sessions", middleware.JWTMiddleware(sessionController.GetAllSessions)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/delete-session", middleware.JWTMiddleware(sessionController.DeleteSession)).Methods("DELETE", "OPTIONS")
-
 	// Support ticket routes
 	router.HandleFunc("/create-ticket", middleware.JWTMiddleware(supportTicketController.CreateTicket)).Methods("POST", "OPTIONS")
-
 	// Testing API routes
 	router.HandleFunc("/update-expired-subscriptions", subscriptionController.UpdateAllExpiredSubscriptions).Methods("GET", "OPTIONS")
 	router.HandleFunc("/test-create-daily-mail-calc", smtpController.CreateRecordDailyMailCalculation).Methods("POST", "OPTIONS")
-
 }

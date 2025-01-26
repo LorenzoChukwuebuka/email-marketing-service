@@ -3,6 +3,15 @@ import { parseDate } from "../../../utils/utils"
 import { useAllCampaignStatsQuery } from "../hooks/useAnalyticsQuery"
 import { Empty } from 'antd';
 
+const columns = [
+    "Campaign Name",
+    "Bounces",
+    "Recipients",
+    "Opened",
+    "Clicked",
+    "Sent Date",
+];
+
 const AnalyticsTableComponent: React.FC = () => {
     const { data: allCampaignStatsData } = useAllCampaignStatsQuery()
     const alcsdata = useMemo(() => allCampaignStatsData?.payload || [], [allCampaignStatsData])
@@ -12,26 +21,14 @@ const AnalyticsTableComponent: React.FC = () => {
             <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Campaign Name
-                        </th>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Bounces
-                        </th>
-
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Recipients
-                        </th>
-
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Opened
-                        </th>
-
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Clicked
-                        </th>
-
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Sent Date </th>
+                        {columns.map((column) => (
+                            <th
+                                key={column}
+                                className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                {column}
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -66,10 +63,6 @@ const AnalyticsTableComponent: React.FC = () => {
                     )}
                 </tbody>
             </table>
-
-
-
-
         </div>
 
 

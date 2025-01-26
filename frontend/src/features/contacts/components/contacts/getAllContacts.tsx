@@ -17,6 +17,8 @@ interface Props {
     onPageChange: (page: number, size: number) => void 
 }
 
+
+ 
 const GetAllContacts: React.FC<Props> = ({ contactData, loading,currentPage,pageSize,onPageChange }) => {
     const { selectedIds, setSelectedId } = useContactStore();
     const { setSelectedContactIds } = useContactGroupStore()

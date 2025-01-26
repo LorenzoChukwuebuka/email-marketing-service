@@ -787,7 +787,6 @@ func (s *CampaignService) GetUserCampaignStats(userId string) (map[string]int64,
 }
 
 func (s *CampaignService) GetUserCampaignsStats(userId string) ([]map[string]interface{}, error) {
-
 	userStats, err := s.CampaignRepo.GetAllCampaignStatsByUser(userId)
 
 	if err != nil {

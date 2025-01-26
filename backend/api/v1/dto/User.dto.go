@@ -2,10 +2,11 @@ package dto
 
 type User struct {
 	FullName string `json:"fullname" validate:"required"`
-	Company  string `json:"company" validate:"required"`
+	Company  string `json:"company"`
 	Email    string `json:"email" validate:"required,email" `
-	Password string `json:"password" validate:"required" `
+	Password string `json:"password"`
 	Verified bool   `json:"verified"`
+	GoogleID string `json:"google_id"`
 }
 
 type EditUserDTO struct {
@@ -18,7 +19,8 @@ type EditUserDTO struct {
 
 type Login struct {
 	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password"`
+	GoogleID string `json:"google_id"`
 }
 
 type ForgetPassword struct {

@@ -11,7 +11,6 @@ const GroupContactList: React.FC = () => {
     const [group, setGroup] = useState<ContactGroupData | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-
     const location = useLocation();
     const stateData = location.state as { groupId: string };
 

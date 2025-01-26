@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	config = utils.Config{}
+	config = utils.LoadEnv()
 	key    = config.JWTKey
 )
 

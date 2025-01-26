@@ -5,11 +5,11 @@ import dayjs from 'dayjs';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import useCampaignStore from '../../store/campaign.store';
 import { useSingleCampaignQuery } from '../../hooks/useCampaignQuery';
-import { CampaignData } from '../../../../../../frontend/src/store/userstore/campaignStore';
 import LoadingSpinnerComponent from '../../../../components/loadingSpinnerComponent';
 import AddSenderComponent from './addSenderCampaignComponent';
 import AddCampaignRecipients from './addRecipientComponent';
 import AddCampaignSubjectComponent from './addSubjectComponent';
+import { CampaignData } from '../../interface/campaign.interface';
 
 const EditCampaignForm: React.FC = () => {
     const { id } = useParams<{ id: string }>() as { id: string };

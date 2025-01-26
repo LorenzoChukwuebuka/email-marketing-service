@@ -86,18 +86,28 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("invalid user data: %w", err)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(d.Password), bcryptCost)
-	if err != nil {
-		return nil, fmt.Errorf("error hashing password: %w", err)
-	}
-
 	user := &model.User{
 		UUID:     uuid.New().String(),
 		FullName: d.FullName,
-		Company:  d.Company,
 		Email:    strings.ToLower(d.Email),
-		Password: string(hashedPassword),
 		Verified: false,
+	}
+
+	if d.Company != "" {
+		user.Company = d.Company
+	}
+
+	if d.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(d.Password), bcryptCost)
+		if err != nil {
+			return nil, fmt.Errorf("error hashing password: %w", err)
+		}
+		hashedStr := string(hashedPassword)
+		user.Password = &hashedStr
+	}
+
+	if d.GoogleID != "" {
+		user.GoogleID = d.GoogleID
 	}
 
 	tx := s.userRepo.DB.Begin()
@@ -360,7 +370,6 @@ func (s *UserService) createSubscription(userId uint, plan *model.PlanResponse, 
 }
 
 func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error {
-
 	smtpkeyModel := &model.SMTPMasterKey{
 		UUID:      uuid.New().String(),
 		KeyName:   "Master",
@@ -369,13 +378,10 @@ func (s *UserService) createSMTPMasterKey(userId string, userEmail string) error
 		Password:  utils.GenerateOTP(15),
 		Status:    model.KeyStatus("active"),
 	}
-
 	err := s.smtpKeyRepo.CreateSMTPMasterKey(smtpkeyModel)
-
 	if err != nil {
 		return ErrCreatingSMTPKey
 	}
-
 	return nil
 }
 
@@ -413,8 +419,15 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 		return nil, ErrAccountNotVerified
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(d.Password)); err != nil {
-		return nil, ErrInvalidCredentials
+	var userPass *string
+	// var googleId *string
+
+	if d.Password != "" {
+		userPass = user.Password
+
+		if err := bcrypt.CompareHashAndPassword([]byte(*userPass), []byte(d.Password)); err != nil {
+			return nil, ErrInvalidCredentials
+		}
 	}
 
 	token, err := utils.GenerateAccessToken(user.UUID, user.UUID, user.FullName, user.Email)
@@ -469,7 +482,9 @@ func (s *UserService) ResetPassword(d *dto.ResetPassword) error {
 		return fmt.Errorf("error hashing password: %w", err)
 	}
 
-	if err := s.userRepo.ResetPassword(&model.User{UUID: otpData.UserId, Password: string(hashedPassword)}); err != nil {
+	hashPass := string(hashedPassword)
+
+	if err := s.userRepo.ResetPassword(&model.User{UUID: otpData.UserId, Password: &hashPass}); err != nil {
 		return fmt.Errorf("error resetting password: %w", err)
 	}
 
@@ -486,7 +501,7 @@ func (s *UserService) ChangePassword(userId string, d *dto.ChangePassword) error
 		return fmt.Errorf("error finding user: %w", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(d.OldPassword)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(d.OldPassword)); err != nil {
 		return ErrInvalidCredentials
 	}
 
@@ -494,8 +509,8 @@ func (s *UserService) ChangePassword(userId string, d *dto.ChangePassword) error
 	if err != nil {
 		return fmt.Errorf("error hashing password: %w", err)
 	}
-
-	return s.userRepo.ChangeUserPassword(&model.User{UUID: userId, Password: string(hashedPassword)})
+	haspas := string(hashedPassword)
+	return s.userRepo.ChangeUserPassword(&model.User{UUID: userId, Password: &haspas})
 }
 
 func (s *UserService) EditUser(d *model.User) error {

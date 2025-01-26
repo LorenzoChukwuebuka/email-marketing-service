@@ -19,6 +19,11 @@ const ContactDashTemplate: React.FC = () => {
         localStorage.setItem("activeTab", tab);
     };
 
+    const tabs = {
+        "Contact": <ContactsDashComponent />,
+        "Contact Group": <ContactGroupDash />,
+        "Segments": <> Hello world </>
+    }
 
     const metaData = useMetadata("Contact")
 
@@ -57,11 +62,7 @@ const ContactDashTemplate: React.FC = () => {
                 </button> */}
                 </nav>
 
-                 {activeTab === "Contact" && <ContactsDashComponent/>}
-
-                {activeTab === "Contact Group" && <ContactGroupDash />}  
-
-                {activeTab === "Segments" && <> hello world </>}
+                {tabs[activeTab]}
             </div>
         </HelmetProvider>
     );
