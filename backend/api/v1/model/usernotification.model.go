@@ -8,6 +8,7 @@ type UserNotification struct {
 	UserId     string `json:"user_id"`
 	Title      string `json:"title"`
 	ReadStatus bool   `json:"read_status"`
+	AdditionalField string `json:"additional_field"`
 }
 
 type UserNotificationResponse struct {

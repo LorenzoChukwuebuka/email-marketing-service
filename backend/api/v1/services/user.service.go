@@ -86,15 +86,27 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("invalid user data: %w", err)
 	}
 
+	tx := s.userRepo.DB.Begin()
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			return
+		}
+	}()
+
 	user := &model.User{
 		UUID:     uuid.New().String(),
 		FullName: d.FullName,
 		Email:    strings.ToLower(d.Email),
-		Verified: false,
 	}
 
-	if d.Company != "" {
-		user.Company = d.Company
+	if d.GoogleID != "" {
+		user.GoogleID = d.GoogleID
+		user.Verified = true
+		user.VerifiedAt = utils.Ptr(time.Now())
 	}
 
 	if d.Password != "" {
@@ -102,21 +114,18 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error hashing password: %w", err)
 		}
-		hashedStr := string(hashedPassword)
-		user.Password = &hashedStr
-	}
+		user.Password = utils.Ptr(string(hashedPassword))
+		user.Verified = false
+		user.Company = utils.Ptr(d.Company)
 
-	if d.GoogleID != "" {
-		user.GoogleID = d.GoogleID
-	}
+		otp := utils.GenerateOTP(otpLength)
 
-	tx := s.userRepo.DB.Begin()
-
-	defer func() {
-		if r := recover(); r != nil {
+		if err := s.createAndSendOTP(user, otp); err != nil {
 			tx.Rollback()
+			return nil, err
 		}
-	}()
+
+	}
 
 	if err := s.checkUserExists(user); err != nil {
 		tx.Rollback()
@@ -129,13 +138,6 @@ func (s *UserService) CreateUser(d *dto.User) (map[string]interface{}, error) {
 	}
 
 	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	otp := utils.GenerateOTP(otpLength)
-
-	if err := s.createAndSendOTP(user, otp); err != nil {
 		tx.Rollback()
 		return nil, err
 	}
@@ -211,21 +213,15 @@ func (s *UserService) createSuccessResponse(userID string) map[string]interface{
 }
 
 func (s *UserService) createTempEmailForUser(userID string, UserEmail string) error {
-
 	parts := strings.Split(UserEmail, "@")
-
 	if len(parts) > 2 {
 		return fmt.Errorf("invalid email format")
 	}
-
 	tempMail := parts[0] + "@" + config.DOMAIN
-
 	tempModel := &model.UserTempEmail{UserId: userID, TemporaryEmail: tempMail}
-
 	if err := s.userRepo.CreateTempEmail(tempModel); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -282,32 +278,26 @@ func (s *UserService) createUserBasicPlan(userId uint) error {
 			tx.Rollback()
 		}
 	}()
-
 	basicPlan, err := s.findBasicPlan()
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to find basic plan: %w", err)
 	}
-
 	transactionId := uuid.New().String()
-
 	billing, err := s.createBilling(userId, basicPlan, transactionId)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to create billing: %w", err)
 	}
-
 	err = s.createSubscription(userId, basicPlan, transactionId, int(billing.ID))
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to create subscription: %w", err)
 	}
-
 	// Commit the transaction if everything is successful
 	if err := tx.Commit().Error; err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
-
 	return nil
 }
 
@@ -322,7 +312,6 @@ func (s *UserService) findBasicPlan() (*model.PlanResponse, error) {
 			return &plan, nil
 		}
 	}
-
 	return nil, ErrNoBasicPlan
 }
 
@@ -420,7 +409,6 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 	}
 
 	var userPass *string
-	// var googleId *string
 
 	if d.Password != "" {
 		userPass = user.Password
@@ -446,6 +434,96 @@ func (s *UserService) Login(d *dto.Login) (map[string]interface{}, error) {
 		"token":         token,
 		"details":       user,
 		"refresh_token": refreshToken,
+	}, nil
+}
+
+func (s *UserService) GoogleLogin(d *dto.User) (map[string]interface{}, error) {
+	user, err := s.userRepo.Login(&model.User{Email: strings.ToLower(d.Email), GoogleID: d.GoogleID})
+	if err != nil {
+		return nil, fmt.Errorf("error during login: %w", err)
+	}
+
+	if user.Blocked {
+		return nil, ErrBlocked
+	}
+
+	// Generate access token
+	token, err := utils.GenerateAccessToken(user.UUID, user.UUID, user.FullName, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
+	// Generate refresh token
+	refreshToken, err := utils.GenerateRefreshToken(user.UUID, user.UUID, user.FullName, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
+	return map[string]interface{}{
+		"status":        "login successful",
+		"token":         token,
+		"details":       user,
+		"refresh_token": refreshToken,
+	}, nil
+}
+
+func (s *UserService) CreateGoogleUser(d *dto.User) (map[string]interface{}, error) {
+	tx := s.userRepo.DB.Begin()
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			return
+		}
+	}()
+
+	// Reuse most of your existing CreateUser logic
+	userData, err := s.CreateUser(d)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// After successful creation, generate tokens
+	user, err := s.userRepo.Login(&model.User{Email: strings.ToLower(d.Email)})
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error fetching user after creation: %w", err)
+	}
+
+	if err := s.createUserBasicPlan(user.ID); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create basic plan: %w", err)
+	}
+
+	if err := s.createSMTPMasterKey(user.UUID, user.Email); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create key: %w", err)
+	}
+
+	if err := s.createSender(user.UUID); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to create sender: %w", err)
+	}
+
+	token, err := utils.GenerateAccessToken(user.UUID, user.UUID, user.FullName, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken(user.UUID, user.UUID, user.FullName, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGeneratingToken, err)
+	}
+
+	return map[string]interface{}{
+		"status":        "signup successful",
+		"token":         token,
+		"details":       user,
+		"refresh_token": refreshToken,
+		"user_data":     userData,
 	}, nil
 }
 

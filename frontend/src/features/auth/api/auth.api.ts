@@ -48,13 +48,11 @@ class AuthApi {
     async resetPassword(resetPasswordValues: ResetPasswordValues): Promise<APIResponse<ResponseT>> {
         const response = await axiosInstance.post("/user-reset-password", resetPasswordValues);
         return response.data;
-
     }
 
     async changePassword(changePasswordValues: ChangePasswordValues): Promise<APIResponse<ResponseT>> {
         const response = await axiosInstance.put("/change-user-password", changePasswordValues);
         return response.data;
-
     }
 
     async loginUser(loginValues: LoginValues): Promise<APIResponse<ResponseT>> {
@@ -65,13 +63,11 @@ class AuthApi {
     async getUserDetails(): Promise<APIResponse<UserDetails>> {
         const response = await axiosInstance.get<APIResponse<UserDetails>>("/get-user-details");
         return response.data;
-
     }
 
     async editUserDetails(editFormValues: EditFormValues): Promise<APIResponse<ResponseT>> {
         const response = await axiosInstance.put("/edit-user-details", editFormValues);
         return response.data;
-
     }
 
     async deleteUserAccount() {
@@ -81,6 +77,11 @@ class AuthApi {
 
     async cancelDeleteUserAccount() {
         const response = await axiosInstance.put("/cancel-delete")
+        return response.data
+    }
+
+    async getGoogleAuthLoginDetails(key: string): Promise<APIResponse<UserDetails>> {
+        const response = await axiosInstance.get("/google-login-details?key=" + key)
         return response.data
     }
 }

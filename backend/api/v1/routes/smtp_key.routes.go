@@ -12,7 +12,6 @@ type SMTPKeyRoute struct {
 
 func NewSMTPKeyRoute(db *gorm.DB) *SMTPKeyRoute {
 	return &SMTPKeyRoute{db: db}
-
 }
 
 func (ur *SMTPKeyRoute) InitRoutes(router *mux.Router) {

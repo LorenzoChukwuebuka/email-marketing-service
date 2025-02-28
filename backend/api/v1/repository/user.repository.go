@@ -24,9 +24,7 @@ const (
 )
 
 func (r *UserRepository) createUserResponse(user model.User) model.UserResponse {
-
 	htime := user.VerifiedAt.String()
-
 	response := model.UserResponse{
 		ID:          user.ID,
 		UUID:        user.UUID,
@@ -103,8 +101,14 @@ func (r *UserRepository) Login(d *model.User) (model.UserResponse, error) {
 		return model.UserResponse{}, fmt.Errorf("error querying database: %w", err)
 	}
 
-	userResponse := r.createUserResponse(user)
+	// Update only LastLoginAt
+	currentTime := time.Now()
+	if err := r.DB.Model(&user).Update("last_login_at", currentTime).Error; err != nil {
+		return model.UserResponse{}, fmt.Errorf("error updating last login time: %w", err)
+	}
 
+	user.LastLoginAt = &currentTime // Update the struct in memory
+	userResponse := r.createUserResponse(user)
 	return userResponse, nil
 }
 
@@ -326,7 +330,7 @@ func (r *UserRepository) PermanentlyDeleteUser(userId string) error {
 		UserID:           user.UUID,
 		Email:            user.Email,
 		FullName:         user.FullName,
-		Company:          user.Company,
+		Company:          *user.Company,
 		DeletedAt:        time.Now(),
 		AccountCreatedAt: user.CreatedAt,
 		VerifiedAt:       user.VerifiedAt,

@@ -33,11 +33,17 @@ func ConvertUserToUserResponse(user model.User) model.UserResponse {
 		deletedAt = user.DeletedAt.Time.Format(time.RFC3339)
 	}
 
+	company := ""
+
+	if user.Company != nil {
+		company = *user.Company
+	}
+
 	return model.UserResponse{
 		UUID:        user.UUID,
 		FullName:    user.FullName,
 		Email:       user.Email,
-		Company:     user.Company,
+		Company:     &company,
 		PhoneNumber: user.PhoneNumber,
 		Verified:    user.Verified,
 		Blocked:     user.Blocked,

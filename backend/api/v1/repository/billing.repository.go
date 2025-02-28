@@ -127,11 +127,17 @@ func mapBillingToResponse(billing model.Billing) model.BillingResponse {
 		User: func() *model.UserResponse {
 			if billing.User != nil {
 				return &model.UserResponse{
-					ID:          billing.User.ID,
-					UUID:        billing.User.UUID,
-					FullName:    billing.User.FullName,
-					Email:       billing.User.Email,
-					Company:     billing.User.Company,
+					ID:       billing.User.ID,
+					UUID:     billing.User.UUID,
+					FullName: billing.User.FullName,
+					Email:    billing.User.Email,
+					Company: func() *string {
+						if billing.User.Company != nil {
+							bcompany := billing.User.Company
+							return bcompany
+						}
+						return nil
+					}(),
 					PhoneNumber: billing.User.PhoneNumber,
 					Password: func() *string {
 						if billing.User != nil && billing.User.Password != nil {

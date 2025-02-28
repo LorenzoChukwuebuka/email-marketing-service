@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"fmt"
 	"encoding/json"
+	"email-marketing-service/api/v1/utils"
 )
 
 var (
@@ -15,6 +16,9 @@ var (
 	ErrForbidden    = errors.New("forbidden")
 	ErrBadRequest   = errors.New("bad request")
 	ErrConflict     = errors.New("conflict")
+	response = &utils.ApiResponse{}
+	config   = utils.LoadEnv()
+	key      = config.JWTKey
 )
 
 // Create a helper method to extract user ID from claims

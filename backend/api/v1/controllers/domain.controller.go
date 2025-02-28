@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+
 type DomainController struct {
 	DomainService *services.DomainService
 }

@@ -34,7 +34,7 @@ const LoginComponent: React.FC = () => {
 
     const handleGoogleLogin = () => {
         // Redirect to your backend's Google login endpoint
-        window.location.href = `${import.meta.env.VITE_API_URL}/google/login`;
+        window.location.href = `${import.meta.env.VITE_API_URL}/google/signup`;
 
     };
 

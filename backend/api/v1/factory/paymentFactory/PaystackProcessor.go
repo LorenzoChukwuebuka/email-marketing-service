@@ -59,13 +59,9 @@ func (c *PaystackPaymentProcessor) OpenDeposit(d *dto.BasePaymentModelData) (map
 }
 
 func (c *PaystackPaymentProcessor) ProcessDeposit(d *dto.BaseProcessPaymentModel) (*dto.BasePaymentResponse, error) {
-
 	url := fmt.Sprintf(api_base+"transaction/verify/%s", d.Reference)
-
 	//ctx := context.TODO()
-
 	client := resty.New()
-
 	resp, err := client.R().
 		SetHeader("Authorization", "Bearer "+key).
 		SetHeader("Accept", "application/json").
