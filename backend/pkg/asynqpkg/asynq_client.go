@@ -32,3 +32,17 @@ func GetClient() *asynq.Client {
 	}
 	return client
 }
+
+func GetRedisAddress() string {
+	if client == nil {
+		return DefaultRedisAddress
+	}
+	// You might need to add a field to store the current address
+	return DefaultRedisAddress
+}
+
+func NewInspector() *asynq.Inspector {
+	return asynq.NewInspector(asynq.RedisClientOpt{
+		Addr: GetRedisAddress(),
+	})
+}

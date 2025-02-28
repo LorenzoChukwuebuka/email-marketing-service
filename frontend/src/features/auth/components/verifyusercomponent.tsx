@@ -11,6 +11,8 @@ const VerifyAccountComponent: React.FC = () => {
     const { setOTPValue, verifyUser, isVerified, resendOTP } = useAuthStore();
     const [isLoading, setIsLoading] = useState(false);
 
+  
+
     const handleVerify = async () => {
         setIsLoading(true);
         const tokenFromURL = new URLSearchParams(window.location.search).get("token");

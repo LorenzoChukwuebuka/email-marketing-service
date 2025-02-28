@@ -35,6 +35,7 @@ type Config struct {
 	GOOGLE_CLIENT_SECRET              string `env:"GOOGLE_CLIENT_SECRET"`
 	GOOGLE_CLIENT_LOGIN_REDIRECT_URL  string `env:"GOOGLE_CLIENT_LOGIN_REDIRECT_URL"`
 	GOOGLE_CLIENT_SIGNUP_REDIRECT_URL string `env:"GOOGLE_CLIENT_SIGNUP_REDIRECT_URL"`
+	REDIS_PORT                        string `env:"REDIS_PORT"`
 }
 
 var LoadEnv = func() *Config {
@@ -45,34 +46,35 @@ var LoadEnv = func() *Config {
 	}
 
 	config := &Config{
-		DB_User:                          os.Getenv("DB_USER"),
-		DBPassword:                       os.Getenv("DB_PASSWORD"),
-		DBName:                           os.Getenv("DB_NAME"),
-		DBHost:                           os.Getenv("DB_HOST"),
-		DBPort:                           os.Getenv("DB_PORT"),
-		MailUsername:                     os.Getenv("MAIL_USERNAME"),
-		MailPassword:                     os.Getenv("MAIL_PASSWORD"),
-		JWTKey:                           os.Getenv("JWT_KEY"),
-		PaystackKey:                      os.Getenv("PAYSTACK_KEY"),
-		PaystackBaseURL:                  os.Getenv("PAYSTACK_BASE_URL"),
-		DB_URL:                           os.Getenv("DB_URL"),
-		APPName:                          os.Getenv("APP_NAME"),
-		PAYSTACK_CALLBACK_URL:            os.Getenv("PAYSTACK_CALLBACK_URL"),
-		ENC_KEY:                          os.Getenv("ENC_KEY"),
-		SMTP_SERVER:                      os.Getenv("SMTP_SERVER"),
-		SMTP_PORT:                        os.Getenv("SMTP_PORT"),
-		MAIL_PROCESSOR:                   os.Getenv("MAIL_PROCESSOR"),
-		ADMIN_EMAIL:                      os.Getenv("ADMIN_EMAIL"),
-		ADMIN_PASSWORD:                   os.Getenv("ADMIN_PASSWORD"),
-		SERVER_URL:                       os.Getenv("SERVER_URL"),
-		SLACK_WEBHOOK_URL:                os.Getenv("SLACK_WEBHOOK_URL"),
-		DOMAIN:                           os.Getenv("DOMAIN"),
-		FRONTEND_URL:                     os.Getenv("FRONTEND_URL"),
-		SENDER:                           os.Getenv("SENDER"),
-		GOOGLE_CLIENT_ID:                 os.Getenv("GOOGLE_CLIENT_ID"),
-		GOOGLE_CLIENT_SECRET:             os.Getenv("GOOGLE_CLIENT_SECRET"),
-		GOOGLE_CLIENT_LOGIN_REDIRECT_URL: os.Getenv("GOOGLE_CLIENT_LOGIN_REDIRECT_URL"),
+		DB_User:                           os.Getenv("DB_USER"),
+		DBPassword:                        os.Getenv("DB_PASSWORD"),
+		DBName:                            os.Getenv("DB_NAME"),
+		DBHost:                            os.Getenv("DB_HOST"),
+		DBPort:                            os.Getenv("DB_PORT"),
+		MailUsername:                      os.Getenv("MAIL_USERNAME"),
+		MailPassword:                      os.Getenv("MAIL_PASSWORD"),
+		JWTKey:                            os.Getenv("JWT_KEY"),
+		PaystackKey:                       os.Getenv("PAYSTACK_KEY"),
+		PaystackBaseURL:                   os.Getenv("PAYSTACK_BASE_URL"),
+		DB_URL:                            os.Getenv("DB_URL"),
+		APPName:                           os.Getenv("APP_NAME"),
+		PAYSTACK_CALLBACK_URL:             os.Getenv("PAYSTACK_CALLBACK_URL"),
+		ENC_KEY:                           os.Getenv("ENC_KEY"),
+		SMTP_SERVER:                       os.Getenv("SMTP_SERVER"),
+		SMTP_PORT:                         os.Getenv("SMTP_PORT"),
+		MAIL_PROCESSOR:                    os.Getenv("MAIL_PROCESSOR"),
+		ADMIN_EMAIL:                       os.Getenv("ADMIN_EMAIL"),
+		ADMIN_PASSWORD:                    os.Getenv("ADMIN_PASSWORD"),
+		SERVER_URL:                        os.Getenv("SERVER_URL"),
+		SLACK_WEBHOOK_URL:                 os.Getenv("SLACK_WEBHOOK_URL"),
+		DOMAIN:                            os.Getenv("DOMAIN"),
+		FRONTEND_URL:                      os.Getenv("FRONTEND_URL"),
+		SENDER:                            os.Getenv("SENDER"),
+		GOOGLE_CLIENT_ID:                  os.Getenv("GOOGLE_CLIENT_ID"),
+		GOOGLE_CLIENT_SECRET:              os.Getenv("GOOGLE_CLIENT_SECRET"),
+		GOOGLE_CLIENT_LOGIN_REDIRECT_URL:  os.Getenv("GOOGLE_CLIENT_LOGIN_REDIRECT_URL"),
 		GOOGLE_CLIENT_SIGNUP_REDIRECT_URL: os.Getenv("GOOGLE_CLIENT_SIGNUP_REDIRECT_URL"),
+		REDIS_PORT:                        os.Getenv("REDIS_PORT"),
 	}
 
 	return config

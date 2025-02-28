@@ -5,60 +5,44 @@ import (
 	"email-marketing-service/api/v1/model"
 	"email-marketing-service/api/v1/services"
 	"email-marketing-service/api/v1/utils"
+	"email-marketing-service/internals/workers/payloads"
+	"email-marketing-service/internals/workers/tasks"
+	"email-marketing-service/pkg/asynqpkg"
 	"encoding/json"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"github.com/hibiken/asynq"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
-
-var (
-	config   = utils.LoadEnv()
-	key      = config.JWTKey
-	response = &utils.ApiResponse{}
-)
-
-// Define at package level
-var loginOauthConfig *oauth2.Config
-var signupOauthConfig *oauth2.Config
-
-// Initialize in init() function
-func init() {
-	loginOauthConfig = &oauth2.Config{
-		ClientID:     config.GOOGLE_CLIENT_ID,
-		ClientSecret: config.GOOGLE_CLIENT_SECRET,
-		RedirectURL:  config.GOOGLE_CLIENT_LOGIN_REDIRECT_URL,
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
-			"https://www.googleapis.com/auth/userinfo.profile",
-		},
-		Endpoint: google.Endpoint,
-	}
-
-	signupOauthConfig = &oauth2.Config{
-		ClientID:     config.GOOGLE_CLIENT_ID,
-		ClientSecret: config.GOOGLE_CLIENT_SECRET,
-		RedirectURL:  config.GOOGLE_CLIENT_SIGNUP_REDIRECT_URL,
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
-			"https://www.googleapis.com/auth/userinfo.profile",
-		},
-		Endpoint: google.Endpoint,
-	}
-
-}
 
 type UserController struct {
 	userService *services.UserService
+	loginAuth   *utils.GoogleAuthConfig
+	signupAuth  *utils.GoogleAuthConfig
+	client      *asynq.Client
 }
 
 func NewUserController(userService *services.UserService) *UserController {
+	loginAuth := utils.NewGoogleAuth(
+		utils.WithClientID(config.GOOGLE_CLIENT_ID),
+		utils.WithClientSecret(config.GOOGLE_CLIENT_SECRET),
+		utils.WithRedirectURL(config.GOOGLE_CLIENT_LOGIN_REDIRECT_URL),
+	)
+	signupAuth := utils.NewGoogleAuth(
+		utils.WithClientID(config.GOOGLE_CLIENT_ID),
+		utils.WithClientSecret(config.GOOGLE_CLIENT_SECRET),
+		utils.WithRedirectURL(config.GOOGLE_CLIENT_SIGNUP_REDIRECT_URL),
+	)
+
+	client := asynqpkg.GetClient()
+
 	return &UserController{
 		userService: userService,
+		loginAuth:   loginAuth,
+		signupAuth:  signupAuth,
+		client:      client,
 	}
 }
 
@@ -216,14 +200,11 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 		response.ErrorResponse(w, "unable to decode request body")
 		return
 	}
-
 	reqdata.UUID = userId
-
 	if err := c.userService.EditUser(reqdata); err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, "User edited successfully")
 }
 
@@ -233,13 +214,11 @@ func (c *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) 
 		HandleControllerError(w, err)
 		return
 	}
-
 	result, err := c.userService.GetUserDetails(userId)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
@@ -249,13 +228,11 @@ func (c *UserController) GetUserSubscription(w http.ResponseWriter, r *http.Requ
 		HandleControllerError(w, err)
 		return
 	}
-
 	result, err := c.userService.GetUserCurrentRunningSubscriptionWithMailsRemaining(userId)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, result)
 }
 
@@ -320,13 +297,11 @@ func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request
 		HandleControllerError(w, err)
 		return
 	}
-
 	err = c.userService.UpdateReadStatus(userId)
 	if err != nil {
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 	response.SuccessResponse(w, 200, "notifications updated")
 }
 
@@ -340,7 +315,6 @@ func (c *UserController) MarkUserForDeletion(w http.ResponseWriter, r *http.Requ
 		response.ErrorResponse(w, err.Error())
 		return
 	}
-
 }
 
 func (c *UserController) CancelUserDeletion(w http.ResponseWriter, r *http.Request) {
@@ -383,112 +357,28 @@ func (c *UserController) RefreshTokenHandler(w http.ResponseWriter, r *http.Requ
 	response.SuccessResponse(w, 200, res)
 }
 
-func (c *UserController) GoogleSignup(w http.ResponseWriter, r *http.Request) {
-	state := utils.GenerateRandomState()
-	// Generate the Google OAuth2 URL and redirect to it
-	authURL := loginOauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
-	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
-}
-
-func (c *UserController) GoogleSignUpCallback(w http.ResponseWriter, r *http.Request) {
-	// Get the code from the callback
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Code not found", http.StatusBadRequest)
-		return
-	}
-
-	// Exchange the code for a token
-	token, err := signupOauthConfig.Exchange(r.Context(), code)
-	if err != nil {
-		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Get user info
-	client := signupOauthConfig.Client(r.Context(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
-	if err != nil {
-		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	userData := struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		Name          string `json:"name"`
-		VerifiedEmail bool   `json:"verified_email"`
-	}{}
-
-	if err := json.NewDecoder(resp.Body).Decode(&userData); err != nil {
-		http.Error(w, "Failed to decode user data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	userDto := &dto.User{
-		FullName: userData.Name,
-		Email:    userData.Email,
-		GoogleID: userData.ID,
-	}
-
-	_, err = c.userService.CreateUser(userDto)
-
-	if err != nil {
-		log.Printf("User creation error: %v", err)
-		http.Error(w, "error signing up", http.StatusInternalServerError)
-		return
-	}
-
-	redirectURL := fmt.Sprintf("%sauth/signup/callback", config.FRONTEND_URL)
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+func (c *UserController) GetClient() *asynq.Client {
+	return c.client
 }
 
 func (c *UserController) GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	// Generate the Google OAuth2 URL and redirect to it
 	state := utils.GenerateRandomState()
-	authURL := loginOauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	authURL := c.loginAuth.GetAuthURL(state)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
-// GoogleCallback handles the Google OAuth callback
 func (c *UserController) GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	// Get the code from the callback
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Code not found", http.StatusBadRequest)
 		return
 	}
 
-	// Exchange the code for a token
-	token, err := loginOauthConfig.Exchange(r.Context(), code)
+	userData, err := c.loginAuth.GetUserData(r.Context(), code)
 	if err != nil {
-		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// Get user info
-	client := loginOauthConfig.Client(r.Context(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
-	if err != nil {
-		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	userData := struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		Name          string `json:"name"`
-		VerifiedEmail bool   `json:"verified_email"`
-	}{}
-
-	if err := json.NewDecoder(resp.Body).Decode(&userData); err != nil {
-		http.Error(w, "Failed to decode user data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	print(userData.ID)
 
 	// Generate JWT token
 	jwtToken, err := utils.GenerateAccessToken(
@@ -503,6 +393,112 @@ func (c *UserController) GoogleCallback(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Redirect to frontend with the token
-	redirectURL := fmt.Sprintf("%sauth/callback?token=%s", config.FRONTEND_URL, jwtToken)
+	redirectURL := fmt.Sprintf("%sauth/callback?token=%s&type=%s", config.FRONTEND_URL, jwtToken, "login")
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+}
+
+func (c *UserController) GoogleSignup(w http.ResponseWriter, r *http.Request) {
+	state := utils.GenerateRandomState()
+	authURL := c.signupAuth.GetAuthURL(state)
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+func (c *UserController) GoogleSignUpCallback(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Code not found", http.StatusBadRequest)
+		return
+	}
+
+	userData, err := c.signupAuth.GetUserData(r.Context(), code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userDto := &dto.User{
+		FullName: userData.Name,
+		Email:    userData.Email,
+		GoogleID: userData.ID,
+	}
+
+	// First try to login if user exists
+	loginData, err := c.userService.GoogleLogin(userDto)
+	if err == nil {
+		//save the user details in the asynq store this will come in handy when we get to the FE
+
+		// Store user details in Asynq with expiration
+		userResponse := loginData["details"].(model.UserResponse)
+		task, err := tasks.NewStoreUserDetailsTask(utils.ToMap(userResponse))
+		if err != nil {
+			http.Error(w, "Error creating task", http.StatusInternalServerError)
+			return
+		}
+
+		// Store with 5 minute expiration
+		info, err := c.client.Enqueue(task,
+			asynq.Queue("user_details"),
+			asynq.Timeout(5*time.Minute),
+			asynq.Retention(5*time.Minute),
+		)
+
+		if err != nil {
+			http.Error(w, "Error storing details", http.StatusInternalServerError)
+			return
+		}
+
+		// User exists, return login data
+		redirectURL := fmt.Sprintf("%sauth/callback?type=login&token=%s&refresh_token=%s&details_key=%s",
+			config.FRONTEND_URL,
+			loginData["token"],
+			loginData["refresh_token"],
+			info.ID) // Using task ID as the key
+		http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// If user doesn't exist, create new user and return login data
+	signupData, err := c.userService.CreateGoogleUser(userDto)
+	if err != nil {
+		http.Error(w, "error signing up: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	redirectURL := fmt.Sprintf("%sauth/callback?type=signup&token=%s&refresh_token=%s",
+		config.FRONTEND_URL,
+		signupData["token"],
+		signupData["refresh_token"])
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+}
+
+func (c *UserController) GetLoginDetails(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		response.ErrorResponse(w, "No details key provided")
+		return
+	}
+
+	// Create inspector using the same Redis connection as your client
+	inspector := asynq.NewInspector(asynq.RedisClientOpt{
+		Addr: config.REDIS_PORT,
+	})
+
+	taskInfo, err := inspector.GetTaskInfo("user_details", key)
+	if err != nil {
+		response.ErrorResponse(w, "Details not found or expired")
+		return
+	}
+
+	var payload payloads.UserDetailsPayload
+	if err := json.Unmarshal(taskInfo.Payload, &payload); err != nil {
+		response.ErrorResponse(w, "Error decoding details")
+		return
+	}
+
+	// Delete the task after fetching
+	if err := inspector.DeleteTask("user_details", key); err != nil {
+		log.Printf("Error deleting task: %v", err)
+	}
+
+	response.SuccessResponse(w, http.StatusOK, payload.Details)
 }

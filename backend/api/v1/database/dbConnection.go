@@ -1,16 +1,17 @@
 package database
 
 import (
+	//"email-marketing-service/api/v1/migrations"
 	"email-marketing-service/api/v1/model"
 	adminmodel "email-marketing-service/api/v1/model/admin"
 	"email-marketing-service/api/v1/utils"
 	"fmt"
+	"log"
+	"sync"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
-	"sync"
 )
 
 var (
@@ -43,6 +44,12 @@ func initializeDatabase() {
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";").Error; err != nil {
 		log.Fatal(err)
 	}
+
+	// // Run migrations before auto-migrating models
+	// if err := migrations.RunMigrations(db); err != nil {
+	// 	log.Fatalf("Failed to run migrations: %v", err)
+	// }
+
 	autoMigrateModels()
 	log.Println("Connected to the database")
 	seedData(db)
@@ -86,6 +93,7 @@ func autoMigrateModels() {
 		&adminmodel.AdminNotification{},
 		&adminmodel.AdminMailLog{},
 		&adminmodel.SystemsSMTPSetting{},
+		&model.MigrationHistory{},
 	)
 
 	if err != nil {

@@ -7,4 +7,5 @@ const (
 	TaskSendUserNotification  = "usernotification:send"
 	TaskSendAdminNotification = "adminnotifcation:send"
 	TaskSendEmail             = "email:send"
+	TaskUserDetails           = "user:store_details"
 )

@@ -16,8 +16,7 @@ interface CookieData {
 const UserDashIndexTemplate: React.FC = () => {
     const [userName, setUserName] = useState<string>("");
     const navigate = useNavigate();
-    const { data: mailData } = useMailCalcQuery()
-
+    const { data: mailData } = useMailCalcQuery();
 
     useEffect(() => {
         const cookie = Cookies.get("Cookies");
@@ -34,43 +33,39 @@ const UserDashIndexTemplate: React.FC = () => {
     const handleSendCampaign = () => navigate('/app/campaign');
     const handleCreateContact = () => navigate('/app/contacts');
     const handleCreateEmailTemplate = () => navigate('/app/templates');
-    const handleUpgrade = () => navigate('/app/billing')
+    const handleUpgrade = () => navigate('/app/billing');
 
     return (
-        <>
-            <div className=" mt-2 p-6 flex items-center">
-                <h2 className="text-2xl font-bold mb-2">
+        <div className="mt-2 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">
                     Welcome {userName}
-                    <span>
-                        {mailData?.payload?.plan?.toLowerCase() === 'free' ? (
-                            <>
-                                <button
-                                    className="ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors"
-                                    onClick={handleUpgrade}
-                                >
-                                    Upgrade
-                                </button>
-                            </>
-                        ) : (
-                            <span className="ml-2 text-sm font-normal text-gray-600">
-
-                            </span>
-                        )}
-                    </span>
+                    {mailData?.payload?.plan?.toLowerCase() === 'free' && (
+                        <button
+                            className="ml-2 sm:ml-4 px-3 py-1 text-sm text-blue-700 border-blue-700 border rounded-md transition-colors hover:bg-blue-700 hover:text-white"
+                            onClick={handleUpgrade}
+                        >
+                            Upgrade
+                        </button>
+                    )}
                 </h2>
-
-                <div className="ml-auto space-x-2 text-blue-700 font-semibold ">
-                    <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleSendCampaign}> Create Campaign <i className="bi bi-arrow-up-right-square"></i> </span>
-                    <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateContact}> Add Contact <i className="bi bi-arrow-up-right-square"></i> </span>
-                    <span className=" p-4 w-1/3 mr-4 transition-transform transform hover:scale-105 cursor-pointer hover:shadow-lg" onClick={handleCreateEmailTemplate}> Create Template <i className="bi bi-arrow-up-right-square"></i> </span>
+                <div className="flex flex-wrap justify-center sm:justify-end gap-2 mt-4 sm:mt-0">
+                    <button className="px-4 py-2 text-sm text-blue-700 font-semibold border border-blue-700 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg" onClick={handleSendCampaign}>
+                        Create Campaign <i className="bi bi-arrow-up-right-square"></i>
+                    </button>
+                    <button className="px-4 py-2 text-sm text-blue-700 font-semibold border border-blue-700 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg" onClick={handleCreateContact}>
+                        Add Contact <i className="bi bi-arrow-up-right-square"></i>
+                    </button>
+                    <button className="px-4 py-2 text-sm text-blue-700 font-semibold border border-blue-700 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg" onClick={handleCreateEmailTemplate}>
+                        Create Template <i className="bi bi-arrow-up-right-square"></i>
+                    </button>
                 </div>
             </div>
 
             <RecentCampaigns />
-            <ContactsDashboard/>
-            <OverviewStats/>
-        </>
-
+            <ContactsDashboard />
+            <OverviewStats />
+        </div>
     );
 };
 
