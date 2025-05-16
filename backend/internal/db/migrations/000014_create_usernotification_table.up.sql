@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS user_notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    read_status BOOLEAN NOT NULL DEFAULT FALSE,
+    additional_field TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

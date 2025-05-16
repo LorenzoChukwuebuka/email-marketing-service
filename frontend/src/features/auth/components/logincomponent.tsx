@@ -32,6 +32,7 @@ const LoginComponent: React.FC = () => {
         }
     };
 
+    //@ts-ignore
     const handleGoogleLogin = () => {
         // Redirect to your backend's Google login endpoint
         window.location.href = `${import.meta.env.VITE_API_URL}/google/signup`;
@@ -110,7 +111,7 @@ const LoginComponent: React.FC = () => {
                             </div>
                         </div>
 
-                        <Button
+                        {/* <Button
                             onClick={() => handleGoogleLogin()}
                             className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 mb-4"
                         >
@@ -133,7 +134,7 @@ const LoginComponent: React.FC = () => {
                                 />
                             </svg>
                             Sign in with Google
-                        </Button>
+                        </Button> */}
 
                     </Form>
 

@@ -6,22 +6,17 @@ COPY . ./
 RUN npm install
 RUN npm run build
 
-# Stage 2: Serve frontend using Nginx
-FROM nginx:alpine
+# Stage 2: Serve the frontend with a lightweight server
+FROM node:18-alpine
 
-WORKDIR /root/
-
-# Install bash and nano
-RUN apk update && apk add bash nano
+WORKDIR /app
+RUN npm install -g serve
 
 # Copy the frontend build from the builder stage
-COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
+COPY --from=frontend-builder /app/frontend/dist /app/dist
 
-# Copy Nginx configuration
-COPY ./../config/nginx.conf /etc/nginx/nginx.conf
+# Expose port
+EXPOSE 6000
 
-# Expose Nginx port
-EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start serve
+CMD ["serve", "-s", "dist", "-l", "6000"]

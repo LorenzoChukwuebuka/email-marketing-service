@@ -22,17 +22,13 @@ const SignUpComponent: React.FC = () => {
             form.resetFields();
         }
     };
-
+//@ts-ignore
     const handleGoogleSignUp = () => {
         window.location.href = `${import.meta.env.VITE_API_URL}/google/signup`;
     }
 
     return (
         <main className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-
-
-
-
             <div className="py-4">
                 <h1 className="text-center text-3xl font-bold">{renderApiName()}</h1>
             </div>
@@ -134,17 +130,21 @@ const SignUpComponent: React.FC = () => {
                         </Form.Item>
                     </Form>
 
-                    
-            <div className="relative mb-4">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-            </div>
 
-            <Button
+                    <div className="relative mb-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                        </div>
+                    </div>
+
+                    {/** TODO 
+             * uncomment the google auth login and sign up
+             */}
+
+                    {/* <Button
                 onClick={() => handleGoogleSignUp()}
                 className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 mb-4"
             >
@@ -167,7 +167,7 @@ const SignUpComponent: React.FC = () => {
                     />
                 </svg>
                 Sign up with Google
-            </Button>
+            </Button> */}
 
                     <div className="mt-2 text-center text-sm text-gray-600">
                         By signing up, you agree to our{" "}
