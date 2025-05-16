@@ -60,4 +60,4 @@ docker-restart:
 	$(MAKE) docker
 
 docker-dev:
-	docker-compose -f docker-compose.dev.yaml up --build -d
+	docker-compose -f compose.dev.yaml up --build -d

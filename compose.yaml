@@ -1,5 +1,4 @@
 services:
-  
   nginx:
     container_name: frontend
     build:
@@ -46,6 +45,26 @@ services:
       - NET_BIND_SERVICE
     privileged: true # Consider removing if possible for security
 
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   app-network:
     driver: bridge
@@ -58,4 +77,6 @@ volumes:
   uploads:
     driver: local
   templates:
+    driver: local
+  postgres_data:
     driver: local
