@@ -20,11 +20,11 @@ CREATE TABLE IF NOT EXISTS domains (
 );
 
 -- Index on the primary key is often automatically created, but explicitly defining doesn't hurt
-CREATE INDEX idx_domains_id ON domains (id);
+CREATE INDEX IF NOT EXISTS idx_domains_id ON domains (id);
 
-CREATE INDEX idx_domains_user_id ON domains (user_id);
+CREATE INDEX IF NOT EXISTS idx_domains_user_id ON domains (user_id);
 
-CREATE INDEX idx_domains_domain ON domains (domain);
+CREATE INDEX IF NOT EXISTS idx_domains_domain ON domains (domain);
 
 
 -- Corrected senders table definition
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS senders (
 );
 
 -- Index on the primary key is often automatically created, but explicitly defining doesn't hurt
-CREATE INDEX idx_senders_id ON senders (id);
+CREATE INDEX IF NOT EXISTS idx_senders_id ON senders (id);
 
-CREATE INDEX idx_senders_user_id ON senders (user_id);
+CREATE INDEX IF NOT EXISTS idx_senders_user_id ON senders (user_id);
 
-CREATE INDEX idx_senders_domain_id ON senders (domain_id);
+CREATE INDEX IF NOT EXISTS idx_senders_domain_id ON senders (domain_id);

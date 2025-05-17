@@ -3,7 +3,8 @@ package server
 import (
 	"context"
 	"email-marketing-service/core/middleware"
-	// "email-marketing-service/internal/config"
+	"email-marketing-service/core/routes"
+	"email-marketing-service/internal/config"
 	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -27,6 +28,10 @@ func NewServer(db db.Store) *Server {
 		db:     db,
 	}
 }
+
+var (
+	cfg = config.LoadEnv()
+)
 
 func (s *Server) setupLogger() (*os.File, error) {
 	logFile, err := os.OpenFile("logs/requests.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -54,43 +59,14 @@ func (s *Server) setupRoutes() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	}).Methods(http.MethodGet)
-	// routeMap := map[string]routes.RouteInterface{
-	// 	"":               routes.NewAuthRoute(s.db),
-	// 	"admin":          routes.NewAdminRoute(s.db),
-	// 	"templates":      routes.NewTemplateRoute(s.db),
-	// 	"contact":        routes.NewContactRoute(s.db),
-	// 	"smtpkey":        routes.NewSMTPKeyRoute(s.db),
-	// 	"apikey":         routes.NewAPIKeyRoute(s.db),
-	// 	"campaigns":      routes.NewCampaignRoute(s.db),
-	// 	"domain":         routes.NewDomainRoute(s.db),
-	// 	"sender":         routes.NewSenderRoute(s.db),
-	// 	"transaction":    routes.NewTransactionRoute(s.db),
-	// 	"support":        routes.NewSupportRoute(s.db),
-	// 	"admin/users":    routes.NewAdminUsersRoute(s.db),
-	// 	"admin/support":  routes.NewAdminSupportRoute(s.db),
-	// 	"admin/campaign": routes.NewAdminCampaignRoute(s.db),
-	// 	"system":         routes.NewSystemRoute(s.db),
-	// }
 
-	// for path, route := range routeMap {
-	// 	route.InitRoutes(apiV1Router.PathPrefix("/" + path).Subrouter())
-	// }
+	routeMap := map[string]routes.RouteInterface{
+		"auth": routes.NewAuthRoute(s.db),
+	}
 
-	// Route groups
-	// routes.NewAuthRoute(s.db).InitRoutes(apiV1.PathPrefix("/auth").Subrouter())
-	// routes.NewAdminRoute(s.db).InitRoutes(apiV1.PathPrefix("/admin").Subrouter())
-	// routes.NewCampaignRoute(s.db).InitRoutes(apiV1.PathPrefix("/campaigns").Subrouter())
-	// routes.NewContactRoute(s.db).InitRoutes(apiV1.PathPrefix("/contact").Subrouter())
-	// routes.NewSMTPKeyRoute(s.db).InitRoutes(apiV1.PathPrefix("/smtpkey").Subrouter())
-	// routes.NewAPIKeyRoute(s.db).InitRoutes(apiV1.PathPrefix("/apikey").Subrouter())
-	// routes.NewDomainRoute(s.db).InitRoutes(apiV1.PathPrefix("/domain").Subrouter())
-	// routes.NewSenderRoute(s.db).InitRoutes(apiV1.PathPrefix("/sender").Subrouter())
-	// routes.NewTransactionRoute(s.db).InitRoutes(apiV1.PathPrefix("/transaction").Subrouter())
-	// routes.NewSupportRoute(s.db).InitRoutes(apiV1.PathPrefix("/support").Subrouter())
-	// routes.NewAdminUsersRoute(s.db).InitRoutes(apiV1.PathPrefix("/admin/users").Subrouter())
-	// routes.NewAdminSupportRoute(s.db).InitRoutes(apiV1.PathPrefix("/admin/support").Subrouter())
-	// routes.NewAdminCampaignRoute(s.db).InitRoutes(apiV1.PathPrefix("/admin/campaign").Subrouter())
-	// routes.NewSystemRoute(s.db).InitRoutes(apiV1.PathPrefix("/system").Subrouter())
+	for path, route := range routeMap {
+		route.InitRoutes(apiV1.PathPrefix("/" + path).Subrouter())
+	}
 
 	uploadsDir := filepath.Join(".", "uploads", "tickets")
 	s.router.PathPrefix("/uploads/tickets/").Handler(http.StripPrefix("/uploads/tickets/", http.FileServer(http.Dir(uploadsDir))))
@@ -142,7 +118,7 @@ func (s *Server) Start() {
 	// }()
 
 	server := &http.Server{
-		Addr:         ":9000",
+		Addr:         cfg.APP_PORT,
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
@@ -150,7 +126,7 @@ func (s *Server) Start() {
 	}
 
 	go func() {
-		log.Println("Server started on port 9000")
+		log.Println("Server started on port " + cfg.APP_PORT)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe: %v", err)
 		}

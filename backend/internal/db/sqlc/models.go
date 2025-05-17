@@ -174,22 +174,30 @@ type Otp struct {
 	CreatedAt sql.NullTime `json:"created_at"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
 }
 
 type Payment struct {
-	ID             uuid.UUID       `json:"id"`
-	CompanyID      uuid.UUID       `json:"company_id"`
-	UserID         uuid.UUID       `json:"user_id"`
-	SubscriptionID uuid.UUID       `json:"subscription_id"`
-	PaymentID      sql.NullString  `json:"payment_id"`
-	Amount         decimal.Decimal `json:"amount"`
-	Currency       sql.NullString  `json:"currency"`
-	PaymentMethod  sql.NullString  `json:"payment_method"`
-	Status         sql.NullString  `json:"status"`
-	Notes          sql.NullString  `json:"notes"`
-	CreatedAt      sql.NullTime    `json:"created_at"`
-	UpdatedAt      sql.NullTime    `json:"updated_at"`
-	DeletedAt      sql.NullTime    `json:"deleted_at"`
+	ID                   uuid.UUID       `json:"id"`
+	CompanyID            uuid.UUID       `json:"company_id"`
+	UserID               uuid.UUID       `json:"user_id"`
+	SubscriptionID       uuid.UUID       `json:"subscription_id"`
+	PaymentID            sql.NullString  `json:"payment_id"`
+	Amount               decimal.Decimal `json:"amount"`
+	Currency             sql.NullString  `json:"currency"`
+	PaymentMethod        sql.NullString  `json:"payment_method"`
+	Status               sql.NullString  `json:"status"`
+	Notes                sql.NullString  `json:"notes"`
+	CreatedAt            sql.NullTime    `json:"created_at"`
+	UpdatedAt            sql.NullTime    `json:"updated_at"`
+	DeletedAt            sql.NullTime    `json:"deleted_at"`
+	TransactionReference sql.NullString  `json:"transaction_reference"`
+	PaymentDate          sql.NullTime    `json:"payment_date"`
+	BillingPeriodStart   sql.NullTime    `json:"billing_period_start"`
+	BillingPeriodEnd     sql.NullTime    `json:"billing_period_end"`
+	RefundedAmount       decimal.Decimal `json:"refunded_amount"`
+	IntegrityHash        sql.NullString  `json:"integrity_hash"`
+	RefundDate           sql.NullTime    `json:"refund_date"`
 }
 
 type Plan struct {
@@ -267,19 +275,24 @@ type SmtpMasterKey struct {
 }
 
 type Subscription struct {
-	ID            uuid.UUID       `json:"id"`
-	CompanyID     uuid.UUID       `json:"company_id"`
-	PlanID        uuid.UUID       `json:"plan_id"`
-	Amount        decimal.Decimal `json:"amount"`
-	BillingCycle  sql.NullString  `json:"billing_cycle"`
-	TrialStartsAt sql.NullTime    `json:"trial_starts_at"`
-	TrialEndsAt   sql.NullTime    `json:"trial_ends_at"`
-	StartsAt      sql.NullTime    `json:"starts_at"`
-	EndsAt        sql.NullTime    `json:"ends_at"`
-	Status        sql.NullString  `json:"status"`
-	CreatedAt     sql.NullTime    `json:"created_at"`
-	UpdatedAt     sql.NullTime    `json:"updated_at"`
-	DeletedAt     sql.NullTime    `json:"deleted_at"`
+	ID                 uuid.UUID       `json:"id"`
+	CompanyID          uuid.UUID       `json:"company_id"`
+	PlanID             uuid.UUID       `json:"plan_id"`
+	Amount             decimal.Decimal `json:"amount"`
+	BillingCycle       sql.NullString  `json:"billing_cycle"`
+	TrialStartsAt      sql.NullTime    `json:"trial_starts_at"`
+	TrialEndsAt        sql.NullTime    `json:"trial_ends_at"`
+	StartsAt           sql.NullTime    `json:"starts_at"`
+	EndsAt             sql.NullTime    `json:"ends_at"`
+	Status             sql.NullString  `json:"status"`
+	CreatedAt          sql.NullTime    `json:"created_at"`
+	UpdatedAt          sql.NullTime    `json:"updated_at"`
+	DeletedAt          sql.NullTime    `json:"deleted_at"`
+	NextBillingDate    sql.NullTime    `json:"next_billing_date"`
+	PaymentMethodID    uuid.NullUUID   `json:"payment_method_id"`
+	AutoRenew          sql.NullBool    `json:"auto_renew"`
+	CancellationReason sql.NullString  `json:"cancellation_reason"`
+	LastPaymentDate    sql.NullTime    `json:"last_payment_date"`
 }
 
 type SubscriptionUsage struct {
@@ -309,6 +322,22 @@ type SupportTicket struct {
 	LastReply    sql.NullTime   `json:"last_reply"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
+type SystemsSmtpSetting struct {
+	ID             uuid.UUID      `json:"id"`
+	CreatedAt      sql.NullTime   `json:"created_at"`
+	UpdatedAt      sql.NullTime   `json:"updated_at"`
+	DeletedAt      sql.NullTime   `json:"deleted_at"`
+	TxtRecord      sql.NullString `json:"txt_record"`
+	DmarcRecord    sql.NullString `json:"dmarc_record"`
+	DkimSelector   sql.NullString `json:"dkim_selector"`
+	DkimPublicKey  sql.NullString `json:"dkim_public_key"`
+	DkimPrivateKey sql.NullString `json:"dkim_private_key"`
+	SpfRecord      sql.NullString `json:"spf_record"`
+	Verified       sql.NullBool   `json:"verified"`
+	MxRecord       sql.NullString `json:"mx_record"`
+	Domain         sql.NullString `json:"domain"`
 }
 
 type Template struct {

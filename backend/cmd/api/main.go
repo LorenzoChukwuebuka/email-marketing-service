@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"email-marketing-service/core/server"
 	"email-marketing-service/internal/config"
+	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
-	"log"
-
 	_ "github.com/lib/pq"
+	"log"
+	"time"
 )
 
 var (
@@ -40,6 +42,11 @@ func main() {
 	store := db.NewStore(conn)
 
 	server := server.NewServer(store)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	seeders.SeedPlans(ctx, store)
 
 	server.Start()
 

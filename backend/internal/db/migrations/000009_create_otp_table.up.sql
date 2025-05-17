@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS otps (
     deleted_at TIMESTAMP
 );
 
-CREATE INDEX idx_otps_uuid ON otps (id);
+CREATE INDEX IF NOT EXISTS idx_otps_uuid ON otps (id);
 
-CREATE INDEX idx_otps_user_id ON otps (user_id);
+CREATE INDEX IF NOT EXISTS idx_otps_user_id ON otps (user_id);

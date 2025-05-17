@@ -42,12 +42,10 @@ CREATE TABLE IF NOT EXISTS user_contact_groups (
     CONSTRAINT fk_ucg_contact FOREIGN KEY (contact_id) REFERENCES contacts (id) ON DELETE CASCADE
 );
 
--- Corrected contact_groups table definition
-CREATE INDEX idx_contact_groups_id ON contact_groups (id);
+CREATE INDEX IF NOT EXISTS idx_contact_groups_id ON contact_groups (id);
 
-CREATE INDEX idx_user_contact_groups_id ON user_contact_groups (id);
+CREATE INDEX IF NOT EXISTS idx_user_contact_groups_id ON user_contact_groups (id);
 
--- These indexes were already correct
-CREATE INDEX idx_ucg_contact_group_id ON user_contact_groups (contact_group_id);
+CREATE INDEX IF NOT EXISTS idx_ucg_contact_group_id ON user_contact_groups (contact_group_id);
 
-CREATE INDEX idx_ucg_contact_id ON user_contact_groups (contact_id);
+CREATE INDEX IF NOT EXISTS idx_ucg_contact_id ON user_contact_groups (contact_id);

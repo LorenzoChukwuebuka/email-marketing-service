@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS templates (
 );
 
 -- Index on the primary key is often automatically created, but explicitly defining doesn't hurt
-CREATE INDEX idx_templates_id ON templates (id);
+CREATE INDEX IF NOT EXISTS idx_templates_id ON templates (id);
 
-CREATE INDEX idx_templates_user_id ON templates (user_id);
+CREATE INDEX IF NOT EXISTS idx_templates_user_id ON templates (user_id);
 
-CREATE INDEX idx_templates_type ON templates(type);
+CREATE INDEX IF NOT EXISTS idx_templates_type ON templates(type);

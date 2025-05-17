@@ -23,14 +23,8 @@ INSERT INTO
         phonenumber,
         password,
         google_id,
-        picture,
         verified,
-        blocked,
-        verified_at,
-        status,
-        scheduled_for_deletion,
-        scheduled_deletion_at,
-        last_login_at
+        verified_at
     )
 VALUES (
         $1,
@@ -40,13 +34,7 @@ VALUES (
         $5,
         $6,
         $7,
-        $8,
-        $9,
-        $10,
-        $11,
-        $12,
-        $13,
-        $14
+        $8
     ) RETURNING *;
 
 -- name: GetUserByEmail :one

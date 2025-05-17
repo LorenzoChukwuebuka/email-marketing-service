@@ -6,7 +6,6 @@ import (
 	adminrepository "email-marketing-service/api/v1/repository/admin"
 	"email-marketing-service/internals/workers/tasks"
 	"log"
-
 	"github.com/hibiken/asynq"
 	"gorm.io/gorm"
 )

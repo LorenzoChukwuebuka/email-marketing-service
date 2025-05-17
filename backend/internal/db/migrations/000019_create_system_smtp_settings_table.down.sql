@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS  systems_smtp_settings;
