@@ -47,14 +47,8 @@ INSERT INTO
         phonenumber,
         password,
         google_id,
-        picture,
         verified,
-        blocked,
-        verified_at,
-        status,
-        scheduled_for_deletion,
-        scheduled_deletion_at,
-        last_login_at
+        verified_at
     )
 VALUES (
         $1,
@@ -64,31 +58,19 @@ VALUES (
         $5,
         $6,
         $7,
-        $8,
-        $9,
-        $10,
-        $11,
-        $12,
-        $13,
-        $14
+        $8
     ) RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
-	Fullname             string         `json:"fullname"`
-	CompanyID            uuid.UUID      `json:"company_id"`
-	Email                string         `json:"email"`
-	Phonenumber          sql.NullString `json:"phonenumber"`
-	Password             sql.NullString `json:"password"`
-	GoogleID             sql.NullString `json:"google_id"`
-	Picture              sql.NullString `json:"picture"`
-	Verified             bool           `json:"verified"`
-	Blocked              bool           `json:"blocked"`
-	VerifiedAt           sql.NullTime   `json:"verified_at"`
-	Status               string         `json:"status"`
-	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
-	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
-	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	Fullname    string         `json:"fullname"`
+	CompanyID   uuid.UUID      `json:"company_id"`
+	Email       string         `json:"email"`
+	Phonenumber sql.NullString `json:"phonenumber"`
+	Password    sql.NullString `json:"password"`
+	GoogleID    sql.NullString `json:"google_id"`
+	Verified    bool           `json:"verified"`
+	VerifiedAt  sql.NullTime   `json:"verified_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -99,14 +81,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Phonenumber,
 		arg.Password,
 		arg.GoogleID,
-		arg.Picture,
 		arg.Verified,
-		arg.Blocked,
 		arg.VerifiedAt,
-		arg.Status,
-		arg.ScheduledForDeletion,
-		arg.ScheduledDeletionAt,
-		arg.LastLoginAt,
 	)
 	var i User
 	err := row.Scan(

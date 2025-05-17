@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS sent_emails (
 );
 
 -- Index on the primary key is often automatically created, but explicitly defining doesn't hurt
-CREATE INDEX idx_sent_emails_id ON sent_emails (id);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_id ON sent_emails (id);
 
 -- Corrected index name to match the column name sender_id
-CREATE INDEX idx_sent_emails_sender_id ON sent_emails (sender_id);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_sender_id ON sent_emails (sender_id);

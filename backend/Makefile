@@ -47,3 +47,9 @@ ifdef version
 else
 	@echo "Please provide a version argument, e.g., make migrate-to version=1"
 endif
+
+run:
+	go run cmd/api/main.go
+
+sqlc-gen:
+	sqlc generate

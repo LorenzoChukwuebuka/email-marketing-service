@@ -1,16 +1,11 @@
 package middleware
 
 import (
-	"email-marketing-service/pkg/utils"
+	"email-marketing-service/internal/helper"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"runtime"
-
-	"github.com/gorilla/mux"
-)
-
-var (
-	response = utils.ApiResponse{}
 )
 
 func EnableCORS(handler http.Handler) http.Handler {
@@ -43,6 +38,7 @@ func EnableCORS(handler http.Handler) http.Handler {
 
 		handler.ServeHTTP(w, r)
 	})
+
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +47,7 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 		"error":   "Not Found",
 		"message": fmt.Sprintf("The requested resource at %s was not found", r.URL.Path),
 	}
-	response.ErrorResponse(w, res)
+	helper.ErrorResponse(w, fmt.Errorf("an error occured"), res)
 }
 
 func RecoveryMiddleware(next http.Handler) http.Handler {
@@ -63,7 +59,7 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 				stack = stack[:runtime.Stack(stack, false)]
 				fmt.Printf("Panic Stack Trace:\n%s\n", stack)
 
-				response.ErrorResponse(w, "internal server error")
+				helper.ErrorResponse(w, fmt.Errorf("internal server error"), nil)
 			}
 		}()
 
@@ -83,7 +79,7 @@ func MethodNotAllowedMiddleware(next http.Handler) http.Handler {
 					"error":   "Method Not Allowed",
 					"message": fmt.Sprintf("The requested resource exists, but does not support the %s method", r.Method),
 				}
-				response.ErrorResponse(w, res)
+				helper.ErrorResponse(w, fmt.Errorf("an error occured"), res)
 				return
 			}
 		}

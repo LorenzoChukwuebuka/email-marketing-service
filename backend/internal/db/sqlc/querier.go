@@ -12,16 +12,63 @@ import (
 )
 
 type Querier interface {
+	ArchivePlan(ctx context.Context, id uuid.UUID) (Plan, error)
 	BlockUser(ctx context.Context, id uuid.UUID) error
+	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
 	CreateCompany(ctx context.Context, companyname sql.NullString) (Company, error)
+	CreateMailingLimit(ctx context.Context, arg CreateMailingLimitParams) (MailingLimit, error)
+	CreateOTP(ctx context.Context, arg CreateOTPParams) (Otp, error)
+	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
+	CreatePlanFeature(ctx context.Context, arg CreatePlanFeatureParams) (PlanFeature, error)
+	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
+	CreateSystemsSMTPSettings(ctx context.Context, arg CreateSystemsSMTPSettingsParams) (SystemsSmtpSetting, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUserNotification(ctx context.Context, arg CreateUserNotificationParams) (UserNotification, error)
+	DeleteOTPById(ctx context.Context, id uuid.UUID) error
+	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
+	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
+	GetActiveSubscriptionByCompanyID(ctx context.Context, companyID uuid.UUID) (Subscription, error)
+	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
 	GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, error)
+	GetCompanyPaymentsWithSubscriptionInfo(ctx context.Context, arg GetCompanyPaymentsWithSubscriptionInfoParams) ([]GetCompanyPaymentsWithSubscriptionInfoRow, error)
+	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
+	GetOTPByToken(ctx context.Context, token string) (Otp, error)
+	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
+	GetPaymentByPaymentID(ctx context.Context, paymentID sql.NullString) (Payment, error)
+	GetPaymentSuccessRate(ctx context.Context, createdAt sql.NullTime) (GetPaymentSuccessRateRow, error)
+	GetPaymentsByDateRange(ctx context.Context, arg GetPaymentsByDateRangeParams) ([]Payment, error)
+	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
+	GetPlanByName(ctx context.Context, name string) (Plan, error)
+	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
+	GetPlanWithDetails(ctx context.Context, id uuid.UUID) (GetPlanWithDetailsRow, error)
+	GetSMTPSettingByDomain(ctx context.Context, domain sql.NullString) (SystemsSmtpSetting, error)
+	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
+	GetTotalPaymentAmount(ctx context.Context, companyID uuid.UUID) (GetTotalPaymentAmountRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
+	HardDeleteOTPById(ctx context.Context, id uuid.UUID) error
+	ListActivePlans(ctx context.Context) ([]Plan, error)
 	ListCompanies(ctx context.Context) ([]Company, error)
+	ListPaymentsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]Payment, error)
+	ListPaymentsBySubscriptionID(ctx context.Context, subscriptionID uuid.UUID) ([]Payment, error)
+	ListPaymentsByUserID(ctx context.Context, userID uuid.UUID) ([]Payment, error)
+	ListPlansWithDetails(ctx context.Context) ([]ListPlansWithDetailsRow, error)
+	ListSubscriptionsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]Subscription, error)
 	ListUsersByCompany(ctx context.Context, companyID uuid.UUID) ([]User, error)
+	MarkAdminNotificationAsRead(ctx context.Context, id uuid.UUID) error
+	MarkAllAdminNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkAllUserNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkNotificationAsRead(ctx context.Context, id uuid.UUID) error
+	RecordRefund(ctx context.Context, arg RecordRefundParams) (Payment, error)
 	SoftDeleteCompany(ctx context.Context, id uuid.UUID) error
+	SoftDeletePlan(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
+	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) (Payment, error)
+	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
+	UpdatePlanFeature(ctx context.Context, arg UpdatePlanFeatureParams) (PlanFeature, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
 	VerifyUser(ctx context.Context, id uuid.UUID) error
 }

@@ -1,0 +1,28 @@
+-- name: CreateAdminNotification :one
+INSERT INTO
+    admin_notifications (user_id, title, link)
+VALUES ($1, $2, $3) RETURNING *;
+
+-- name: GetAdminNotifications :many
+SELECT *
+FROM admin_notifications
+WHERE
+    user_id = $1
+ORDER BY created_at DESC;
+
+-- name: MarkAdminNotificationAsRead :exec
+UPDATE admin_notifications
+SET
+    read_status = TRUE,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1;
+
+-- name: MarkAllAdminNotificationsAsRead :exec
+UPDATE admin_notifications
+SET
+    read_status = TRUE,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    user_id = $1
+    AND read_status = FALSE;
