@@ -26,7 +26,6 @@ INSERT INTO
         ends_at,
         status,
         next_billing_date,
-        payment_method_id,
         auto_renew
     )
 VALUES (
@@ -40,9 +39,8 @@ VALUES (
         $8,
         $9,
         $10,
-        $11,
-        $12
-    ) RETURNING id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, payment_method_id, auto_renew, cancellation_reason, last_payment_date
+        $11
+    ) RETURNING id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
 `
 
 type CreateSubscriptionParams struct {
@@ -56,7 +54,6 @@ type CreateSubscriptionParams struct {
 	EndsAt          sql.NullTime    `json:"ends_at"`
 	Status          sql.NullString  `json:"status"`
 	NextBillingDate sql.NullTime    `json:"next_billing_date"`
-	PaymentMethodID uuid.NullUUID   `json:"payment_method_id"`
 	AutoRenew       sql.NullBool    `json:"auto_renew"`
 }
 
@@ -72,7 +69,6 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		arg.EndsAt,
 		arg.Status,
 		arg.NextBillingDate,
-		arg.PaymentMethodID,
 		arg.AutoRenew,
 	)
 	var i Subscription
@@ -91,7 +87,6 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.NextBillingDate,
-		&i.PaymentMethodID,
 		&i.AutoRenew,
 		&i.CancellationReason,
 		&i.LastPaymentDate,
@@ -100,7 +95,7 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 }
 
 const getActiveSubscriptionByCompanyID = `-- name: GetActiveSubscriptionByCompanyID :one
-SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, payment_method_id, auto_renew, cancellation_reason, last_payment_date
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
 FROM subscriptions
 WHERE
     company_id = $1
@@ -128,7 +123,6 @@ func (q *Queries) GetActiveSubscriptionByCompanyID(ctx context.Context, companyI
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.NextBillingDate,
-		&i.PaymentMethodID,
 		&i.AutoRenew,
 		&i.CancellationReason,
 		&i.LastPaymentDate,
@@ -137,7 +131,7 @@ func (q *Queries) GetActiveSubscriptionByCompanyID(ctx context.Context, companyI
 }
 
 const getSubscriptionByID = `-- name: GetSubscriptionByID :one
-SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, payment_method_id, auto_renew, cancellation_reason, last_payment_date FROM subscriptions WHERE id = $1 AND deleted_at IS NULL
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date FROM subscriptions WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error) {
@@ -158,7 +152,6 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscr
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.NextBillingDate,
-		&i.PaymentMethodID,
 		&i.AutoRenew,
 		&i.CancellationReason,
 		&i.LastPaymentDate,
@@ -167,7 +160,7 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscr
 }
 
 const listSubscriptionsByCompanyID = `-- name: ListSubscriptionsByCompanyID :many
-SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, payment_method_id, auto_renew, cancellation_reason, last_payment_date
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
 FROM subscriptions
 WHERE
     company_id = $1
@@ -199,7 +192,6 @@ func (q *Queries) ListSubscriptionsByCompanyID(ctx context.Context, companyID uu
 			&i.UpdatedAt,
 			&i.DeletedAt,
 			&i.NextBillingDate,
-			&i.PaymentMethodID,
 			&i.AutoRenew,
 			&i.CancellationReason,
 			&i.LastPaymentDate,

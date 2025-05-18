@@ -11,7 +11,6 @@ INSERT INTO
         ends_at,
         status,
         next_billing_date,
-        payment_method_id,
         auto_renew
     )
 VALUES (
@@ -25,8 +24,7 @@ VALUES (
         $8,
         $9,
         $10,
-        $11,
-        $12
+        $11
     ) RETURNING *;
 
 -- name: GetSubscriptionByID :one

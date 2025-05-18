@@ -3,14 +3,20 @@ package main
 import (
 	"context"
 	"database/sql"
-	"email-marketing-service/core/server"
+	"email-marketing-service/core/server/asynqserver"
+	"email-marketing-service/core/server/httpserver"
+	"email-marketing-service/core/server/websocketserver"
 	"email-marketing-service/internal/config"
 	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
+	smtp_server "email-marketing-service/internal/smtp"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"time"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
 var (
@@ -18,7 +24,6 @@ var (
 )
 
 func main() {
-
 	conn, err := sql.Open("postgres", cfg.DB_URL)
 	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
@@ -38,16 +43,61 @@ func main() {
 		return
 	}
 	fmt.Println("Connected to the database!")
-
-	store := db.NewStore(conn)
-
-	server := server.NewServer(store)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	store := db.NewStore(conn)
+	server := server.NewServer(store)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	seeders.SeedPlans(ctx, store)
 
-	server.Start()
+	//redis...
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379" // Default for local development
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		server.Start()
+	}()
+
+	//start the smtpserver
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if err := smtp_server.StartSMTPServer(ctx, store); err != nil {
+			log.Printf("SMTP server error: %v", err)
+		}
+	}()
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		if err := asynqserver.StartAsynqServer(redisAddr, store, ctx); err != nil {
+			log.Printf("Asynq server error: %v", err)
+			cancel()
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		websocketserver.StartSocketServer()
+	}()
+
+	// Wait for shutdown signal
+	<-sigChan
+	log.Println("Received shutdown signal")
+	// Cancel the context to initiate shutdown of SMTP server
+	cancel()
+	// Wait for all components to shut down
+	wg.Wait()
+	log.Println("All components shut down gracefully")
 
 }

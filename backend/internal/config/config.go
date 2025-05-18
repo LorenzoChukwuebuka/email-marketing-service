@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	APP_PORT                               string `env:APP_PORT`
+	APP_PORT                               string `env:"APP_PORT"`
 	DB_User                                string `env:"DB_USER"`
 	DBPassword                             string `env:"DB_PASSWORD"`
 	DBName                                 string `env:"DB_NAME"`

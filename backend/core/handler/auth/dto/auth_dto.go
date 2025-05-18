@@ -29,10 +29,17 @@ type EditUserDTO struct {
 	PhoneNumber string `json:"phonenumber"`
 }
 
-type Login struct {
+type LoginRequest struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password"`
 	GoogleID string `json:"google_id"`
+}
+
+type LoginResponse[T any] struct {
+	Status       string `json:"status"`
+	Token        string `json:"token"`
+	Details      T      `json:"details"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type ForgetPassword struct {
@@ -67,4 +74,3 @@ type ResendOTPRequest struct {
 	Email    string `json:"email" validated:"required"`
 	OTPType  string `json:"otp_type" validated:"required"`
 }
-

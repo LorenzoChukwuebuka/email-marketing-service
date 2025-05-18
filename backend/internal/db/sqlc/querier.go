@@ -12,64 +12,110 @@ import (
 )
 
 type Querier interface {
+	AddContactToGroup(ctx context.Context, arg AddContactToGroupParams) error
 	ArchivePlan(ctx context.Context, id uuid.UUID) (Plan, error)
 	BlockUser(ctx context.Context, id uuid.UUID) error
+	CheckIfEmailExists(ctx context.Context, arg CheckIfEmailExistsParams) (bool, error)
+	CheckIfGroupNameExists(ctx context.Context, arg CheckIfGroupNameExistsParams) (bool, error)
+	CheckSMTPKeyExists(ctx context.Context, arg CheckSMTPKeyExistsParams) (bool, error)
+	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
+	CountContactGroups(ctx context.Context, arg CountContactGroupsParams) (int64, error)
+	CountContacts(ctx context.Context, arg CountContactsParams) (int64, error)
+	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
+	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
 	CreateCompany(ctx context.Context, companyname sql.NullString) (Company, error)
+	CreateContact(ctx context.Context, arg CreateContactParams) error
+	CreateContactGroup(ctx context.Context, arg CreateContactGroupParams) error
+	CreateEmailBox(ctx context.Context, arg CreateEmailBoxParams) (EmailBox, error)
 	CreateMailingLimit(ctx context.Context, arg CreateMailingLimitParams) (MailingLimit, error)
 	CreateOTP(ctx context.Context, arg CreateOTPParams) (Otp, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreatePlanFeature(ctx context.Context, arg CreatePlanFeatureParams) (PlanFeature, error)
+	CreateSMTPKey(ctx context.Context, arg CreateSMTPKeyParams) (SmtpKey, error)
+	CreateSMTPMasterKey(ctx context.Context, arg CreateSMTPMasterKeyParams) (SmtpMasterKey, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateSystemsSMTPSettings(ctx context.Context, arg CreateSystemsSMTPSettingsParams) (SystemsSmtpSetting, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserNotification(ctx context.Context, arg CreateUserNotificationParams) (UserNotification, error)
+	DeleteAPIKey(ctx context.Context, id uuid.UUID) error
+	DeleteContact(ctx context.Context, arg DeleteContactParams) error
+	// This is a transaction that will be handled in Go code
+	DeleteContactGroup(ctx context.Context, arg DeleteContactGroupParams) error
+	DeleteContactGroupRelations(ctx context.Context, contactGroupID uuid.UUID) error
 	DeleteOTPById(ctx context.Context, id uuid.UUID) error
 	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
 	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
+	FindUserWithAPIKey(ctx context.Context, apiKey string) (FindUserWithAPIKeyRow, error)
+	GetAPIKeysByCompanyID(ctx context.Context, companyID uuid.UUID) ([]GetAPIKeysByCompanyIDRow, error)
+	GetAPIKeysByUserID(ctx context.Context, userID uuid.UUID) ([]GetAPIKeysByUserIDRow, error)
 	GetActiveSubscriptionByCompanyID(ctx context.Context, companyID uuid.UUID) (Subscription, error)
+	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
+	GetAdminByID(ctx context.Context, id uuid.UUID) (Admin, error)
 	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
 	GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, error)
-	GetCompanyPaymentsWithSubscriptionInfo(ctx context.Context, arg GetCompanyPaymentsWithSubscriptionInfoParams) ([]GetCompanyPaymentsWithSubscriptionInfoRow, error)
+	GetContactByID(ctx context.Context, arg GetContactByIDParams) (Contact, error)
+	GetContactCount(ctx context.Context, userID uuid.UUID) (GetContactCountRow, error)
+	GetContactGroupByID(ctx context.Context, arg GetContactGroupByIDParams) (ContactGroup, error)
+	GetContactSubscriptionStatsDashboard(ctx context.Context, userID uuid.UUID) (GetContactSubscriptionStatsDashboardRow, error)
+	GetContactsInGroup(ctx context.Context, arg GetContactsInGroupParams) ([]Contact, error)
+	GetEmailBoxByID(ctx context.Context, id uuid.UUID) (EmailBox, error)
+	GetEngagedContactsCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
+	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
 	GetOTPByToken(ctx context.Context, token string) (Otp, error)
-	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
-	GetPaymentByPaymentID(ctx context.Context, paymentID sql.NullString) (Payment, error)
-	GetPaymentSuccessRate(ctx context.Context, createdAt sql.NullTime) (GetPaymentSuccessRateRow, error)
-	GetPaymentsByDateRange(ctx context.Context, arg GetPaymentsByDateRangeParams) ([]Payment, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
 	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
 	GetPlanWithDetails(ctx context.Context, id uuid.UUID) (GetPlanWithDetailsRow, error)
+	GetSMTPKeyByID(ctx context.Context, arg GetSMTPKeyByIDParams) (SmtpKey, error)
+	GetSMTPKeyUserAndPass(ctx context.Context, arg GetSMTPKeyUserAndPassParams) (SmtpKey, error)
+	GetSMTPMasterKeyAndPass(ctx context.Context, arg GetSMTPMasterKeyAndPassParams) (SmtpMasterKey, error)
 	GetSMTPSettingByDomain(ctx context.Context, domain sql.NullString) (SystemsSmtpSetting, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
-	GetTotalPaymentAmount(ctx context.Context, companyID uuid.UUID) (GetTotalPaymentAmountRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
+	GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
+	GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	HardDeleteOTPById(ctx context.Context, id uuid.UUID) error
 	ListActivePlans(ctx context.Context) ([]Plan, error)
+	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListCompanies(ctx context.Context) ([]Company, error)
-	ListPaymentsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]Payment, error)
-	ListPaymentsBySubscriptionID(ctx context.Context, subscriptionID uuid.UUID) ([]Payment, error)
-	ListPaymentsByUserID(ctx context.Context, userID uuid.UUID) ([]Payment, error)
+	ListContactGroups(ctx context.Context, arg ListContactGroupsParams) ([]ContactGroup, error)
+	ListContacts(ctx context.Context, arg ListContactsParams) ([]Contact, error)
+	ListEmailBoxesByMailbox(ctx context.Context, arg ListEmailBoxesByMailboxParams) ([]EmailBox, error)
+	ListEmailBoxesByUser(ctx context.Context, userName sql.NullString) ([]EmailBox, error)
 	ListPlansWithDetails(ctx context.Context) ([]ListPlansWithDetailsRow, error)
 	ListSubscriptionsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]Subscription, error)
 	ListUsersByCompany(ctx context.Context, companyID uuid.UUID) ([]User, error)
 	MarkAdminNotificationAsRead(ctx context.Context, id uuid.UUID) error
 	MarkAllAdminNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
 	MarkAllUserNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkEmailAsDelivered(ctx context.Context, recipientEmail string) error
 	MarkNotificationAsRead(ctx context.Context, id uuid.UUID) error
-	RecordRefund(ctx context.Context, arg RecordRefundParams) (Payment, error)
+	RemoveContactFromGroup(ctx context.Context, arg RemoveContactFromGroupParams) error
+	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) error
+	SoftDeleteAdmin(ctx context.Context, id uuid.UUID) error
 	SoftDeleteCompany(ctx context.Context, id uuid.UUID) error
 	SoftDeletePlan(ctx context.Context, id uuid.UUID) error
+	SoftDeleteSMTPKey(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (Admin, error)
+	UpdateBounceStatus(ctx context.Context, arg UpdateBounceStatusParams) error
+	UpdateContact(ctx context.Context, arg UpdateContactParams) error
+	UpdateContactGroup(ctx context.Context, arg UpdateContactGroupParams) error
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
-	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) (Payment, error)
+	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
 	UpdatePlanFeature(ctx context.Context, arg UpdatePlanFeatureParams) (PlanFeature, error)
+	UpdateSMTPKeyLogin(ctx context.Context, arg UpdateSMTPKeyLoginParams) error
+	UpdateSMTPKeyMasterPasswordAndLogin(ctx context.Context, arg UpdateSMTPKeyMasterPasswordAndLoginParams) error
+	UpdateSMTPKeyStatus(ctx context.Context, arg UpdateSMTPKeyStatusParams) error
+	UpdateSubscriptionStatus(ctx context.Context, email string) error
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
+	UpsertAdmin(ctx context.Context, arg UpsertAdminParams) (Admin, error)
 	VerifyUser(ctx context.Context, id uuid.UUID) error
 }
 

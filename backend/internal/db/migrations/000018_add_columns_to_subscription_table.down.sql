@@ -2,7 +2,6 @@
 -- Down migration for subscription table alterations
 ALTER TABLE subscriptions
     DROP COLUMN IF EXISTS next_billing_date,
-    DROP COLUMN IF EXISTS payment_method_id,
     DROP COLUMN IF EXISTS auto_renew,
     DROP COLUMN IF EXISTS cancellation_reason,
     DROP COLUMN IF EXISTS last_payment_date;

@@ -20,3 +20,4 @@ sql:
         "nullable": true
       - go_type: "float64"
         db_type: "double precision"
+     
