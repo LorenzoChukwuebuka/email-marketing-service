@@ -1,6 +1,6 @@
 WIRE_PATH := ./backend/api/v1/routes
 MAIN_PATH := ./backend/api/v1
-ROOT_DIR := ./backend/
+ROOT_DIR := ./backend-archived/
 FE_DIR := ./frontend/
 DIST_DIR := $(FE_DIR)dist
 CLIENT_DIR := $(ROOT_DIR)client

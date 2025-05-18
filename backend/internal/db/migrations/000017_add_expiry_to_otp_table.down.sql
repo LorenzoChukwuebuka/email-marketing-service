@@ -1,2 +1,2 @@
-ALTER TABLE otp
+ALTER TABLE otps
 DROP COLUMN IF EXISTS expires_at;

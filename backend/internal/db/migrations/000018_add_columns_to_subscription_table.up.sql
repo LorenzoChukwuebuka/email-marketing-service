@@ -10,8 +10,7 @@ $$ LANGUAGE plpgsql;
 -- Subscription table alterations
 ALTER TABLE IF EXISTS subscriptions
 ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS payment_method_id UUID,
-ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT TRUE,
+ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN,
 ADD COLUMN IF NOT EXISTS cancellation_reason TEXT,
 ADD COLUMN IF NOT EXISTS last_payment_date TIMESTAMPTZ;
 

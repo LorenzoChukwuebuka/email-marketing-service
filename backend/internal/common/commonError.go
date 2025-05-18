@@ -2,6 +2,8 @@ package common
 
 import (
 	"errors"
+	"fmt"
+	"runtime"
 )
 
 var (
@@ -16,5 +18,21 @@ var (
 	ErrFetchingOTP             = errors.New("error creating otp")
 	ErrVerificationCodeExpired = errors.New("verification code has expired")
 	ErrDeletingOTP             = errors.New("error deleting otp")
-	ErrInvalidUUID = errors.New("error parsing uuid")
+	ErrInvalidUUID             = errors.New("error parsing uuid")
+	ErrFetchingAdmin           = errors.New("error encountered while fetching admin")
+	ErrAdminNotFound           = errors.New("admin does not exist")
+	ErrCheckingPasswordHash    = errors.New("password does not match")
+	ErrCreatingSMTPKey         = errors.New("error creating smtp key")
+	ErrBlocked                 = errors.New("your account has been blocked. Kindly contact the admin")
+	ErrSendingEmail            = errors.New("error sending email")
+	ErrAccountNotVerified      = errors.New("account has not been verified")
+	ErrCreatingSubscription    = errors.New("error creating subscription")
 )
+
+func TraceError(err error) error {
+	if err == nil {
+		return nil
+	}
+	_, file, line, _ := runtime.Caller(1)
+	return fmt.Errorf("%s:%d: %w", file, line, err)
+}

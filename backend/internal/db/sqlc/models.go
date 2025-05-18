@@ -131,6 +131,18 @@ type Domain struct {
 	DeletedAt      sql.NullTime   `json:"deleted_at"`
 }
 
+type EmailBox struct {
+	ID        uuid.UUID      `json:"id"`
+	UserName  sql.NullString `json:"user_name"`
+	From      sql.NullString `json:"from"`
+	To        sql.NullString `json:"to"`
+	Content   []byte         `json:"content"`
+	Mailbox   sql.NullString `json:"mailbox"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	UpdatedAt sql.NullTime   `json:"updated_at"`
+	DeletedAt sql.NullTime   `json:"deleted_at"`
+}
+
 type EmailCampaignResult struct {
 	ID              uuid.UUID      `json:"id"`
 	CompanyID       uuid.UUID      `json:"company_id"`
@@ -289,7 +301,6 @@ type Subscription struct {
 	UpdatedAt          sql.NullTime    `json:"updated_at"`
 	DeletedAt          sql.NullTime    `json:"deleted_at"`
 	NextBillingDate    sql.NullTime    `json:"next_billing_date"`
-	PaymentMethodID    uuid.NullUUID   `json:"payment_method_id"`
 	AutoRenew          sql.NullBool    `json:"auto_renew"`
 	CancellationReason sql.NullString  `json:"cancellation_reason"`
 	LastPaymentDate    sql.NullTime    `json:"last_payment_date"`

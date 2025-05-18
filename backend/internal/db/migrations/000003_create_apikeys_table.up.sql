@@ -20,10 +20,10 @@ CREATE TABLE IF NOT EXISTS smtp_master_keys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     company_id UUID NOT NULL,
-    smtp_login TEXT NOT NULL UNIQUE, -- Assuming smtp_login should be unique per company or globally
+    smtp_login TEXT NOT NULL, 
     key_name TEXT NOT NULL,
-    password TEXT NOT NULL, -- Consider encrypting this
-    status TEXT NOT NULL DEFAULT 'active', -- Added a default, consider ENUM
+    password TEXT NOT NULL, 
+    status TEXT NOT NULL DEFAULT 'active', 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ,
