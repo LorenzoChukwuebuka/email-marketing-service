@@ -130,6 +130,82 @@ func (q *Queries) GetActiveSubscriptionByCompanyID(ctx context.Context, companyI
 	return i, err
 }
 
+const getCurrentRunningSubscription = `-- name: GetCurrentRunningSubscription :one
+SELECT 
+    s.id AS subscription_id,
+    s.company_id,
+    s.amount AS subscription_amount,
+    s.billing_cycle,
+    s.trial_starts_at,
+    s.trial_ends_at,
+    s.starts_at,
+    s.ends_at,
+    s.status AS subscription_status,
+    s.created_at AS subscription_created_at,
+    s.updated_at AS subscription_updated_at,
+    
+    p.id AS plan_id,
+    p.name AS plan_name,
+    p.description AS plan_description,
+    p.price AS plan_price,
+    p.billing_cycle AS plan_billing_cycle,
+    p.status AS plan_status
+FROM 
+    subscriptions s
+JOIN 
+    plans p ON s.plan_id = p.id
+WHERE 
+    s.deleted_at IS NULL AND s.company_id = $1
+ORDER BY 
+    s.created_at DESC
+LIMIT 1
+`
+
+type GetCurrentRunningSubscriptionRow struct {
+	SubscriptionID        uuid.UUID       `json:"subscription_id"`
+	CompanyID             uuid.UUID       `json:"company_id"`
+	SubscriptionAmount    decimal.Decimal `json:"subscription_amount"`
+	BillingCycle          sql.NullString  `json:"billing_cycle"`
+	TrialStartsAt         sql.NullTime    `json:"trial_starts_at"`
+	TrialEndsAt           sql.NullTime    `json:"trial_ends_at"`
+	StartsAt              sql.NullTime    `json:"starts_at"`
+	EndsAt                sql.NullTime    `json:"ends_at"`
+	SubscriptionStatus    sql.NullString  `json:"subscription_status"`
+	SubscriptionCreatedAt sql.NullTime    `json:"subscription_created_at"`
+	SubscriptionUpdatedAt sql.NullTime    `json:"subscription_updated_at"`
+	PlanID                uuid.UUID       `json:"plan_id"`
+	PlanName              string          `json:"plan_name"`
+	PlanDescription       sql.NullString  `json:"plan_description"`
+	PlanPrice             decimal.Decimal `json:"plan_price"`
+	PlanBillingCycle      sql.NullString  `json:"plan_billing_cycle"`
+	PlanStatus            sql.NullString  `json:"plan_status"`
+}
+
+func (q *Queries) GetCurrentRunningSubscription(ctx context.Context, companyID uuid.UUID) (GetCurrentRunningSubscriptionRow, error) {
+	row := q.db.QueryRowContext(ctx, getCurrentRunningSubscription, companyID)
+	var i GetCurrentRunningSubscriptionRow
+	err := row.Scan(
+		&i.SubscriptionID,
+		&i.CompanyID,
+		&i.SubscriptionAmount,
+		&i.BillingCycle,
+		&i.TrialStartsAt,
+		&i.TrialEndsAt,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.SubscriptionStatus,
+		&i.SubscriptionCreatedAt,
+		&i.SubscriptionUpdatedAt,
+		&i.PlanID,
+		&i.PlanName,
+		&i.PlanDescription,
+		&i.PlanPrice,
+		&i.PlanBillingCycle,
+		&i.PlanStatus,
+	)
+	return i, err
+}
+
 const getSubscriptionByID = `-- name: GetSubscriptionByID :one
 SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date FROM subscriptions WHERE id = $1 AND deleted_at IS NULL
 `

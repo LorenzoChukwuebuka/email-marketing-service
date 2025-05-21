@@ -7,6 +7,7 @@ import (
 	"email-marketing-service/internal/config"
 	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -46,7 +46,6 @@ func (s *Server) setupLogger() (*os.File, error) {
 }
 
 func (s *Server) setupRoutes() {
-
 	s.router.Use(middleware.RecoveryMiddleware)
 	s.router.Use(middleware.EnableCORS)
 	s.router.Use(middleware.MethodNotAllowedMiddleware)
@@ -61,7 +60,10 @@ func (s *Server) setupRoutes() {
 	}).Methods(http.MethodGet)
 
 	routeMap := map[string]routes.RouteInterface{
-		"auth": routes.NewAuthRoute(s.db),
+		"auth":            routes.NewAuthRoute(s.db),
+		"admin/auth":      routes.NewAdminAuthRoute(s.db),
+		"admin/systemdns": routes.NewAdminDNSRoute(s.db),
+		"contacts":        routes.NewContactRoutes(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -133,16 +135,12 @@ func (s *Server) Start() {
 	}()
 
 	//graceful shutdown
-
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-
 	sig := <-sigCh
 	fmt.Printf("Received signal: %v\n", sig)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown error: %v", err)
 	}

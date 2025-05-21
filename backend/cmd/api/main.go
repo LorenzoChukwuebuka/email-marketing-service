@@ -50,7 +50,10 @@ func main() {
 	server := server.NewServer(store)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	//seeders
 	seeders.SeedPlans(ctx, store)
+	seeders.SeedSMTPKey(ctx, store)
 
 	//redis...
 	redisAddr := os.Getenv("REDIS_ADDR")

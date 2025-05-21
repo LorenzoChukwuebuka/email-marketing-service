@@ -27,6 +27,14 @@ var (
 	ErrSendingEmail            = errors.New("error sending email")
 	ErrAccountNotVerified      = errors.New("account has not been verified")
 	ErrCreatingSubscription    = errors.New("error creating subscription")
+	ErrInvalidOTPType          = errors.New("Invalid otp type")
+	ErrFetchingSubscription    = errors.New("error fetching company's subscription")
+	ErrParsingFile             = errors.New("error parsing file")
+	ErrRetrievingFile          = errors.New("error retrieving file")
+	ErrUpdatingRecord          = errors.New("error updating record")
+	ErrDeletingRecord          = errors.New("error deleting record")
+	ErrCreatingRecord          = errors.New("error creating record")
+	ErrFetchingRecord          = errors.New("error fetching record")
 )
 
 func TraceError(err error) error {

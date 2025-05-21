@@ -27,7 +27,7 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 	defer cancel()
 
 	var req *dto.APIkeyRequestDTO
-	userId, err := helper.ExtractUserId(r)
+	userId, _, err := helper.ExtractUserId(r)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return
@@ -52,7 +52,7 @@ func (c *ApiKeyController) GetAPIKey(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	userId, err := helper.ExtractUserId(r)
+	userId, _, err := helper.ExtractUserId(r)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return

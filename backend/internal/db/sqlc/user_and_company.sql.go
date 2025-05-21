@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -126,12 +127,52 @@ func (q *Queries) GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, er
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS NULL
+SELECT 
+    u.id, u.fullname, u.company_id, u.email, u.phonenumber, u.password, u.google_id, u.picture, u.verified, u.blocked, u.verified_at, u.status, u.scheduled_for_deletion, u.scheduled_deletion_at, u.last_login_at, u.created_at, u.updated_at, u.deleted_at,
+    c.id AS company_id,
+    c.companyname,
+    c.created_at AS company_created_at,
+    c.updated_at AS company_updated_at,
+    c.deleted_at AS company_deleted_at
+FROM 
+    users u
+JOIN 
+    companies c ON u.company_id = c.id
+WHERE 
+    u.email = $1 
+    AND u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+type GetUserByEmailRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	CompanyID            uuid.UUID      `json:"company_id"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Password             sql.NullString `json:"password"`
+	GoogleID             sql.NullString `json:"google_id"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	DeletedAt            sql.NullTime   `json:"deleted_at"`
+	CompanyID_2          uuid.UUID      `json:"company_id_2"`
+	Companyname          sql.NullString `json:"companyname"`
+	CompanyCreatedAt     time.Time      `json:"company_created_at"`
+	CompanyUpdatedAt     time.Time      `json:"company_updated_at"`
+	CompanyDeletedAt     sql.NullTime   `json:"company_deleted_at"`
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
-	var i User
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Fullname,
@@ -151,17 +192,62 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CompanyID_2,
+		&i.Companyname,
+		&i.CompanyCreatedAt,
+		&i.CompanyUpdatedAt,
+		&i.CompanyDeletedAt,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at FROM users WHERE id = $1 AND deleted_at IS NULL
+SELECT 
+    u.id, u.fullname, u.company_id, u.email, u.phonenumber, u.password, u.google_id, u.picture, u.verified, u.blocked, u.verified_at, u.status, u.scheduled_for_deletion, u.scheduled_deletion_at, u.last_login_at, u.created_at, u.updated_at, u.deleted_at,
+    c.id AS company_id,
+    c.companyname,
+    c.created_at AS company_created_at,
+    c.updated_at AS company_updated_at,
+    c.deleted_at AS company_deleted_at
+FROM 
+    users u
+JOIN 
+    companies c ON u.company_id = c.id
+WHERE 
+    u.id = $1 
+    AND u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+type GetUserByIDRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	CompanyID            uuid.UUID      `json:"company_id"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Password             sql.NullString `json:"password"`
+	GoogleID             sql.NullString `json:"google_id"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	DeletedAt            sql.NullTime   `json:"deleted_at"`
+	CompanyID_2          uuid.UUID      `json:"company_id_2"`
+	Companyname          sql.NullString `json:"companyname"`
+	CompanyCreatedAt     time.Time      `json:"company_created_at"`
+	CompanyUpdatedAt     time.Time      `json:"company_updated_at"`
+	CompanyDeletedAt     sql.NullTime   `json:"company_deleted_at"`
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Fullname,
@@ -181,6 +267,11 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.CompanyID_2,
+		&i.Companyname,
+		&i.CompanyCreatedAt,
+		&i.CompanyUpdatedAt,
+		&i.CompanyDeletedAt,
 	)
 	return i, err
 }
@@ -274,7 +365,7 @@ func (q *Queries) ListUsersByCompany(ctx context.Context, companyID uuid.UUID) (
 }
 
 const resetUserPassword = `-- name: ResetUserPassword :exec
-UPDATE users SET password = $1 AND updated_at = now() WHERE id = $2
+UPDATE users SET password = $1, updated_at = now() WHERE id = $2
 `
 
 type ResetUserPasswordParams struct {
