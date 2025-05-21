@@ -1,5 +1,9 @@
 package dto
 
+import(
+	"time"
+)
+
 type AdminRequestDTO struct {
 	FirstName  string `json:"firstname"`
 	MiddleName string `json:"middlename"`
@@ -30,4 +34,19 @@ type AdminLoginResponse[T any] struct {
 type RefreshAccessToken struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+
+ 
+type AdminResponse struct {
+	ID         string     `json:"id"`
+	Firstname  string     `json:"firstname"`
+	Middlename string     `json:"middlename,omitempty"`
+	Lastname   string     `json:"lastname"`
+	Email      string     `json:"email"`
+	Type       string     `json:"type"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
+}
+
 

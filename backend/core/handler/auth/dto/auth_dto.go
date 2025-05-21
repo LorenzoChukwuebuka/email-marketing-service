@@ -1,5 +1,10 @@
 package dto
 
+import (
+	"github.com/google/uuid"
+	"time"
+)
+
 type UserSignUpRequest struct {
 	FullName string `json:"fullname" validate:"required"`
 	Company  string `json:"company"`
@@ -41,6 +46,25 @@ type LoginResponse[T any] struct {
 	Details      T      `json:"details"`
 	RefreshToken string `json:"refresh_token"`
 }
+
+type PublicUser struct {
+	ID        uuid.UUID `json:"id"`
+	Fullname  string    `json:"fullname"`
+	Email     string    `json:"email"`
+	CompanyID uuid.UUID `json:"company_id"`
+	Verified  bool      `json:"verified"`
+	Blocked   bool      `json:"blocked"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Company CompanyResponse `json:"company"`
+}
+
+type CompanyResponse struct {
+		ID          uuid.UUID `json:"id"`
+		CompanyName string    `json:"company_name"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}
 
 type ForgetPassword struct {
 	Email string `json:"email" validate:"required,email"`

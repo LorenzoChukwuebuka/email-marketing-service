@@ -40,7 +40,6 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := c.authSrv.LoginUser(ctx, req)
-
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return
@@ -83,7 +82,6 @@ func (c *Controller) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = c.authSrv.VerifyUser(ctx, req)
-
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return
@@ -101,7 +99,6 @@ func (c *Controller) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var req *dto.ForgetPassword
-
 	err := helper.DecodeRequestBody(r, &req)
 	if err != nil {
 		helper.ErrorResponse(w, common.ErrDecodingRequestBody, nil)
@@ -135,6 +132,34 @@ func (c *Controller) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helper.SuccessResponse(w, 200, "password reset successful")
+}
+
+func (c *Controller) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	var req *dto.ChangePassword
+
+	err = helper.DecodeRequestBody(r, &req)
+	if err != nil {
+		helper.ErrorResponse(w, common.ErrDecodingRequestBody, nil)
+		return
+	}
+
+	err = c.authSrv.ChangePassword(ctx, userId, req)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, "password changed successfully")
 }
 
 func (c *Controller) GoogleLogin(http.ResponseWriter, *http.Request) {}

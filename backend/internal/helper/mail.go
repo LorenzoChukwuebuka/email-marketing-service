@@ -21,17 +21,17 @@ type SMTPConfig struct {
 
 // DefaultSMTPConfig returns the default SMTP configuration
 func DefaultSMTPConfig() SMTPConfig {
-	config := config.LoadEnv()
+	cfg := config.LoadEnv()
 	port := 1025 // Default development port
 	if os.Getenv("SERVER_MODE") == "production" {
 		port = 587 // Production STARTTLS port
 	}
 
 	return SMTPConfig{
-		Host:     config.SMTP_SERVER,
+		Host:     cfg.SMTP_SERVER,
 		Port:     port,
-		Username: config.MailUsername,
-		Password: config.MailPassword,
+		Username: cfg.MailUsername,
+		Password: cfg.MailPassword,
 	}
 }
 

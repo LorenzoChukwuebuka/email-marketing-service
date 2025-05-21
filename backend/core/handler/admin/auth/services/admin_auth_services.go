@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"email-marketing-service/core/handler/admin/auth/dto"
+	"email-marketing-service/core/handler/admin/auth/mapper"
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/helper"
@@ -53,7 +54,7 @@ func (s *Service) CreateAdmin(ctx context.Context, req *dto.AdminRequestDTO) (*d
 	return req, nil
 }
 
-func (s *Service) AdminLogin(ctx context.Context, req *dto.AdminLoginRequest) (*dto.AdminLoginResponse[db.Admin], error) {
+func (s *Service) AdminLogin(ctx context.Context, req *dto.AdminLoginRequest) (*dto.AdminLoginResponse[dto.AdminResponse], error) {
 	if err := helper.ValidateData(req); err != nil {
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
@@ -79,10 +80,10 @@ func (s *Service) AdminLogin(ctx context.Context, req *dto.AdminLoginRequest) (*
 		return nil, err
 	}
 
-	return &dto.AdminLoginResponse[db.Admin]{
+	return &dto.AdminLoginResponse[dto.AdminResponse]{
 		Status:       "login successful",
 		Token:        token,
-		Details:      admin,
+		Details:      mapper.MapAdminToResponse(admin),
 		RefreshToken: refreshToken,
 		Type:         admin.Type,
 	}, nil

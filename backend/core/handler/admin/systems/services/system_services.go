@@ -23,7 +23,7 @@ type Service struct {
 	store db.Store
 }
 
-func NewSystemsService(store db.Store) *Service {
+func NewAdminSystemsService(store db.Store) *Service {
 	return &Service{
 		store: store,
 	}
@@ -62,7 +62,6 @@ func (s *Service) GenerateAndSaveSMTPCredentials(ctx context.Context, domain str
 	formattedPublicKey := formatPublicKeyForDKIM(publicKeyBase64)
 
 	selector := fmt.Sprintf("dkim%d", privateKey.N.Int64()%1000000)
-
 	txtRecord := fmt.Sprintf("v=DKIM1; k=rsa; p=%s", formattedPublicKey)
 	spfRecord := "v=spf1 mx -all"
 	dmarcRecord := fmt.Sprintf("v=DMARC1; p=none; rua=mailto:postmaster@%s", domain)

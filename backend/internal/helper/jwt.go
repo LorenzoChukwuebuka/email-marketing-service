@@ -20,13 +20,13 @@ const accessTokenExpiration = time.Hour * 15 // 15 minutes
 const refreshTokenExpiration = time.Hour * 24 * 7 // 7 days
 
 // GenerateAccessToken generates an access token with a short expiration time
-func GenerateAccessToken(userId string, user_uuid string, username string, email string) (string, error) {
+func GenerateAccessToken(userId string, company_id string, username string, email string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":      "The server",
 		"exp":      time.Now().Add(accessTokenExpiration).Unix(), // 15 minutes expiration
 		"username": username,
 		"email":    email,
-		"uuid":     user_uuid,
+		"company_id":  company_id,
 		"userId":   userId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

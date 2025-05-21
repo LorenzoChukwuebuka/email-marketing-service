@@ -365,7 +365,7 @@
                                     <tr>
                                         <td>
                                             <h1>Welcome to CrabMailer!</h1>
-                                            <p>Hi {{FirstName}},</p>
+                                            <p>Hi {{.FirstName}},</p>
                                             <p>We're thrilled to have you on board! You've just taken the first step
                                                 towards revolutionizing your email marketing and transactional email
                                                 strategy. Let's get you started with CrabMailer's powerful features:</p>
@@ -396,7 +396,7 @@
                                                                 cellspacing="0">
                                                                 <tbody>
                                                                     <tr>
-                                                                        <td> <a href="{{DashboardLink}}"
+                                                                        <td> <a href="{{.DashboardLink}}"
                                                                                 target="_blank">Go to Your Dashboard</a>
                                                                         </td>
                                                                     </tr>
@@ -408,7 +408,7 @@
                                             </table>
 
                                             <p>Need help getting started? Check out our <a
-                                                    href="{{KnowledgeBaseLink}}">Knowledge Base</a> or reach out to our
+                                                    href="{{.KnowledgeBaseLink}}">Knowledge Base</a> or reach out to our
                                                 friendly support team at <a
                                                     href="mailto:support@crabmailer.com">support@crabmailer.com</a>.</p>
 
@@ -428,7 +428,7 @@
                                 <td class="content-block">
                                     <span class="apple-link">CrabMailer, Inc., 123 Email Street, San Francisco, CA
                                         94102</span>
-                                    <br>Don't want these emails? <a href="{{UnsubscribeLink}}">Unsubscribe</a>.
+                                    <br>Don't want these emails? <a href="{{.UnsubscribeLink}}">Unsubscribe</a>.
                                 </td>
                             </tr>
                         </table>

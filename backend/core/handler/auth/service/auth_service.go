@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"email-marketing-service/core/handler/auth/dto"
+	"email-marketing-service/core/handler/auth/mapper"
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/enums"
@@ -180,7 +181,7 @@ func (s *Service) VerifyUser(ctx context.Context, req *dto.VerifyUserRequest) er
 	return err
 }
 
-func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, user db.User) error {
+func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, user db.GetUserByIDRow) error {
 	plan, err := s.store.GetPlanByName(ctx, "Free")
 	if err != nil {
 		return err
@@ -219,9 +220,7 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 	})
 
 	//update payment integrity
-
 	paymentHash, err := common.GeneratePaymentHash(payment.ID, user.ID, 0, subscription.ID)
-
 	if err != nil {
 		return err
 	}
@@ -258,26 +257,29 @@ func (s *Service) ResendEmail(ctx context.Context, req *dto.ResendOTPRequest) er
 	if err != nil {
 		return fmt.Errorf("error creating OTP: %w", err)
 	}
-	// switch req.OTPType {
-	// case "emailVerify":
-	// 	return mailer.SignUpMail(d.Email, d.Username, d.UserId, otp)
-	// case "passwordReset":
-	// 	return mailer.ResetPasswordMail(d.Email, d.Username, otp)
-	// default:
-	// 	return ErrInvalidOTPType
-	// }
 
-	fmt.Print("sending mail")
-	return nil
+	userID, err = uuid.Parse(req.UserId)
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
+
+	switch req.OTPType {
+	case "emailVerify":
+		return mailer.NewEmailService().SignUpMail(req.Email, req.Username, userID, token)
+	case "passwordReset":
+		return mailer.NewEmailService().ResetPasswordMail(req.Email, req.Username, token)
+	default:
+		return common.ErrInvalidOTPType
+	}
+
 }
 
-func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse[db.User], error) {
+func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse[dto.PublicUser], error) {
 	if err := helper.ValidateData(req); err != nil {
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
 	// Check if a user exists
 	user, err := s.store.GetUserByEmail(ctx, req.Email)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, common.ErrUserNotFound
@@ -295,12 +297,11 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}
 
 	err = common.CheckPassword(req.Password, user.Password.String)
-
 	if err != nil {
 		return nil, common.ErrCheckingPasswordHash
 	}
 
-	token, err := helper.GenerateAccessToken(user.ID.String(), user.ID.String(), user.Fullname, user.Email)
+	token, err := helper.GenerateAccessToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -311,10 +312,10 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		return nil, err
 	}
 
-	return &dto.LoginResponse[db.User]{
+	return &dto.LoginResponse[dto.PublicUser]{
 		Status:       "success",
 		Token:        token,
-		Details:      user,
+		Details:      mapper.MapPublicUser(user),
 		RefreshToken: refreshToken,
 	}, nil
 }
@@ -405,5 +406,4 @@ func (s *Service) ChangePassword(ctx context.Context, userId string, req *dto.Ch
 		Password: sql.NullString{String: hashedPassword, Valid: true},
 		ID:       user.ID,
 	})
-
 }

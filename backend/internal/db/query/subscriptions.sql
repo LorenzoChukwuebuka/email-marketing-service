@@ -47,3 +47,33 @@ WHERE
     company_id = $1
     AND deleted_at IS NULL
 ORDER BY created_at DESC;
+
+-- name: GetCurrentRunningSubscription :one
+SELECT 
+    s.id AS subscription_id,
+    s.company_id,
+    s.amount AS subscription_amount,
+    s.billing_cycle,
+    s.trial_starts_at,
+    s.trial_ends_at,
+    s.starts_at,
+    s.ends_at,
+    s.status AS subscription_status,
+    s.created_at AS subscription_created_at,
+    s.updated_at AS subscription_updated_at,
+    
+    p.id AS plan_id,
+    p.name AS plan_name,
+    p.description AS plan_description,
+    p.price AS plan_price,
+    p.billing_cycle AS plan_billing_cycle,
+    p.status AS plan_status
+FROM 
+    subscriptions s
+JOIN 
+    plans p ON s.plan_id = p.id
+WHERE 
+    s.deleted_at IS NULL AND s.company_id = $1
+ORDER BY 
+    s.created_at DESC
+LIMIT 1;
