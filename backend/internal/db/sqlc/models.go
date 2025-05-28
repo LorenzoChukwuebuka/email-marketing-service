@@ -168,6 +168,20 @@ type EmailCampaignResult struct {
 	DeletedAt       sql.NullTime   `json:"deleted_at"`
 }
 
+type EmailUsage struct {
+	ID               uuid.UUID     `json:"id"`
+	CompanyID        uuid.UUID     `json:"company_id"`
+	SubscriptionID   uuid.UUID     `json:"subscription_id"`
+	UsagePeriodStart time.Time     `json:"usage_period_start"`
+	UsagePeriodEnd   time.Time     `json:"usage_period_end"`
+	PeriodType       string        `json:"period_type"`
+	EmailsSent       sql.NullInt32 `json:"emails_sent"`
+	EmailsLimit      int32         `json:"emails_limit"`
+	CreatedAt        sql.NullTime  `json:"created_at"`
+	UpdatedAt        sql.NullTime  `json:"updated_at"`
+	RemainingEmails  sql.NullInt32 `json:"remaining_emails"`
+}
+
 type MailingLimit struct {
 	ID                   uuid.UUID     `json:"id"`
 	PlanID               uuid.UUID     `json:"plan_id"`
@@ -210,6 +224,35 @@ type Payment struct {
 	RefundedAmount       decimal.Decimal `json:"refunded_amount"`
 	IntegrityHash        sql.NullString  `json:"integrity_hash"`
 	RefundDate           sql.NullTime    `json:"refund_date"`
+}
+
+type PaymentIntent struct {
+	ID                      uuid.UUID             `json:"id"`
+	CompanyID               uuid.UUID             `json:"company_id"`
+	UserID                  uuid.UUID             `json:"user_id"`
+	SubscriptionID          uuid.NullUUID         `json:"subscription_id"`
+	PaymentIntentID         string                `json:"payment_intent_id"`
+	Amount                  decimal.Decimal       `json:"amount"`
+	Currency                sql.NullString        `json:"currency"`
+	PaymentMethodTypes      []string              `json:"payment_method_types"`
+	Status                  sql.NullString        `json:"status"`
+	ClientSecret            sql.NullString        `json:"client_secret"`
+	Description             sql.NullString        `json:"description"`
+	Metadata                pqtype.NullRawMessage `json:"metadata"`
+	AutomaticPaymentMethods sql.NullBool          `json:"automatic_payment_methods"`
+	ReceiptEmail            sql.NullString        `json:"receipt_email"`
+	SetupFutureUsage        sql.NullString        `json:"setup_future_usage"`
+	ConfirmationMethod      sql.NullString        `json:"confirmation_method"`
+	CaptureMethod           sql.NullString        `json:"capture_method"`
+	PaymentMethodID         sql.NullString        `json:"payment_method_id"`
+	LastPaymentError        pqtype.NullRawMessage `json:"last_payment_error"`
+	NextAction              pqtype.NullRawMessage `json:"next_action"`
+	CanceledAt              sql.NullTime          `json:"canceled_at"`
+	SucceededAt             sql.NullTime          `json:"succeeded_at"`
+	ExpiresAt               sql.NullTime          `json:"expires_at"`
+	CreatedAt               sql.NullTime          `json:"created_at"`
+	UpdatedAt               sql.NullTime          `json:"updated_at"`
+	DeletedAt               sql.NullTime          `json:"deleted_at"`
 }
 
 type Plan struct {
@@ -360,7 +403,7 @@ type Template struct {
 	FromEmail         sql.NullString        `json:"from_email"`
 	Subject           sql.NullString        `json:"subject"`
 	Type              string                `json:"type"`
-	EmailHtml         string                `json:"email_html"`
+	EmailHtml         sql.NullString        `json:"email_html"`
 	EmailDesign       pqtype.NullRawMessage `json:"email_design"`
 	IsEditable        sql.NullBool          `json:"is_editable"`
 	IsPublished       sql.NullBool          `json:"is_published"`

@@ -22,6 +22,42 @@ func (q *Queries) BlockUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const cancelUserDeletion = `-- name: CancelUserDeletion :one
+UPDATE users
+SET
+    scheduled_for_deletion = FALSE,
+    scheduled_deletion_at = NULL,
+    updated_at = now()
+WHERE
+    id = $1 RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) CancelUserDeletion(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, cancelUserDeletion, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Fullname,
+		&i.CompanyID,
+		&i.Email,
+		&i.Phonenumber,
+		&i.Password,
+		&i.GoogleID,
+		&i.Picture,
+		&i.Verified,
+		&i.Blocked,
+		&i.VerifiedAt,
+		&i.Status,
+		&i.ScheduledForDeletion,
+		&i.ScheduledDeletionAt,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const createCompany = `-- name: CreateCompany :one
 INSERT INTO companies (companyname) VALUES ($1) RETURNING id, companyname, created_at, updated_at, deleted_at
 `
@@ -127,19 +163,17 @@ func (q *Queries) GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, er
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT 
+SELECT
     u.id, u.fullname, u.company_id, u.email, u.phonenumber, u.password, u.google_id, u.picture, u.verified, u.blocked, u.verified_at, u.status, u.scheduled_for_deletion, u.scheduled_deletion_at, u.last_login_at, u.created_at, u.updated_at, u.deleted_at,
     c.id AS company_id,
     c.companyname,
     c.created_at AS company_created_at,
     c.updated_at AS company_updated_at,
     c.deleted_at AS company_deleted_at
-FROM 
-    users u
-JOIN 
-    companies c ON u.company_id = c.id
-WHERE 
-    u.email = $1 
+FROM users u
+    JOIN companies c ON u.company_id = c.id
+WHERE
+    u.email = $1
     AND u.deleted_at IS NULL
     AND c.deleted_at IS NULL
 `
@@ -202,19 +236,17 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT 
+SELECT
     u.id, u.fullname, u.company_id, u.email, u.phonenumber, u.password, u.google_id, u.picture, u.verified, u.blocked, u.verified_at, u.status, u.scheduled_for_deletion, u.scheduled_deletion_at, u.last_login_at, u.created_at, u.updated_at, u.deleted_at,
     c.id AS company_id,
     c.companyname,
     c.created_at AS company_created_at,
     c.updated_at AS company_updated_at,
     c.deleted_at AS company_deleted_at
-FROM 
-    users u
-JOIN 
-    companies c ON u.company_id = c.id
-WHERE 
-    u.id = $1 
+FROM users u
+    JOIN companies c ON u.company_id = c.id
+WHERE
+    u.id = $1
     AND u.deleted_at IS NULL
     AND c.deleted_at IS NULL
 `
@@ -362,6 +394,49 @@ func (q *Queries) ListUsersByCompany(ctx context.Context, companyID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const markUserForDeletion = `-- name: MarkUserForDeletion :one
+UPDATE users
+SET
+    scheduled_for_deletion = TRUE,
+    scheduled_deletion_at = $2,
+    status = $3,
+    updated_at = now()
+WHERE
+    id = $1 RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
+`
+
+type MarkUserForDeletionParams struct {
+	ID                  uuid.UUID    `json:"id"`
+	ScheduledDeletionAt sql.NullTime `json:"scheduled_deletion_at"`
+	Status              string       `json:"status"`
+}
+
+func (q *Queries) MarkUserForDeletion(ctx context.Context, arg MarkUserForDeletionParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, markUserForDeletion, arg.ID, arg.ScheduledDeletionAt, arg.Status)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Fullname,
+		&i.CompanyID,
+		&i.Email,
+		&i.Phonenumber,
+		&i.Password,
+		&i.GoogleID,
+		&i.Picture,
+		&i.Verified,
+		&i.Blocked,
+		&i.VerifiedAt,
+		&i.Status,
+		&i.ScheduledForDeletion,
+		&i.ScheduledDeletionAt,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const resetUserPassword = `-- name: ResetUserPassword :exec

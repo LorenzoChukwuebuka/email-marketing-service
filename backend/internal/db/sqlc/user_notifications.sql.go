@@ -102,10 +102,11 @@ SET
     read_status = TRUE,
     updated_at = CURRENT_TIMESTAMP
 WHERE
-    id = $1
+    user_id = $1
+    AND id = $1
 `
 
-func (q *Queries) MarkNotificationAsRead(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, markNotificationAsRead, id)
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, markNotificationAsRead, userID)
 	return err
 }

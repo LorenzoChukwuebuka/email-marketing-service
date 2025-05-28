@@ -24,6 +24,7 @@ type ContactGroupDTO struct {
 	UserId      string `json:"user_id" validate:"required"`
 	GroupName   string `json:"group_name" valiate:"required"`
 	Description string `json:"description"`
+	CompanyID   string `json:"company_id" validate:"required"`
 }
 
 type AddContactsToGroupDTO struct {
@@ -39,8 +40,18 @@ type ToggleContactSubDTO struct {
 }
 
 type FetchContactDTO struct {
+	UserId      string `json:"user_id"`
+	CompanyID   string `json:"company_id"`
+	Offset      int    `json:"offset"`
+	Limit       int    `json:"limit"`
+	SearchQuery string `json:"search_query"`
+}
+
+
+type FetchContactGroupDTO struct {
 	UserId    string `json:"user_id"`
-	CompanyID string `json:"company_id"`
-	Offset    int    `json:"offset"`
-	Limit     int    `json:"limit"`
+	CompanyID   string `json:"company_id"`
+	Offset      int    `json:"offset"`
+	Limit       int    `json:"limit"`
+	SearchQuery string `json:"search_query"`
 }

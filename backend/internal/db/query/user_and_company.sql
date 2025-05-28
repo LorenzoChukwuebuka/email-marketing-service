@@ -38,36 +38,32 @@ VALUES (
     ) RETURNING *;
 
 -- name: GetUserByEmail :one
-SELECT 
+SELECT
     u.*,
     c.id AS company_id,
     c.companyname,
     c.created_at AS company_created_at,
     c.updated_at AS company_updated_at,
     c.deleted_at AS company_deleted_at
-FROM 
-    users u
-JOIN 
-    companies c ON u.company_id = c.id
-WHERE 
-    u.email = $1 
+FROM users u
+    JOIN companies c ON u.company_id = c.id
+WHERE
+    u.email = $1
     AND u.deleted_at IS NULL
     AND c.deleted_at IS NULL;
 
 -- name: GetUserByID :one
-SELECT 
+SELECT
     u.*,
     c.id AS company_id,
     c.companyname,
     c.created_at AS company_created_at,
     c.updated_at AS company_updated_at,
     c.deleted_at AS company_deleted_at
-FROM 
-    users u
-JOIN 
-    companies c ON u.company_id = c.id
-WHERE 
-    u.id = $1 
+FROM users u
+    JOIN companies c ON u.company_id = c.id
+WHERE
+    u.id = $1
     AND u.deleted_at IS NULL
     AND c.deleted_at IS NULL;
 
@@ -102,5 +98,24 @@ UPDATE users SET blocked = TRUE, updated_at = now() WHERE id = $1;
 -- name: SoftDeleteUser :exec
 UPDATE users SET deleted_at = now() WHERE id = $1;
 
--- name: ResetUserPassword :exec 
+-- name: ResetUserPassword :exec
 UPDATE users SET password = $1, updated_at = now() WHERE id = $2;
+
+-- name: MarkUserForDeletion :one
+UPDATE users
+SET
+    scheduled_for_deletion = TRUE,
+    scheduled_deletion_at = $2,
+    status = $3,
+    updated_at = now()
+WHERE
+    id = $1 RETURNING *;
+
+-- name: CancelUserDeletion :one
+UPDATE users
+SET
+    scheduled_for_deletion = FALSE,
+    scheduled_deletion_at = NULL,
+    updated_at = now()
+WHERE
+    id = $1 RETURNING *;

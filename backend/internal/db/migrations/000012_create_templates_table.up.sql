@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS templates (
     type VARCHAR(20) NOT NULL CHECK (
         type IN ('transactional', 'marketing')
     ),
-    email_html TEXT NOT NULL,
+    email_html TEXT,
     email_design JSONB,
     is_editable BOOLEAN DEFAULT FALSE,
     is_published BOOLEAN DEFAULT FALSE,

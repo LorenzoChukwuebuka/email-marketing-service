@@ -26,6 +26,7 @@ ADD COLUMN IF NOT EXISTS refund_date TIMESTAMPTZ;
 
 -- Drop existing triggers if they exist before recreating (to avoid duplicate trigger errors)
 DROP TRIGGER IF EXISTS set_subscriptions_timestamp ON subscriptions;
+
 DROP TRIGGER IF EXISTS set_payments_timestamp ON payments;
 
 -- Add trigger for auto-updating 'updated_at' on your existing tables
