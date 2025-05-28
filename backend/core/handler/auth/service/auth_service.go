@@ -184,7 +184,7 @@ func (s *Service) VerifyUser(ctx context.Context, req *dto.VerifyUserRequest) er
 func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, user db.GetUserByIDRow) error {
 	plan, err := s.store.GetPlanByName(ctx, "Free")
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting plan: %w", err)
 	}
 
 	//create user subscription plan
@@ -222,7 +222,7 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 	//update payment integrity
 	paymentHash, err := common.GeneratePaymentHash(payment.ID, user.ID, 0, subscription.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error generating payment hash: %w", err)
 	}
 
 	err = q.UpdatePaymentHash(ctx, db.UpdatePaymentHashParams{
@@ -231,7 +231,32 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 	})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error updating payment hash: %w", err)
+	}
+
+	mailinglimits, err := q.GetMailingLimitByPlanID(ctx, plan.ID)
+	if err != nil {
+		return fmt.Errorf("error getting mailing limit: %w", err)
+	}
+	now := time.Now()
+
+	for i := 0; i < 30; i++ {
+		// Calculate the start and end of each day
+		periodStart := now.AddDate(0, 0, i).Truncate(24 * time.Hour)
+		periodEnd := periodStart.Add(24 * time.Hour).Add(-time.Second)
+
+		// Create the record for this day
+		_, err := q.CreateDailyEmailUsage(ctx, db.CreateDailyEmailUsageParams{
+			CompanyID:        user.CompanyID,
+			SubscriptionID:   subscription.ID,
+			EmailsSent:       sql.NullInt32{Int32: 0, Valid: true},
+			EmailsLimit:      mailinglimits.DailyLimit.Int32,
+			UsagePeriodStart: periodStart,
+			UsagePeriodEnd:   periodEnd,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating daily email usage for %s: %w", periodStart.Format("2006-01-02"), err)
+		}
 	}
 
 	return nil

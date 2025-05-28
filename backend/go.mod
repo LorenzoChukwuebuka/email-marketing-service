@@ -8,6 +8,7 @@ require (
 	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
 	github.com/emersion/go-smtp v0.22.0
 	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1

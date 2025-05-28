@@ -1,0 +1,1 @@
+DROP Table if EXISTS email_usage;

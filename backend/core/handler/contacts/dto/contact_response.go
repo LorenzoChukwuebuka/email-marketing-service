@@ -18,7 +18,6 @@ type ContactResponse struct {
 	ContactUpdatedAt *time.Time        `json:"contact_updated_at"`
 	UserContactGroup *UserContactGroup `json:"user_contact_group"`
 	Group            *GroupInfo        `json:"group"`
-	TotalCount       int64             `json:"total_count"`
 }
 
 type UserContactGroup struct {
@@ -37,4 +36,22 @@ type GroupInfo struct {
 	GroupCreatorID *uuid.UUID `json:"group_creator_id"`
 	GroupCreatedAt *time.Time `json:"group_created_at"`
 	GroupUpdatedAt *time.Time `json:"group_updated_at"`
+}
+
+type GroupwithContactResponse struct {
+	GroupID        uuid.UUID         `json:"group_id"`
+	GroupName      string            `json:"group_name"`
+	Description    *string           `json:"description"`
+	GroupCreatedAt *time.Time        `json:"group_created_at"`
+	Contacts       []GroupContactResponse `json:"contacts"`
+}
+
+type GroupContactResponse struct {
+	ContactID           uuid.NullUUID `json:"contact_id"`
+	ContactFirstName    *string       `json:"contact_first_name"`
+	ContactLastName     *string       `json:"contact_last_name"`
+	ContactEmail        *string       `json:"contact_email"`
+	ContactFromOrigin   *string       `json:"contact_from_origin"`
+	ContactIsSubscribed *bool         `json:"contact_is_subscribed"`
+	ContactCreatedAt    *time.Time    `json:"contact_created_at"`
 }

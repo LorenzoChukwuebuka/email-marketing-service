@@ -21,8 +21,18 @@ func NewContactRoutes(store db.Store) *ContactRoutes {
 func (c *ContactRoutes) InitRoutes(r *mux.Router) {
 	service := services.NewContactService(c.store)
 	handler := controller.NewContactController(*service, c.store)
-
-	r.HandleFunc("/create", middleware.JWTMiddleware(handler.CreateContact)).Methods("POST", "OPTIONS")
-	r.HandleFunc("/upload-csv", middleware.JWTMiddleware(handler.UploadContactViaCSV)).Methods("POST", "OPTIONS")
-	r.HandleFunc("/getall", middleware.JWTMiddleware(handler.GetAllContacts)).Methods("GET", "OPTIONS")
+	r.Use(middleware.JWTMiddleware)
+	r.HandleFunc("/create", handler.CreateContact).Methods("POST", "OPTIONS")
+	r.HandleFunc("/upload-csv", handler.UploadContactViaCSV).Methods("POST", "OPTIONS")
+	r.HandleFunc("/getall", handler.GetAllContacts).Methods("GET", "OPTIONS")
+	r.HandleFunc("/update/{contactId}", handler.EditContact).Methods("PUT", "OPTIONS")
+	r.HandleFunc("/delete/{contactId}", handler.DeleteContact).Methods("DELETE", "OPTIONS")
+	r.HandleFunc("/creategroup", handler.CreateGroup).Methods("POST", "OPTIONS")
+	r.HandleFunc("/addcontacttogroup", handler.AddContactsToGroup).Methods("POST", "OPTIONS")
+	r.HandleFunc("/removecontactfromgroup", handler.RemoveContactsFromGroup).Methods("POST", "OPTIONS")
+	r.HandleFunc("/updatecontactgroup/{groupId}", handler.UpdateContactGroup).Methods("PUT", "OPTIONS")
+	r.HandleFunc("/deletecontactgroup/{groupId}", handler.DeleteContactGroup).Methods("DELETE", "OPTIONS")
+	r.HandleFunc("/getgroupwithcontacts", handler.GetAllContactGroups).Methods("GET", "OPTIONS")
+	r.HandleFunc("/getgroupwithcontacts/{groupId}", handler.GetSingleGroupWithContacts).Methods("GET", "OPTIONS")
+	r.HandleFunc("/getdashboardstats", handler.GetDashboardStats).Methods("GET", "OPTIONS")
 }

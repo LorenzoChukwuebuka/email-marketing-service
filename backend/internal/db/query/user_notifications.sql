@@ -20,7 +20,8 @@ SET
     read_status = TRUE,
     updated_at = CURRENT_TIMESTAMP
 WHERE
-    id = $1;
+    user_id = $1
+    AND id = $1;
 
 -- name: MarkAllUserNotificationsAsRead :exec
 UPDATE user_notifications

@@ -12,6 +12,38 @@ import (
 	"github.com/google/uuid"
 )
 
+const addContactToGroup = `-- name: AddContactToGroup :one
+INSERT INTO
+    user_contact_groups (
+        user_id,
+        contact_group_id,
+        contact_id
+    )
+VALUES ($1, $2, $3) RETURNING id, user_id, contact_group_id, contact_id, created_at, updated_at, deleted_at
+`
+
+type AddContactToGroupParams struct {
+	UserID         uuid.UUID `json:"user_id"`
+	ContactGroupID uuid.UUID `json:"contact_group_id"`
+	ContactID      uuid.UUID `json:"contact_id"`
+}
+
+// Adds a contact to a group and returns the created entry
+func (q *Queries) AddContactToGroup(ctx context.Context, arg AddContactToGroupParams) (UserContactGroup, error) {
+	row := q.db.QueryRowContext(ctx, addContactToGroup, arg.UserID, arg.ContactGroupID, arg.ContactID)
+	var i UserContactGroup
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ContactGroupID,
+		&i.ContactID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const checkIfContactEmailExists = `-- name: CheckIfContactEmailExists :one
 SELECT EXISTS (
         SELECT 1
@@ -33,6 +65,22 @@ func (q *Queries) CheckIfContactEmailExists(ctx context.Context, arg CheckIfCont
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const countContactGroups = `-- name: CountContactGroups :one
+SELECT COUNT(*)
+FROM contact_groups
+WHERE
+    company_id = $1
+    AND deleted_at IS NULL
+`
+
+// Counts total number of contact groups for a company
+func (q *Queries) CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countContactGroups, companyID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createContact = `-- name: CreateContact :exec
@@ -82,6 +130,46 @@ func (q *Queries) CreateContact(ctx context.Context, arg CreateContactParams) er
 		arg.CreatedAt,
 	)
 	return err
+}
+
+const createContactGroup = `-- name: CreateContactGroup :one
+INSERT INTO
+    contact_groups (
+        company_id,
+        group_name,
+        user_id,
+        description
+    )
+VALUES ($1, $2, $3, $4) RETURNING id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+`
+
+type CreateContactGroupParams struct {
+	CompanyID   uuid.UUID      `json:"company_id"`
+	GroupName   string         `json:"group_name"`
+	UserID      uuid.UUID      `json:"user_id"`
+	Description sql.NullString `json:"description"`
+}
+
+// Creates a new contact group
+func (q *Queries) CreateContactGroup(ctx context.Context, arg CreateContactGroupParams) (ContactGroup, error) {
+	row := q.db.QueryRowContext(ctx, createContactGroup,
+		arg.CompanyID,
+		arg.GroupName,
+		arg.UserID,
+		arg.Description,
+	)
+	var i ContactGroup
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.GroupName,
+		&i.UserID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const deleteContact = `-- name: DeleteContact :exec
@@ -138,17 +226,23 @@ WHERE
     c.user_id = $1
     AND c.company_id = $2
     AND c.deleted_at IS NULL
+    AND (
+        c.first_name ILIKE '%' || $3 || '%'
+        OR c.last_name ILIKE '%' || $3 || '%'
+        OR c.email ILIKE '%' || $3 || '%'
+    )
 ORDER BY c.first_name, c.last_name
-LIMIT $3
+LIMIT $5
 OFFSET
     $4
 `
 
 type GetAllContactsParams struct {
-	UserID    uuid.UUID `json:"user_id"`
-	CompanyID uuid.UUID `json:"company_id"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
+	UserID     uuid.UUID      `json:"user_id"`
+	CompanyID  uuid.UUID      `json:"company_id"`
+	SearchTerm sql.NullString `json:"search_term"`
+	RowOffset  int32          `json:"row_offset"`
+	RowLimit   int32          `json:"row_limit"`
 }
 
 type GetAllContactsRow struct {
@@ -181,8 +275,9 @@ func (q *Queries) GetAllContacts(ctx context.Context, arg GetAllContactsParams) 
 	rows, err := q.db.QueryContext(ctx, getAllContacts,
 		arg.UserID,
 		arg.CompanyID,
-		arg.Limit,
-		arg.Offset,
+		arg.SearchTerm,
+		arg.RowOffset,
+		arg.RowLimit,
 	)
 	if err != nil {
 		return nil, err
@@ -229,6 +324,136 @@ func (q *Queries) GetAllContacts(ctx context.Context, arg GetAllContactsParams) 
 	return items, nil
 }
 
+const getContactGroup = `-- name: GetContactGroup :one
+SELECT id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at FROM contact_groups WHERE id = $1 AND deleted_at IS NULL
+`
+
+// Gets a contact group by ID
+func (q *Queries) GetContactGroup(ctx context.Context, id uuid.UUID) (ContactGroup, error) {
+	row := q.db.QueryRowContext(ctx, getContactGroup, id)
+	var i ContactGroup
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.GroupName,
+		&i.UserID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getContactGroupByName = `-- name: GetContactGroupByName :one
+SELECT id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+FROM contact_groups
+WHERE
+    company_id = $1
+    AND group_name = $2
+    AND deleted_at IS NULL
+`
+
+type GetContactGroupByNameParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	GroupName string    `json:"group_name"`
+}
+
+// Gets a contact group by name within a company
+func (q *Queries) GetContactGroupByName(ctx context.Context, arg GetContactGroupByNameParams) (ContactGroup, error) {
+	row := q.db.QueryRowContext(ctx, getContactGroupByName, arg.CompanyID, arg.GroupName)
+	var i ContactGroup
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.GroupName,
+		&i.UserID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getContactStats = `-- name: GetContactStats :one
+SELECT
+    (SELECT COUNT(*) FROM contacts c1 WHERE c1.user_id = $1 AND c1.is_subscribed = false AND c1.deleted_at IS NULL) AS unsubscribed_count,
+    (SELECT COUNT(*) FROM contacts c2 WHERE c2.user_id = $1 AND c2.deleted_at IS NULL) AS total_count,
+    (SELECT COUNT(*) FROM contacts c3 WHERE c3.user_id = $1 AND c3.created_at >= $2 AND c3.deleted_at IS NULL) AS new_contacts_count,
+    (SELECT COUNT(DISTINCT c4.id) 
+     FROM contacts c4
+     JOIN email_campaign_results ecr ON c4.email = ecr.recipient_email
+     WHERE c4.user_id = $1 
+     AND c4.deleted_at IS NULL
+     AND ecr.deleted_at IS NULL
+     AND (ecr.opened_at IS NOT NULL OR ecr.clicked_at IS NOT NULL OR ecr.conversion_at IS NOT NULL)
+    ) AS engaged_count
+`
+
+type GetContactStatsParams struct {
+	UserID     uuid.UUID    `json:"user_id"`
+	TenDaysAgo sql.NullTime `json:"ten_days_ago"`
+}
+
+type GetContactStatsRow struct {
+	UnsubscribedCount int64 `json:"unsubscribed_count"`
+	TotalCount        int64 `json:"total_count"`
+	NewContactsCount  int64 `json:"new_contacts_count"`
+	EngagedCount      int64 `json:"engaged_count"`
+}
+
+// Get all contact statistics in a single query
+// Get all contact statistics in a single query
+func (q *Queries) GetContactStats(ctx context.Context, arg GetContactStatsParams) (GetContactStatsRow, error) {
+	row := q.db.QueryRowContext(ctx, getContactStats, arg.UserID, arg.TenDaysAgo)
+	var i GetContactStatsRow
+	err := row.Scan(
+		&i.UnsubscribedCount,
+		&i.TotalCount,
+		&i.NewContactsCount,
+		&i.EngagedCount,
+	)
+	return i, err
+}
+
+const getContactTotalCount = `-- name: GetContactTotalCount :one
+SELECT
+    COUNT(*) AS count
+FROM
+    contacts
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
+`
+
+// Get total count of contacts for a specific user
+func (q *Queries) GetContactTotalCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getContactTotalCount, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getContactUnsubscribedCount = `-- name: GetContactUnsubscribedCount :one
+SELECT
+    COUNT(*) AS count
+FROM
+    contacts
+WHERE
+    user_id = $1
+    AND is_subscribed = false
+    AND deleted_at IS NULL
+`
+
+// Get count of unsubscribed contacts for a specific user
+func (q *Queries) GetContactUnsubscribedCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getContactUnsubscribedCount, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getContactsCount = `-- name: GetContactsCount :one
 SELECT COUNT(*) AS total_count
 FROM contacts c
@@ -248,6 +473,507 @@ func (q *Queries) GetContactsCount(ctx context.Context, arg GetContactsCountPara
 	var total_count int64
 	err := row.Scan(&total_count)
 	return total_count, err
+}
+
+const getGroupsWithContacts = `-- name: GetGroupsWithContacts :many
+SELECT
+    cg.id AS group_id,
+    cg.group_name,
+    cg.description,
+    cg.created_at AS group_created_at,
+    c.id AS contact_id,
+    c.first_name as contact_first_name,
+    c.last_name as contact_last_name,
+    c.email as contact_email,
+    c.from_origin as contact_from_origin,
+    c.is_subscribed as contact_is_subscribed,
+    c.created_at AS contact_created_at
+FROM
+    contact_groups cg
+    LEFT JOIN user_contact_groups ucg ON cg.id = ucg.contact_group_id
+    AND ucg.deleted_at IS NULL
+    LEFT JOIN contacts c ON ucg.contact_id = c.id
+    AND c.deleted_at IS NULL
+WHERE
+    cg.company_id = $1
+    AND cg.user_id = $2
+    AND (
+        $3 = ''
+        OR LOWER(cg.group_name) LIKE LOWER('%' || $3 || '%')
+        OR LOWER(c.first_name) LIKE LOWER('%' || $3 || '%')
+        OR LOWER(c.last_name) LIKE LOWER('%' || $3 || '%')
+        OR LOWER(c.email) LIKE LOWER('%' || $3 || '%')
+    )
+    AND cg.deleted_at IS NULL
+ORDER BY cg.group_name, c.last_name, c.first_name
+LIMIT $5
+OFFSET
+    $4
+`
+
+type GetGroupsWithContactsParams struct {
+	CompanyID  uuid.UUID   `json:"company_id"`
+	UserID     uuid.UUID   `json:"user_id"`
+	Searchterm interface{} `json:"searchterm"`
+	Rowoffset  int32       `json:"rowoffset"`
+	Rowlimit   int32       `json:"rowlimit"`
+}
+
+type GetGroupsWithContactsRow struct {
+	GroupID             uuid.UUID      `json:"group_id"`
+	GroupName           string         `json:"group_name"`
+	Description         sql.NullString `json:"description"`
+	GroupCreatedAt      sql.NullTime   `json:"group_created_at"`
+	ContactID           uuid.NullUUID  `json:"contact_id"`
+	ContactFirstName    sql.NullString `json:"contact_first_name"`
+	ContactLastName     sql.NullString `json:"contact_last_name"`
+	ContactEmail        sql.NullString `json:"contact_email"`
+	ContactFromOrigin   sql.NullString `json:"contact_from_origin"`
+	ContactIsSubscribed sql.NullBool   `json:"contact_is_subscribed"`
+	ContactCreatedAt    sql.NullTime   `json:"contact_created_at"`
+}
+
+// Fetches all contact groups with their associated contacts for a specific user and company
+// with pagination support using limit and offset
+func (q *Queries) GetGroupsWithContacts(ctx context.Context, arg GetGroupsWithContactsParams) ([]GetGroupsWithContactsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getGroupsWithContacts,
+		arg.CompanyID,
+		arg.UserID,
+		arg.Searchterm,
+		arg.Rowoffset,
+		arg.Rowlimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetGroupsWithContactsRow{}
+	for rows.Next() {
+		var i GetGroupsWithContactsRow
+		if err := rows.Scan(
+			&i.GroupID,
+			&i.GroupName,
+			&i.Description,
+			&i.GroupCreatedAt,
+			&i.ContactID,
+			&i.ContactFirstName,
+			&i.ContactLastName,
+			&i.ContactEmail,
+			&i.ContactFromOrigin,
+			&i.ContactIsSubscribed,
+			&i.ContactCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getNewContactsCount = `-- name: GetNewContactsCount :one
+SELECT
+    COUNT(*) AS count
+FROM
+    contacts
+WHERE
+    user_id = $1
+    AND created_at >= $2
+    AND deleted_at IS NULL
+`
+
+type GetNewContactsCountParams struct {
+	UserID     uuid.UUID    `json:"user_id"`
+	TenDaysAgo sql.NullTime `json:"ten_days_ago"`
+}
+
+// Get count of new contacts (less than 10 days old) for a specific user
+func (q *Queries) GetNewContactsCount(ctx context.Context, arg GetNewContactsCountParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNewContactsCount, arg.UserID, arg.TenDaysAgo)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getSingleGroupWithContacts = `-- name: GetSingleGroupWithContacts :many
+SELECT
+    cg.id AS group_id,
+    cg.group_name,
+    cg.description,
+    cg.created_at AS group_created_at,
+    c.id AS contact_id,
+    c.first_name as contact_first_name,
+    c.last_name as contact_last_name,
+    c.email as contact_email,
+    c.from_origin as contact_from_origin,
+    c.is_subscribed as contact_is_subscribed,
+    c.created_at AS contact_created_at
+FROM
+    contact_groups cg
+    LEFT JOIN user_contact_groups ucg ON cg.id = ucg.contact_group_id
+    AND ucg.deleted_at IS NULL
+    LEFT JOIN contacts c ON ucg.contact_id = c.id
+    AND c.deleted_at IS NULL
+WHERE
+    cg.id = $1
+    AND cg.company_id = $2
+    AND cg.user_id = $3
+    AND cg.deleted_at IS NULL
+ORDER BY c.last_name, c.first_name
+`
+
+type GetSingleGroupWithContactsParams struct {
+	GroupID   uuid.UUID `json:"group_id"`
+	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+type GetSingleGroupWithContactsRow struct {
+	GroupID             uuid.UUID      `json:"group_id"`
+	GroupName           string         `json:"group_name"`
+	Description         sql.NullString `json:"description"`
+	GroupCreatedAt      sql.NullTime   `json:"group_created_at"`
+	ContactID           uuid.NullUUID  `json:"contact_id"`
+	ContactFirstName    sql.NullString `json:"contact_first_name"`
+	ContactLastName     sql.NullString `json:"contact_last_name"`
+	ContactEmail        sql.NullString `json:"contact_email"`
+	ContactFromOrigin   sql.NullString `json:"contact_from_origin"`
+	ContactIsSubscribed sql.NullBool   `json:"contact_is_subscribed"`
+	ContactCreatedAt    sql.NullTime   `json:"contact_created_at"`
+}
+
+// Fetches a specific contact group with all its associated contacts for a specific user and company
+func (q *Queries) GetSingleGroupWithContacts(ctx context.Context, arg GetSingleGroupWithContactsParams) ([]GetSingleGroupWithContactsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSingleGroupWithContacts, arg.GroupID, arg.CompanyID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetSingleGroupWithContactsRow{}
+	for rows.Next() {
+		var i GetSingleGroupWithContactsRow
+		if err := rows.Scan(
+			&i.GroupID,
+			&i.GroupName,
+			&i.Description,
+			&i.GroupCreatedAt,
+			&i.ContactID,
+			&i.ContactFirstName,
+			&i.ContactLastName,
+			&i.ContactEmail,
+			&i.ContactFromOrigin,
+			&i.ContactIsSubscribed,
+			&i.ContactCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const hardDeleteContactGroup = `-- name: HardDeleteContactGroup :exec
+DELETE FROM contact_groups WHERE id = $1
+`
+
+// Hard deletes a contact group (use with caution)
+func (q *Queries) HardDeleteContactGroup(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, hardDeleteContactGroup, id)
+	return err
+}
+
+const isContactGroupNameUnique = `-- name: IsContactGroupNameUnique :one
+SELECT NOT EXISTS (
+        SELECT 1
+        FROM contact_groups
+        WHERE
+            company_id = $1
+            AND group_name = $2
+            AND user_id = $3
+            AND deleted_at IS NULL
+    ) AS is_unique
+`
+
+type IsContactGroupNameUniqueParams struct {
+	Companyid uuid.UUID `json:"companyid"`
+	Groupname string    `json:"groupname"`
+	Userid    uuid.UUID `json:"userid"`
+}
+
+// Checks if a contact group name is unique within a company
+func (q *Queries) IsContactGroupNameUnique(ctx context.Context, arg IsContactGroupNameUniqueParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isContactGroupNameUnique, arg.Companyid, arg.Groupname, arg.Userid)
+	var is_unique bool
+	err := row.Scan(&is_unique)
+	return is_unique, err
+}
+
+const isContactInGroup = `-- name: IsContactInGroup :one
+SELECT EXISTS (
+        SELECT 1
+        FROM user_contact_groups
+        WHERE
+            user_id = $1
+            AND contact_group_id = $2
+            AND contact_id = $3
+            AND deleted_at IS NULL
+    ) AS is_in_group
+`
+
+type IsContactInGroupParams struct {
+	UserID         uuid.UUID `json:"user_id"`
+	ContactGroupID uuid.UUID `json:"contact_group_id"`
+	ContactID      uuid.UUID `json:"contact_id"`
+}
+
+// Checks if a contact is already in a specific group
+func (q *Queries) IsContactInGroup(ctx context.Context, arg IsContactInGroupParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isContactInGroup, arg.UserID, arg.ContactGroupID, arg.ContactID)
+	var is_in_group bool
+	err := row.Scan(&is_in_group)
+	return is_in_group, err
+}
+
+const listContactGroups = `-- name: ListContactGroups :many
+SELECT id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+FROM contact_groups
+WHERE
+    company_id = $1
+    AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $2
+OFFSET
+    $3
+`
+
+type ListContactGroupsParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+// Lists all contact groups for a company with pagination
+func (q *Queries) ListContactGroups(ctx context.Context, arg ListContactGroupsParams) ([]ContactGroup, error) {
+	rows, err := q.db.QueryContext(ctx, listContactGroups, arg.CompanyID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ContactGroup{}
+	for rows.Next() {
+		var i ContactGroup
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.GroupName,
+			&i.UserID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listContactGroupsForUser = `-- name: ListContactGroupsForUser :many
+SELECT id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+FROM contact_groups
+WHERE
+    company_id = $1
+    AND user_id = $2
+    AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET
+    $4
+`
+
+type ListContactGroupsForUserParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+// Lists all contact groups for a specific user with pagination
+func (q *Queries) ListContactGroupsForUser(ctx context.Context, arg ListContactGroupsForUserParams) ([]ContactGroup, error) {
+	rows, err := q.db.QueryContext(ctx, listContactGroupsForUser,
+		arg.CompanyID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ContactGroup{}
+	for rows.Next() {
+		var i ContactGroup
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.GroupName,
+			&i.UserID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeContactFromGroup = `-- name: RemoveContactFromGroup :exec
+UPDATE user_contact_groups
+SET
+    deleted_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    user_id = $1
+    AND contact_group_id = $2
+    AND contact_id = $3
+    AND deleted_at IS NULL
+`
+
+type RemoveContactFromGroupParams struct {
+	UserID         uuid.UUID `json:"user_id"`
+	ContactGroupID uuid.UUID `json:"contact_group_id"`
+	ContactID      uuid.UUID `json:"contact_id"`
+}
+
+// Soft deletes a contact from a group by setting the deleted_at timestamp
+func (q *Queries) RemoveContactFromGroup(ctx context.Context, arg RemoveContactFromGroupParams) error {
+	_, err := q.db.ExecContext(ctx, removeContactFromGroup, arg.UserID, arg.ContactGroupID, arg.ContactID)
+	return err
+}
+
+const restoreContactGroup = `-- name: RestoreContactGroup :exec
+UPDATE contact_groups
+SET
+    deleted_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1
+`
+
+// Restores a soft-deleted contact group
+func (q *Queries) RestoreContactGroup(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, restoreContactGroup, id)
+	return err
+}
+
+const searchContactGroups = `-- name: SearchContactGroups :many
+SELECT id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+FROM contact_groups
+WHERE
+    company_id = $1
+    AND deleted_at IS NULL
+    AND (
+        group_name ILIKE '%' || $2 || '%'
+        OR description ILIKE '%' || $2 || '%'
+    )
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET
+    $4
+`
+
+type SearchContactGroupsParams struct {
+	CompanyID uuid.UUID      `json:"company_id"`
+	Column2   sql.NullString `json:"column_2"`
+	Limit     int32          `json:"limit"`
+	Offset    int32          `json:"offset"`
+}
+
+// Searches contact groups by name or description
+func (q *Queries) SearchContactGroups(ctx context.Context, arg SearchContactGroupsParams) ([]ContactGroup, error) {
+	rows, err := q.db.QueryContext(ctx, searchContactGroups,
+		arg.CompanyID,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ContactGroup{}
+	for rows.Next() {
+		var i ContactGroup
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.GroupName,
+			&i.UserID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const softDeleteContactGroup = `-- name: SoftDeleteContactGroup :exec
+UPDATE contact_groups
+SET
+    deleted_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1
+    AND user_id = $2
+    AND deleted_at IS NULL
+`
+
+type SoftDeleteContactGroupParams struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+// Soft deletes a contact group
+func (q *Queries) SoftDeleteContactGroup(ctx context.Context, arg SoftDeleteContactGroupParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteContactGroup, arg.ID, arg.UserID)
+	return err
 }
 
 const updateContact = `-- name: UpdateContact :exec
@@ -295,4 +1021,45 @@ func (q *Queries) UpdateContact(ctx context.Context, arg UpdateContactParams) er
 		arg.UserID,
 	)
 	return err
+}
+
+const updateContactGroup = `-- name: UpdateContactGroup :one
+UPDATE contact_groups
+SET
+    group_name = $2,
+    description = $3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1
+    AND user_id = $4
+    AND deleted_at IS NULL RETURNING id, company_id, group_name, user_id, description, created_at, updated_at, deleted_at
+`
+
+type UpdateContactGroupParams struct {
+	ID          uuid.UUID      `json:"id"`
+	GroupName   string         `json:"group_name"`
+	Description sql.NullString `json:"description"`
+	UserID      uuid.UUID      `json:"user_id"`
+}
+
+// Updates a contact group's details
+func (q *Queries) UpdateContactGroup(ctx context.Context, arg UpdateContactGroupParams) (ContactGroup, error) {
+	row := q.db.QueryRowContext(ctx, updateContactGroup,
+		arg.ID,
+		arg.GroupName,
+		arg.Description,
+		arg.UserID,
+	)
+	var i ContactGroup
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.GroupName,
+		&i.UserID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }

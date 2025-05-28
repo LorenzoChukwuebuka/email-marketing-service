@@ -1,0 +1,323 @@
+package services
+
+import (
+	"context"
+	"database/sql"
+	"email-marketing-service/core/handler/templates/dto"
+	"email-marketing-service/core/handler/templates/mapper"
+	"email-marketing-service/internal/common"
+	"email-marketing-service/internal/config"
+	db "email-marketing-service/internal/db/sqlc"
+	"email-marketing-service/internal/domain"
+	"email-marketing-service/internal/factory/smtpFactory"
+	"email-marketing-service/internal/helper"
+	"errors"
+	"fmt"
+	"github.com/sqlc-dev/pqtype"
+	"strings"
+	"sync"
+)
+
+type Service struct {
+	store db.Store
+}
+
+var (
+	cfg = config.LoadEnv()
+)
+
+func NewTemplateService(store db.Store) *Service {
+	return &Service{
+		store: store,
+	}
+}
+
+func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dto.TemplateDTO, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    req.UserId,
+		"company": req.CompanyID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	templateExists, err := s.store.CheckTemplateNameExists(ctx, db.CheckTemplateNameExistsParams{
+		UserID:       _uuid["user"],
+		TemplateName: req.TemplateName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if templateExists {
+		return nil, common.ErrRecordExists
+	}
+
+	_, err = s.store.CreateTemplate(ctx, db.CreateTemplateParams{
+		UserID:       _uuid["user"],
+		CompanyID:    _uuid["company"],
+		TemplateName: req.TemplateName,
+		SenderName:   sql.NullString{String: req.SenderName, Valid: true},
+		FromEmail:    sql.NullString{String: req.FromEmail, Valid: true},
+		Subject:      sql.NullString{String: req.Subject, Valid: true},
+		Type:         req.Type,
+		EmailHtml:    sql.NullString{String: req.EmailHtml, Valid: true},
+		EmailDesign:  pqtype.NullRawMessage{RawMessage: req.EmailDesign, Valid: true},
+		IsEditable:   sql.NullBool{Bool: req.IsEditable, Valid: true},
+		IsPublished:  sql.NullBool{Bool: req.IsPublished, Valid: true},
+		IsPublicTemplate: sql.NullBool{
+			Bool:  req.IsPublicTemplate,
+			Valid: true,
+		},
+		IsGalleryTemplate: sql.NullBool{
+			Bool:  req.IsGalleryTemplate,
+			Valid: true,
+		},
+		Tags:        sql.NullString{String: req.Tags, Valid: true},
+		Description: sql.NullString{String: req.Description, Valid: true},
+		ImageUrl:    sql.NullString{String: req.ImageUrl, Valid: true},
+		IsActive:    sql.NullBool{Bool: req.IsActive, Valid: true},
+		EditorType:  sql.NullString{String: req.EditorType, Valid: true},
+	})
+
+	return req, nil
+}
+
+func (s *Service) GetAllTemplateByType(ctx context.Context, req dto.FetchTemplateDTO) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": req.UserId,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	templates, err := s.store.ListTemplatesByType(ctx, db.ListTemplatesByTypeParams{
+		Type:    req.Type,
+		UserID:  _uuid["user"],
+		Limit:   int32(req.Limit),
+		Offset:  int32(req.Offset),
+		Column5: req.SearchQuery,
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrFetchingRecord
+	}
+
+	count_templates, err := s.store.CountTemplatesByUserID(ctx, _uuid["user"])
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrFetchingRecord
+	}
+
+	response := mapper.MapTemplateResponse(templates)
+
+	items := make([]any, len(response))
+	for i, v := range response {
+		items[i] = v
+	}
+
+	data := common.Paginate(int(count_templates), items, req.Offset, req.Limit)
+	return data, nil
+}
+
+func (s *Service) GetTemplateByID(ctx context.Context, req dto.FetchTemplateDTO) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": req.UserId,
+		"template": req.TemplateId,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
+		UserID: _uuid["user"],
+		ID:     _uuid["template"],
+		Type:   req.Type,
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrFetchingRecord
+	}
+
+	response := mapper.MapSingleTemplateResponse(template)
+	return response, nil
+}
+
+func (s *Service) UpdateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dto.TemplateDTO, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":     req.UserId,
+		"template": req.TemplateID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	_, err = s.store.UpdateTemplate(ctx, db.UpdateTemplateParams{
+		UserID:       _uuid["user"],
+		ID:           _uuid["template"],
+		TemplateName: req.TemplateName,
+		SenderName:   sql.NullString{String: req.SenderName, Valid: true},
+		FromEmail:    sql.NullString{String: req.FromEmail, Valid: true},
+		Subject:      sql.NullString{String: req.Subject, Valid: true},
+		Type:         req.Type,
+		EmailHtml:    sql.NullString{String: req.EmailHtml, Valid: true},
+		EmailDesign:  pqtype.NullRawMessage{RawMessage: req.EmailDesign, Valid: true},
+		IsEditable:   sql.NullBool{Bool: req.IsEditable, Valid: true},
+		IsPublished:  sql.NullBool{Bool: req.IsPublished, Valid: true},
+		IsPublicTemplate: sql.NullBool{
+			Bool:  req.IsPublicTemplate,
+			Valid: true,
+		},
+		IsGalleryTemplate: sql.NullBool{
+			Bool:  req.IsGalleryTemplate,
+			Valid: true,
+		},
+		Tags:        sql.NullString{String: req.Tags, Valid: true},
+		Description: sql.NullString{String: req.Description, Valid: true},
+		ImageUrl:    sql.NullString{String: req.ImageUrl, Valid: true},
+		IsActive:    sql.NullBool{Bool: req.IsActive, Valid: true},
+		EditorType:  sql.NullString{String: req.EditorType, Valid: true},
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrUpdatingRecord
+	}
+	return req, nil
+}
+
+func (s *Service) DeleteTemplate(ctx context.Context, req dto.FetchTemplateDTO) error {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":     req.UserId,
+		"template": req.TemplateId,
+	})
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
+
+	err = s.store.SoftDeleteTemplate(ctx, db.SoftDeleteTemplateParams{
+		ID:     _uuid["template"],
+		UserID: _uuid["user"],
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return common.ErrDeletingRecord
+	}
+	return nil
+}
+
+func (s *Service) SendTestMail(ctx context.Context, d *dto.SendTestMailDTO) error {
+	if err := helper.ValidateData(d); err != nil {
+		return fmt.Errorf("invalid data: %w", err)
+	}
+
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":     d.UserId,
+		"template": d.TemplateId,
+	})
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
+
+	emails := strings.Split(d.EmailAddress, ",")
+
+	user, err := s.store.GetUserByID(context.Background(), _uuid["user"])
+	if err != nil {
+		return fmt.Errorf("error fetching user: %w", err)
+	}
+
+	mailUsageRecord, err := s.store.GetCurrentEmailUsage(ctx, user.CompanyID)
+	if err != nil {
+		return fmt.Errorf("error fetching or creating mail usage record: %w", err)
+	}
+
+	if mailUsageRecord.RemainingEmails.Int32 == 0 {
+		return fmt.Errorf("you have exceeded your plan limit")
+	}
+
+	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
+		UserID: _uuid["user"],
+		ID:     _uuid["template"],
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return common.ErrFetchingRecord
+	}
+
+	var wg sync.WaitGroup
+	var errChan = make(chan error, len(emails))
+
+	for _, email := range emails {
+		wg.Add(1)
+		go func(email string) {
+			defer wg.Done()
+
+			defer func() {
+				if err := recover(); err != nil {
+					fmt.Printf("Error sending batch: %v\n", err)
+					errChan <- fmt.Errorf("panic: %v", err)
+				}
+			}()
+
+			if err := s.proccessEmail(template.EmailHtml.String, d.Subject, email, user.Email, user.Fullname); err != nil {
+				errChan <- fmt.Errorf("error processing email %s: %w", email, err)
+				return
+			}
+			// Update the mail usage record
+			_, err = s.store.UpdateEmailsSentAndRemaining(ctx, db.UpdateEmailsSentAndRemainingParams{
+				CompanyID:  user.CompanyID,
+				EmailsSent: sql.NullInt32{Int32: mailUsageRecord.EmailsSent.Int32 + 1, Valid: true},
+				ID:         mailUsageRecord.ID,
+			})
+			if err != nil {
+				errChan <- fmt.Errorf("error updating mail usage for email %s: %w", email, err)
+			}
+		}(email)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) proccessEmail(design string, subject string, email string, from string, fromName string) error {
+	valid := helper.IsValidEmail(email)
+	if !valid {
+		return nil
+	}
+
+	sender := &domain.Sender{Email: from, Name: &fromName}
+	recipient := domain.Recipient{Email: email}
+	request := &domain.EmailRequest{
+		Sender:      *sender,
+		To:          recipient,
+		Subject:     subject,
+		HtmlContent: &design,
+	}
+	println(cfg.MAIL_PROCESSOR)
+	mailS, err := smtpfactory.MailFactory(cfg.MAIL_PROCESSOR)
+	if err != nil {
+		return fmt.Errorf("failed to create mail factory: %w", err)
+	}
+
+	if err := mailS.HandleSendMail(request); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}

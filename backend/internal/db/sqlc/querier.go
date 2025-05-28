@@ -12,26 +12,42 @@ import (
 )
 
 type Querier interface {
+	// Adds a contact to a group and returns the created entry
+	AddContactToGroup(ctx context.Context, arg AddContactToGroupParams) (UserContactGroup, error)
+	ArchiveCampaign(ctx context.Context, id uuid.UUID) (Campaign, error)
 	ArchivePlan(ctx context.Context, id uuid.UUID) (Plan, error)
 	BlockUser(ctx context.Context, id uuid.UUID) error
+	CancelUserDeletion(ctx context.Context, id uuid.UUID) (User, error)
+	CheckCampaignNameExists(ctx context.Context, arg CheckCampaignNameExistsParams) (bool, error)
+	CheckEmailLimitExceeded(ctx context.Context, arg CheckEmailLimitExceededParams) (CheckEmailLimitExceededRow, error)
 	CheckIfContactEmailExists(ctx context.Context, arg CheckIfContactEmailExistsParams) (bool, error)
 	CheckSMTPKeyExists(ctx context.Context, arg CheckSMTPKeyExistsParams) (bool, error)
 	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
+	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
+	// Counts total number of contact groups for a company
+	CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error)
+	CountTemplatesByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
+	CreateCampaign(ctx context.Context, arg CreateCampaignParams) (Campaign, error)
 	CreateCompany(ctx context.Context, companyname sql.NullString) (Company, error)
 	CreateContact(ctx context.Context, arg CreateContactParams) error
+	// Creates a new contact group
+	CreateContactGroup(ctx context.Context, arg CreateContactGroupParams) (ContactGroup, error)
+	CreateDailyEmailUsage(ctx context.Context, arg CreateDailyEmailUsageParams) (EmailUsage, error)
 	CreateEmailBox(ctx context.Context, arg CreateEmailBoxParams) (EmailBox, error)
 	CreateMailingLimit(ctx context.Context, arg CreateMailingLimitParams) (MailingLimit, error)
 	CreateOTP(ctx context.Context, arg CreateOTPParams) (Otp, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	CreatePaymentIntent(ctx context.Context, arg CreatePaymentIntentParams) (PaymentIntent, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreatePlanFeature(ctx context.Context, arg CreatePlanFeatureParams) (PlanFeature, error)
 	CreateSMTPKey(ctx context.Context, arg CreateSMTPKeyParams) (SmtpKey, error)
 	CreateSMTPMasterKey(ctx context.Context, arg CreateSMTPMasterKeyParams) (SmtpMasterKey, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateSystemsSMTPSettings(ctx context.Context, arg CreateSystemsSMTPSettingsParams) (SystemsSmtpSetting, error)
+	CreateTemplate(ctx context.Context, arg CreateTemplateParams) (Template, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserNotification(ctx context.Context, arg CreateUserNotificationParams) (UserNotification, error)
 	DeleteAPIKey(ctx context.Context, id uuid.UUID) error
@@ -47,13 +63,46 @@ type Querier interface {
 	GetAdminByID(ctx context.Context, id uuid.UUID) (Admin, error)
 	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
 	GetAllContacts(ctx context.Context, arg GetAllContactsParams) ([]GetAllContactsRow, error)
+	GetCampaignByID(ctx context.Context, id uuid.UUID) (GetCampaignByIDRow, error)
+	GetCampaignsByTemplateType(ctx context.Context, arg GetCampaignsByTemplateTypeParams) ([]GetCampaignsByTemplateTypeRow, error)
+	GetCompaniesNearLimit(ctx context.Context, arg GetCompaniesNearLimitParams) ([]GetCompaniesNearLimitRow, error)
 	GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, error)
+	// Gets a contact group by ID
+	GetContactGroup(ctx context.Context, id uuid.UUID) (ContactGroup, error)
+	// Gets a contact group by name within a company
+	GetContactGroupByName(ctx context.Context, arg GetContactGroupByNameParams) (ContactGroup, error)
+	// Get all contact statistics in a single query
+	// Get all contact statistics in a single query
+	GetContactStats(ctx context.Context, arg GetContactStatsParams) (GetContactStatsRow, error)
+	// Get total count of contacts for a specific user
+	GetContactTotalCount(ctx context.Context, userID uuid.UUID) (int64, error)
+	// Get count of unsubscribed contacts for a specific user
+	GetContactUnsubscribedCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetContactsCount(ctx context.Context, arg GetContactsCountParams) (int64, error)
+	GetCurrentBillingPeriod(ctx context.Context, companyID uuid.UUID) (GetCurrentBillingPeriodRow, error)
+	GetCurrentEmailUsage(ctx context.Context, companyID uuid.UUID) (EmailUsage, error)
 	GetCurrentRunningSubscription(ctx context.Context, companyID uuid.UUID) (GetCurrentRunningSubscriptionRow, error)
 	GetEmailBoxByID(ctx context.Context, id uuid.UUID) (EmailBox, error)
+	GetEmailUsageByCompany(ctx context.Context, companyID uuid.UUID) ([]EmailUsage, error)
+	GetEmailUsageByCompanyAndPeriod(ctx context.Context, arg GetEmailUsageByCompanyAndPeriodParams) (EmailUsage, error)
+	GetEmailUsageBySubscription(ctx context.Context, subscriptionID uuid.UUID) ([]EmailUsage, error)
+	GetEmailUsageInDateRange(ctx context.Context, arg GetEmailUsageInDateRangeParams) ([]EmailUsage, error)
+	GetEmailUsageStats(ctx context.Context, arg GetEmailUsageStatsParams) (GetEmailUsageStatsRow, error)
+	// Fetches all contact groups with their associated contacts for a specific user and company
+	// with pagination support using limit and offset
+	GetGroupsWithContacts(ctx context.Context, arg GetGroupsWithContactsParams) ([]GetGroupsWithContactsRow, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
 	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
+	GetMonthlyEmailTrends(ctx context.Context, arg GetMonthlyEmailTrendsParams) ([]GetMonthlyEmailTrendsRow, error)
+	// Get count of new contacts (less than 10 days old) for a specific user
+	GetNewContactsCount(ctx context.Context, arg GetNewContactsCountParams) (int64, error)
 	GetOTPByToken(ctx context.Context, token string) (Otp, error)
+	GetPaymentIntent(ctx context.Context, id uuid.UUID) (PaymentIntent, error)
+	GetPaymentIntentByPaymentIntentID(ctx context.Context, paymentIntentID string) (PaymentIntent, error)
+	GetPaymentIntentsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]PaymentIntent, error)
+	GetPaymentIntentsByStatus(ctx context.Context, arg GetPaymentIntentsByStatusParams) ([]PaymentIntent, error)
+	GetPaymentIntentsBySubscriptionID(ctx context.Context, subscriptionID uuid.NullUUID) ([]PaymentIntent, error)
+	GetPaymentIntentsByUserID(ctx context.Context, userID uuid.UUID) ([]PaymentIntent, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
 	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
@@ -62,42 +111,83 @@ type Querier interface {
 	GetSMTPKeyUserAndPass(ctx context.Context, arg GetSMTPKeyUserAndPassParams) (SmtpKey, error)
 	GetSMTPMasterKeyAndPass(ctx context.Context, arg GetSMTPMasterKeyAndPassParams) (SmtpMasterKey, error)
 	GetSMTPSettingByDomain(ctx context.Context, domain sql.NullString) (SystemsSmtpSetting, error)
+	// Fetches a specific contact group with all its associated contacts for a specific user and company
+	GetSingleGroupWithContacts(ctx context.Context, arg GetSingleGroupWithContactsParams) ([]GetSingleGroupWithContactsRow, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
+	GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
 	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
 	GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
+	HardDeleteCampaign(ctx context.Context, id uuid.UUID) error
+	// Hard deletes a contact group (use with caution)
+	HardDeleteContactGroup(ctx context.Context, id uuid.UUID) error
 	HardDeleteOTPById(ctx context.Context, id uuid.UUID) error
+	HardDeleteTemplate(ctx context.Context, id uuid.UUID) error
+	IncrementEmailsSent(ctx context.Context, arg IncrementEmailsSentParams) (EmailUsage, error)
+	// Checks if a contact group name is unique within a company
+	IsContactGroupNameUnique(ctx context.Context, arg IsContactGroupNameUniqueParams) (bool, error)
+	// Checks if a contact is already in a specific group
+	IsContactInGroup(ctx context.Context, arg IsContactInGroupParams) (bool, error)
 	ListActivePlans(ctx context.Context) ([]Plan, error)
 	ListAdmins(ctx context.Context) ([]Admin, error)
+	ListCampaigns(ctx context.Context, arg ListCampaignsParams) ([]ListCampaignsRow, error)
+	ListCampaignsByCompanyID(ctx context.Context, arg ListCampaignsByCompanyIDParams) ([]ListCampaignsByCompanyIDRow, error)
+	ListCampaignsByUserID(ctx context.Context, arg ListCampaignsByUserIDParams) ([]ListCampaignsByUserIDRow, error)
 	ListCompanies(ctx context.Context) ([]Company, error)
+	// Lists all contact groups for a company with pagination
+	ListContactGroups(ctx context.Context, arg ListContactGroupsParams) ([]ContactGroup, error)
+	// Lists all contact groups for a specific user with pagination
+	ListContactGroupsForUser(ctx context.Context, arg ListContactGroupsForUserParams) ([]ContactGroup, error)
 	ListEmailBoxesByMailbox(ctx context.Context, arg ListEmailBoxesByMailboxParams) ([]EmailBox, error)
 	ListEmailBoxesByUser(ctx context.Context, userName sql.NullString) ([]EmailBox, error)
 	ListPlansWithDetails(ctx context.Context) ([]ListPlansWithDetailsRow, error)
 	ListSubscriptionsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]Subscription, error)
+	ListTemplates(ctx context.Context, arg ListTemplatesParams) ([]ListTemplatesRow, error)
+	ListTemplatesByCompanyID(ctx context.Context, arg ListTemplatesByCompanyIDParams) ([]ListTemplatesByCompanyIDRow, error)
+	ListTemplatesByType(ctx context.Context, arg ListTemplatesByTypeParams) ([]ListTemplatesByTypeRow, error)
+	ListTemplatesByUserID(ctx context.Context, arg ListTemplatesByUserIDParams) ([]ListTemplatesByUserIDRow, error)
 	ListUsersByCompany(ctx context.Context, companyID uuid.UUID) ([]User, error)
 	MarkAdminNotificationAsRead(ctx context.Context, id uuid.UUID) error
 	MarkAllAdminNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
 	MarkAllUserNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkCampaignAsSent(ctx context.Context, id uuid.UUID) (Campaign, error)
 	MarkEmailAsDelivered(ctx context.Context, recipientEmail string) error
-	MarkNotificationAsRead(ctx context.Context, id uuid.UUID) error
+	MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkUserForDeletion(ctx context.Context, arg MarkUserForDeletionParams) (User, error)
+	// Soft deletes a contact from a group by setting the deleted_at timestamp
+	RemoveContactFromGroup(ctx context.Context, arg RemoveContactFromGroupParams) error
 	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) error
+	// Restores a soft-deleted contact group
+	RestoreContactGroup(ctx context.Context, id uuid.UUID) error
+	// Searches contact groups by name or description
+	SearchContactGroups(ctx context.Context, arg SearchContactGroupsParams) ([]ContactGroup, error)
 	SoftDeleteAdmin(ctx context.Context, id uuid.UUID) error
+	SoftDeleteCampaign(ctx context.Context, id uuid.UUID) error
 	SoftDeleteCompany(ctx context.Context, id uuid.UUID) error
+	// Soft deletes a contact group
+	SoftDeleteContactGroup(ctx context.Context, arg SoftDeleteContactGroupParams) error
 	SoftDeletePlan(ctx context.Context, id uuid.UUID) error
 	SoftDeleteSMTPKey(ctx context.Context, id uuid.UUID) error
+	SoftDeleteTemplate(ctx context.Context, arg SoftDeleteTemplateParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (Admin, error)
 	UpdateBounceStatus(ctx context.Context, arg UpdateBounceStatusParams) error
+	UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) (Campaign, error)
 	UpdateContact(ctx context.Context, arg UpdateContactParams) error
+	// Updates a contact group's details
+	UpdateContactGroup(ctx context.Context, arg UpdateContactGroupParams) (ContactGroup, error)
+	UpdateEmailsSentAndRemaining(ctx context.Context, arg UpdateEmailsSentAndRemainingParams) (EmailUsage, error)
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
 	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error
+	UpdatePaymentIntent(ctx context.Context, arg UpdatePaymentIntentParams) (PaymentIntent, error)
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
 	UpdatePlanFeature(ctx context.Context, arg UpdatePlanFeatureParams) (PlanFeature, error)
 	UpdateSMTPKeyLogin(ctx context.Context, arg UpdateSMTPKeyLoginParams) error
 	UpdateSMTPKeyMasterPasswordAndLogin(ctx context.Context, arg UpdateSMTPKeyMasterPasswordAndLoginParams) error
 	UpdateSMTPKeyStatus(ctx context.Context, arg UpdateSMTPKeyStatusParams) error
+	UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
 	UpsertAdmin(ctx context.Context, arg UpsertAdminParams) (Admin, error)
 	VerifyUser(ctx context.Context, id uuid.UUID) error

@@ -1,0 +1,1 @@
+Drop Table if EXISTS payment_intents;

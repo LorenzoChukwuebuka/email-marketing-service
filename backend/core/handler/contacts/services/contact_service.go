@@ -263,11 +263,21 @@ func (s *Service) GetAllContacts(ctx context.Context, req dto.FetchContactDTO) (
 		return nil, common.ErrInvalidUUID
 	}
 
-	contacts, err := s.store.GetAllContacts(ctx, db.GetAllContactsParams{
+	contact_count, err := s.store.GetContactsCount(ctx, db.GetContactsCountParams{
 		UserID:    userUUID,
 		CompanyID: companyUUID,
-		Limit:     int32(req.Limit),
-		Offset:    int32(req.Offset),
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
+	}
+
+	contacts, err := s.store.GetAllContacts(ctx, db.GetAllContactsParams{
+		UserID:     userUUID,
+		CompanyID:  companyUUID,
+		RowLimit:   int32(req.Limit),
+		RowOffset:  int32(req.Offset),
+		SearchTerm: sql.NullString{String: req.SearchQuery, Valid: true},
 	})
 
 	if err != nil {
@@ -281,8 +291,229 @@ func (s *Service) GetAllContacts(ctx context.Context, req dto.FetchContactDTO) (
 		contactsResponse = append(contactsResponse, *value)
 	}
 
-	data := common.Paginate(10, contactsResponse, req.Offset, req.Limit)
+	data := common.Paginate(int(contact_count), contactsResponse, req.Offset, req.Limit)
+	return data, nil
+}
+
+func (s *Service) CreateContactGroup(ctx context.Context, req *dto.ContactGroupDTO) (*dto.ContactGroupDTO, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+
+	userUUID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	companyUUID, err := uuid.Parse(req.CompanyID)
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	//check if contact name is unique
+	isunique, err := s.store.IsContactGroupNameUnique(ctx, db.IsContactGroupNameUniqueParams{
+		Groupname: req.GroupName,
+		Userid:    userUUID,
+		Companyid: companyUUID,
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	if !isunique {
+		return nil, common.ErrRecordExists
+	}
+
+	//create the group
+	_, err = s.store.CreateContactGroup(ctx, db.CreateContactGroupParams{
+		GroupName:   req.GroupName,
+		CompanyID:   companyUUID,
+		UserID:      userUUID,
+		Description: sql.NullString{String: req.Description, Valid: true},
+	})
+
+	return req, nil
+}
+
+func (s *Service) AddContactToGroup(ctx context.Context, req *dto.AddContactsToGroupDTO) (*dto.AddContactsToGroupDTO, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    req.UserId,
+		"contact": req.ContactId,
+		"group":   req.GroupId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	isunique, err := s.store.IsContactInGroup(ctx, db.IsContactInGroupParams{
+		UserID:         _uuid["user"],
+		ContactGroupID: _uuid["group"],
+		ContactID:      _uuid["contact"],
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	if isunique {
+		return nil, common.ErrRecordExists
+	}
+	_, err = s.store.AddContactToGroup(ctx, db.AddContactToGroupParams{
+		UserID:         _uuid["user"],
+		ContactGroupID: _uuid["group"],
+		ContactID:      _uuid["contact"],
+	})
+	return req, nil
+}
+
+func (s *Service) RemoveContactFromGroup(ctx context.Context, req *dto.AddContactsToGroupDTO) (*dto.AddContactsToGroupDTO, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    req.UserId,
+		"contact": req.ContactId,
+		"group":   req.GroupId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	err = s.store.RemoveContactFromGroup(ctx, db.RemoveContactFromGroupParams{
+		UserID:         _uuid["user"],
+		ContactGroupID: _uuid["group"],
+		ContactID:      _uuid["contact"],
+	})
+
+	return req, nil
+}
+
+func (s *Service) UpdateContactGroup(ctx context.Context, d *dto.ContactGroupDTO, groupId string) error {
+
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":  d.UserId,
+		"group": groupId,
+	})
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
+
+	_, err = s.store.UpdateContactGroup(ctx, db.UpdateContactGroupParams{
+		ID:          _uuid["group"],
+		UserID:      _uuid["user"],
+		GroupName:   d.GroupName,
+		Description: sql.NullString{String: d.Description, Valid: true},
+	})
+
+	if err != nil {
+		return common.ErrUpdatingRecord
+	}
+
+	return nil
+}
+
+func (s *Service) DeleteContactGroup(ctx context.Context, userId string, groupId string) error {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":  userId,
+		"group": groupId,
+	})
+
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
+
+	err = s.store.SoftDeleteContactGroup(ctx, db.SoftDeleteContactGroupParams{
+		ID:     _uuid["group"],
+		UserID: _uuid["user"],
+	})
+
+	if err != nil {
+		return common.ErrDeletingRecord
+	}
+
+	return nil
+}
+
+func (s *Service) GetAllContactGroups(ctx context.Context, req *dto.FetchContactGroupDTO) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    req.UserId,
+		"company": req.CompanyID,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	contact_count, err := s.store.CountContactGroups(ctx, _uuid["company"])
+
+	groups, err := s.store.GetGroupsWithContacts(ctx, db.GetGroupsWithContactsParams{
+		UserID:     _uuid["user"],
+		CompanyID:  _uuid["company"],
+		Rowlimit:   int32(req.Limit),
+		Rowoffset:  int32(req.Offset),
+		Searchterm: sql.NullString{String: req.SearchQuery, Valid: true},
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	response := mapper.MapGroupsWithContacts(groups)
+
+	items := make([]any, len(response))
+	for i, v := range response {
+		items[i] = v
+	}
+
+	data := common.Paginate(int(contact_count), items, req.Offset, req.Limit)
 
 	return data, nil
+}
 
+func (s *Service) GetSingleGroupWithContacts(ctx context.Context, groupId string, userId string, companyId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"group":   groupId,
+		"user":    userId,
+		"company": companyId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	group, err := s.store.GetSingleGroupWithContacts(ctx, db.GetSingleGroupWithContactsParams{
+		GroupID:   _uuid["group"],
+		UserID:    _uuid["user"],
+		CompanyID: _uuid["company"],
+	})
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+	response := mapper.MapSingleGroupwithContacts(group)
+	return response, nil
+}
+
+func (s *Service) GetDashboardStats(ctx context.Context, userId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": userId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	tenDaysAgo := time.Now().AddDate(0, 0, -10)
+	stats, err := s.store.GetContactStats(ctx, db.GetContactStatsParams{
+		UserID:     _uuid["user"],
+		TenDaysAgo: sql.NullTime{Time: tenDaysAgo, Valid: true},
+	})
+
+	return stats, nil
 }

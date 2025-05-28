@@ -64,6 +64,8 @@ func (s *Server) setupRoutes() {
 		"admin/auth":      routes.NewAdminAuthRoute(s.db),
 		"admin/systemdns": routes.NewAdminDNSRoute(s.db),
 		"contacts":        routes.NewContactRoutes(s.db),
+		"templates":       routes.NewTemplateRoute(s.db),
+		"payments":        routes.NewPaymentRoute(s.db),
 	}
 
 	for path, route := range routeMap {
@@ -72,35 +74,6 @@ func (s *Server) setupRoutes() {
 
 	uploadsDir := filepath.Join(".", "uploads", "tickets")
 	s.router.PathPrefix("/uploads/tickets/").Handler(http.StripPrefix("/uploads/tickets/", http.FileServer(http.Dir(uploadsDir))))
-
-	// mode := os.Getenv("SERVER_MODE")
-
-	// var staticDir string
-
-	// if mode == "" {
-	// 	staticDir = "./client"
-	// } else if mode == "test" {
-	// 	staticDir = "/app/client"
-	// } else {
-	// 	staticDir = "/app/client"
-	// }
-
-	// // Handle static files using Gorilla Mux
-	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-
-	// // Handle all other routes by serving index.html for the SPA
-	// s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	path := filepath.Join(staticDir, r.URL.Path)
-
-	// 	// If the requested file exists, serve it
-	// 	if _, err := os.Stat(path); err == nil {
-	// 		http.ServeFile(w, r, path)
-	// 		return
-	// 	}
-
-	// 	// Otherwise, serve index.html
-	// 	http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
-	// })
 }
 
 func (s *Server) Start() {
