@@ -2,15 +2,17 @@ package controller
 
 import (
 	"context"
+	"email-marketing-service/core/handler/payments/dto"
 	"email-marketing-service/core/handler/payments/services"
 	"email-marketing-service/internal/common"
-
 	"email-marketing-service/internal/domain"
 	"email-marketing-service/internal/helper"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
 
 type Controller struct {
@@ -61,5 +63,43 @@ func (c *Controller) ProcessPayment(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	print(ctx)
+	vars := mux.Vars(r)
+	reference := vars["reference"]
+	paymentmethod := vars["paymentmethod"]
+	result, err := c.service.VerifyPayment(ctx, paymentmethod, reference)
+	if err != nil {
+		helper.ErrorResponse(w, err, err)
+		return
+	}
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *Controller) GetAllPayments(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, companyID, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	page, pageSize, _, err := common.ParsePaginationParams(r)
+	offset := (page - 1) * pageSize
+	limit := pageSize
+
+	req := &dto.FetchPayment{
+		UserId:    userId,
+		CompanyID: companyID,
+		Offset:    offset,
+		Limit:     limit,
+	}
+
+	result, err := c.service.GetAllPaymentsForACompany(ctx, req)
+
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
 }

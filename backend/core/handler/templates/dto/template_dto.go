@@ -31,6 +31,7 @@ type SendTestMailDTO struct {
 	EmailAddress string `json:"email_address" validate:"required"`
 	TemplateId   string `json:"template_id" validate:"required"`
 	Subject      string `json:"subject" validate:"required"`
+	Type         string `json:"type"`
 }
 
 type FetchTemplateDTO struct {

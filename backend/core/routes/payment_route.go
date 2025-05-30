@@ -23,4 +23,6 @@ func (t *PaymentRoute) InitRoutes(r *mux.Router) {
 	handler := controller.NewPaymentController(service)
 	r.Use(middleware.JWTMiddleware)
 	r.HandleFunc("/initiate-transaction", handler.InitiateNewTransaction).Methods("POST", "OPTIONS")
+	r.HandleFunc("/confirm-payment/{reference}/{paymentmethod}", handler.ProcessPayment).Methods("GET", "OPTIONS")
+	r.HandleFunc("/get", handler.GetAllPayments).Methods("GET", "OPTIONS")
 }

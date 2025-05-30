@@ -130,8 +130,218 @@ func (q *Queries) GetActiveSubscriptionByCompanyID(ctx context.Context, companyI
 	return i, err
 }
 
+const getActiveSubscriptionsEndingIn5Days = `-- name: GetActiveSubscriptionsEndingIn5Days :many
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+FROM subscriptions
+WHERE
+    status = 'active'
+    AND deleted_at IS NULL
+    AND ends_at IS NOT NULL
+    AND ends_at > NOW()
+    AND ends_at <= NOW() + INTERVAL '5 days'
+ORDER BY ends_at ASC
+`
+
+// Find all active subscriptions that end within 5 days
+func (q *Queries) GetActiveSubscriptionsEndingIn5Days(ctx context.Context) ([]Subscription, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveSubscriptionsEndingIn5Days)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Subscription{}
+	for rows.Next() {
+		var i Subscription
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.PlanID,
+			&i.Amount,
+			&i.BillingCycle,
+			&i.TrialStartsAt,
+			&i.TrialEndsAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.NextBillingDate,
+			&i.AutoRenew,
+			&i.CancellationReason,
+			&i.LastPaymentDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getActiveSubscriptionsEndingInDays = `-- name: GetActiveSubscriptionsEndingInDays :many
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+FROM subscriptions
+WHERE
+    status = 'active'
+    AND deleted_at IS NULL
+    AND ends_at IS NOT NULL
+    AND ends_at > NOW()
+    AND ends_at <= NOW() + INTERVAL '%d days'
+ORDER BY ends_at ASC
+`
+
+// Find all active subscriptions that end within a specific number of days
+func (q *Queries) GetActiveSubscriptionsEndingInDays(ctx context.Context) ([]Subscription, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveSubscriptionsEndingInDays)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Subscription{}
+	for rows.Next() {
+		var i Subscription
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.PlanID,
+			&i.Amount,
+			&i.BillingCycle,
+			&i.TrialStartsAt,
+			&i.TrialEndsAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.NextBillingDate,
+			&i.AutoRenew,
+			&i.CancellationReason,
+			&i.LastPaymentDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getActiveSubscriptionsNotExpired = `-- name: GetActiveSubscriptionsNotExpired :many
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+FROM subscriptions
+WHERE
+    status = 'active'
+    AND deleted_at IS NULL
+    AND (ends_at IS NULL OR ends_at > NOW())
+ORDER BY created_at DESC
+`
+
+// Find all active subscriptions where ends_at is greater than current time
+func (q *Queries) GetActiveSubscriptionsNotExpired(ctx context.Context) ([]Subscription, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveSubscriptionsNotExpired)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Subscription{}
+	for rows.Next() {
+		var i Subscription
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.PlanID,
+			&i.Amount,
+			&i.BillingCycle,
+			&i.TrialStartsAt,
+			&i.TrialEndsAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.NextBillingDate,
+			&i.AutoRenew,
+			&i.CancellationReason,
+			&i.LastPaymentDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllActiveSubscriptions = `-- name: GetAllActiveSubscriptions :many
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+FROM subscriptions
+WHERE
+    status = 'active'
+    AND deleted_at IS NULL
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetAllActiveSubscriptions(ctx context.Context) ([]Subscription, error) {
+	rows, err := q.db.QueryContext(ctx, getAllActiveSubscriptions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Subscription{}
+	for rows.Next() {
+		var i Subscription
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.PlanID,
+			&i.Amount,
+			&i.BillingCycle,
+			&i.TrialStartsAt,
+			&i.TrialEndsAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.NextBillingDate,
+			&i.AutoRenew,
+			&i.CancellationReason,
+			&i.LastPaymentDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCurrentRunningSubscription = `-- name: GetCurrentRunningSubscription :one
-SELECT 
+SELECT
     s.id AS subscription_id,
     s.company_id,
     s.amount AS subscription_amount,
@@ -143,21 +353,18 @@ SELECT
     s.status AS subscription_status,
     s.created_at AS subscription_created_at,
     s.updated_at AS subscription_updated_at,
-    
     p.id AS plan_id,
     p.name AS plan_name,
     p.description AS plan_description,
     p.price AS plan_price,
     p.billing_cycle AS plan_billing_cycle,
     p.status AS plan_status
-FROM 
-    subscriptions s
-JOIN 
-    plans p ON s.plan_id = p.id
-WHERE 
-    s.deleted_at IS NULL AND s.company_id = $1
-ORDER BY 
-    s.created_at DESC
+FROM subscriptions s
+    JOIN plans p ON s.plan_id = p.id
+WHERE
+    s.deleted_at IS NULL
+    AND s.company_id = $1
+ORDER BY s.created_at DESC
 LIMIT 1
 `
 
@@ -204,6 +411,59 @@ func (q *Queries) GetCurrentRunningSubscription(ctx context.Context, companyID u
 		&i.PlanStatus,
 	)
 	return i, err
+}
+
+const getExpiredActiveSubscriptions = `-- name: GetExpiredActiveSubscriptions :many
+SELECT id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+FROM subscriptions
+WHERE
+    status = 'active'
+    AND deleted_at IS NULL
+    AND ends_at IS NOT NULL
+    AND ends_at <= NOW()
+ORDER BY ends_at DESC
+`
+
+// Find subscriptions that are marked as 'active' but have actually expired
+func (q *Queries) GetExpiredActiveSubscriptions(ctx context.Context) ([]Subscription, error) {
+	rows, err := q.db.QueryContext(ctx, getExpiredActiveSubscriptions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Subscription{}
+	for rows.Next() {
+		var i Subscription
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.PlanID,
+			&i.Amount,
+			&i.BillingCycle,
+			&i.TrialStartsAt,
+			&i.TrialEndsAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.NextBillingDate,
+			&i.AutoRenew,
+			&i.CancellationReason,
+			&i.LastPaymentDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getSubscriptionByID = `-- name: GetSubscriptionByID :one
@@ -283,4 +543,44 @@ func (q *Queries) ListSubscriptionsByCompanyID(ctx context.Context, companyID uu
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSubscriptionStatus = `-- name: UpdateSubscriptionStatus :one
+UPDATE subscriptions
+SET
+    status = $2,
+    updated_at = NOW()
+WHERE
+    id = $1
+    AND deleted_at IS NULL RETURNING id, company_id, plan_id, amount, billing_cycle, trial_starts_at, trial_ends_at, starts_at, ends_at, status, created_at, updated_at, deleted_at, next_billing_date, auto_renew, cancellation_reason, last_payment_date
+`
+
+type UpdateSubscriptionStatusParams struct {
+	ID     uuid.UUID      `json:"id"`
+	Status sql.NullString `json:"status"`
+}
+
+func (q *Queries) UpdateSubscriptionStatus(ctx context.Context, arg UpdateSubscriptionStatusParams) (Subscription, error) {
+	row := q.db.QueryRowContext(ctx, updateSubscriptionStatus, arg.ID, arg.Status)
+	var i Subscription
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.PlanID,
+		&i.Amount,
+		&i.BillingCycle,
+		&i.TrialStartsAt,
+		&i.TrialEndsAt,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.NextBillingDate,
+		&i.AutoRenew,
+		&i.CancellationReason,
+		&i.LastPaymentDate,
+	)
+	return i, err
 }

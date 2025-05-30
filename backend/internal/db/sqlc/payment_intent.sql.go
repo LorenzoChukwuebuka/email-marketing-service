@@ -633,3 +633,54 @@ func (q *Queries) UpdatePaymentIntent(ctx context.Context, arg UpdatePaymentInte
 	)
 	return i, err
 }
+
+const updatePaymentIntentError = `-- name: UpdatePaymentIntentError :one
+UPDATE payment_intents
+SET
+    last_payment_error = $1,
+    status = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    payment_intent_id = $3
+    AND deleted_at IS NULL RETURNING id, company_id, user_id, subscription_id, payment_intent_id, amount, currency, payment_method_types, status, client_secret, description, metadata, automatic_payment_methods, receipt_email, setup_future_usage, confirmation_method, capture_method, payment_method_id, last_payment_error, next_action, canceled_at, succeeded_at, expires_at, created_at, updated_at, deleted_at
+`
+
+type UpdatePaymentIntentErrorParams struct {
+	LastPaymentError pqtype.NullRawMessage `json:"last_payment_error"`
+	Status           sql.NullString        `json:"status"`
+	PaymentIntentID  string                `json:"payment_intent_id"`
+}
+
+func (q *Queries) UpdatePaymentIntentError(ctx context.Context, arg UpdatePaymentIntentErrorParams) (PaymentIntent, error) {
+	row := q.db.QueryRowContext(ctx, updatePaymentIntentError, arg.LastPaymentError, arg.Status, arg.PaymentIntentID)
+	var i PaymentIntent
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.UserID,
+		&i.SubscriptionID,
+		&i.PaymentIntentID,
+		&i.Amount,
+		&i.Currency,
+		pq.Array(&i.PaymentMethodTypes),
+		&i.Status,
+		&i.ClientSecret,
+		&i.Description,
+		&i.Metadata,
+		&i.AutomaticPaymentMethods,
+		&i.ReceiptEmail,
+		&i.SetupFutureUsage,
+		&i.ConfirmationMethod,
+		&i.CaptureMethod,
+		&i.PaymentMethodID,
+		&i.LastPaymentError,
+		&i.NextAction,
+		&i.CanceledAt,
+		&i.SucceededAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}

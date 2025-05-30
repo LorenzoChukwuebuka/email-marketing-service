@@ -253,6 +253,7 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 			EmailsLimit:      mailinglimits.DailyLimit.Int32,
 			UsagePeriodStart: periodStart,
 			UsagePeriodEnd:   periodEnd,
+			RemainingEmails: sql.NullInt32{Int32: mailinglimits.DailyLimit.Int32,Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("error creating daily email usage for %s: %w", periodStart.Format("2006-01-02"), err)

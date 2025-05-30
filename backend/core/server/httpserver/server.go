@@ -5,9 +5,9 @@ import (
 	"email-marketing-service/core/middleware"
 	"email-marketing-service/core/routes"
 	"email-marketing-service/internal/config"
+	"email-marketing-service/internal/cronjobs"
 	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -84,13 +86,10 @@ func (s *Server) Start() {
 	}
 	defer logFile.Close()
 
-	// c := cronjobs.SetupCronJobs(s.db)
-
-	// go func() {
-	// 	c.Start()
-	// 	defer c.Stop()
-	// 	select {}
-	// }()
+	//start the cron jobs
+	c := cronjobs.SetupCronJobs(&s.db)
+	c.Start()
+	log.Println("Cron jobs started")
 
 	server := &http.Server{
 		Addr:         cfg.APP_PORT,
@@ -112,6 +111,13 @@ func (s *Server) Start() {
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigCh
 	fmt.Printf("Received signal: %v\n", sig)
+
+	// Stop cron jobs first
+	log.Println("Stopping cron jobs...")
+	c.Stop()
+	log.Println("Cron jobs stopped")
+
+	// Then shutdown the HTTP server
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
