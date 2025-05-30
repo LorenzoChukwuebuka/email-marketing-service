@@ -96,15 +96,19 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *domain.BaseProcessPaymentMo
 	userID, _ := data["metadata"].(map[string]any)["user_id"].(string)
 	duration, _ := data["metadata"].(map[string]any)["duration"].(string)
 	email, _ := data["customer"].(map[string]any)["email"].(string)
+	paymentIntentID, _ := data["metadata"].(map[string]any)["payment_intent_id"].(string)
+	companyIDD, _ := data["metadata"].(map[string]any)["company_id"].(string)
 	status, _ := data["status"].(string)
 
 	paymentData := &domain.BasePaymentResponse{
-		Amount:   amount,
-		PlanID:   planIDStr,
-		UserID:   userID,
-		Duration: duration,
-		Email:    email,
-		Status:   status,
+		Amount:          amount,
+		PlanID:          planIDStr,
+		UserID:          userID,
+		Duration:        duration,
+		Email:           email,
+		Status:          status,
+		PaymentIntentID: paymentIntentID,
+		CompanyID:       companyIDD,
 	}
 
 	return paymentData, nil

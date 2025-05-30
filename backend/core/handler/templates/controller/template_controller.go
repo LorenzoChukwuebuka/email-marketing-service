@@ -102,6 +102,8 @@ func (c *Controller) GetTemplateById(w http.ResponseWriter, r *http.Request) {
 		TemplateId:   tempId,
 		Type: temptype,
 	}
+
+	fmt.Printf("ddd %+v",req)
 	template, err := c.service.GetTemplateByID(ctx, *req)
 	if err != nil {
 		helper.ErrorResponse(w, err, err)

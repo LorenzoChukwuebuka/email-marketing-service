@@ -7,9 +7,10 @@ INSERT INTO
         usage_period_end,
         period_type,
         emails_sent,
-        emails_limit
+        emails_limit,
+        remaining_emails
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+VALUES ($1, $2, $3, $4, $5, $6, $7,$8) RETURNING *;
 
 -- name: GetCurrentBillingPeriod :one
 SELECT 
@@ -26,7 +27,6 @@ JOIN plans p ON s.plan_id = p.id
 JOIN mailing_limits ml ON p.id = ml.plan_id
 WHERE s.company_id = $1 
   AND s.status = 'active';
-
 
 -- name: GetEmailUsageByCompanyAndPeriod :one
 SELECT *
@@ -147,3 +147,10 @@ WHERE
     company_id = $1
     AND usage_period_start = $2
     AND period_type = $3;
+
+-- name: DeleteEmailUsageByCompanyIDAndSubscriptionID :exec
+
+DELETE FROM email_usage
+WHERE
+    company_id = $1
+    AND subscription_id = $2;

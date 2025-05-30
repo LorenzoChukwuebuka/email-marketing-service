@@ -21,6 +21,7 @@ type Querier interface {
 	CheckCampaignNameExists(ctx context.Context, arg CheckCampaignNameExistsParams) (bool, error)
 	CheckEmailLimitExceeded(ctx context.Context, arg CheckEmailLimitExceededParams) (CheckEmailLimitExceededRow, error)
 	CheckIfContactEmailExists(ctx context.Context, arg CheckIfContactEmailExistsParams) (bool, error)
+	CheckPaymentIntentExists(ctx context.Context, paymentID sql.NullString) (bool, error)
 	CheckSMTPKeyExists(ctx context.Context, arg CheckSMTPKeyExistsParams) (bool, error)
 	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
 	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
@@ -52,6 +53,7 @@ type Querier interface {
 	CreateUserNotification(ctx context.Context, arg CreateUserNotificationParams) (UserNotification, error)
 	DeleteAPIKey(ctx context.Context, id uuid.UUID) error
 	DeleteContact(ctx context.Context, arg DeleteContactParams) error
+	DeleteEmailUsageByCompanyIDAndSubscriptionID(ctx context.Context, arg DeleteEmailUsageByCompanyIDAndSubscriptionIDParams) error
 	DeleteOTPById(ctx context.Context, id uuid.UUID) error
 	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
 	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
@@ -59,9 +61,16 @@ type Querier interface {
 	GetAPIKeysByCompanyID(ctx context.Context, companyID uuid.UUID) ([]GetAPIKeysByCompanyIDRow, error)
 	GetAPIKeysByUserID(ctx context.Context, userID uuid.UUID) ([]GetAPIKeysByUserIDRow, error)
 	GetActiveSubscriptionByCompanyID(ctx context.Context, companyID uuid.UUID) (Subscription, error)
+	// Find all active subscriptions that end within 5 days
+	GetActiveSubscriptionsEndingIn5Days(ctx context.Context) ([]Subscription, error)
+	// Find all active subscriptions that end within a specific number of days
+	GetActiveSubscriptionsEndingInDays(ctx context.Context) ([]Subscription, error)
+	// Find all active subscriptions where ends_at is greater than current time
+	GetActiveSubscriptionsNotExpired(ctx context.Context) ([]Subscription, error)
 	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
 	GetAdminByID(ctx context.Context, id uuid.UUID) (Admin, error)
 	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
+	GetAllActiveSubscriptions(ctx context.Context) ([]Subscription, error)
 	GetAllContacts(ctx context.Context, arg GetAllContactsParams) ([]GetAllContactsRow, error)
 	GetCampaignByID(ctx context.Context, id uuid.UUID) (GetCampaignByIDRow, error)
 	GetCampaignsByTemplateType(ctx context.Context, arg GetCampaignsByTemplateTypeParams) ([]GetCampaignsByTemplateTypeRow, error)
@@ -88,21 +97,27 @@ type Querier interface {
 	GetEmailUsageBySubscription(ctx context.Context, subscriptionID uuid.UUID) ([]EmailUsage, error)
 	GetEmailUsageInDateRange(ctx context.Context, arg GetEmailUsageInDateRangeParams) ([]EmailUsage, error)
 	GetEmailUsageStats(ctx context.Context, arg GetEmailUsageStatsParams) (GetEmailUsageStatsRow, error)
+	// Find subscriptions that are marked as 'active' but have actually expired
+	GetExpiredActiveSubscriptions(ctx context.Context) ([]Subscription, error)
 	// Fetches all contact groups with their associated contacts for a specific user and company
 	// with pagination support using limit and offset
 	GetGroupsWithContacts(ctx context.Context, arg GetGroupsWithContactsParams) ([]GetGroupsWithContactsRow, error)
+	GetLastPaymentByCompanyID(ctx context.Context, companyID uuid.UUID) (Payment, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
 	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
 	GetMonthlyEmailTrends(ctx context.Context, arg GetMonthlyEmailTrendsParams) ([]GetMonthlyEmailTrendsRow, error)
 	// Get count of new contacts (less than 10 days old) for a specific user
 	GetNewContactsCount(ctx context.Context, arg GetNewContactsCountParams) (int64, error)
 	GetOTPByToken(ctx context.Context, token string) (Otp, error)
+	GetPaymentCounts(ctx context.Context, companyID uuid.UUID) (int64, error)
 	GetPaymentIntent(ctx context.Context, id uuid.UUID) (PaymentIntent, error)
 	GetPaymentIntentByPaymentIntentID(ctx context.Context, paymentIntentID string) (PaymentIntent, error)
 	GetPaymentIntentsByCompanyID(ctx context.Context, companyID uuid.UUID) ([]PaymentIntent, error)
 	GetPaymentIntentsByStatus(ctx context.Context, arg GetPaymentIntentsByStatusParams) ([]PaymentIntent, error)
 	GetPaymentIntentsBySubscriptionID(ctx context.Context, subscriptionID uuid.NullUUID) ([]PaymentIntent, error)
 	GetPaymentIntentsByUserID(ctx context.Context, userID uuid.UUID) ([]PaymentIntent, error)
+	GetPaymentsByCompanyAndUser(ctx context.Context, arg GetPaymentsByCompanyAndUserParams) ([]GetPaymentsByCompanyAndUserRow, error)
+	GetPaymentsByCompanyAndUserSimple(ctx context.Context, companyID uuid.UUID) ([]GetPaymentsByCompanyAndUserSimpleRow, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
 	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
@@ -182,11 +197,13 @@ type Querier interface {
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
 	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error
 	UpdatePaymentIntent(ctx context.Context, arg UpdatePaymentIntentParams) (PaymentIntent, error)
+	UpdatePaymentIntentError(ctx context.Context, arg UpdatePaymentIntentErrorParams) (PaymentIntent, error)
 	UpdatePlan(ctx context.Context, arg UpdatePlanParams) (Plan, error)
 	UpdatePlanFeature(ctx context.Context, arg UpdatePlanFeatureParams) (PlanFeature, error)
 	UpdateSMTPKeyLogin(ctx context.Context, arg UpdateSMTPKeyLoginParams) error
 	UpdateSMTPKeyMasterPasswordAndLogin(ctx context.Context, arg UpdateSMTPKeyMasterPasswordAndLoginParams) error
 	UpdateSMTPKeyStatus(ctx context.Context, arg UpdateSMTPKeyStatusParams) error
+	UpdateSubscriptionStatus(ctx context.Context, arg UpdateSubscriptionStatusParams) (Subscription, error)
 	UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
 	UpsertAdmin(ctx context.Context, arg UpsertAdminParams) (Admin, error)

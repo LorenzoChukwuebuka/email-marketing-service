@@ -173,3 +173,14 @@ SET
 WHERE
     id = sqlc.arg ('id')
     AND deleted_at IS NULL RETURNING *;
+
+-- name: UpdatePaymentIntentError :one
+UPDATE payment_intents
+SET
+    last_payment_error = $1,
+    status = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    payment_intent_id = $3
+    AND deleted_at IS NULL RETURNING *;
+

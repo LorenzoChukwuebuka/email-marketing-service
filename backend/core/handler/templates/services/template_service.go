@@ -16,6 +16,7 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 type Service struct {
@@ -127,7 +128,7 @@ func (s *Service) GetAllTemplateByType(ctx context.Context, req dto.FetchTemplat
 
 func (s *Service) GetTemplateByID(ctx context.Context, req dto.FetchTemplateDTO) (any, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
-		"user": req.UserId,
+		"user":     req.UserId,
 		"template": req.TemplateId,
 	})
 	if err != nil {
@@ -246,6 +247,7 @@ func (s *Service) SendTestMail(ctx context.Context, d *dto.SendTestMailDTO) erro
 	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
 		UserID: _uuid["user"],
 		ID:     _uuid["template"],
+		Type:   d.Type,
 	})
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
@@ -254,6 +256,7 @@ func (s *Service) SendTestMail(ctx context.Context, d *dto.SendTestMailDTO) erro
 
 	var wg sync.WaitGroup
 	var errChan = make(chan error, len(emails))
+	var successCount int32 // Track successful emails
 
 	for _, email := range emails {
 		wg.Add(1)
@@ -271,27 +274,33 @@ func (s *Service) SendTestMail(ctx context.Context, d *dto.SendTestMailDTO) erro
 				errChan <- fmt.Errorf("error processing email %s: %w", email, err)
 				return
 			}
-			// Update the mail usage record
-			_, err = s.store.UpdateEmailsSentAndRemaining(ctx, db.UpdateEmailsSentAndRemainingParams{
-				CompanyID:  user.CompanyID,
-				EmailsSent: sql.NullInt32{Int32: mailUsageRecord.EmailsSent.Int32 + 1, Valid: true},
-				ID:         mailUsageRecord.ID,
-			})
-			if err != nil {
-				errChan <- fmt.Errorf("error updating mail usage for email %s: %w", email, err)
-			}
+
+			// Increment successful count using atomic operation
+			atomic.AddInt32(&successCount, 1)
 		}(email)
 	}
 
 	wg.Wait()
 	close(errChan)
 
+	// Check for errors
 	for err := range errChan {
 		if err != nil {
 			return err
 		}
 	}
 
+	// Update the database with the total successful count in one operation
+	if successCount > 0 {
+		_, err = s.store.UpdateEmailsSentAndRemaining(ctx, db.UpdateEmailsSentAndRemainingParams{
+			CompanyID:  user.CompanyID,
+			EmailsSent: sql.NullInt32{Int32: successCount, Valid: true},
+			ID:         mailUsageRecord.ID,
+		})
+		if err != nil {
+			return fmt.Errorf("error updating mail usage: %w", err)
+		}
+	}
 	return nil
 }
 

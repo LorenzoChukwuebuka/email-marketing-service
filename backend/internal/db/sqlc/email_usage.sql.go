@@ -80,9 +80,10 @@ INSERT INTO
         usage_period_end,
         period_type,
         emails_sent,
-        emails_limit
+        emails_limit,
+        remaining_emails
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, company_id, subscription_id, usage_period_start, usage_period_end, period_type, emails_sent, emails_limit, created_at, updated_at, remaining_emails
+VALUES ($1, $2, $3, $4, $5, $6, $7,$8) RETURNING id, company_id, subscription_id, usage_period_start, usage_period_end, period_type, emails_sent, emails_limit, created_at, updated_at, remaining_emails
 `
 
 type CreateDailyEmailUsageParams struct {
@@ -93,6 +94,7 @@ type CreateDailyEmailUsageParams struct {
 	PeriodType       string        `json:"period_type"`
 	EmailsSent       sql.NullInt32 `json:"emails_sent"`
 	EmailsLimit      int32         `json:"emails_limit"`
+	RemainingEmails  sql.NullInt32 `json:"remaining_emails"`
 }
 
 func (q *Queries) CreateDailyEmailUsage(ctx context.Context, arg CreateDailyEmailUsageParams) (EmailUsage, error) {
@@ -104,6 +106,7 @@ func (q *Queries) CreateDailyEmailUsage(ctx context.Context, arg CreateDailyEmai
 		arg.PeriodType,
 		arg.EmailsSent,
 		arg.EmailsLimit,
+		arg.RemainingEmails,
 	)
 	var i EmailUsage
 	err := row.Scan(
@@ -120,6 +123,24 @@ func (q *Queries) CreateDailyEmailUsage(ctx context.Context, arg CreateDailyEmai
 		&i.RemainingEmails,
 	)
 	return i, err
+}
+
+const deleteEmailUsageByCompanyIDAndSubscriptionID = `-- name: DeleteEmailUsageByCompanyIDAndSubscriptionID :exec
+
+DELETE FROM email_usage
+WHERE
+    company_id = $1
+    AND subscription_id = $2
+`
+
+type DeleteEmailUsageByCompanyIDAndSubscriptionIDParams struct {
+	CompanyID      uuid.UUID `json:"company_id"`
+	SubscriptionID uuid.UUID `json:"subscription_id"`
+}
+
+func (q *Queries) DeleteEmailUsageByCompanyIDAndSubscriptionID(ctx context.Context, arg DeleteEmailUsageByCompanyIDAndSubscriptionIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteEmailUsageByCompanyIDAndSubscriptionID, arg.CompanyID, arg.SubscriptionID)
+	return err
 }
 
 const getCompaniesNearLimit = `-- name: GetCompaniesNearLimit :many

@@ -1,0 +1,10 @@
+{
+  "DKIMPrivateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIICXgIBAAKBgQDXIQQmqrW/fRlf+c1OUuks4VL6HkzvLa29M4FqRc0vHdIBNQjh\n0dtJp9/aGYtJbSU+VPsRLO/Gh3Hi9LpPcaiCrubBt/+ULGY7+gzzAn6rPj4clbES\nGJdIGD08GiXde81qfQ/EClYdux40vFsMMoVntkno1rm7iuT5HpLenCmEZQIDAQAB\nAoGAQ1ND104JfxoJfO3SgLaV3sPNkhU1gozLGLEryTR7GEm+1T3hv7pLZGuzNLBV\n1O7hfvZddGyZxYnR7HMmc4Jgd6IYCxfXocYYHqJNAgzwOtBjggiPa0qvTeDC1a2p\n3l6FTg3/nLmj0Qmcn/PpCqLcVK1NfF0mQUmr0yMWBARIZ6kCQQDXtA6WOK3eP1LI\nt3vOfd0p+OfeM2vWKEECWibp3A5eXPj22TeuGIPyT0HPPVdEQeNtpZ7ITV0H2dqH\n881dQAoDAkEA/1F9YxjiY7JfXUYiOnCxtodUK3pOYw2wL9115Afa8Vud5JqeHl/d\n93ghrRKKkamMTTVBj5OOauo1JNk+TQ+fdwJBAJn5gAgfwY1Kao+42nnWQs+5S9rD\nnhCrf2xsaia53M/jUhzzhdmSym1nwjRrNyYUWoJknWmiP+xgyKwPjuMn2X0CQQDx\nB1AUtlA6iBDJMEVt4CeUxirqpJrNngV/GlWKAPRrN+9V+bVdvWkBj1JTXhacrm/6\nD1WmIkmnmxSyhbfv7di/AkEAhL9F84bEbuO0dQr4tgKdwsdYWU4o7Hq1pXhBRsyZ\nkXYjIhRW3CiuFFAG7JMsp2RpMnGty9oo/SMeD+WXoJyd8A==\n-----END RSA PRIVATE KEY-----\n",
+  "DKIMPublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXIQQmqrW/fRlf+c1OUuks4VL6HkzvLa29M4FqRc0vHdIBNQjh0dtJp9/aGYtJbSU+VPsRLO/Gh3Hi9LpPcaiCrubBt/+ULGY7+gzzAn6rPj4clbESGJdIGD08GiXde81qfQ/EClYdux40vFsMMoVntkno1rm7iuT5HpLenCmEZQIDAQAB",
+  "DKIMSelector": "dkim-814299",
+  "DMARCRecord": "v=DMARC1; p=none; rua=mailto:postmaster@gmail.com",
+  "Domain": "gmail.com",
+  "MXRecord": "gmail.com. 10 gmail.com.",
+  "SPFRecord": "v=spf1 mx -all",
+  "TXTRecord": "v=DKIM1; k=rsa; p=\"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXIQQmqrW/fRlf+c1OUuks4VL6HkzvLa29M4FqRc0vHdIBNQjh0dtJp9/aGYtJbSU+VPsRLO/Gh3Hi9LpPcaiCrubBt/+ULGY7+gzzAn6rPj4clbESGJdIGD08GiXde81qfQ/EClYdux40vFsMMoVntkno1rm7iuT5HpLenCmEZQIDAQAB\""
+}

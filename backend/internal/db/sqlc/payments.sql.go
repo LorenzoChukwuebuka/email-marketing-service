@@ -8,10 +8,28 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
+
+const checkPaymentIntentExists = `-- name: CheckPaymentIntentExists :one
+SELECT EXISTS (
+        SELECT 1
+        FROM payments
+        WHERE
+            payment_id = $1
+            AND deleted_at IS NULL
+    ) AS exists
+`
+
+func (q *Queries) CheckPaymentIntentExists(ctx context.Context, paymentID sql.NullString) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkPaymentIntentExists, paymentID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
 
 const createPayment = `-- name: CreatePayment :one
 INSERT INTO
@@ -103,6 +121,319 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		&i.RefundDate,
 	)
 	return i, err
+}
+
+const getLastPaymentByCompanyID = `-- name: GetLastPaymentByCompanyID :one
+SELECT id, company_id, user_id, subscription_id, payment_id, amount, currency, payment_method, status, notes, created_at, updated_at, deleted_at, transaction_reference, payment_date, billing_period_start, billing_period_end, refunded_amount, integrity_hash, refund_date
+FROM payments
+WHERE
+    company_id = $1
+    AND deleted_at IS NULL
+ORDER BY payment_date DESC, created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLastPaymentByCompanyID(ctx context.Context, companyID uuid.UUID) (Payment, error) {
+	row := q.db.QueryRowContext(ctx, getLastPaymentByCompanyID, companyID)
+	var i Payment
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.UserID,
+		&i.SubscriptionID,
+		&i.PaymentID,
+		&i.Amount,
+		&i.Currency,
+		&i.PaymentMethod,
+		&i.Status,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.TransactionReference,
+		&i.PaymentDate,
+		&i.BillingPeriodStart,
+		&i.BillingPeriodEnd,
+		&i.RefundedAmount,
+		&i.IntegrityHash,
+		&i.RefundDate,
+	)
+	return i, err
+}
+
+const getPaymentCounts = `-- name: GetPaymentCounts :one
+SELECT COUNT(*) 
+FROM payments
+WHERE company_id = $1 
+AND deleted_at IS NULL
+`
+
+func (q *Queries) GetPaymentCounts(ctx context.Context, companyID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPaymentCounts, companyID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getPaymentsByCompanyAndUser = `-- name: GetPaymentsByCompanyAndUser :many
+SELECT
+    p.id,
+    p.company_id,
+    p.user_id,
+    p.subscription_id,
+    p.payment_id,
+    p.amount,
+    p.currency,
+    p.payment_method,
+    p.status,
+    p.notes,
+    p.created_at,
+    p.updated_at,
+    p.deleted_at,
+    -- Company details
+    c.companyname as companyname,
+    c.created_at as companycreatedat,
+    c.updated_at as companyupdatedat,
+    -- User details
+    u.fullname as userfullname,
+    u.email as useremail,
+    u.phonenumber as userphonenumber,
+    u.picture as userpicture,
+    u.verified as userverified,
+    u.blocked as userblocked,
+    u.status as userstatus,
+    u.last_login_at as userlastloginat,
+    u.created_at as usercreatedat,
+    -- Subscription details
+    s.plan_id as subscriptionplanid,
+    s.amount as subscriptionamount,
+    s.billing_cycle as subscriptionbillingcycle,
+    s.trial_starts_at as subscriptiontrialstartsat,
+    s.trial_ends_at as subscriptiontrialendsat,
+    s.starts_at as subscriptionstartsat,
+    s.ends_at as subscriptionendsat,
+    s.status as subscriptionstatus,
+    s.created_at as subscriptioncreatedat
+FROM
+    payments p
+    INNER JOIN companies c ON p.company_id = c.id
+    INNER JOIN users u ON p.user_id = u.id
+    INNER JOIN subscriptions s ON p.subscription_id = s.id
+WHERE
+    p.company_id = $1
+    AND p.user_id = $2
+    AND p.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND u.deleted_at IS NULL
+    AND s.deleted_at IS NULL
+ORDER BY p.created_at DESC
+LIMIT $3
+OFFSET
+    $4
+`
+
+type GetPaymentsByCompanyAndUserParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+}
+
+type GetPaymentsByCompanyAndUserRow struct {
+	ID                        uuid.UUID       `json:"id"`
+	CompanyID                 uuid.UUID       `json:"company_id"`
+	UserID                    uuid.UUID       `json:"user_id"`
+	SubscriptionID            uuid.UUID       `json:"subscription_id"`
+	PaymentID                 sql.NullString  `json:"payment_id"`
+	Amount                    decimal.Decimal `json:"amount"`
+	Currency                  sql.NullString  `json:"currency"`
+	PaymentMethod             sql.NullString  `json:"payment_method"`
+	Status                    sql.NullString  `json:"status"`
+	Notes                     sql.NullString  `json:"notes"`
+	CreatedAt                 sql.NullTime    `json:"created_at"`
+	UpdatedAt                 sql.NullTime    `json:"updated_at"`
+	DeletedAt                 sql.NullTime    `json:"deleted_at"`
+	Companyname               sql.NullString  `json:"companyname"`
+	Companycreatedat          time.Time       `json:"companycreatedat"`
+	Companyupdatedat          time.Time       `json:"companyupdatedat"`
+	Userfullname              string          `json:"userfullname"`
+	Useremail                 string          `json:"useremail"`
+	Userphonenumber           sql.NullString  `json:"userphonenumber"`
+	Userpicture               sql.NullString  `json:"userpicture"`
+	Userverified              bool            `json:"userverified"`
+	Userblocked               bool            `json:"userblocked"`
+	Userstatus                string          `json:"userstatus"`
+	Userlastloginat           sql.NullTime    `json:"userlastloginat"`
+	Usercreatedat             time.Time       `json:"usercreatedat"`
+	Subscriptionplanid        uuid.UUID       `json:"subscriptionplanid"`
+	Subscriptionamount        decimal.Decimal `json:"subscriptionamount"`
+	Subscriptionbillingcycle  sql.NullString  `json:"subscriptionbillingcycle"`
+	Subscriptiontrialstartsat sql.NullTime    `json:"subscriptiontrialstartsat"`
+	Subscriptiontrialendsat   sql.NullTime    `json:"subscriptiontrialendsat"`
+	Subscriptionstartsat      sql.NullTime    `json:"subscriptionstartsat"`
+	Subscriptionendsat        sql.NullTime    `json:"subscriptionendsat"`
+	Subscriptionstatus        sql.NullString  `json:"subscriptionstatus"`
+	Subscriptioncreatedat     sql.NullTime    `json:"subscriptioncreatedat"`
+}
+
+func (q *Queries) GetPaymentsByCompanyAndUser(ctx context.Context, arg GetPaymentsByCompanyAndUserParams) ([]GetPaymentsByCompanyAndUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPaymentsByCompanyAndUser,
+		arg.CompanyID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPaymentsByCompanyAndUserRow{}
+	for rows.Next() {
+		var i GetPaymentsByCompanyAndUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.UserID,
+			&i.SubscriptionID,
+			&i.PaymentID,
+			&i.Amount,
+			&i.Currency,
+			&i.PaymentMethod,
+			&i.Status,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.Companyname,
+			&i.Companycreatedat,
+			&i.Companyupdatedat,
+			&i.Userfullname,
+			&i.Useremail,
+			&i.Userphonenumber,
+			&i.Userpicture,
+			&i.Userverified,
+			&i.Userblocked,
+			&i.Userstatus,
+			&i.Userlastloginat,
+			&i.Usercreatedat,
+			&i.Subscriptionplanid,
+			&i.Subscriptionamount,
+			&i.Subscriptionbillingcycle,
+			&i.Subscriptiontrialstartsat,
+			&i.Subscriptiontrialendsat,
+			&i.Subscriptionstartsat,
+			&i.Subscriptionendsat,
+			&i.Subscriptionstatus,
+			&i.Subscriptioncreatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPaymentsByCompanyAndUserSimple = `-- name: GetPaymentsByCompanyAndUserSimple :many
+SELECT
+    p.id, p.company_id, p.user_id, p.subscription_id, p.payment_id, p.amount, p.currency, p.payment_method, p.status, p.notes, p.created_at, p.updated_at, p.deleted_at, p.transaction_reference, p.payment_date, p.billing_period_start, p.billing_period_end, p.refunded_amount, p.integrity_hash, p.refund_date,
+    c.companyname,
+    u.fullname,
+    u.email,
+    s.billing_cycle,
+    s.status as subscription_status
+FROM
+    payments p
+    LEFT JOIN companies c ON p.company_id = c.id
+    LEFT JOIN users u ON p.user_id = u.id
+    LEFT JOIN subscriptions s ON p.subscription_id = s.id
+WHERE
+    p.company_id = $1
+    -- AND p.user_id = $2
+    AND p.deleted_at IS NULL
+ORDER BY p.created_at DESC
+`
+
+type GetPaymentsByCompanyAndUserSimpleRow struct {
+	ID                   uuid.UUID       `json:"id"`
+	CompanyID            uuid.UUID       `json:"company_id"`
+	UserID               uuid.UUID       `json:"user_id"`
+	SubscriptionID       uuid.UUID       `json:"subscription_id"`
+	PaymentID            sql.NullString  `json:"payment_id"`
+	Amount               decimal.Decimal `json:"amount"`
+	Currency             sql.NullString  `json:"currency"`
+	PaymentMethod        sql.NullString  `json:"payment_method"`
+	Status               sql.NullString  `json:"status"`
+	Notes                sql.NullString  `json:"notes"`
+	CreatedAt            sql.NullTime    `json:"created_at"`
+	UpdatedAt            sql.NullTime    `json:"updated_at"`
+	DeletedAt            sql.NullTime    `json:"deleted_at"`
+	TransactionReference sql.NullString  `json:"transaction_reference"`
+	PaymentDate          sql.NullTime    `json:"payment_date"`
+	BillingPeriodStart   sql.NullTime    `json:"billing_period_start"`
+	BillingPeriodEnd     sql.NullTime    `json:"billing_period_end"`
+	RefundedAmount       decimal.Decimal `json:"refunded_amount"`
+	IntegrityHash        sql.NullString  `json:"integrity_hash"`
+	RefundDate           sql.NullTime    `json:"refund_date"`
+	Companyname          sql.NullString  `json:"companyname"`
+	Fullname             sql.NullString  `json:"fullname"`
+	Email                sql.NullString  `json:"email"`
+	BillingCycle         sql.NullString  `json:"billing_cycle"`
+	SubscriptionStatus   sql.NullString  `json:"subscription_status"`
+}
+
+func (q *Queries) GetPaymentsByCompanyAndUserSimple(ctx context.Context, companyID uuid.UUID) ([]GetPaymentsByCompanyAndUserSimpleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPaymentsByCompanyAndUserSimple, companyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPaymentsByCompanyAndUserSimpleRow{}
+	for rows.Next() {
+		var i GetPaymentsByCompanyAndUserSimpleRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.UserID,
+			&i.SubscriptionID,
+			&i.PaymentID,
+			&i.Amount,
+			&i.Currency,
+			&i.PaymentMethod,
+			&i.Status,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.TransactionReference,
+			&i.PaymentDate,
+			&i.BillingPeriodStart,
+			&i.BillingPeriodEnd,
+			&i.RefundedAmount,
+			&i.IntegrityHash,
+			&i.RefundDate,
+			&i.Companyname,
+			&i.Fullname,
+			&i.Email,
+			&i.BillingCycle,
+			&i.SubscriptionStatus,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updatePaymentHash = `-- name: UpdatePaymentHash :exec
