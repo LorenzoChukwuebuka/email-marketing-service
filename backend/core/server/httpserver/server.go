@@ -68,6 +68,7 @@ func (s *Server) setupRoutes() {
 		"contacts":        routes.NewContactRoutes(s.db),
 		"templates":       routes.NewTemplateRoute(s.db),
 		"payments":        routes.NewPaymentRoute(s.db),
+		"campaigns":       routes.NewCampaignRoute(s.db),
 	}
 
 	for path, route := range routeMap {

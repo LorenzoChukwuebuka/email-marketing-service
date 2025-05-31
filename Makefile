@@ -1,5 +1,5 @@
-WIRE_PATH := ./backend/api/v1/routes
-MAIN_PATH := ./backend/api/v1
+WIRE_PATH := ./backend-archived/api/v1/routes
+MAIN_PATH := ./backend-archived/api/v1
 ROOT_DIR := ./backend-archived/
 FE_DIR := ./frontend/
 DIST_DIR := $(FE_DIR)dist

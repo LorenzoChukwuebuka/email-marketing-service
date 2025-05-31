@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"gorm.io/gorm"
+	//"gorm.io/gorm"
 )
 
 type EmailRequest struct {
@@ -16,7 +16,7 @@ type EmailRequest struct {
 	Text        *string      `json:"text"`
 	PreviewText *string      `json:"preview_text"`
 	AuthUser    SMTPAuthUser `json:"smtp_auth_user"`
-	DB          gorm.DB
+	//DB          gorm.DB
 }
 
 type Sender struct {
