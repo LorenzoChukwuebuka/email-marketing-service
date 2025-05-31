@@ -8,19 +8,20 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const archiveCampaign = `-- name: ArchiveCampaign :one
 UPDATE campaigns
-SET 
+SET
     is_archived = true,
     updated_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     id = $1
-    AND deleted_at IS NULL
-RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+    AND deleted_at IS NULL RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) ArchiveCampaign(ctx context.Context, id uuid.UUID) (Campaign, error) {
@@ -53,13 +54,13 @@ func (q *Queries) ArchiveCampaign(ctx context.Context, id uuid.UUID) (Campaign, 
 }
 
 const checkCampaignNameExists = `-- name: CheckCampaignNameExists :one
-SELECT 
-    EXISTS (
-        SELECT 1 
-        FROM campaigns 
-        WHERE name = $1 
-        AND company_id = $2
-        AND deleted_at IS NULL
+SELECT EXISTS (
+        SELECT 1
+        FROM campaigns
+        WHERE
+            name = $1
+            AND company_id = $2
+            AND deleted_at IS NULL
     ) AS campaign_exists
 `
 
@@ -76,24 +77,37 @@ func (q *Queries) CheckCampaignNameExists(ctx context.Context, arg CheckCampaign
 }
 
 const createCampaign = `-- name: CreateCampaign :one
-INSERT INTO campaigns (
-    company_id,
-    name,
-    subject,
-    preview_text,
-    user_id,
-    sender_from_name,
-    template_id,
-    recipient_info,
-    status,
-    track_type,
-    sender,
-    scheduled_at,
-    has_custom_logo
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-)
-RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+INSERT INTO
+    campaigns (
+        company_id,
+        name,
+        subject,
+        preview_text,
+        user_id,
+        sender_from_name,
+        template_id,
+        recipient_info,
+        status,
+        track_type,
+        sender,
+        scheduled_at,
+        has_custom_logo
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13
+    ) RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 type CreateCampaignParams struct {
@@ -156,49 +170,137 @@ func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) 
 }
 
 const getCampaignByID = `-- name: GetCampaignByID :one
-SELECT 
+SELECT
+    -- Campaign information (all columns)
     c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
+    -- User information (with user_ prefix)
+    u.id AS user_id,
     u.fullname AS user_fullname,
     u.email AS user_email,
-    u.picture AS user_picture
-FROM 
+    u.phonenumber AS user_phonenumber,
+    u.picture AS user_picture,
+    u.verified AS user_verified,
+    u.blocked AS user_blocked,
+    u.verified_at AS user_verified_at,
+    u.status AS user_status,
+    u.last_login_at AS user_last_login_at,
+    u.created_at AS user_created_at,
+    u.updated_at AS user_updated_at,
+    -- Company information (with company_ prefix)
+    comp.id AS company_id_ref,
+    comp.companyname AS company_name,
+    comp.created_at AS company_created_at,
+    comp.updated_at AS company_updated_at,
+    -- Template information (all columns with template_ prefix)
+    t.id AS template_id_ref,
+    t.user_id AS template_user_id,
+    t.company_id AS template_company_id,
+    t.template_name AS template_name,
+    t.sender_name AS template_sender_name,
+    t.from_email AS template_from_email,
+    t.subject AS template_subject,
+    t.type AS template_type,
+    t.email_html AS template_email_html,
+    t.email_design AS template_email_design,
+    t.is_editable AS template_is_editable,
+    t.is_published AS template_is_published,
+    t.is_public_template AS template_is_public_template,
+    t.is_gallery_template AS template_is_gallery_template,
+    t.tags AS template_tags,
+    t.description AS template_description,
+    t.image_url AS template_image_url,
+    t.is_active AS template_is_active,
+    t.editor_type AS template_editor_type,
+    t.created_at AS template_created_at,
+    t.updated_at AS template_updated_at,
+    t.deleted_at AS template_deleted_at
+FROM
     campaigns c
-LEFT JOIN 
-    users u ON c.user_id = u.id
-WHERE 
-    c.id = $1
+    INNER JOIN users u ON c.user_id = u.id
+    AND u.deleted_at IS NULL
+    AND u.blocked = FALSE
+    INNER JOIN companies comp ON c.company_id = comp.id
+    AND comp.deleted_at IS NULL
+    LEFT JOIN templates t ON c.template_id = t.id
+    AND t.deleted_at IS NULL
+    AND t.is_active = TRUE
+WHERE
+    c.company_id = $1
+    AND c.id = $3
     AND c.deleted_at IS NULL
+    AND c.user_id = $2
 `
 
-type GetCampaignByIDRow struct {
-	ID             uuid.UUID      `json:"id"`
-	CompanyID      uuid.UUID      `json:"company_id"`
-	Name           string         `json:"name"`
-	Subject        sql.NullString `json:"subject"`
-	PreviewText    sql.NullString `json:"preview_text"`
-	UserID         uuid.UUID      `json:"user_id"`
-	SenderFromName sql.NullString `json:"sender_from_name"`
-	TemplateID     uuid.NullUUID  `json:"template_id"`
-	SentTemplateID uuid.NullUUID  `json:"sent_template_id"`
-	RecipientInfo  sql.NullString `json:"recipient_info"`
-	IsPublished    sql.NullBool   `json:"is_published"`
-	Status         sql.NullString `json:"status"`
-	TrackType      sql.NullString `json:"track_type"`
-	IsArchived     sql.NullBool   `json:"is_archived"`
-	SentAt         sql.NullTime   `json:"sent_at"`
-	Sender         sql.NullString `json:"sender"`
-	ScheduledAt    sql.NullTime   `json:"scheduled_at"`
-	HasCustomLogo  sql.NullBool   `json:"has_custom_logo"`
-	CreatedAt      sql.NullTime   `json:"created_at"`
-	UpdatedAt      sql.NullTime   `json:"updated_at"`
-	DeletedAt      sql.NullTime   `json:"deleted_at"`
-	UserFullname   sql.NullString `json:"user_fullname"`
-	UserEmail      sql.NullString `json:"user_email"`
-	UserPicture    sql.NullString `json:"user_picture"`
+type GetCampaignByIDParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
 }
 
-func (q *Queries) GetCampaignByID(ctx context.Context, id uuid.UUID) (GetCampaignByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getCampaignByID, id)
+type GetCampaignByIDRow struct {
+	ID                        uuid.UUID             `json:"id"`
+	CompanyID                 uuid.UUID             `json:"company_id"`
+	Name                      string                `json:"name"`
+	Subject                   sql.NullString        `json:"subject"`
+	PreviewText               sql.NullString        `json:"preview_text"`
+	UserID                    uuid.UUID             `json:"user_id"`
+	SenderFromName            sql.NullString        `json:"sender_from_name"`
+	TemplateID                uuid.NullUUID         `json:"template_id"`
+	SentTemplateID            uuid.NullUUID         `json:"sent_template_id"`
+	RecipientInfo             sql.NullString        `json:"recipient_info"`
+	IsPublished               sql.NullBool          `json:"is_published"`
+	Status                    sql.NullString        `json:"status"`
+	TrackType                 sql.NullString        `json:"track_type"`
+	IsArchived                sql.NullBool          `json:"is_archived"`
+	SentAt                    sql.NullTime          `json:"sent_at"`
+	Sender                    sql.NullString        `json:"sender"`
+	ScheduledAt               sql.NullTime          `json:"scheduled_at"`
+	HasCustomLogo             sql.NullBool          `json:"has_custom_logo"`
+	CreatedAt                 sql.NullTime          `json:"created_at"`
+	UpdatedAt                 sql.NullTime          `json:"updated_at"`
+	DeletedAt                 sql.NullTime          `json:"deleted_at"`
+	UserID_2                  uuid.UUID             `json:"user_id_2"`
+	UserFullname              string                `json:"user_fullname"`
+	UserEmail                 string                `json:"user_email"`
+	UserPhonenumber           sql.NullString        `json:"user_phonenumber"`
+	UserPicture               sql.NullString        `json:"user_picture"`
+	UserVerified              bool                  `json:"user_verified"`
+	UserBlocked               bool                  `json:"user_blocked"`
+	UserVerifiedAt            sql.NullTime          `json:"user_verified_at"`
+	UserStatus                string                `json:"user_status"`
+	UserLastLoginAt           sql.NullTime          `json:"user_last_login_at"`
+	UserCreatedAt             time.Time             `json:"user_created_at"`
+	UserUpdatedAt             time.Time             `json:"user_updated_at"`
+	CompanyIDRef              uuid.UUID             `json:"company_id_ref"`
+	CompanyName               sql.NullString        `json:"company_name"`
+	CompanyCreatedAt          time.Time             `json:"company_created_at"`
+	CompanyUpdatedAt          time.Time             `json:"company_updated_at"`
+	TemplateIDRef             uuid.NullUUID         `json:"template_id_ref"`
+	TemplateUserID            uuid.NullUUID         `json:"template_user_id"`
+	TemplateCompanyID         uuid.NullUUID         `json:"template_company_id"`
+	TemplateName              sql.NullString        `json:"template_name"`
+	TemplateSenderName        sql.NullString        `json:"template_sender_name"`
+	TemplateFromEmail         sql.NullString        `json:"template_from_email"`
+	TemplateSubject           sql.NullString        `json:"template_subject"`
+	TemplateType              sql.NullString        `json:"template_type"`
+	TemplateEmailHtml         sql.NullString        `json:"template_email_html"`
+	TemplateEmailDesign       pqtype.NullRawMessage `json:"template_email_design"`
+	TemplateIsEditable        sql.NullBool          `json:"template_is_editable"`
+	TemplateIsPublished       sql.NullBool          `json:"template_is_published"`
+	TemplateIsPublicTemplate  sql.NullBool          `json:"template_is_public_template"`
+	TemplateIsGalleryTemplate sql.NullBool          `json:"template_is_gallery_template"`
+	TemplateTags              sql.NullString        `json:"template_tags"`
+	TemplateDescription       sql.NullString        `json:"template_description"`
+	TemplateImageUrl          sql.NullString        `json:"template_image_url"`
+	TemplateIsActive          sql.NullBool          `json:"template_is_active"`
+	TemplateEditorType        sql.NullString        `json:"template_editor_type"`
+	TemplateCreatedAt         sql.NullTime          `json:"template_created_at"`
+	TemplateUpdatedAt         sql.NullTime          `json:"template_updated_at"`
+	TemplateDeletedAt         sql.NullTime          `json:"template_deleted_at"`
+}
+
+func (q *Queries) GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams) (GetCampaignByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getCampaignByID, arg.CompanyID, arg.UserID, arg.ID)
 	var i GetCampaignByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -222,34 +324,87 @@ func (q *Queries) GetCampaignByID(ctx context.Context, id uuid.UUID) (GetCampaig
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.UserID_2,
 		&i.UserFullname,
 		&i.UserEmail,
+		&i.UserPhonenumber,
 		&i.UserPicture,
+		&i.UserVerified,
+		&i.UserBlocked,
+		&i.UserVerifiedAt,
+		&i.UserStatus,
+		&i.UserLastLoginAt,
+		&i.UserCreatedAt,
+		&i.UserUpdatedAt,
+		&i.CompanyIDRef,
+		&i.CompanyName,
+		&i.CompanyCreatedAt,
+		&i.CompanyUpdatedAt,
+		&i.TemplateIDRef,
+		&i.TemplateUserID,
+		&i.TemplateCompanyID,
+		&i.TemplateName,
+		&i.TemplateSenderName,
+		&i.TemplateFromEmail,
+		&i.TemplateSubject,
+		&i.TemplateType,
+		&i.TemplateEmailHtml,
+		&i.TemplateEmailDesign,
+		&i.TemplateIsEditable,
+		&i.TemplateIsPublished,
+		&i.TemplateIsPublicTemplate,
+		&i.TemplateIsGalleryTemplate,
+		&i.TemplateTags,
+		&i.TemplateDescription,
+		&i.TemplateImageUrl,
+		&i.TemplateIsActive,
+		&i.TemplateEditorType,
+		&i.TemplateCreatedAt,
+		&i.TemplateUpdatedAt,
+		&i.TemplateDeletedAt,
 	)
 	return i, err
 }
 
+const getCampaignCounts = `-- name: GetCampaignCounts :one
+SELECT COUNT(*)
+FROM campaigns
+WHERE
+    user_id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL
+`
+
+type GetCampaignCountsParams struct {
+	UserID    uuid.UUID `json:"user_id"`
+	CompanyID uuid.UUID `json:"company_id"`
+}
+
+func (q *Queries) GetCampaignCounts(ctx context.Context, arg GetCampaignCountsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getCampaignCounts, arg.UserID, arg.CompanyID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getCampaignsByTemplateType = `-- name: GetCampaignsByTemplateType :many
-SELECT 
+SELECT
     c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
     t.type AS template_type,
     u.fullname AS user_fullname,
     comp.companyname AS company_name
-FROM 
+FROM
     campaigns c
-JOIN 
-    templates t ON c.template_id = t.id
-LEFT JOIN 
-    users u ON c.user_id = u.id
-LEFT JOIN 
-    companies comp ON c.company_id = comp.id
-WHERE 
+    JOIN templates t ON c.template_id = t.id
+    LEFT JOIN users u ON c.user_id = u.id
+    LEFT JOIN companies comp ON c.company_id = comp.id
+WHERE
     t.type = $1
     AND c.deleted_at IS NULL
-ORDER BY 
-    c.created_at DESC
+ORDER BY c.created_at DESC
 LIMIT $2
-OFFSET $3
+OFFSET
+    $3
 `
 
 type GetCampaignsByTemplateTypeParams struct {
@@ -334,8 +489,7 @@ func (q *Queries) GetCampaignsByTemplateType(ctx context.Context, arg GetCampaig
 }
 
 const hardDeleteCampaign = `-- name: HardDeleteCampaign :exec
-DELETE FROM campaigns
-WHERE id = $1
+DELETE FROM campaigns WHERE id = $1
 `
 
 func (q *Queries) HardDeleteCampaign(ctx context.Context, id uuid.UUID) error {
@@ -343,162 +497,170 @@ func (q *Queries) HardDeleteCampaign(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const listCampaigns = `-- name: ListCampaigns :many
-SELECT 
-    c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
-    u.fullname AS user_fullname,
-    u.email AS user_email,
-    comp.companyname AS company_name
-FROM 
-    campaigns c
-LEFT JOIN 
-    users u ON c.user_id = u.id
-LEFT JOIN 
-    companies comp ON c.company_id = comp.id
-WHERE 
-    c.deleted_at IS NULL
-ORDER BY 
-    c.created_at DESC
-LIMIT $1
-OFFSET $2
-`
-
-type ListCampaignsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-type ListCampaignsRow struct {
-	ID             uuid.UUID      `json:"id"`
-	CompanyID      uuid.UUID      `json:"company_id"`
-	Name           string         `json:"name"`
-	Subject        sql.NullString `json:"subject"`
-	PreviewText    sql.NullString `json:"preview_text"`
-	UserID         uuid.UUID      `json:"user_id"`
-	SenderFromName sql.NullString `json:"sender_from_name"`
-	TemplateID     uuid.NullUUID  `json:"template_id"`
-	SentTemplateID uuid.NullUUID  `json:"sent_template_id"`
-	RecipientInfo  sql.NullString `json:"recipient_info"`
-	IsPublished    sql.NullBool   `json:"is_published"`
-	Status         sql.NullString `json:"status"`
-	TrackType      sql.NullString `json:"track_type"`
-	IsArchived     sql.NullBool   `json:"is_archived"`
-	SentAt         sql.NullTime   `json:"sent_at"`
-	Sender         sql.NullString `json:"sender"`
-	ScheduledAt    sql.NullTime   `json:"scheduled_at"`
-	HasCustomLogo  sql.NullBool   `json:"has_custom_logo"`
-	CreatedAt      sql.NullTime   `json:"created_at"`
-	UpdatedAt      sql.NullTime   `json:"updated_at"`
-	DeletedAt      sql.NullTime   `json:"deleted_at"`
-	UserFullname   sql.NullString `json:"user_fullname"`
-	UserEmail      sql.NullString `json:"user_email"`
-	CompanyName    sql.NullString `json:"company_name"`
-}
-
-func (q *Queries) ListCampaigns(ctx context.Context, arg ListCampaignsParams) ([]ListCampaignsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCampaigns, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListCampaignsRow{}
-	for rows.Next() {
-		var i ListCampaignsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.CompanyID,
-			&i.Name,
-			&i.Subject,
-			&i.PreviewText,
-			&i.UserID,
-			&i.SenderFromName,
-			&i.TemplateID,
-			&i.SentTemplateID,
-			&i.RecipientInfo,
-			&i.IsPublished,
-			&i.Status,
-			&i.TrackType,
-			&i.IsArchived,
-			&i.SentAt,
-			&i.Sender,
-			&i.ScheduledAt,
-			&i.HasCustomLogo,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.UserFullname,
-			&i.UserEmail,
-			&i.CompanyName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listCampaignsByCompanyID = `-- name: ListCampaignsByCompanyID :many
 SELECT 
+    -- Campaign information (all columns)
     c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
+    -- User information (with user_ prefix)
+    u.id AS user_id,
     u.fullname AS user_fullname,
     u.email AS user_email,
-    comp.companyname AS company_name
+    u.phonenumber AS user_phonenumber,
+    u.picture AS user_picture,
+    u.verified AS user_verified,
+    u.blocked AS user_blocked,
+    u.verified_at AS user_verified_at,
+    u.status AS user_status,
+    u.last_login_at AS user_last_login_at,
+    u.created_at AS user_created_at,
+    u.updated_at AS user_updated_at,
+    -- Company information (with company_ prefix)
+    comp.id AS company_id_ref,
+    comp.companyname AS company_name,
+    comp.created_at AS company_created_at,
+    comp.updated_at AS company_updated_at,
+    -- Template information (all columns with template_ prefix)
+    t.id AS template_id_ref,
+    t.user_id AS template_user_id,
+    t.company_id AS template_company_id,
+    t.template_name AS template_name,
+    t.sender_name AS template_sender_name,
+    t.from_email AS template_from_email,
+    t.subject AS template_subject,
+    t.type AS template_type,
+    t.email_html AS template_email_html,
+    t.email_design AS template_email_design,
+    t.is_editable AS template_is_editable,
+    t.is_published AS template_is_published,
+    t.is_public_template AS template_is_public_template,
+    t.is_gallery_template AS template_is_gallery_template,
+    t.tags AS template_tags,
+    t.description AS template_description,
+    t.image_url AS template_image_url,
+    t.is_active AS template_is_active,
+    t.editor_type AS template_editor_type,
+    t.created_at AS template_created_at,
+    t.updated_at AS template_updated_at,
+    t.deleted_at AS template_deleted_at
 FROM 
     campaigns c
+INNER JOIN 
+    users u ON c.user_id = u.id 
+    AND u.deleted_at IS NULL 
+    AND u.blocked = FALSE
+INNER JOIN 
+    companies comp ON c.company_id = comp.id 
+    AND comp.deleted_at IS NULL
 LEFT JOIN 
-    users u ON c.user_id = u.id
-LEFT JOIN 
-    companies comp ON c.company_id = comp.id
+    templates t ON c.template_id = t.id 
+    AND t.deleted_at IS NULL 
+    AND t.is_active = TRUE
 WHERE 
     c.company_id = $1
     AND c.deleted_at IS NULL
+    AND  c.user_id = $2  
+     AND (
+        $5::TEXT IS NULL OR $5 = '' OR (
+            -- Search in campaign fields
+            LOWER(c.campaign_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.subject) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.description) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.from_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.from_email) LIKE LOWER('%' || $5 || '%') OR
+            -- Search in user fields
+            LOWER(u.fullname) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(u.email) LIKE LOWER('%' || $5 || '%') OR
+            -- Search in template fields
+            LOWER(t.template_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.sender_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.subject) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.description) LIKE LOWER('%' || $5 || '%')
+        )
+    )
 ORDER BY 
     c.created_at DESC
-LIMIT $2
-OFFSET $3
+LIMIT $3
+OFFSET $4
 `
 
 type ListCampaignsByCompanyIDParams struct {
 	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
 	Limit     int32     `json:"limit"`
 	Offset    int32     `json:"offset"`
+	Column5   string    `json:"column_5"`
 }
 
 type ListCampaignsByCompanyIDRow struct {
-	ID             uuid.UUID      `json:"id"`
-	CompanyID      uuid.UUID      `json:"company_id"`
-	Name           string         `json:"name"`
-	Subject        sql.NullString `json:"subject"`
-	PreviewText    sql.NullString `json:"preview_text"`
-	UserID         uuid.UUID      `json:"user_id"`
-	SenderFromName sql.NullString `json:"sender_from_name"`
-	TemplateID     uuid.NullUUID  `json:"template_id"`
-	SentTemplateID uuid.NullUUID  `json:"sent_template_id"`
-	RecipientInfo  sql.NullString `json:"recipient_info"`
-	IsPublished    sql.NullBool   `json:"is_published"`
-	Status         sql.NullString `json:"status"`
-	TrackType      sql.NullString `json:"track_type"`
-	IsArchived     sql.NullBool   `json:"is_archived"`
-	SentAt         sql.NullTime   `json:"sent_at"`
-	Sender         sql.NullString `json:"sender"`
-	ScheduledAt    sql.NullTime   `json:"scheduled_at"`
-	HasCustomLogo  sql.NullBool   `json:"has_custom_logo"`
-	CreatedAt      sql.NullTime   `json:"created_at"`
-	UpdatedAt      sql.NullTime   `json:"updated_at"`
-	DeletedAt      sql.NullTime   `json:"deleted_at"`
-	UserFullname   sql.NullString `json:"user_fullname"`
-	UserEmail      sql.NullString `json:"user_email"`
-	CompanyName    sql.NullString `json:"company_name"`
+	ID                        uuid.UUID             `json:"id"`
+	CompanyID                 uuid.UUID             `json:"company_id"`
+	Name                      string                `json:"name"`
+	Subject                   sql.NullString        `json:"subject"`
+	PreviewText               sql.NullString        `json:"preview_text"`
+	UserID                    uuid.UUID             `json:"user_id"`
+	SenderFromName            sql.NullString        `json:"sender_from_name"`
+	TemplateID                uuid.NullUUID         `json:"template_id"`
+	SentTemplateID            uuid.NullUUID         `json:"sent_template_id"`
+	RecipientInfo             sql.NullString        `json:"recipient_info"`
+	IsPublished               sql.NullBool          `json:"is_published"`
+	Status                    sql.NullString        `json:"status"`
+	TrackType                 sql.NullString        `json:"track_type"`
+	IsArchived                sql.NullBool          `json:"is_archived"`
+	SentAt                    sql.NullTime          `json:"sent_at"`
+	Sender                    sql.NullString        `json:"sender"`
+	ScheduledAt               sql.NullTime          `json:"scheduled_at"`
+	HasCustomLogo             sql.NullBool          `json:"has_custom_logo"`
+	CreatedAt                 sql.NullTime          `json:"created_at"`
+	UpdatedAt                 sql.NullTime          `json:"updated_at"`
+	DeletedAt                 sql.NullTime          `json:"deleted_at"`
+	UserID_2                  uuid.UUID             `json:"user_id_2"`
+	UserFullname              string                `json:"user_fullname"`
+	UserEmail                 string                `json:"user_email"`
+	UserPhonenumber           sql.NullString        `json:"user_phonenumber"`
+	UserPicture               sql.NullString        `json:"user_picture"`
+	UserVerified              bool                  `json:"user_verified"`
+	UserBlocked               bool                  `json:"user_blocked"`
+	UserVerifiedAt            sql.NullTime          `json:"user_verified_at"`
+	UserStatus                string                `json:"user_status"`
+	UserLastLoginAt           sql.NullTime          `json:"user_last_login_at"`
+	UserCreatedAt             time.Time             `json:"user_created_at"`
+	UserUpdatedAt             time.Time             `json:"user_updated_at"`
+	CompanyIDRef              uuid.UUID             `json:"company_id_ref"`
+	CompanyName               sql.NullString        `json:"company_name"`
+	CompanyCreatedAt          time.Time             `json:"company_created_at"`
+	CompanyUpdatedAt          time.Time             `json:"company_updated_at"`
+	TemplateIDRef             uuid.NullUUID         `json:"template_id_ref"`
+	TemplateUserID            uuid.NullUUID         `json:"template_user_id"`
+	TemplateCompanyID         uuid.NullUUID         `json:"template_company_id"`
+	TemplateName              sql.NullString        `json:"template_name"`
+	TemplateSenderName        sql.NullString        `json:"template_sender_name"`
+	TemplateFromEmail         sql.NullString        `json:"template_from_email"`
+	TemplateSubject           sql.NullString        `json:"template_subject"`
+	TemplateType              sql.NullString        `json:"template_type"`
+	TemplateEmailHtml         sql.NullString        `json:"template_email_html"`
+	TemplateEmailDesign       pqtype.NullRawMessage `json:"template_email_design"`
+	TemplateIsEditable        sql.NullBool          `json:"template_is_editable"`
+	TemplateIsPublished       sql.NullBool          `json:"template_is_published"`
+	TemplateIsPublicTemplate  sql.NullBool          `json:"template_is_public_template"`
+	TemplateIsGalleryTemplate sql.NullBool          `json:"template_is_gallery_template"`
+	TemplateTags              sql.NullString        `json:"template_tags"`
+	TemplateDescription       sql.NullString        `json:"template_description"`
+	TemplateImageUrl          sql.NullString        `json:"template_image_url"`
+	TemplateIsActive          sql.NullBool          `json:"template_is_active"`
+	TemplateEditorType        sql.NullString        `json:"template_editor_type"`
+	TemplateCreatedAt         sql.NullTime          `json:"template_created_at"`
+	TemplateUpdatedAt         sql.NullTime          `json:"template_updated_at"`
+	TemplateDeletedAt         sql.NullTime          `json:"template_deleted_at"`
 }
 
 func (q *Queries) ListCampaignsByCompanyID(ctx context.Context, arg ListCampaignsByCompanyIDParams) ([]ListCampaignsByCompanyIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCampaignsByCompanyID, arg.CompanyID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listCampaignsByCompanyID,
+		arg.CompanyID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.Column5,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -528,9 +690,44 @@ func (q *Queries) ListCampaignsByCompanyID(ctx context.Context, arg ListCampaign
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.UserID_2,
 			&i.UserFullname,
 			&i.UserEmail,
+			&i.UserPhonenumber,
+			&i.UserPicture,
+			&i.UserVerified,
+			&i.UserBlocked,
+			&i.UserVerifiedAt,
+			&i.UserStatus,
+			&i.UserLastLoginAt,
+			&i.UserCreatedAt,
+			&i.UserUpdatedAt,
+			&i.CompanyIDRef,
 			&i.CompanyName,
+			&i.CompanyCreatedAt,
+			&i.CompanyUpdatedAt,
+			&i.TemplateIDRef,
+			&i.TemplateUserID,
+			&i.TemplateCompanyID,
+			&i.TemplateName,
+			&i.TemplateSenderName,
+			&i.TemplateFromEmail,
+			&i.TemplateSubject,
+			&i.TemplateType,
+			&i.TemplateEmailHtml,
+			&i.TemplateEmailDesign,
+			&i.TemplateIsEditable,
+			&i.TemplateIsPublished,
+			&i.TemplateIsPublicTemplate,
+			&i.TemplateIsGalleryTemplate,
+			&i.TemplateTags,
+			&i.TemplateDescription,
+			&i.TemplateImageUrl,
+			&i.TemplateIsActive,
+			&i.TemplateEditorType,
+			&i.TemplateCreatedAt,
+			&i.TemplateUpdatedAt,
+			&i.TemplateDeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -546,24 +743,22 @@ func (q *Queries) ListCampaignsByCompanyID(ctx context.Context, arg ListCampaign
 }
 
 const listCampaignsByUserID = `-- name: ListCampaignsByUserID :many
-SELECT 
+SELECT
     c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
     u.fullname AS user_fullname,
     u.email AS user_email,
     comp.companyname AS company_name
-FROM 
+FROM
     campaigns c
-LEFT JOIN 
-    users u ON c.user_id = u.id
-LEFT JOIN 
-    companies comp ON c.company_id = comp.id
-WHERE 
+    LEFT JOIN users u ON c.user_id = u.id
+    LEFT JOIN companies comp ON c.company_id = comp.id
+WHERE
     c.user_id = $1
     AND c.deleted_at IS NULL
-ORDER BY 
-    c.created_at DESC
+ORDER BY c.created_at DESC
 LIMIT $2
-OFFSET $3
+OFFSET
+    $3
 `
 
 type ListCampaignsByUserIDParams struct {
@@ -649,15 +844,14 @@ func (q *Queries) ListCampaignsByUserID(ctx context.Context, arg ListCampaignsBy
 
 const markCampaignAsSent = `-- name: MarkCampaignAsSent :one
 UPDATE campaigns
-SET 
+SET
     status = 'sent',
     sent_at = CURRENT_TIMESTAMP,
     sent_template_id = template_id,
     updated_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     id = $1
-    AND deleted_at IS NULL
-RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+    AND deleted_at IS NULL RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) MarkCampaignAsSent(ctx context.Context, id uuid.UUID) (Campaign, error) {
@@ -691,9 +885,9 @@ func (q *Queries) MarkCampaignAsSent(ctx context.Context, id uuid.UUID) (Campaig
 
 const softDeleteCampaign = `-- name: SoftDeleteCampaign :exec
 UPDATE campaigns
-SET 
+SET
     deleted_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     id = $1
     AND deleted_at IS NULL
 `
@@ -705,7 +899,7 @@ func (q *Queries) SoftDeleteCampaign(ctx context.Context, id uuid.UUID) error {
 
 const updateCampaign = `-- name: UpdateCampaign :one
 UPDATE campaigns
-SET 
+SET
     name = COALESCE($1, name),
     subject = COALESCE($2, subject),
     preview_text = COALESCE($3, preview_text),
@@ -720,10 +914,10 @@ SET
     is_published = COALESCE($12, is_published),
     is_archived = COALESCE($13, is_archived),
     updated_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     id = $14
-    AND deleted_at IS NULL
-RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+    AND user_id = $15
+    AND deleted_at IS NULL RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 type UpdateCampaignParams struct {
@@ -741,6 +935,7 @@ type UpdateCampaignParams struct {
 	IsPublished    sql.NullBool   `json:"is_published"`
 	IsArchived     sql.NullBool   `json:"is_archived"`
 	ID             uuid.UUID      `json:"id"`
+	UserID         uuid.UUID      `json:"user_id"`
 }
 
 func (q *Queries) UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) (Campaign, error) {
@@ -759,6 +954,7 @@ func (q *Queries) UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) 
 		arg.IsPublished,
 		arg.IsArchived,
 		arg.ID,
+		arg.UserID,
 	)
 	var i Campaign
 	err := row.Scan(
