@@ -10,13 +10,15 @@ import (
 	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
 	smtp_server "email-marketing-service/internal/smtp"
+	//"email-marketing-service/internal/workers/tasks"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -60,6 +62,14 @@ func main() {
 	if redisAddr == "" {
 		redisAddr = "localhost:6379" // Default for local development
 	}
+
+	asynqserver.Init()
+	client := asynqserver.GetClient()
+	defer client.Close()
+
+	//simulating mail sending
+	//_ = tasks.EnqueueWelcomeEmail(client, "hello@hello.com", "obi")
+
 
 	var wg sync.WaitGroup
 	wg.Add(1)

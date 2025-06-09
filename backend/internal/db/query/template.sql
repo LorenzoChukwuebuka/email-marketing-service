@@ -192,3 +192,22 @@ SELECT COUNT(*)
 FROM templates 
 WHERE user_id = $1 
 AND deleted_at IS NULL;
+
+
+-- name: GetTemplateByIDWithoutType :one
+SELECT
+    t.*,
+    u.fullname AS user_fullname,
+    u.email AS user_email,
+    u.picture AS user_picture,
+    c.companyname AS company_name
+FROM
+    templates t
+    LEFT JOIN users u ON t.user_id = u.id
+    LEFT JOIN companies c ON t.company_id = c.id
+WHERE
+    t.id = $1
+    AND t.user_id = $2
+    AND t.deleted_at IS NULL
+ORDER BY t.created_at DESC
+LIMIT 1;

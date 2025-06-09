@@ -26,4 +26,8 @@ func (c *CampaignRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/create", handler.CreateCampaign).Methods("POST", "OPTIONS")
 	r.HandleFunc("/get", handler.GetAllCampaigns).Methods("GET", "OPTIONS")
 	r.HandleFunc("/get/{id}", handler.GetSingleCampaign).Methods("GET", "OPTIONS")
+	r.HandleFunc("/delete/{id}", handler.DeleteCampaign).Methods("DELETE", "OPTIONS")
+	r.HandleFunc("/update/{id}", handler.UpdateCampaign).Methods("PUT", "OPTIONS")
+	r.HandleFunc("/send", handler.SendCampaign).Methods("POST", "OPTIONS")
+	r.HandleFunc("/add-campaign-group", handler.CreateCampaignGroup).Methods("POST", "OPTIONS")
 }

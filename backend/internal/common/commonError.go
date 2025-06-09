@@ -38,6 +38,7 @@ var (
 	ErrFetchingCount             = errors.New("error fetching counts")
 	ErrRecordExists              = errors.New("record already exists")
 	ErrPaymentMethodNotSupported = errors.New("payment method not supported")
+	ErrRecordNotFound = errors.New("record not found")
 )
 
 func TraceError(err error) error {

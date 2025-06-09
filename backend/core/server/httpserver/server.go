@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-
 	"github.com/gorilla/mux"
 )
 
@@ -69,6 +68,8 @@ func (s *Server) setupRoutes() {
 		"templates":       routes.NewTemplateRoute(s.db),
 		"payments":        routes.NewPaymentRoute(s.db),
 		"campaigns":       routes.NewCampaignRoute(s.db),
+		"domains":         routes.NewDomainRoute(s.db),
+		"senders":         routes.NewSenderRoute(s.db),
 	}
 
 	for path, route := range routeMap {
