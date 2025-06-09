@@ -369,8 +369,6 @@ WHERE
 
 -- name: GetContactStats :one
 -- Get all contact statistics in a single query
--- name: GetContactStats :one
--- Get all contact statistics in a single query
 SELECT
     (SELECT COUNT(*) FROM contacts c1 WHERE c1.user_id = @user_id AND c1.is_subscribed = false AND c1.deleted_at IS NULL) AS unsubscribed_count,
     (SELECT COUNT(*) FROM contacts c2 WHERE c2.user_id = @user_id AND c2.deleted_at IS NULL) AS total_count,
@@ -384,3 +382,7 @@ SELECT
      AND (ecr.opened_at IS NOT NULL OR ecr.clicked_at IS NOT NULL OR ecr.conversion_at IS NOT NULL)
     ) AS engaged_count;
 
+-- name: UpdateContactSubscription :exec
+UPDATE contacts 
+SET is_subscribed = $3
+WHERE company_id = $1 AND email = $2;

@@ -53,6 +53,23 @@ func (q *Queries) ArchiveCampaign(ctx context.Context, id uuid.UUID) (Campaign, 
 	return i, err
 }
 
+const campaignGroupExists = `-- name: CampaignGroupExists :one
+SELECT EXISTS (
+        SELECT 1
+        FROM campaign_groups
+        WHERE
+            campaign_id = $1
+            AND deleted_at IS NULL
+    ) AS campaign_group_exists
+`
+
+func (q *Queries) CampaignGroupExists(ctx context.Context, campaignID uuid.UUID) (bool, error) {
+	row := q.db.QueryRowContext(ctx, campaignGroupExists, campaignID)
+	var campaign_group_exists bool
+	err := row.Scan(&campaign_group_exists)
+	return campaign_group_exists, err
+}
+
 const checkCampaignNameExists = `-- name: CheckCampaignNameExists :one
 SELECT EXISTS (
         SELECT 1
@@ -162,6 +179,117 @@ func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) 
 		&i.Sender,
 		&i.ScheduledAt,
 		&i.HasCustomLogo,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const createCampaignGroups = `-- name: CreateCampaignGroups :exec
+INSERT INTO
+    campaign_groups (campaign_id, contact_group_id)
+VALUES ($1, $2)
+`
+
+type CreateCampaignGroupsParams struct {
+	CampaignID     uuid.UUID `json:"campaign_id"`
+	ContactGroupID uuid.UUID `json:"contact_group_id"`
+}
+
+func (q *Queries) CreateCampaignGroups(ctx context.Context, arg CreateCampaignGroupsParams) error {
+	_, err := q.db.ExecContext(ctx, createCampaignGroups, arg.CampaignID, arg.ContactGroupID)
+	return err
+}
+
+const createEmailCampaignResult = `-- name: CreateEmailCampaignResult :one
+INSERT INTO email_campaign_results (
+    company_id,
+    campaign_id,
+    recipient_email,
+    recipient_name,
+    version,
+    sent_at,
+    opened_at,
+    open_count,
+    clicked_at,
+    click_count,
+    conversion_at,
+    bounce_status,
+    unsubscribed_at,
+    complaint_status,
+    device_type,
+    location,
+    retry_count,
+    notes
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+) RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type CreateEmailCampaignResultParams struct {
+	CompanyID       uuid.UUID      `json:"company_id"`
+	CampaignID      uuid.UUID      `json:"campaign_id"`
+	RecipientEmail  string         `json:"recipient_email"`
+	RecipientName   sql.NullString `json:"recipient_name"`
+	Version         sql.NullString `json:"version"`
+	SentAt          sql.NullTime   `json:"sent_at"`
+	OpenedAt        sql.NullTime   `json:"opened_at"`
+	OpenCount       sql.NullInt32  `json:"open_count"`
+	ClickedAt       sql.NullTime   `json:"clicked_at"`
+	ClickCount      sql.NullInt32  `json:"click_count"`
+	ConversionAt    sql.NullTime   `json:"conversion_at"`
+	BounceStatus    sql.NullString `json:"bounce_status"`
+	UnsubscribedAt  sql.NullTime   `json:"unsubscribed_at"`
+	ComplaintStatus sql.NullBool   `json:"complaint_status"`
+	DeviceType      sql.NullString `json:"device_type"`
+	Location        sql.NullString `json:"location"`
+	RetryCount      sql.NullInt32  `json:"retry_count"`
+	Notes           sql.NullString `json:"notes"`
+}
+
+func (q *Queries) CreateEmailCampaignResult(ctx context.Context, arg CreateEmailCampaignResultParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, createEmailCampaignResult,
+		arg.CompanyID,
+		arg.CampaignID,
+		arg.RecipientEmail,
+		arg.RecipientName,
+		arg.Version,
+		arg.SentAt,
+		arg.OpenedAt,
+		arg.OpenCount,
+		arg.ClickedAt,
+		arg.ClickCount,
+		arg.ConversionAt,
+		arg.BounceStatus,
+		arg.UnsubscribedAt,
+		arg.ComplaintStatus,
+		arg.DeviceType,
+		arg.Location,
+		arg.RetryCount,
+		arg.Notes,
+	)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -366,6 +494,113 @@ func (q *Queries) GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams
 	return i, err
 }
 
+const getCampaignContactEmails = `-- name: GetCampaignContactEmails :many
+/* -- name: GetCampaignWithGroups :many
+SELECT
+    c.id as campaign_id,
+    c.name as campaign_name,
+    c.sender,
+    c.template,
+    c.sent_at,
+    c.created_at,
+    c.scheduled_at,
+    cg.id as group_id,
+    cg.name as group_name,
+    cg.description as group_description
+FROM
+    campaigns c
+    LEFT JOIN campaign_groups cg ON c.id = cg.campaign_id
+WHERE
+    c.id = $1
+    AND c.user_id = $2; */
+
+SELECT DISTINCT
+    c.email
+FROM
+    contacts c
+    JOIN user_contact_groups ucg ON c.id = ucg.contact_id
+    JOIN contact_groups cg ON ucg.contact_group_id = cg.id
+    JOIN campaign_groups camp_g ON cg.id = camp_g.contact_group_id
+WHERE
+    camp_g.campaign_id = $1
+    AND c.is_subscribed = true
+    AND c.deleted_at IS NULL
+    AND ucg.deleted_at IS NULL
+    AND cg.deleted_at IS NULL
+    AND camp_g.deleted_at IS NULL
+`
+
+func (q *Queries) GetCampaignContactEmails(ctx context.Context, campaignID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getCampaignContactEmails, campaignID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCampaignContactGroups = `-- name: GetCampaignContactGroups :many
+SELECT 
+    cg.id,
+    cg.group_name,
+    cg.description,
+    cg.created_at
+FROM contact_groups cg
+JOIN campaign_groups camp_g ON cg.id = camp_g.contact_group_id
+WHERE camp_g.campaign_id = $1 
+AND cg.deleted_at IS NULL 
+AND camp_g.deleted_at IS NULL
+`
+
+type GetCampaignContactGroupsRow struct {
+	ID          uuid.UUID      `json:"id"`
+	GroupName   string         `json:"group_name"`
+	Description sql.NullString `json:"description"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+}
+
+func (q *Queries) GetCampaignContactGroups(ctx context.Context, campaignID uuid.UUID) ([]GetCampaignContactGroupsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCampaignContactGroups, campaignID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCampaignContactGroupsRow{}
+	for rows.Next() {
+		var i GetCampaignContactGroupsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupName,
+			&i.Description,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCampaignCounts = `-- name: GetCampaignCounts :one
 SELECT COUNT(*)
 FROM campaigns
@@ -488,6 +723,203 @@ func (q *Queries) GetCampaignsByTemplateType(ctx context.Context, arg GetCampaig
 	return items, nil
 }
 
+const getEmailCampaignResult = `-- name: GetEmailCampaignResult :one
+SELECT id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at FROM email_campaign_results 
+WHERE id = $1 AND recipient_email = $2 AND deleted_at IS NULL
+`
+
+type GetEmailCampaignResultParams struct {
+	ID             uuid.UUID `json:"id"`
+	RecipientEmail string    `json:"recipient_email"`
+}
+
+func (q *Queries) GetEmailCampaignResult(ctx context.Context, arg GetEmailCampaignResultParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, getEmailCampaignResult, arg.ID, arg.RecipientEmail)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getEmailCampaignResultsByCampaign = `-- name: GetEmailCampaignResultsByCampaign :many
+SELECT id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at FROM email_campaign_results 
+WHERE campaign_id = $1 AND company_id = $2 AND deleted_at IS NULL
+ORDER BY created_at DESC
+`
+
+type GetEmailCampaignResultsByCampaignParams struct {
+	CampaignID uuid.UUID `json:"campaign_id"`
+	CompanyID  uuid.UUID `json:"company_id"`
+}
+
+func (q *Queries) GetEmailCampaignResultsByCampaign(ctx context.Context, arg GetEmailCampaignResultsByCampaignParams) ([]EmailCampaignResult, error) {
+	rows, err := q.db.QueryContext(ctx, getEmailCampaignResultsByCampaign, arg.CampaignID, arg.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EmailCampaignResult{}
+	for rows.Next() {
+		var i EmailCampaignResult
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.CampaignID,
+			&i.RecipientEmail,
+			&i.RecipientName,
+			&i.Version,
+			&i.SentAt,
+			&i.OpenedAt,
+			&i.OpenCount,
+			&i.ClickedAt,
+			&i.ClickCount,
+			&i.ConversionAt,
+			&i.BounceStatus,
+			&i.UnsubscribedAt,
+			&i.ComplaintStatus,
+			&i.DeviceType,
+			&i.Location,
+			&i.RetryCount,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEmailCampaignResultsByRecipient = `-- name: GetEmailCampaignResultsByRecipient :many
+SELECT id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at FROM email_campaign_results 
+WHERE recipient_email = $1 AND company_id = $2 AND deleted_at IS NULL
+ORDER BY created_at DESC
+`
+
+type GetEmailCampaignResultsByRecipientParams struct {
+	RecipientEmail string    `json:"recipient_email"`
+	CompanyID      uuid.UUID `json:"company_id"`
+}
+
+func (q *Queries) GetEmailCampaignResultsByRecipient(ctx context.Context, arg GetEmailCampaignResultsByRecipientParams) ([]EmailCampaignResult, error) {
+	rows, err := q.db.QueryContext(ctx, getEmailCampaignResultsByRecipient, arg.RecipientEmail, arg.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EmailCampaignResult{}
+	for rows.Next() {
+		var i EmailCampaignResult
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.CampaignID,
+			&i.RecipientEmail,
+			&i.RecipientName,
+			&i.Version,
+			&i.SentAt,
+			&i.OpenedAt,
+			&i.OpenCount,
+			&i.ClickedAt,
+			&i.ClickCount,
+			&i.ConversionAt,
+			&i.BounceStatus,
+			&i.UnsubscribedAt,
+			&i.ComplaintStatus,
+			&i.DeviceType,
+			&i.Location,
+			&i.RetryCount,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEmailCampaignStats = `-- name: GetEmailCampaignStats :one
+SELECT 
+    COUNT(*) as total_sent,
+    COUNT(opened_at) as total_opened,
+    COUNT(clicked_at) as total_clicked,
+    COUNT(conversion_at) as total_conversions,
+    COUNT(CASE WHEN bounce_status IS NOT NULL THEN 1 END) as total_bounced,
+    COUNT(unsubscribed_at) as total_unsubscribed,
+    COUNT(CASE WHEN complaint_status = true THEN 1 END) as total_complaints
+FROM email_campaign_results 
+WHERE campaign_id = $1 AND company_id = $2 AND deleted_at IS NULL
+`
+
+type GetEmailCampaignStatsParams struct {
+	CampaignID uuid.UUID `json:"campaign_id"`
+	CompanyID  uuid.UUID `json:"company_id"`
+}
+
+type GetEmailCampaignStatsRow struct {
+	TotalSent         int64 `json:"total_sent"`
+	TotalOpened       int64 `json:"total_opened"`
+	TotalClicked      int64 `json:"total_clicked"`
+	TotalConversions  int64 `json:"total_conversions"`
+	TotalBounced      int64 `json:"total_bounced"`
+	TotalUnsubscribed int64 `json:"total_unsubscribed"`
+	TotalComplaints   int64 `json:"total_complaints"`
+}
+
+func (q *Queries) GetEmailCampaignStats(ctx context.Context, arg GetEmailCampaignStatsParams) (GetEmailCampaignStatsRow, error) {
+	row := q.db.QueryRowContext(ctx, getEmailCampaignStats, arg.CampaignID, arg.CompanyID)
+	var i GetEmailCampaignStatsRow
+	err := row.Scan(
+		&i.TotalSent,
+		&i.TotalOpened,
+		&i.TotalClicked,
+		&i.TotalConversions,
+		&i.TotalBounced,
+		&i.TotalUnsubscribed,
+		&i.TotalComplaints,
+	)
+	return i, err
+}
+
 const hardDeleteCampaign = `-- name: HardDeleteCampaign :exec
 DELETE FROM campaigns WHERE id = $1
 `
@@ -562,11 +994,9 @@ WHERE
      AND (
         $5::TEXT IS NULL OR $5 = '' OR (
             -- Search in campaign fields
-            LOWER(c.campaign_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.name) LIKE LOWER('%' || $5 || '%') OR
             LOWER(c.subject) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.description) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_email) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.sender) LIKE LOWER('%' || $5 || '%') OR
             -- Search in user fields
             LOWER(u.fullname) LIKE LOWER('%' || $5 || '%') OR
             LOWER(u.email) LIKE LOWER('%' || $5 || '%') OR
@@ -842,6 +1272,252 @@ func (q *Queries) ListCampaignsByUserID(ctx context.Context, arg ListCampaignsBy
 	return items, nil
 }
 
+const listScheduledCampaignsByCompanyID = `-- name: ListScheduledCampaignsByCompanyID :many
+SELECT 
+    -- Campaign information (all columns)
+    c.id, c.company_id, c.name, c.subject, c.preview_text, c.user_id, c.sender_from_name, c.template_id, c.sent_template_id, c.recipient_info, c.is_published, c.status, c.track_type, c.is_archived, c.sent_at, c.sender, c.scheduled_at, c.has_custom_logo, c.created_at, c.updated_at, c.deleted_at,
+    -- User information (with user_ prefix)
+    u.id AS user_id,
+    u.fullname AS user_fullname,
+    u.email AS user_email,
+    u.phonenumber AS user_phonenumber,
+    u.picture AS user_picture,
+    u.verified AS user_verified,
+    u.blocked AS user_blocked,
+    u.verified_at AS user_verified_at,
+    u.status AS user_status,
+    u.last_login_at AS user_last_login_at,
+    u.created_at AS user_created_at,
+    u.updated_at AS user_updated_at,
+    -- Company information (with company_ prefix)
+    comp.id AS company_id_ref,
+    comp.companyname AS company_name,
+    comp.created_at AS company_created_at,
+    comp.updated_at AS company_updated_at,
+    -- Template information (all columns with template_ prefix)
+    t.id AS template_id_ref,
+    t.user_id AS template_user_id,
+    t.company_id AS template_company_id,
+    t.template_name AS template_name,
+    t.sender_name AS template_sender_name,
+    t.from_email AS template_from_email,
+    t.subject AS template_subject,
+    t.type AS template_type,
+    t.email_html AS template_email_html,
+    t.email_design AS template_email_design,
+    t.is_editable AS template_is_editable,
+    t.is_published AS template_is_published,
+    t.is_public_template AS template_is_public_template,
+    t.is_gallery_template AS template_is_gallery_template,
+    t.tags AS template_tags,
+    t.description AS template_description,
+    t.image_url AS template_image_url,
+    t.is_active AS template_is_active,
+    t.editor_type AS template_editor_type,
+    t.created_at AS template_created_at,
+    t.updated_at AS template_updated_at,
+    t.deleted_at AS template_deleted_at
+FROM 
+    campaigns c
+INNER JOIN 
+    users u ON c.user_id = u.id 
+    AND u.deleted_at IS NULL 
+    AND u.blocked = FALSE
+INNER JOIN 
+    companies comp ON c.company_id = comp.id 
+    AND comp.deleted_at IS NULL
+LEFT JOIN 
+    templates t ON c.template_id = t.id 
+    AND t.deleted_at IS NULL 
+    AND t.is_active = TRUE
+WHERE 
+    c.company_id = $1
+    AND c.deleted_at IS NULL
+    AND  c.user_id = $2  
+    AND c.scheduled_at IS NULL
+     AND (
+        $5::TEXT IS NULL OR $5 = '' OR (
+            -- Search in campaign fields
+            LOWER(c.campaign_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.subject) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.description) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.from_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.from_email) LIKE LOWER('%' || $5 || '%') OR
+            -- Search in user fields
+            LOWER(u.fullname) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(u.email) LIKE LOWER('%' || $5 || '%') OR
+            -- Search in template fields
+            LOWER(t.template_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.sender_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.subject) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(t.description) LIKE LOWER('%' || $5 || '%')
+        )
+    )
+ORDER BY 
+    c.created_at DESC
+LIMIT $3
+OFFSET $4
+`
+
+type ListScheduledCampaignsByCompanyIDParams struct {
+	CompanyID uuid.UUID `json:"company_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
+	Column5   string    `json:"column_5"`
+}
+
+type ListScheduledCampaignsByCompanyIDRow struct {
+	ID                        uuid.UUID             `json:"id"`
+	CompanyID                 uuid.UUID             `json:"company_id"`
+	Name                      string                `json:"name"`
+	Subject                   sql.NullString        `json:"subject"`
+	PreviewText               sql.NullString        `json:"preview_text"`
+	UserID                    uuid.UUID             `json:"user_id"`
+	SenderFromName            sql.NullString        `json:"sender_from_name"`
+	TemplateID                uuid.NullUUID         `json:"template_id"`
+	SentTemplateID            uuid.NullUUID         `json:"sent_template_id"`
+	RecipientInfo             sql.NullString        `json:"recipient_info"`
+	IsPublished               sql.NullBool          `json:"is_published"`
+	Status                    sql.NullString        `json:"status"`
+	TrackType                 sql.NullString        `json:"track_type"`
+	IsArchived                sql.NullBool          `json:"is_archived"`
+	SentAt                    sql.NullTime          `json:"sent_at"`
+	Sender                    sql.NullString        `json:"sender"`
+	ScheduledAt               sql.NullTime          `json:"scheduled_at"`
+	HasCustomLogo             sql.NullBool          `json:"has_custom_logo"`
+	CreatedAt                 sql.NullTime          `json:"created_at"`
+	UpdatedAt                 sql.NullTime          `json:"updated_at"`
+	DeletedAt                 sql.NullTime          `json:"deleted_at"`
+	UserID_2                  uuid.UUID             `json:"user_id_2"`
+	UserFullname              string                `json:"user_fullname"`
+	UserEmail                 string                `json:"user_email"`
+	UserPhonenumber           sql.NullString        `json:"user_phonenumber"`
+	UserPicture               sql.NullString        `json:"user_picture"`
+	UserVerified              bool                  `json:"user_verified"`
+	UserBlocked               bool                  `json:"user_blocked"`
+	UserVerifiedAt            sql.NullTime          `json:"user_verified_at"`
+	UserStatus                string                `json:"user_status"`
+	UserLastLoginAt           sql.NullTime          `json:"user_last_login_at"`
+	UserCreatedAt             time.Time             `json:"user_created_at"`
+	UserUpdatedAt             time.Time             `json:"user_updated_at"`
+	CompanyIDRef              uuid.UUID             `json:"company_id_ref"`
+	CompanyName               sql.NullString        `json:"company_name"`
+	CompanyCreatedAt          time.Time             `json:"company_created_at"`
+	CompanyUpdatedAt          time.Time             `json:"company_updated_at"`
+	TemplateIDRef             uuid.NullUUID         `json:"template_id_ref"`
+	TemplateUserID            uuid.NullUUID         `json:"template_user_id"`
+	TemplateCompanyID         uuid.NullUUID         `json:"template_company_id"`
+	TemplateName              sql.NullString        `json:"template_name"`
+	TemplateSenderName        sql.NullString        `json:"template_sender_name"`
+	TemplateFromEmail         sql.NullString        `json:"template_from_email"`
+	TemplateSubject           sql.NullString        `json:"template_subject"`
+	TemplateType              sql.NullString        `json:"template_type"`
+	TemplateEmailHtml         sql.NullString        `json:"template_email_html"`
+	TemplateEmailDesign       pqtype.NullRawMessage `json:"template_email_design"`
+	TemplateIsEditable        sql.NullBool          `json:"template_is_editable"`
+	TemplateIsPublished       sql.NullBool          `json:"template_is_published"`
+	TemplateIsPublicTemplate  sql.NullBool          `json:"template_is_public_template"`
+	TemplateIsGalleryTemplate sql.NullBool          `json:"template_is_gallery_template"`
+	TemplateTags              sql.NullString        `json:"template_tags"`
+	TemplateDescription       sql.NullString        `json:"template_description"`
+	TemplateImageUrl          sql.NullString        `json:"template_image_url"`
+	TemplateIsActive          sql.NullBool          `json:"template_is_active"`
+	TemplateEditorType        sql.NullString        `json:"template_editor_type"`
+	TemplateCreatedAt         sql.NullTime          `json:"template_created_at"`
+	TemplateUpdatedAt         sql.NullTime          `json:"template_updated_at"`
+	TemplateDeletedAt         sql.NullTime          `json:"template_deleted_at"`
+}
+
+func (q *Queries) ListScheduledCampaignsByCompanyID(ctx context.Context, arg ListScheduledCampaignsByCompanyIDParams) ([]ListScheduledCampaignsByCompanyIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listScheduledCampaignsByCompanyID,
+		arg.CompanyID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.Column5,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListScheduledCampaignsByCompanyIDRow{}
+	for rows.Next() {
+		var i ListScheduledCampaignsByCompanyIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyID,
+			&i.Name,
+			&i.Subject,
+			&i.PreviewText,
+			&i.UserID,
+			&i.SenderFromName,
+			&i.TemplateID,
+			&i.SentTemplateID,
+			&i.RecipientInfo,
+			&i.IsPublished,
+			&i.Status,
+			&i.TrackType,
+			&i.IsArchived,
+			&i.SentAt,
+			&i.Sender,
+			&i.ScheduledAt,
+			&i.HasCustomLogo,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.UserID_2,
+			&i.UserFullname,
+			&i.UserEmail,
+			&i.UserPhonenumber,
+			&i.UserPicture,
+			&i.UserVerified,
+			&i.UserBlocked,
+			&i.UserVerifiedAt,
+			&i.UserStatus,
+			&i.UserLastLoginAt,
+			&i.UserCreatedAt,
+			&i.UserUpdatedAt,
+			&i.CompanyIDRef,
+			&i.CompanyName,
+			&i.CompanyCreatedAt,
+			&i.CompanyUpdatedAt,
+			&i.TemplateIDRef,
+			&i.TemplateUserID,
+			&i.TemplateCompanyID,
+			&i.TemplateName,
+			&i.TemplateSenderName,
+			&i.TemplateFromEmail,
+			&i.TemplateSubject,
+			&i.TemplateType,
+			&i.TemplateEmailHtml,
+			&i.TemplateEmailDesign,
+			&i.TemplateIsEditable,
+			&i.TemplateIsPublished,
+			&i.TemplateIsPublicTemplate,
+			&i.TemplateIsGalleryTemplate,
+			&i.TemplateTags,
+			&i.TemplateDescription,
+			&i.TemplateImageUrl,
+			&i.TemplateIsActive,
+			&i.TemplateEditorType,
+			&i.TemplateCreatedAt,
+			&i.TemplateUpdatedAt,
+			&i.TemplateDeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markCampaignAsSent = `-- name: MarkCampaignAsSent :one
 UPDATE campaigns
 SET
@@ -889,11 +1565,37 @@ SET
     deleted_at = CURRENT_TIMESTAMP
 WHERE
     id = $1
+    AND user_id = $2
+    AND company_id = $3
     AND deleted_at IS NULL
 `
 
-func (q *Queries) SoftDeleteCampaign(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, softDeleteCampaign, id)
+type SoftDeleteCampaignParams struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	CompanyID uuid.UUID `json:"company_id"`
+}
+
+func (q *Queries) SoftDeleteCampaign(ctx context.Context, arg SoftDeleteCampaignParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteCampaign, arg.ID, arg.UserID, arg.CompanyID)
+	return err
+}
+
+const softDeleteEmailCampaignResult = `-- name: SoftDeleteEmailCampaignResult :exec
+UPDATE email_campaign_results 
+SET 
+    deleted_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2
+`
+
+type SoftDeleteEmailCampaignResultParams struct {
+	ID        uuid.UUID `json:"id"`
+	CompanyID uuid.UUID `json:"company_id"`
+}
+
+func (q *Queries) SoftDeleteEmailCampaignResult(ctx context.Context, arg SoftDeleteEmailCampaignResultParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteEmailCampaignResult, arg.ID, arg.CompanyID)
 	return err
 }
 
@@ -976,6 +1678,423 @@ func (q *Queries) UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) 
 		&i.Sender,
 		&i.ScheduledAt,
 		&i.HasCustomLogo,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateCampaignGroup = `-- name: UpdateCampaignGroup :exec
+UPDATE campaign_groups
+SET
+    contact_group_id = $1
+WHERE
+    campaign_id = $2
+`
+
+type UpdateCampaignGroupParams struct {
+	ContactGroupID uuid.UUID `json:"contact_group_id"`
+	CampaignID     uuid.UUID `json:"campaign_id"`
+}
+
+func (q *Queries) UpdateCampaignGroup(ctx context.Context, arg UpdateCampaignGroupParams) error {
+	_, err := q.db.ExecContext(ctx, updateCampaignGroup, arg.ContactGroupID, arg.CampaignID)
+	return err
+}
+
+const updateCampaignStatus = `-- name: UpdateCampaignStatus :exec
+UPDATE campaigns SET status = $1 WHERE id = $2 AND user_id = $3
+`
+
+type UpdateCampaignStatusParams struct {
+	Status sql.NullString `json:"status"`
+	ID     uuid.UUID      `json:"id"`
+	UserID uuid.UUID      `json:"user_id"`
+}
+
+func (q *Queries) UpdateCampaignStatus(ctx context.Context, arg UpdateCampaignStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateCampaignStatus, arg.Status, arg.ID, arg.UserID)
+	return err
+}
+
+const updateEmailBounced = `-- name: UpdateEmailBounced :one
+UPDATE email_campaign_results 
+SET 
+    bounce_status = $3,
+    retry_count = retry_count + 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailBouncedParams struct {
+	ID           uuid.UUID      `json:"id"`
+	CompanyID    uuid.UUID      `json:"company_id"`
+	BounceStatus sql.NullString `json:"bounce_status"`
+}
+
+func (q *Queries) UpdateEmailBounced(ctx context.Context, arg UpdateEmailBouncedParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailBounced, arg.ID, arg.CompanyID, arg.BounceStatus)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailCampaignResult = `-- name: UpdateEmailCampaignResult :one
+UPDATE email_campaign_results 
+SET 
+    recipient_name = COALESCE($2, recipient_name),
+    version = COALESCE($3, version),
+    sent_at = COALESCE($4, sent_at),
+    opened_at = COALESCE($5, opened_at),
+    open_count = COALESCE($6, open_count),
+    clicked_at = COALESCE($7, clicked_at),
+    click_count = COALESCE($8, click_count),
+    conversion_at = COALESCE($9, conversion_at),
+    bounce_status = COALESCE($10, bounce_status),
+    unsubscribed_at = COALESCE($11, unsubscribed_at),
+    complaint_status = COALESCE($12, complaint_status),
+    device_type = COALESCE($13, device_type),
+    location = COALESCE($14, location),
+    retry_count = COALESCE($15, retry_count),
+    notes = COALESCE($16, notes),
+    updated_at = CURRENT_TIMESTAMP
+WHERE campaign_id = $1 AND recipient_email = $17 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailCampaignResultParams struct {
+	CampaignID      uuid.UUID      `json:"campaign_id"`
+	RecipientName   sql.NullString `json:"recipient_name"`
+	Version         sql.NullString `json:"version"`
+	SentAt          sql.NullTime   `json:"sent_at"`
+	OpenedAt        sql.NullTime   `json:"opened_at"`
+	OpenCount       sql.NullInt32  `json:"open_count"`
+	ClickedAt       sql.NullTime   `json:"clicked_at"`
+	ClickCount      sql.NullInt32  `json:"click_count"`
+	ConversionAt    sql.NullTime   `json:"conversion_at"`
+	BounceStatus    sql.NullString `json:"bounce_status"`
+	UnsubscribedAt  sql.NullTime   `json:"unsubscribed_at"`
+	ComplaintStatus sql.NullBool   `json:"complaint_status"`
+	DeviceType      sql.NullString `json:"device_type"`
+	Location        sql.NullString `json:"location"`
+	RetryCount      sql.NullInt32  `json:"retry_count"`
+	Notes           sql.NullString `json:"notes"`
+	RecipientEmail  string         `json:"recipient_email"`
+}
+
+func (q *Queries) UpdateEmailCampaignResult(ctx context.Context, arg UpdateEmailCampaignResultParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailCampaignResult,
+		arg.CampaignID,
+		arg.RecipientName,
+		arg.Version,
+		arg.SentAt,
+		arg.OpenedAt,
+		arg.OpenCount,
+		arg.ClickedAt,
+		arg.ClickCount,
+		arg.ConversionAt,
+		arg.BounceStatus,
+		arg.UnsubscribedAt,
+		arg.ComplaintStatus,
+		arg.DeviceType,
+		arg.Location,
+		arg.RetryCount,
+		arg.Notes,
+		arg.RecipientEmail,
+	)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailClicked = `-- name: UpdateEmailClicked :one
+UPDATE email_campaign_results 
+SET 
+    clicked_at = COALESCE($3, clicked_at),
+    click_count = click_count + 1,
+    device_type = COALESCE($4, device_type),
+    location = COALESCE($5, location),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailClickedParams struct {
+	ID         uuid.UUID      `json:"id"`
+	CompanyID  uuid.UUID      `json:"company_id"`
+	ClickedAt  sql.NullTime   `json:"clicked_at"`
+	DeviceType sql.NullString `json:"device_type"`
+	Location   sql.NullString `json:"location"`
+}
+
+func (q *Queries) UpdateEmailClicked(ctx context.Context, arg UpdateEmailClickedParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailClicked,
+		arg.ID,
+		arg.CompanyID,
+		arg.ClickedAt,
+		arg.DeviceType,
+		arg.Location,
+	)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailComplaint = `-- name: UpdateEmailComplaint :one
+UPDATE email_campaign_results 
+SET 
+    complaint_status = $3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailComplaintParams struct {
+	ID              uuid.UUID    `json:"id"`
+	CompanyID       uuid.UUID    `json:"company_id"`
+	ComplaintStatus sql.NullBool `json:"complaint_status"`
+}
+
+func (q *Queries) UpdateEmailComplaint(ctx context.Context, arg UpdateEmailComplaintParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailComplaint, arg.ID, arg.CompanyID, arg.ComplaintStatus)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailConversion = `-- name: UpdateEmailConversion :one
+UPDATE email_campaign_results 
+SET 
+    conversion_at = $3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailConversionParams struct {
+	ID           uuid.UUID    `json:"id"`
+	CompanyID    uuid.UUID    `json:"company_id"`
+	ConversionAt sql.NullTime `json:"conversion_at"`
+}
+
+func (q *Queries) UpdateEmailConversion(ctx context.Context, arg UpdateEmailConversionParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailConversion, arg.ID, arg.CompanyID, arg.ConversionAt)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailOpened = `-- name: UpdateEmailOpened :one
+UPDATE email_campaign_results 
+SET 
+    opened_at = COALESCE($3, opened_at),
+    open_count = open_count + 1,
+    device_type = COALESCE($4, device_type),
+    location = COALESCE($5, location),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailOpenedParams struct {
+	ID         uuid.UUID      `json:"id"`
+	CompanyID  uuid.UUID      `json:"company_id"`
+	OpenedAt   sql.NullTime   `json:"opened_at"`
+	DeviceType sql.NullString `json:"device_type"`
+	Location   sql.NullString `json:"location"`
+}
+
+func (q *Queries) UpdateEmailOpened(ctx context.Context, arg UpdateEmailOpenedParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailOpened,
+		arg.ID,
+		arg.CompanyID,
+		arg.OpenedAt,
+		arg.DeviceType,
+		arg.Location,
+	)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateEmailUnsubscribed = `-- name: UpdateEmailUnsubscribed :one
+UPDATE email_campaign_results 
+SET 
+    unsubscribed_at = $3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
+RETURNING id, company_id, campaign_id, recipient_email, recipient_name, version, sent_at, opened_at, open_count, clicked_at, click_count, conversion_at, bounce_status, unsubscribed_at, complaint_status, device_type, location, retry_count, notes, created_at, updated_at, deleted_at
+`
+
+type UpdateEmailUnsubscribedParams struct {
+	ID             uuid.UUID    `json:"id"`
+	CompanyID      uuid.UUID    `json:"company_id"`
+	UnsubscribedAt sql.NullTime `json:"unsubscribed_at"`
+}
+
+func (q *Queries) UpdateEmailUnsubscribed(ctx context.Context, arg UpdateEmailUnsubscribedParams) (EmailCampaignResult, error) {
+	row := q.db.QueryRowContext(ctx, updateEmailUnsubscribed, arg.ID, arg.CompanyID, arg.UnsubscribedAt)
+	var i EmailCampaignResult
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyID,
+		&i.CampaignID,
+		&i.RecipientEmail,
+		&i.RecipientName,
+		&i.Version,
+		&i.SentAt,
+		&i.OpenedAt,
+		&i.OpenCount,
+		&i.ClickedAt,
+		&i.ClickCount,
+		&i.ConversionAt,
+		&i.BounceStatus,
+		&i.UnsubscribedAt,
+		&i.ComplaintStatus,
+		&i.DeviceType,
+		&i.Location,
+		&i.RetryCount,
+		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

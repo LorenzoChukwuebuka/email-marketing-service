@@ -10,9 +10,153 @@ import (
 	"time"
 )
 
-// MapCampaignResponse maps a single SQLC row to CampaignResponseDTO
-func MapCampaignResponse(row db.ListCampaignsByCompanyIDRow) *dto.CampaignResponseDTO {
+// MapScheduledCampaignResponse maps a single scheduled campaign row to CampaignResponseDTO
+func MapScheduledCampaignResponse(row db.ListScheduledCampaignsByCompanyIDRow) *dto.CampaignResponseDTO {
+	// Convert to the base type by creating a new struct with the same values
+	baseRow := db.ListCampaignsByCompanyIDRow{
+		ID:                        row.ID,
+		CompanyID:                 row.CompanyID,
+		Name:                      row.Name,
+		Subject:                   row.Subject,
+		PreviewText:               row.PreviewText,
+		UserID:                    row.UserID,
+		SenderFromName:            row.SenderFromName,
+		TemplateID:                row.TemplateID,
+		SentTemplateID:            row.SentTemplateID,
+		RecipientInfo:             row.RecipientInfo,
+		IsPublished:               row.IsPublished,
+		Status:                    row.Status,
+		TrackType:                 row.TrackType,
+		IsArchived:                row.IsArchived,
+		SentAt:                    row.SentAt,
+		Sender:                    row.Sender,
+		ScheduledAt:               row.ScheduledAt,
+		HasCustomLogo:             row.HasCustomLogo,
+		CreatedAt:                 row.CreatedAt,
+		UpdatedAt:                 row.UpdatedAt,
+		DeletedAt:                 row.DeletedAt,
+		UserID_2:                  row.UserID_2,
+		UserFullname:              row.UserFullname,
+		UserEmail:                 row.UserEmail,
+		UserPhonenumber:           row.UserPhonenumber,
+		UserPicture:               row.UserPicture,
+		UserVerified:              row.UserVerified,
+		UserBlocked:               row.UserBlocked,
+		UserVerifiedAt:            row.UserVerifiedAt,
+		UserStatus:                row.UserStatus,
+		UserLastLoginAt:           row.UserLastLoginAt,
+		UserCreatedAt:             row.UserCreatedAt,
+		UserUpdatedAt:             row.UserUpdatedAt,
+		CompanyIDRef:              row.CompanyIDRef,
+		CompanyName:               row.CompanyName,
+		CompanyCreatedAt:          row.CompanyCreatedAt,
+		CompanyUpdatedAt:          row.CompanyUpdatedAt,
+		TemplateIDRef:             row.TemplateIDRef,
+		TemplateUserID:            row.TemplateUserID,
+		TemplateCompanyID:         row.TemplateCompanyID,
+		TemplateName:              row.TemplateName,
+		TemplateSenderName:        row.TemplateSenderName,
+		TemplateFromEmail:         row.TemplateFromEmail,
+		TemplateSubject:           row.TemplateSubject,
+		TemplateType:              row.TemplateType,
+		TemplateEmailHtml:         row.TemplateEmailHtml,
+		TemplateEmailDesign:       row.TemplateEmailDesign,
+		TemplateIsEditable:        row.TemplateIsEditable,
+		TemplateIsPublished:       row.TemplateIsPublished,
+		TemplateIsPublicTemplate:  row.TemplateIsPublicTemplate,
+		TemplateIsGalleryTemplate: row.TemplateIsGalleryTemplate,
+		TemplateTags:              row.TemplateTags,
+		TemplateDescription:       row.TemplateDescription,
+		TemplateImageUrl:          row.TemplateImageUrl,
+		TemplateIsActive:          row.TemplateIsActive,
+		TemplateEditorType:        row.TemplateEditorType,
+		TemplateCreatedAt:         row.TemplateCreatedAt,
+		TemplateUpdatedAt:         row.TemplateUpdatedAt,
+		TemplateDeletedAt:         row.TemplateDeletedAt,
+	}
+	
+	return MapCampaignResponse(baseRow)
+}
 
+// MapScheduledCampaignResponses maps a slice of scheduled campaign rows to slice of CampaignResponseDTO
+func MapScheduledCampaignResponses(rows []db.ListScheduledCampaignsByCompanyIDRow) []dto.CampaignResponseDTO {
+	result := make([]dto.CampaignResponseDTO, len(rows))
+	for i, row := range rows {
+		result[i] = *MapScheduledCampaignResponse(row)
+	}
+	return result
+}
+
+// MapGetCampaignResponse maps a single GetCampaignByID row to CampaignResponseDTO
+func MapGetCampaignResponse(row db.GetCampaignByIDRow) *dto.CampaignResponseDTO {
+	// Convert to the base type by creating a new struct with the same values
+	baseRow := db.ListCampaignsByCompanyIDRow{
+		ID:                        row.ID,
+		CompanyID:                 row.CompanyID,
+		Name:                      row.Name,
+		Subject:                   row.Subject,
+		PreviewText:               row.PreviewText,
+		UserID:                    row.UserID,
+		SenderFromName:            row.SenderFromName,
+		TemplateID:                row.TemplateID,
+		SentTemplateID:            row.SentTemplateID,
+		RecipientInfo:             row.RecipientInfo,
+		IsPublished:               row.IsPublished,
+		Status:                    row.Status,
+		TrackType:                 row.TrackType,
+		IsArchived:                row.IsArchived,
+		SentAt:                    row.SentAt,
+		Sender:                    row.Sender,
+		ScheduledAt:               row.ScheduledAt,
+		HasCustomLogo:             row.HasCustomLogo,
+		CreatedAt:                 row.CreatedAt,
+		UpdatedAt:                 row.UpdatedAt,
+		DeletedAt:                 row.DeletedAt,
+		UserID_2:                  row.UserID_2,
+		UserFullname:              row.UserFullname,
+		UserEmail:                 row.UserEmail,
+		UserPhonenumber:           row.UserPhonenumber,
+		UserPicture:               row.UserPicture,
+		UserVerified:              row.UserVerified,
+		UserBlocked:               row.UserBlocked,
+		UserVerifiedAt:            row.UserVerifiedAt,
+		UserStatus:                row.UserStatus,
+		UserLastLoginAt:           row.UserLastLoginAt,
+		UserCreatedAt:             row.UserCreatedAt,
+		UserUpdatedAt:             row.UserUpdatedAt,
+		CompanyIDRef:              row.CompanyIDRef,
+		CompanyName:               row.CompanyName,
+		CompanyCreatedAt:          row.CompanyCreatedAt,
+		CompanyUpdatedAt:          row.CompanyUpdatedAt,
+		TemplateIDRef:             row.TemplateIDRef,
+		TemplateUserID:            row.TemplateUserID,
+		TemplateCompanyID:         row.TemplateCompanyID,
+		TemplateName:              row.TemplateName,
+		TemplateSenderName:        row.TemplateSenderName,
+		TemplateFromEmail:         row.TemplateFromEmail,
+		TemplateSubject:           row.TemplateSubject,
+		TemplateType:              row.TemplateType,
+		TemplateEmailHtml:         row.TemplateEmailHtml,
+		TemplateEmailDesign:       row.TemplateEmailDesign,
+		TemplateIsEditable:        row.TemplateIsEditable,
+		TemplateIsPublished:       row.TemplateIsPublished,
+		TemplateIsPublicTemplate:  row.TemplateIsPublicTemplate,
+		TemplateIsGalleryTemplate: row.TemplateIsGalleryTemplate,
+		TemplateTags:              row.TemplateTags,
+		TemplateDescription:       row.TemplateDescription,
+		TemplateImageUrl:          row.TemplateImageUrl,
+		TemplateIsActive:          row.TemplateIsActive,
+		TemplateEditorType:        row.TemplateEditorType,
+		TemplateCreatedAt:         row.TemplateCreatedAt,
+		TemplateUpdatedAt:         row.TemplateUpdatedAt,
+		TemplateDeletedAt:         row.TemplateDeletedAt,
+	}
+	
+	return MapCampaignResponse(baseRow)
+}
+
+// Original functions remain the same
+func MapCampaignResponse(row db.ListCampaignsByCompanyIDRow) *dto.CampaignResponseDTO {
 	return &dto.CampaignResponseDTO{
 		ID:             row.ID.String(),
 		CompanyID:      row.CompanyID.String(),
@@ -41,7 +185,6 @@ func MapCampaignResponse(row db.ListCampaignsByCompanyIDRow) *dto.CampaignRespon
 	}
 }
 
-// MapCampaignResponses maps a slice of SQLC rows to slice of CampaignResponseDTO
 func MapCampaignResponses(rows []db.ListCampaignsByCompanyIDRow) []dto.CampaignResponseDTO {
 	result := make([]dto.CampaignResponseDTO, len(rows))
 	for i, row := range rows {
@@ -50,7 +193,6 @@ func MapCampaignResponses(rows []db.ListCampaignsByCompanyIDRow) []dto.CampaignR
 	return result
 }
 
-// mapUserResponse maps user-related fields from the row
 func mapUserResponse(row db.ListCampaignsByCompanyIDRow) dto.UserResponse {
 	return dto.UserResponse{
 		UserID_2:        row.UserID_2.String(),
@@ -68,7 +210,6 @@ func mapUserResponse(row db.ListCampaignsByCompanyIDRow) dto.UserResponse {
 	}
 }
 
-// mapCompanyResponse maps company-related fields from the row
 func mapCompanyResponse(row db.ListCampaignsByCompanyIDRow) dto.CompanyResponse {
 	return dto.CompanyResponse{
 		CompanyIDRef:     row.CompanyIDRef.String(),
@@ -78,7 +219,6 @@ func mapCompanyResponse(row db.ListCampaignsByCompanyIDRow) dto.CompanyResponse 
 	}
 }
 
-// mapTemplateResponse maps template-related fields from the row
 func mapTemplateResponse(row db.ListCampaignsByCompanyIDRow) *dto.TemplateResponse {
 	if !row.TemplateIDRef.Valid || row.TemplateIDRef.UUID == uuid.Nil {
 		return nil
@@ -109,8 +249,7 @@ func mapTemplateResponse(row db.ListCampaignsByCompanyIDRow) *dto.TemplateRespon
 	}
 }
 
-// Helper functions for type conversions
-
+// Helper functions
 func nullStringToPtr(ns sql.NullString) *string {
 	if !ns.Valid {
 		return nil
@@ -122,7 +261,6 @@ func nullUUIDToStringPtr(nu uuid.NullUUID) *string {
 	if !nu.Valid {
 		return nil
 	}
-	// Additional check to ensure it's not a zero UUID
 	if nu.UUID == uuid.Nil {
 		return nil
 	}

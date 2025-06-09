@@ -36,6 +36,7 @@ type CampaignGroupDTO struct {
 type SendCampaignDTO struct {
 	CampaignId string `json:"campaign_id" validate:"required"`
 	UserId     string `json:"user_id"`
+	CompanyId string `json:"company_id"`
 }
 
 type FetchCampaignDTO struct {

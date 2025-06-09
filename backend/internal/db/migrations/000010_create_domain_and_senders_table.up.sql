@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS senders (
     verified BOOLEAN DEFAULT FALSE,
     is_signed BOOLEAN DEFAULT FALSE,
     -- domain_id definition is correct as an inline foreign key
-    domain_id UUID NOT NULL REFERENCES domains (id) ON DELETE CASCADE,
+    domain_id UUID ,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
@@ -50,5 +50,3 @@ CREATE TABLE IF NOT EXISTS senders (
 CREATE INDEX IF NOT EXISTS idx_senders_id ON senders (id);
 
 CREATE INDEX IF NOT EXISTS idx_senders_user_id ON senders (user_id);
-
-CREATE INDEX IF NOT EXISTS idx_senders_domain_id ON senders (domain_id);

@@ -253,6 +253,93 @@ func (q *Queries) GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams
 	return i, err
 }
 
+const getTemplateByIDWithoutType = `-- name: GetTemplateByIDWithoutType :one
+SELECT
+    t.id, t.user_id, t.company_id, t.template_name, t.sender_name, t.from_email, t.subject, t.type, t.email_html, t.email_design, t.is_editable, t.is_published, t.is_public_template, t.is_gallery_template, t.tags, t.description, t.image_url, t.is_active, t.editor_type, t.created_at, t.updated_at, t.deleted_at,
+    u.fullname AS user_fullname,
+    u.email AS user_email,
+    u.picture AS user_picture,
+    c.companyname AS company_name
+FROM
+    templates t
+    LEFT JOIN users u ON t.user_id = u.id
+    LEFT JOIN companies c ON t.company_id = c.id
+WHERE
+    t.id = $1
+    AND t.user_id = $2
+    AND t.deleted_at IS NULL
+ORDER BY t.created_at DESC
+LIMIT 1
+`
+
+type GetTemplateByIDWithoutTypeParams struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+type GetTemplateByIDWithoutTypeRow struct {
+	ID                uuid.UUID             `json:"id"`
+	UserID            uuid.UUID             `json:"user_id"`
+	CompanyID         uuid.UUID             `json:"company_id"`
+	TemplateName      string                `json:"template_name"`
+	SenderName        sql.NullString        `json:"sender_name"`
+	FromEmail         sql.NullString        `json:"from_email"`
+	Subject           sql.NullString        `json:"subject"`
+	Type              string                `json:"type"`
+	EmailHtml         sql.NullString        `json:"email_html"`
+	EmailDesign       pqtype.NullRawMessage `json:"email_design"`
+	IsEditable        sql.NullBool          `json:"is_editable"`
+	IsPublished       sql.NullBool          `json:"is_published"`
+	IsPublicTemplate  sql.NullBool          `json:"is_public_template"`
+	IsGalleryTemplate sql.NullBool          `json:"is_gallery_template"`
+	Tags              sql.NullString        `json:"tags"`
+	Description       sql.NullString        `json:"description"`
+	ImageUrl          sql.NullString        `json:"image_url"`
+	IsActive          sql.NullBool          `json:"is_active"`
+	EditorType        sql.NullString        `json:"editor_type"`
+	CreatedAt         sql.NullTime          `json:"created_at"`
+	UpdatedAt         sql.NullTime          `json:"updated_at"`
+	DeletedAt         sql.NullTime          `json:"deleted_at"`
+	UserFullname      sql.NullString        `json:"user_fullname"`
+	UserEmail         sql.NullString        `json:"user_email"`
+	UserPicture       sql.NullString        `json:"user_picture"`
+	CompanyName       sql.NullString        `json:"company_name"`
+}
+
+func (q *Queries) GetTemplateByIDWithoutType(ctx context.Context, arg GetTemplateByIDWithoutTypeParams) (GetTemplateByIDWithoutTypeRow, error) {
+	row := q.db.QueryRowContext(ctx, getTemplateByIDWithoutType, arg.ID, arg.UserID)
+	var i GetTemplateByIDWithoutTypeRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.TemplateName,
+		&i.SenderName,
+		&i.FromEmail,
+		&i.Subject,
+		&i.Type,
+		&i.EmailHtml,
+		&i.EmailDesign,
+		&i.IsEditable,
+		&i.IsPublished,
+		&i.IsPublicTemplate,
+		&i.IsGalleryTemplate,
+		&i.Tags,
+		&i.Description,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.EditorType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.UserFullname,
+		&i.UserEmail,
+		&i.UserPicture,
+		&i.CompanyName,
+	)
+	return i, err
+}
+
 const hardDeleteTemplate = `-- name: HardDeleteTemplate :exec
 DELETE FROM templates WHERE id = $1
 `

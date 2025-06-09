@@ -404,7 +404,6 @@ type GetContactStatsRow struct {
 }
 
 // Get all contact statistics in a single query
-// Get all contact statistics in a single query
 func (q *Queries) GetContactStats(ctx context.Context, arg GetContactStatsParams) (GetContactStatsRow, error) {
 	row := q.db.QueryRowContext(ctx, getContactStats, arg.UserID, arg.TenDaysAgo)
 	var i GetContactStatsRow
@@ -1062,4 +1061,21 @@ func (q *Queries) UpdateContactGroup(ctx context.Context, arg UpdateContactGroup
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const updateContactSubscription = `-- name: UpdateContactSubscription :exec
+UPDATE contacts 
+SET is_subscribed = $3
+WHERE company_id = $1 AND email = $2
+`
+
+type UpdateContactSubscriptionParams struct {
+	CompanyID    uuid.UUID    `json:"company_id"`
+	Email        string       `json:"email"`
+	IsSubscribed sql.NullBool `json:"is_subscribed"`
+}
+
+func (q *Queries) UpdateContactSubscription(ctx context.Context, arg UpdateContactSubscriptionParams) error {
+	_, err := q.db.ExecContext(ctx, updateContactSubscription, arg.CompanyID, arg.Email, arg.IsSubscribed)
+	return err
 }

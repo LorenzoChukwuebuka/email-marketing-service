@@ -279,17 +279,17 @@ type PlanFeature struct {
 }
 
 type Sender struct {
-	ID        uuid.UUID    `json:"id"`
-	UserID    uuid.UUID    `json:"user_id"`
-	CompanyID uuid.UUID    `json:"company_id"`
-	Name      string       `json:"name"`
-	Email     string       `json:"email"`
-	Verified  sql.NullBool `json:"verified"`
-	IsSigned  sql.NullBool `json:"is_signed"`
-	DomainID  uuid.UUID    `json:"domain_id"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	ID        uuid.UUID     `json:"id"`
+	UserID    uuid.UUID     `json:"user_id"`
+	CompanyID uuid.UUID     `json:"company_id"`
+	Name      string        `json:"name"`
+	Email     string        `json:"email"`
+	Verified  sql.NullBool  `json:"verified"`
+	IsSigned  sql.NullBool  `json:"is_signed"`
+	DomainID  uuid.NullUUID `json:"domain_id"`
+	CreatedAt sql.NullTime  `json:"created_at"`
+	UpdatedAt sql.NullTime  `json:"updated_at"`
+	DeletedAt sql.NullTime  `json:"deleted_at"`
 }
 
 type SentEmail struct {
