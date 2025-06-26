@@ -27,7 +27,7 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 	defer cancel()
 
 	var req *dto.APIkeyRequestDTO
-	userId, _, err := helper.ExtractUserId(r)
+	userId, companyId, err := helper.ExtractUserId(r)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return
@@ -40,6 +40,7 @@ func (c *ApiKeyController) GenerateAPIKEY(w http.ResponseWriter, r *http.Request
 	}
 
 	req.UserId = userId
+	req.CompanyID = companyId
 	result, err := c.APIkeySVC.GenerateAPIKey(ctx, req)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
@@ -69,11 +70,12 @@ func (c *ApiKeyController) DeleteAPIKey(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 	vars := mux.Vars(r)
-	apikeyId := vars["apiKeyId"]
+	apikeyId := vars["apikeyId"]
 
 	key, err := uuid.Parse(apikeyId)
 	if err != nil {
 		helper.ErrorResponse(w, common.ErrInvalidUUID, nil)
+		return
 	}
 
 	err = c.APIkeySVC.DeleteAPIKey(ctx, key)

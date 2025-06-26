@@ -145,6 +145,61 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteScheduledUsers = `-- name: DeleteScheduledUsers :many
+UPDATE users 
+SET 
+    deleted_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    scheduled_for_deletion = TRUE
+    AND deleted_at IS NULL
+    AND scheduled_deletion_at IS NOT NULL
+    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
+RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) DeleteScheduledUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, deleteScheduledUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fullname,
+			&i.CompanyID,
+			&i.Email,
+			&i.Phonenumber,
+			&i.Password,
+			&i.GoogleID,
+			&i.Picture,
+			&i.Verified,
+			&i.Blocked,
+			&i.VerifiedAt,
+			&i.Status,
+			&i.ScheduledForDeletion,
+			&i.ScheduledDeletionAt,
+			&i.LastLoginAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCompanyByID = `-- name: GetCompanyByID :one
 SELECT id, companyname, created_at, updated_at, deleted_at FROM companies WHERE id = $1 AND deleted_at IS NULL
 `

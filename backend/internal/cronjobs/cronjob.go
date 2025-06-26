@@ -21,9 +21,6 @@ func NewJobFactory(db *db.Store, ctx context.Context) *JobFactory {
 func (f *JobFactory) CreateJobs() []Job {
 	return []Job{
 		NewUpdateExpiredSubscriptionJob(*f.DB, f.ctx),
-		// NewDailMailCalculationJob(f.DB),
-		// NewSendScheduledCampaignJobs(f.DB),
-		// Add other jobs here
 	}
 }
 

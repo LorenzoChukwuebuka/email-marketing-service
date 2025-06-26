@@ -119,3 +119,15 @@ SET
     updated_at = now()
 WHERE
     id = $1 RETURNING *;
+
+-- name: DeleteScheduledUsers :many
+UPDATE users 
+SET 
+    deleted_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    scheduled_for_deletion = TRUE
+    AND deleted_at IS NULL
+    AND scheduled_deletion_at IS NOT NULL
+    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
+RETURNING *;

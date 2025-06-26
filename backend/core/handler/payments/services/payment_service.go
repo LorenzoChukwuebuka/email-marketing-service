@@ -57,6 +57,10 @@ func (s *PaymentService) InitiateNewTransaction(ctx context.Context, req domain.
 		PaymentMethodTypes: []string{"card", "ussd", "bank transfer"},
 	})
 
+	if err != nil {
+		return  nil,common.ErrCreatingRecord
+	}
+
 	req.PaymentIntentID = paymentIntent.ID.String()
 
 	//call the payment processor
@@ -147,7 +151,7 @@ func (s *PaymentService) VerifyPayment(ctx context.Context, paymentMethod, refer
 	}
 
 	if intentExists {
-		s.updatePaymentIntentErrorWithReference(ctx, reference, fmt.Sprintf("duplicate intent"))
+		s.updatePaymentIntentErrorWithReference(ctx, reference, "duplicate intent")
 		return nil, fmt.Errorf("duplicate transaction.Kindly generate a new intent")
 	}
 

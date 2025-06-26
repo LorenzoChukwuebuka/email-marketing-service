@@ -473,6 +473,17 @@ func (q *Queries) ListPlansWithDetails(ctx context.Context) ([]ListPlansWithDeta
 	return items, nil
 }
 
+const planExists = `-- name: PlanExists :one
+SELECT EXISTS(SELECT 1 FROM plans WHERE name = $1)
+`
+
+func (q *Queries) PlanExists(ctx context.Context, name string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, planExists, name)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const softDeletePlan = `-- name: SoftDeletePlan :exec
 UPDATE plans
 SET 

@@ -8,6 +8,7 @@ import (
 	"email-marketing-service/internal/cronjobs"
 	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -61,15 +61,18 @@ func (s *Server) setupRoutes() {
 	}).Methods(http.MethodGet)
 
 	routeMap := map[string]routes.RouteInterface{
-		"auth":            routes.NewAuthRoute(s.db),
-		"admin/auth":      routes.NewAdminAuthRoute(s.db),
-		"admin/systemdns": routes.NewAdminDNSRoute(s.db),
-		"contacts":        routes.NewContactRoutes(s.db),
-		"templates":       routes.NewTemplateRoute(s.db),
-		"payments":        routes.NewPaymentRoute(s.db),
-		"campaigns":       routes.NewCampaignRoute(s.db),
-		"domains":         routes.NewDomainRoute(s.db),
-		"senders":         routes.NewSenderRoute(s.db),
+		"auth":      routes.NewAuthRoute(s.db),
+		"admin":     routes.NewAdminRoute(s.db),
+		"contacts":  routes.NewContactRoutes(s.db),
+		"templates": routes.NewTemplateRoute(s.db),
+		"payments":  routes.NewPaymentRoute(s.db),
+		"campaigns": routes.NewCampaignRoute(s.db),
+		"domains":   routes.NewDomainRoute(s.db),
+		"senders":   routes.NewSenderRoute(s.db),
+		"users":     routes.NewUserRoute(s.db),
+		"misc":      routes.NewMiscRoute(s.db),
+		"key":       routes.NewSMTPAPIKeyRoute(s.db),
+		"support":   routes.NewSupportRoute(s.db),
 	}
 
 	for path, route := range routeMap {

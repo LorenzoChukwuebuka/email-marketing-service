@@ -71,6 +71,14 @@ type Campaign struct {
 	DeletedAt      sql.NullTime   `json:"deleted_at"`
 }
 
+type CampaignError struct {
+	ID           uuid.UUID      `json:"id"`
+	CampaignID   uuid.UUID      `json:"campaign_id"`
+	ErrorType    sql.NullString `json:"error_type"`
+	ErrorMessage string         `json:"error_message"`
+	CreatedAt    time.Time      `json:"created_at"`
+}
+
 type CampaignGroup struct {
 	ID             uuid.UUID    `json:"id"`
 	CampaignID     uuid.UUID    `json:"campaign_id"`

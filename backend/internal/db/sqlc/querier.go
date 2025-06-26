@@ -22,12 +22,17 @@ type Querier interface {
 	CheckCampaignNameExists(ctx context.Context, arg CheckCampaignNameExistsParams) (bool, error)
 	CheckDomainExists(ctx context.Context, arg CheckDomainExistsParams) (bool, error)
 	CheckEmailLimitExceeded(ctx context.Context, arg CheckEmailLimitExceededParams) (CheckEmailLimitExceededRow, error)
+	CheckIfAPIKeyExists(ctx context.Context, apiKey string) (ApiKey, error)
 	CheckIfContactEmailExists(ctx context.Context, arg CheckIfContactEmailExistsParams) (bool, error)
 	CheckPaymentIntentExists(ctx context.Context, paymentID sql.NullString) (bool, error)
 	CheckSMTPKeyExists(ctx context.Context, arg CheckSMTPKeyExistsParams) (bool, error)
 	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
 	CheckSenderExists(ctx context.Context, arg CheckSenderExistsParams) (bool, error)
 	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
+	// Clear the scheduled_at field after processing to prevent reprocessing
+	ClearCampaignSchedule(ctx context.Context, id uuid.UUID) error
+	CloseStaleTickets(ctx context.Context) ([]SupportTicket, error)
+	CloseTicketByID(ctx context.Context, id uuid.UUID) (SupportTicket, error)
 	// Counts total number of contact groups for a company
 	CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountDomainByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
@@ -37,6 +42,7 @@ type Querier interface {
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
 	CreateCampaign(ctx context.Context, arg CreateCampaignParams) (Campaign, error)
+	CreateCampaignError(ctx context.Context, arg CreateCampaignErrorParams) error
 	CreateCampaignGroups(ctx context.Context, arg CreateCampaignGroupsParams) error
 	CreateCompany(ctx context.Context, companyname sql.NullString) (Company, error)
 	CreateContact(ctx context.Context, arg CreateContactParams) error
@@ -56,8 +62,11 @@ type Querier interface {
 	CreateSMTPMasterKey(ctx context.Context, arg CreateSMTPMasterKeyParams) (SmtpMasterKey, error)
 	CreateSender(ctx context.Context, arg CreateSenderParams) (Sender, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
+	CreateSupportTicket(ctx context.Context, arg CreateSupportTicketParams) (SupportTicket, error)
 	CreateSystemsSMTPSettings(ctx context.Context, arg CreateSystemsSMTPSettingsParams) (SystemsSmtpSetting, error)
 	CreateTemplate(ctx context.Context, arg CreateTemplateParams) (Template, error)
+	CreateTicketFile(ctx context.Context, arg CreateTicketFileParams) (TicketFile, error)
+	CreateTicketMessage(ctx context.Context, arg CreateTicketMessageParams) (TicketMessage, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserNotification(ctx context.Context, arg CreateUserNotificationParams) (UserNotification, error)
 	DeleteAPIKey(ctx context.Context, id uuid.UUID) error
@@ -65,8 +74,10 @@ type Querier interface {
 	DeleteEmailUsageByCompanyIDAndSubscriptionID(ctx context.Context, arg DeleteEmailUsageByCompanyIDAndSubscriptionIDParams) error
 	DeleteOTPById(ctx context.Context, id uuid.UUID) error
 	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
+	DeleteScheduledUsers(ctx context.Context) ([]User, error)
 	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
 	FindDomainByNameAndCompany(ctx context.Context, arg FindDomainByNameAndCompanyParams) (Domain, error)
+	FindTicketByID(ctx context.Context, id uuid.UUID) (SupportTicket, error)
 	FindUserWithAPIKey(ctx context.Context, apiKey string) (FindUserWithAPIKeyRow, error)
 	GetAPIKeysByCompanyID(ctx context.Context, companyID uuid.UUID) ([]GetAPIKeysByCompanyIDRow, error)
 	GetAPIKeysByUserID(ctx context.Context, userID uuid.UUID) ([]GetAPIKeysByUserIDRow, error)
@@ -81,12 +92,17 @@ type Querier interface {
 	GetAdminByID(ctx context.Context, id uuid.UUID) (Admin, error)
 	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
 	GetAllActiveSubscriptions(ctx context.Context) ([]Subscription, error)
+	GetAllAdmins(ctx context.Context) ([]Admin, error)
+	GetAllCampaignsByUser(ctx context.Context, userID uuid.UUID) ([]GetAllCampaignsByUserRow, error)
 	GetAllContacts(ctx context.Context, arg GetAllContactsParams) ([]GetAllContactsRow, error)
+	GetAllTicketsWithPagination(ctx context.Context, arg GetAllTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams) (GetCampaignByIDRow, error)
 	GetCampaignContactEmails(ctx context.Context, campaignID uuid.UUID) ([]string, error)
 	GetCampaignContactGroups(ctx context.Context, campaignID uuid.UUID) ([]GetCampaignContactGroupsRow, error)
 	GetCampaignCounts(ctx context.Context, arg GetCampaignCountsParams) (int64, error)
+	GetCampaignStats(ctx context.Context, campaignID uuid.UUID) (GetCampaignStatsRow, error)
 	GetCampaignsByTemplateType(ctx context.Context, arg GetCampaignsByTemplateTypeParams) ([]GetCampaignsByTemplateTypeRow, error)
+	GetClosedTicketsWithPagination(ctx context.Context, arg GetClosedTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetCompaniesNearLimit(ctx context.Context, arg GetCompaniesNearLimitParams) ([]GetCompaniesNearLimitRow, error)
 	GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, error)
 	// Gets a contact group by ID
@@ -122,6 +138,7 @@ type Querier interface {
 	GetLastPaymentByCompanyID(ctx context.Context, companyID uuid.UUID) (Payment, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
 	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
+	GetMessageFiles(ctx context.Context, messageID uuid.UUID) ([]TicketFile, error)
 	GetMonthlyEmailTrends(ctx context.Context, arg GetMonthlyEmailTrendsParams) ([]GetMonthlyEmailTrendsRow, error)
 	// Get count of new contacts (less than 10 days old) for a specific user
 	GetNewContactsCount(ctx context.Context, arg GetNewContactsCountParams) (int64, error)
@@ -135,6 +152,7 @@ type Querier interface {
 	GetPaymentIntentsByUserID(ctx context.Context, userID uuid.UUID) ([]PaymentIntent, error)
 	GetPaymentsByCompanyAndUser(ctx context.Context, arg GetPaymentsByCompanyAndUserParams) ([]GetPaymentsByCompanyAndUserRow, error)
 	GetPaymentsByCompanyAndUserSimple(ctx context.Context, companyID uuid.UUID) ([]GetPaymentsByCompanyAndUserSimpleRow, error)
+	GetPendingTicketsWithPagination(ctx context.Context, arg GetPendingTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
 	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
@@ -143,14 +161,20 @@ type Querier interface {
 	GetSMTPKeyUserAndPass(ctx context.Context, arg GetSMTPKeyUserAndPassParams) (SmtpKey, error)
 	GetSMTPMasterKeyAndPass(ctx context.Context, arg GetSMTPMasterKeyAndPassParams) (SmtpMasterKey, error)
 	GetSMTPSettingByDomain(ctx context.Context, domain sql.NullString) (SystemsSmtpSetting, error)
+	// Get campaigns that are scheduled and due to be sent
+	GetScheduledCampaignsDue(ctx context.Context, scheduledAt sql.NullTime) ([]Campaign, error)
 	GetSenderById(ctx context.Context, arg GetSenderByIdParams) (Sender, error)
 	// Fetches a specific contact group with all its associated contacts for a specific user and company
 	GetSingleGroupWithContacts(ctx context.Context, arg GetSingleGroupWithContactsParams) ([]GetSingleGroupWithContactsRow, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error)
 	GetTemplateByIDWithoutType(ctx context.Context, arg GetTemplateByIDWithoutTypeParams) (GetTemplateByIDWithoutTypeRow, error)
+	GetTicketFiles(ctx context.Context, ticketID uuid.UUID) ([]TicketFile, error)
+	GetTicketWithMessages(ctx context.Context, id uuid.UUID) ([]GetTicketWithMessagesRow, error)
+	GetTicketsByUserID(ctx context.Context, userID uuid.UUID) ([]SupportTicket, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
+	GetUserCampaignStats(ctx context.Context, userID uuid.UUID) (GetUserCampaignStatsRow, error)
 	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
 	GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
@@ -192,6 +216,7 @@ type Querier interface {
 	MarkEmailAsDelivered(ctx context.Context, recipientEmail string) error
 	MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error
 	MarkUserForDeletion(ctx context.Context, arg MarkUserForDeletionParams) (User, error)
+	PlanExists(ctx context.Context, name string) (bool, error)
 	// Soft deletes a contact from a group by setting the deleted_at timestamp
 	RemoveContactFromGroup(ctx context.Context, arg RemoveContactFromGroupParams) error
 	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) error
@@ -242,6 +267,7 @@ type Querier interface {
 	UpdateSenderVerified(ctx context.Context, arg UpdateSenderVerifiedParams) error
 	UpdateSubscriptionStatus(ctx context.Context, arg UpdateSubscriptionStatusParams) (Subscription, error)
 	UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error)
+	UpdateTicketStatus(ctx context.Context, arg UpdateTicketStatusParams) (SupportTicket, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
 	UpsertAdmin(ctx context.Context, arg UpsertAdminParams) (Admin, error)
 	VerifyUser(ctx context.Context, id uuid.UUID) error

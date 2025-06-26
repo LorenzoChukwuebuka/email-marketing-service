@@ -98,3 +98,12 @@ type ResendOTPRequest struct {
 	Email    string `json:"email" validated:"required"`
 	OTPType  string `json:"otp_type" validated:"required"`
 }
+
+
+type SenderDTO struct {
+	UserID    string `json:"user_id" validate:"required"`
+	CompanyID string `json:"company_id" validate:"required"`
+	Email     string `json:"email" validate:"required"`
+	Name      string `json:"name" validate:"required"`
+	SenderId  string `json:"sender_id"`
+}

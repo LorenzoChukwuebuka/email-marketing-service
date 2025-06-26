@@ -99,6 +99,19 @@ func (s *Service) SignUp(ctx context.Context, req *dto.UserSignUpRequest) (any, 
 			return err
 		}
 
+		notificationTitle := fmt.Sprintf("A new member %s has registered", req.FullName)
+		link := fmt.Sprintf("/zen/dash/users/detail/%s", user.ID.String())
+
+		_, err = q.CreateAdminNotification(ctx, db.CreateAdminNotificationParams{
+			UserID: user.ID,
+			Title:  notificationTitle,
+			Link:   sql.NullString{String: link, Valid: true},
+		})
+
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -175,6 +188,7 @@ func (s *Service) VerifyUser(ctx context.Context, req *dto.VerifyUserRequest) er
 		if err = s.createUserSubscription(ctx, q, user); err != nil {
 			return err
 		}
+
 		return nil
 	})
 
@@ -219,6 +233,10 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 		BillingPeriodEnd:     sql.NullTime{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
 	})
 
+	if err != nil {
+		return err
+	}
+
 	//update payment integrity
 	paymentHash, err := common.GeneratePaymentHash(payment.ID, user.ID, 0, subscription.ID)
 	if err != nil {
@@ -253,7 +271,7 @@ func (s *Service) createUserSubscription(ctx context.Context, q *db.Queries, use
 			EmailsLimit:      mailinglimits.DailyLimit.Int32,
 			UsagePeriodStart: periodStart,
 			UsagePeriodEnd:   periodEnd,
-			RemainingEmails: sql.NullInt32{Int32: mailinglimits.DailyLimit.Int32,Valid: true},
+			RemainingEmails:  sql.NullInt32{Int32: mailinglimits.DailyLimit.Int32, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("error creating daily email usage for %s: %w", periodStart.Format("2006-01-02"), err)
@@ -312,6 +330,8 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		}
 		return nil, common.ErrFetchingUser
 	}
+
+	fmt.Printf("user_id:%v", user.ID)
 
 	//check if user is verified
 	if user.Blocked {

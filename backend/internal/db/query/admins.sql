@@ -86,4 +86,5 @@ WHERE
     id = $1
     AND deleted_at IS NULL;
 
- 
+-- name: GetAllAdmins :many
+SELECT * FROM admins ORDER BY created_at DESC;
