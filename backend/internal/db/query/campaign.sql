@@ -307,8 +307,14 @@ WHERE
     campaign_id = $2;
 
 -- name: UpdateCampaignStatus :exec
-UPDATE campaigns SET status = $1 WHERE id = $2 AND user_id = $3;
-
+UPDATE campaigns
+SET
+    status = $1,
+    sent_at = COALESCE($2, sent_at)
+WHERE
+    id = $3
+    AND user_id = $4;
+    
 -- name: ListScheduledCampaignsByCompanyID :many
 SELECT 
     -- Campaign information (all columns)
@@ -397,22 +403,22 @@ OFFSET $4;
 
 /* -- name: GetCampaignWithGroups :many
 SELECT
-    c.id as campaign_id,
-    c.name as campaign_name,
-    c.sender,
-    c.template,
-    c.sent_at,
-    c.created_at,
-    c.scheduled_at,
-    cg.id as group_id,
-    cg.name as group_name,
-    cg.description as group_description
+c.id as campaign_id,
+c.name as campaign_name,
+c.sender,
+c.template,
+c.sent_at,
+c.created_at,
+c.scheduled_at,
+cg.id as group_id,
+cg.name as group_name,
+cg.description as group_description
 FROM
-    campaigns c
-    LEFT JOIN campaign_groups cg ON c.id = cg.campaign_id
+campaigns c
+LEFT JOIN campaign_groups cg ON c.id = cg.campaign_id
 WHERE
-    c.id = $1
-    AND c.user_id = $2; */
+c.id = $1
+AND c.user_id = $2; */
 
 -- name: GetCampaignContactEmails :many
 SELECT DISTINCT
@@ -430,46 +436,62 @@ WHERE
     AND cg.deleted_at IS NULL
     AND camp_g.deleted_at IS NULL;
 
-
 -- name: GetCampaignContactGroups :many
-SELECT 
-    cg.id,
-    cg.group_name,
-    cg.description,
-    cg.created_at
-FROM contact_groups cg
-JOIN campaign_groups camp_g ON cg.id = camp_g.contact_group_id
-WHERE camp_g.campaign_id = $1 
-AND cg.deleted_at IS NULL 
-AND camp_g.deleted_at IS NULL;
+SELECT cg.id, cg.group_name, cg.description, cg.created_at
+FROM
+    contact_groups cg
+    JOIN campaign_groups camp_g ON cg.id = camp_g.contact_group_id
+WHERE
+    camp_g.campaign_id = $1
+    AND cg.deleted_at IS NULL
+    AND camp_g.deleted_at IS NULL;
 
 -- name: CreateEmailCampaignResult :one
-INSERT INTO email_campaign_results (
-    company_id,
-    campaign_id,
-    recipient_email,
-    recipient_name,
-    version,
-    sent_at,
-    opened_at,
-    open_count,
-    clicked_at,
-    click_count,
-    conversion_at,
-    bounce_status,
-    unsubscribed_at,
-    complaint_status,
-    device_type,
-    location,
-    retry_count,
-    notes
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
-) RETURNING *;
+INSERT INTO
+    email_campaign_results (
+        company_id,
+        campaign_id,
+        recipient_email,
+        recipient_name,
+        version,
+        sent_at,
+        opened_at,
+        open_count,
+        clicked_at,
+        click_count,
+        conversion_at,
+        bounce_status,
+        unsubscribed_at,
+        complaint_status,
+        device_type,
+        location,
+        retry_count,
+        notes
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14,
+        $15,
+        $16,
+        $17,
+        $18
+    ) RETURNING *;
 
 -- name: UpdateEmailCampaignResult :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     recipient_name = COALESCE($2, recipient_name),
     version = COALESCE($3, version),
     sent_at = COALESCE($4, sent_at),
@@ -486,93 +508,240 @@ SET
     retry_count = COALESCE($15, retry_count),
     notes = COALESCE($16, notes),
     updated_at = CURRENT_TIMESTAMP
-WHERE campaign_id = $1 AND recipient_email = $17 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    campaign_id = $1
+    AND recipient_email = $17
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: GetEmailCampaignResult :one
-SELECT * FROM email_campaign_results 
-WHERE id = $1 AND recipient_email = $2 AND deleted_at IS NULL;
+SELECT *
+FROM email_campaign_results
+WHERE
+    campaign_id = $1
+    AND recipient_email = $2
+    AND deleted_at IS NULL;
 
 -- name: GetEmailCampaignResultsByCampaign :many
-SELECT * FROM email_campaign_results 
-WHERE campaign_id = $1 AND company_id = $2 AND deleted_at IS NULL
+SELECT *
+FROM email_campaign_results
+WHERE
+    campaign_id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: GetEmailCampaignResultsByRecipient :many
-SELECT * FROM email_campaign_results 
-WHERE recipient_email = $1 AND company_id = $2 AND deleted_at IS NULL
+SELECT *
+FROM email_campaign_results
+WHERE
+    recipient_email = $1
+    AND company_id = $2
+    AND deleted_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: UpdateEmailOpened :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     opened_at = COALESCE($3, opened_at),
     open_count = open_count + 1,
     device_type = COALESCE($4, device_type),
     location = COALESCE($5, location),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: UpdateEmailClicked :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     clicked_at = COALESCE($3, clicked_at),
     click_count = click_count + 1,
     device_type = COALESCE($4, device_type),
     location = COALESCE($5, location),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: UpdateEmailBounced :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     bounce_status = $3,
     retry_count = retry_count + 1,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: UpdateEmailUnsubscribed :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     unsubscribed_at = $3,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: UpdateEmailComplaint :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     complaint_status = $3,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: UpdateEmailConversion :one
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     conversion_at = $3,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2 AND deleted_at IS NULL
-RETURNING *;
+WHERE
+    id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: SoftDeleteEmailCampaignResult :exec
-UPDATE email_campaign_results 
-SET 
+UPDATE email_campaign_results
+SET
     deleted_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND company_id = $2;
+WHERE
+    id = $1
+    AND company_id = $2;
 
 -- name: GetEmailCampaignStats :one
-SELECT 
+SELECT
     COUNT(*) as total_sent,
     COUNT(opened_at) as total_opened,
     COUNT(clicked_at) as total_clicked,
     COUNT(conversion_at) as total_conversions,
-    COUNT(CASE WHEN bounce_status IS NOT NULL THEN 1 END) as total_bounced,
+    COUNT(
+        CASE
+            WHEN bounce_status IS NOT NULL THEN 1
+        END
+    ) as total_bounced,
     COUNT(unsubscribed_at) as total_unsubscribed,
-    COUNT(CASE WHEN complaint_status = true THEN 1 END) as total_complaints
-FROM email_campaign_results 
-WHERE campaign_id = $1 AND company_id = $2 AND deleted_at IS NULL;
+    COUNT(
+        CASE
+            WHEN complaint_status = true THEN 1
+        END
+    ) as total_complaints
+FROM email_campaign_results
+WHERE
+    campaign_id = $1
+    AND company_id = $2
+    AND deleted_at IS NULL;
+
+-- name: GetUserCampaignStats :one
+SELECT
+    COUNT(*) as total_emails_sent,
+    COALESCE(SUM(open_count), 0) as total_opens,
+    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COALESCE(SUM(click_count), 0) as total_clicks,
+    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
+    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
+    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
+    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
+    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries
+FROM email_campaign_results ecr
+WHERE ecr.campaign_id IN (
+    SELECT c.id 
+    FROM campaigns c 
+    WHERE c.user_id = $1 
+    AND c.deleted_at IS NULL
+)
+AND ecr.deleted_at IS NULL;
+
+-- name: GetAllCampaignsByUser :many
+SELECT 
+    c.id as campaign_id,
+    c.name,
+    c.sent_at
+FROM campaigns c
+WHERE c.user_id = $1 
+AND c.deleted_at IS NULL;
+
+-- name: GetCampaignStats :one
+SELECT
+    COUNT(*) as total_emails_sent,
+    COALESCE(SUM(open_count), 0) as total_opens,
+    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COALESCE(SUM(click_count), 0) as total_clicks,
+    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
+    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
+    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
+    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
+    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries,
+    COUNT(unsubscribed_at) as unsubscribed,
+    COUNT(CASE WHEN complaint_status = true THEN 1 END) as complaints
+FROM email_campaign_results
+WHERE campaign_id = $1
+AND deleted_at IS NULL;
+
+-- name: CreateCampaignError :exec
+INSERT INTO campaign_errors (
+    campaign_id,
+    error_type,
+    error_message
+) VALUES (
+    $1, $2, $3
+);
+
+-- name: GetScheduledCampaignsDue :many
+-- Get campaigns that are scheduled and due to be sent
+SELECT 
+    id,
+    company_id,
+    name,
+    subject,
+    preview_text,
+    user_id,
+    sender_from_name,
+    template_id,
+    sent_template_id,
+    recipient_info,
+    is_published,
+    status,
+    track_type,
+    is_archived,
+    sent_at,
+    sender,
+    scheduled_at,
+    has_custom_logo,
+    created_at,
+    updated_at,
+    deleted_at
+FROM campaigns 
+WHERE 
+    scheduled_at IS NOT NULL 
+    AND scheduled_at <= $1 
+    AND (sent_at IS NULL OR sent_at = '1970-01-01 00:00:00')
+    AND (is_archived IS NULL OR is_archived = false)
+    AND deleted_at IS NULL
+    AND status IN ('draft', 'scheduled')
+ORDER BY scheduled_at ASC;
+
+-- name: ClearCampaignSchedule :exec
+-- Clear the scheduled_at field after processing to prevent reprocessing
+UPDATE campaigns 
+SET scheduled_at = NULL, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1;
+
+/* -- name: GetCampaignContactGroups :many
+-- Get contact groups associated with a campaign
+SELECT 
+    cg.id,
+    cg.campaign_id,
+    cg.contact_group_id,
+    cg.created_at,
+    cg.updated_at
+FROM campaign_groups cg
+WHERE cg.campaign_id = $1 
+AND cg.deleted_at IS NULL;
+  */

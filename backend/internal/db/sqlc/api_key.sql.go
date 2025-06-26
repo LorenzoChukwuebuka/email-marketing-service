@@ -12,6 +12,26 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkIfAPIKeyExists = `-- name: CheckIfAPIKeyExists :one
+SELECT id, user_id, company_id, name, api_key, created_at, updated_at, deleted_at FrOM api_keys WHERE api_key = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) CheckIfAPIKeyExists(ctx context.Context, apiKey string) (ApiKey, error) {
+	row := q.db.QueryRowContext(ctx, checkIfAPIKeyExists, apiKey)
+	var i ApiKey
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.Name,
+		&i.ApiKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const createAPIKey = `-- name: CreateAPIKey :one
 INSERT INTO
     api_keys (
@@ -86,6 +106,7 @@ SELECT
     u.id AS user_id,
     u.email,
     u.fullname,
+    u.company_id,
     ak.company_id,
     ak.id AS api_key_id,
     ak.name AS api_key_name
@@ -99,12 +120,13 @@ LIMIT 1
 `
 
 type FindUserWithAPIKeyRow struct {
-	UserID     uuid.UUID `json:"user_id"`
-	Email      string    `json:"email"`
-	Fullname   string    `json:"fullname"`
-	CompanyID  uuid.UUID `json:"company_id"`
-	ApiKeyID   uuid.UUID `json:"api_key_id"`
-	ApiKeyName string    `json:"api_key_name"`
+	UserID      uuid.UUID `json:"user_id"`
+	Email       string    `json:"email"`
+	Fullname    string    `json:"fullname"`
+	CompanyID   uuid.UUID `json:"company_id"`
+	CompanyID_2 uuid.UUID `json:"company_id_2"`
+	ApiKeyID    uuid.UUID `json:"api_key_id"`
+	ApiKeyName  string    `json:"api_key_name"`
 }
 
 func (q *Queries) FindUserWithAPIKey(ctx context.Context, apiKey string) (FindUserWithAPIKeyRow, error) {
@@ -115,6 +137,7 @@ func (q *Queries) FindUserWithAPIKey(ctx context.Context, apiKey string) (FindUs
 		&i.Email,
 		&i.Fullname,
 		&i.CompanyID,
+		&i.CompanyID_2,
 		&i.ApiKeyID,
 		&i.ApiKeyName,
 	)

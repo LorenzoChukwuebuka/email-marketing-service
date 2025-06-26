@@ -7,10 +7,9 @@ import (
 	"email-marketing-service/internal/common"
 	"email-marketing-service/internal/helper"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type CampaignController struct {
@@ -63,6 +62,10 @@ func (c *CampaignController) GetAllCampaigns(w http.ResponseWriter, r *http.Requ
 	}
 
 	page, pageSize, _, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
 	offset := (page - 1) * pageSize
 	limit := pageSize
 
@@ -215,4 +218,65 @@ func (c *CampaignController) SendCampaign(w http.ResponseWriter, r *http.Request
 	}
 
 	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *CampaignController) GetAllRecipientsForACampaign(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	_, companyId, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+	vars := mux.Vars(r)
+	campaignId := vars["campaignId"]
+
+	result, err := c.service.GetAllRecipientsForACampaign(ctx, campaignId, companyId)
+
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetUserCampaignStats(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	result, err := c.service.GetUserCampaignStats(ctx, userId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetUserCampaignsStats(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	result, err := c.service.GetAllCampaignStatsByUser(ctx, userId)
+
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
 }

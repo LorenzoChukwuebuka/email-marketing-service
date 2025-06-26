@@ -59,6 +59,7 @@ SELECT
     u.id AS user_id,
     u.email,
     u.fullname,
+    u.company_id,
     ak.company_id,
     ak.id AS api_key_id,
     ak.name AS api_key_name
@@ -69,3 +70,7 @@ WHERE
     AND ak.deleted_at IS NULL
     AND u.deleted_at IS NULL
 LIMIT 1;
+
+
+-- name: CheckIfAPIKeyExists :one
+SELECT * FrOM api_keys WHERE api_key = $1 AND deleted_at IS NULL;

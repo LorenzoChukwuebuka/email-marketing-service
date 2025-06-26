@@ -26,4 +26,5 @@ func (a *AuthRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/forget-password", authController.ForgotPassword).Methods("POST", "OPTIONS")
 	r.HandleFunc("/reset-password", authController.ResetPassword).Methods("POST", "OPTIONS")
 	r.HandleFunc("/login", authController.Login).Methods("POST", "OPTIONS")
+	r.HandleFunc("/change-password", authController.ChangePassword).Methods("POST", "OPTIONS")
 }

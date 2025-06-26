@@ -15,14 +15,15 @@ import (
 	"email-marketing-service/internal/helper"
 	"fmt"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
-	"golang.org/x/net/html"
 	"log"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
+	//"github.com/pkg/errors"
+	"go.uber.org/zap"
+	"golang.org/x/net/html"
 )
 
 type Service struct {
@@ -40,6 +41,31 @@ const BATCH_SIZE = 100
 var (
 	cfg = config.LoadEnv()
 )
+
+// Custom error types for better error handling
+type CampaignError struct {
+	Type    string
+	Message string
+	Err     error
+}
+
+func (e CampaignError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %s - %v", e.Type, e.Message, e.Err)
+	}
+	return fmt.Sprintf("%s: %s", e.Type, e.Message)
+}
+
+type BatchError struct {
+	BatchIndex int
+	Recipients []string
+	Errors     []RecipientError
+}
+
+type RecipientError struct {
+	Email string
+	Error string
+}
 
 type SendCampaignUUIDStruct struct {
 	CompanyID  uuid.UUID `json:"company_id"`
@@ -192,7 +218,7 @@ func (s *Service) UpdateCampaign(ctx context.Context, req *dto.CampaignDTO, camp
 		IsArchived:     sql.NullBool{Bool: req.IsArchived, Valid: true},
 	})
 	if err != nil {
-		return common.ErrUpdatingRecord
+		return err
 	}
 
 	return nil
@@ -327,6 +353,10 @@ func (s *Service) SendCampaign(ctx context.Context, req *dto.SendCampaignDTO) (a
 		return nil, fmt.Errorf("campaign already sent")
 	}
 
+	if campaign.IsArchived.Valid && campaign.IsArchived.Bool {
+		return nil, fmt.Errorf("campaign is archived")
+	}
+
 	// Check if the campaign is scheduled and not due yet
 	if campaign.ScheduledAt.Valid && !campaign.ScheduledAt.Time.IsZero() {
 		scheduledTime := campaign.ScheduledAt.Time
@@ -343,7 +373,7 @@ func (s *Service) SendCampaign(ctx context.Context, req *dto.SendCampaignDTO) (a
 	})
 
 	if err != nil {
-		return nil, common.ErrUpdatingRecord
+		return nil, fmt.Errorf("error updating campaign status: %v", err)
 	}
 
 	//add the uuids to the struct for literally transport
@@ -358,23 +388,29 @@ func (s *Service) SendCampaign(ctx context.Context, req *dto.SendCampaignDTO) (a
 		// Create a new context for the goroutine to avoid cancellation issues
 		bgCtx := context.Background()
 
-		if s.processCampaign(bgCtx, requuid); err != nil {
-			if err = s.store.UpdateCampaignStatus(bgCtx, db.UpdateCampaignStatusParams{
+		if err := s.processCampaign(bgCtx, requuid); err != nil {
+			// Log the detailed error
+			log.Printf("Campaign processing failed with detailed error: %v", err)
+
+			// Update campaign status to failed
+			if updateErr := s.store.UpdateCampaignStatus(bgCtx, db.UpdateCampaignStatusParams{
 				Status: sql.NullString{String: string(enums.CampaignStatus(enums.Failed)), Valid: true},
 				ID:     _uuid["campaign"],
 				UserID: _uuid["user"],
-			}); err != nil {
-				log.Printf("error occured while updating status :%v", err)
+			}); updateErr != nil {
+				log.Printf("error occurred while updating status to failed: %v", updateErr)
 			}
 
-			log.Printf("error occurred while sending mails :%v", err)
+			// You could also store the error details in database for later analysis
+			s.storeCampaignError(bgCtx, _uuid["campaign"], err)
 		} else {
-			if err = s.store.UpdateCampaignStatus(bgCtx, db.UpdateCampaignStatusParams{
+			// Update campaign status to sent
+			if updateErr := s.store.UpdateCampaignStatus(bgCtx, db.UpdateCampaignStatusParams{
 				Status: sql.NullString{String: string(enums.CampaignStatus(enums.Sent)), Valid: true},
 				ID:     _uuid["campaign"],
 				UserID: _uuid["user"],
-			}); err != nil {
-				log.Printf("error occured while updating status :%v", err)
+			}); updateErr != nil {
+				log.Printf("campaign sent successfully but failed to update status: %v", updateErr)
 			}
 		}
 	}()
@@ -386,35 +422,51 @@ func (s *Service) processCampaign(ctx context.Context, d *SendCampaignUUIDStruct
 	//get all associated emails for this campaign (from the contact groups)
 	contactEmails, err := s.store.GetCampaignContactEmails(ctx, d.CampaignID)
 	if err != nil {
-		log.Printf("error occured while fetching contacts :%v", err)
-		return err
+		log.Printf("error occurred while fetching contacts: %v", err)
+		return CampaignError{
+			Type:    "CONTACT_FETCH_ERROR",
+			Message: "Failed to fetch campaign contacts",
+			Err:     err,
+		}
+	}
+
+	if len(contactEmails) == 0 {
+		return CampaignError{
+			Type:    "NO_CONTACTS_ERROR",
+			Message: "No contacts found for campaign",
+			Err:     nil,
+		}
 	}
 
 	mailUsageRecord, err := s.store.GetCurrentEmailUsage(ctx, d.CompanyID)
 	if err != nil {
-		return fmt.Errorf("error fetching or creating mail usage record: %w", err)
+		return CampaignError{
+			Type:    "USAGE_CHECK_ERROR",
+			Message: "Failed to fetch email usage record",
+			Err:     err,
+		}
 	}
 
 	if mailUsageRecord.RemainingEmails.Int32 == 0 {
-		return fmt.Errorf("you have exceeded your plan limit")
+		return CampaignError{
+			Type:    "QUOTA_EXCEEDED_ERROR",
+			Message: "Email quota exceeded",
+			Err:     nil,
+		}
 	}
 
-	if err = s.store.UpdateCampaignStatus(ctx, db.UpdateCampaignStatusParams{
-		Status: sql.NullString{String: string(enums.CampaignStatus(enums.Sent)), Valid: true},
-		ID:     d.CampaignID,
-		UserID: d.UserID,
-	}); err != nil {
-		log.Printf("error occured while updating status :%v", err)
-	}
-
-	// Create a channel to receive errors from goroutines
-	errChan := make(chan error, len(contactEmails))
+	// Create a channel to collect ALL errors from goroutines
+	errChan := make(chan BatchError, (len(contactEmails)+BATCH_SIZE-1)/BATCH_SIZE)
 
 	// Create a WaitGroup to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
 	// Create a mutex to synchronize mail usage updates
 	var mu sync.Mutex
+
+	// Track batch processing
+	var batchErrors []BatchError
+	totalBatches := 0
 
 	//send emails in batches
 	for i := 0; i < len(contactEmails); i += BATCH_SIZE {
@@ -423,15 +475,19 @@ func (s *Service) processCampaign(ctx context.Context, d *SendCampaignUUIDStruct
 			end = len(contactEmails)
 		}
 		batch := contactEmails[i:end]
+		batchIndex := totalBatches
 
 		wg.Add(1)
-		go func(ctx context.Context, batch []string) {
+		go func(ctx context.Context, batch []string, batchIdx int) {
 			defer wg.Done()
-			err := s.sendEmailBatch(&mu, ctx, d, batch)
-			if err != nil {
-				errChan <- err
+
+			batchErr := s.sendEmailBatch(&mu, ctx, d, batch, batchIdx)
+			if len(batchErr.Errors) > 0 {
+				errChan <- batchErr
 			}
-		}(ctx, batch)
+		}(ctx, batch, batchIndex)
+
+		totalBatches++
 		// small delay between batches to avoid overwhelming the email server
 		time.Sleep(5 * time.Second)
 	}
@@ -442,15 +498,56 @@ func (s *Service) processCampaign(ctx context.Context, d *SendCampaignUUIDStruct
 		close(errChan)
 	}()
 
-	// Check for any errors from the goroutines
-	for err := range errChan {
-		return err
+	// Collect ALL errors from all batches
+	for batchErr := range errChan {
+		log.Printf("Batch %d had %d errors out of %d recipients",
+			batchErr.BatchIndex, len(batchErr.Errors), len(batchErr.Recipients))
+		for _, recErr := range batchErr.Errors {
+			log.Printf("  - %s: %s", recErr.Email, recErr.Error)
+		}
+		batchErrors = append(batchErrors, batchErr)
 	}
 
+	// Update campaign status (we do this even if there were some errors)
+	if err = s.store.UpdateCampaignStatus(ctx, db.UpdateCampaignStatusParams{
+		Status: sql.NullString{String: string(enums.CampaignStatus(enums.Sent)), Valid: true},
+		ID:     d.CampaignID,
+		UserID: d.UserID,
+		SentAt: sql.NullTime{Time: time.Now(), Valid: true},
+	}); err != nil {
+		log.Printf("error occurred while updating campaign status: %v", err)
+		return CampaignError{
+			Type:    "STATUS_UPDATE_ERROR",
+			Message: "Failed to update campaign status after processing",
+			Err:     err,
+		}
+	}
+
+	// If there were errors in batches, return detailed information
+	if len(batchErrors) > 0 {
+		totalErrors := 0
+		for _, batchErr := range batchErrors {
+			totalErrors += len(batchErr.Errors)
+		}
+
+		return CampaignError{
+			Type: "BATCH_PROCESSING_ERRORS",
+			Message: fmt.Sprintf("Campaign completed with %d errors across %d batches out of %d total batches. Total contacts: %d, Failed: %d",
+				totalErrors, len(batchErrors), totalBatches, len(contactEmails), totalErrors),
+			Err: fmt.Errorf("batch errors: %+v", batchErrors),
+		}
+	}
+	log.Printf("Campaign processed successfully: %d batches, %d total contacts", totalBatches, len(contactEmails))
 	return nil
 }
 
-func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCampaignUUIDStruct, recipients []string) error {
+func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCampaignUUIDStruct, recipients []string, batchIndex int) BatchError {
+	batchError := BatchError{
+		BatchIndex: batchIndex,
+		Recipients: recipients,
+		Errors:     []RecipientError{},
+	}
+
 	//first thing fetch the campaign and extract the template id
 	campaign, err := s.store.GetCampaignByID(ctx, db.GetCampaignByIDParams{
 		CompanyID: d.CompanyID,
@@ -459,23 +556,48 @@ func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCam
 	})
 
 	if err != nil {
-		return common.ErrFetchingRecord
+		// If we can't get campaign info, all recipients in this batch fail
+		for _, recipient := range recipients {
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: fmt.Sprintf("Failed to fetch campaign: %v", err),
+			})
+		}
+		return batchError
 	}
 
 	if !campaign.TemplateID.Valid || campaign.TemplateID.UUID == uuid.Nil {
-		log.Printf("invalid template Id :%v", campaign.TemplateID)
-		return fmt.Errorf("invalid template ID: template ID is required")
+		log.Printf("invalid template Id: %v", campaign.TemplateID)
+		for _, recipient := range recipients {
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: "Invalid template ID: template ID is required",
+			})
+		}
+		return batchError
 	}
 
 	if !campaign.TemplateEmailHtml.Valid {
 		log.Printf("empty template exiting sending....")
-		return fmt.Errorf("template design is empty")
+		for _, recipient := range recipients {
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: "Template design is empty",
+			})
+		}
+		return batchError
 	}
 
 	user, err := s.store.GetUserByID(ctx, d.UserID)
 	if err != nil {
-		log.Printf("error fetching user:%v", err)
-		return fmt.Errorf("error fetching user:%w", err)
+		log.Printf("error fetching user: %v", err)
+		for _, recipient := range recipients {
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: fmt.Sprintf("Error fetching user: %v", err),
+			})
+		}
+		return batchError
 	}
 
 	// Track successful sends in this batch
@@ -487,11 +609,15 @@ func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCam
 		modifiedTemplate, err := s.addTrackingToTemplate(campaign.TemplateEmailHtml.String, campaign.ID.String(), recipient, user.CompanyID.String())
 		if err != nil {
 			log.Printf("error adding tracking to template for recipient %s: %v", recipient, err)
-			continue // Skip this recipient but continue with others
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: fmt.Sprintf("Failed to add tracking to template: %v", err),
+			})
+			continue
 		}
 
-		// Send the email and track success
-		emailSent := s.sendEmail(
+		// Send the email and track success with detailed error
+		emailSent, sendErr := s.sendEmailWithError(
 			ctx,
 			recipient,
 			modifiedTemplate,
@@ -505,14 +631,18 @@ func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCam
 
 		if emailSent {
 			successCount++
+		} else {
+			batchError.Errors = append(batchError.Errors, RecipientError{
+				Email: recipient,
+				Error: fmt.Sprintf("Failed to send email: %v", sendErr),
+			})
 		}
 
 		// Create the EmailCampaignResult for tracking
-		err = s.createEmailCampaignResult(campaign.ID, recipient)
-		if err != nil {
-			return fmt.Errorf("error creating email campaign result for recipient %s: %w", recipient, err)
+		if err := s.createEmailCampaignResult(campaign.ID, d.CompanyID, recipient); err != nil {
+			// This is not a critical error, but we should log it
+			log.Printf("Warning: Failed to create campaign result for %s: %v", recipient, err)
 		}
-
 	}
 
 	// Only update the database once per batch with the total count
@@ -523,28 +653,66 @@ func (s *Service) sendEmailBatch(mu *sync.Mutex, ctx context.Context, d *SendCam
 		// Get current usage record
 		mailUsageRecord, err := s.store.GetCurrentEmailUsage(ctx, d.CompanyID)
 		if err != nil {
-			return fmt.Errorf("error fetching mail usage record: %w", err)
+			log.Printf("error fetching mail usage record: %v", err)
+			// Add this as an error for all successfully sent emails in this batch
+			for _, recipient := range recipients {
+				// Only add this error for recipients that were successfully sent
+				found := false
+				for _, existingErr := range batchError.Errors {
+					if existingErr.Email == recipient {
+						found = true
+						break
+					}
+				}
+				if !found {
+					batchError.Errors = append(batchError.Errors, RecipientError{
+						Email: recipient,
+						Error: fmt.Sprintf("Email sent but failed to update usage record: %v", err),
+					})
+				}
+			}
+		} else {
+			// Update with the count of successfully sent emails
+			_, err = s.store.UpdateEmailsSentAndRemaining(ctx, db.UpdateEmailsSentAndRemainingParams{
+				CompanyID:  d.CompanyID,
+				EmailsSent: sql.NullInt32{Int32: successCount, Valid: true},
+				ID:         mailUsageRecord.ID,
+			})
+			if err != nil {
+				log.Printf("error updating mail usage: %v", err)
+				// Add this as a warning for all successfully sent emails
+				for _, recipient := range recipients {
+					found := false
+					for _, existingErr := range batchError.Errors {
+						if existingErr.Email == recipient {
+							found = true
+							break
+						}
+					}
+					if !found {
+						batchError.Errors = append(batchError.Errors, RecipientError{
+							Email: recipient,
+							Error: fmt.Sprintf("Email sent but failed to update usage count: %v", err),
+						})
+					}
+				}
+			}
 		}
 
-		// Update with the count of successfully sent emails
-		_, err = s.store.UpdateEmailsSentAndRemaining(ctx, db.UpdateEmailsSentAndRemainingParams{
-			CompanyID:  d.CompanyID,
-			EmailsSent: sql.NullInt32{Int32: successCount, Valid: true},
-			ID:         mailUsageRecord.ID,
-		})
-		if err != nil {
-			return fmt.Errorf("error updating mail usage: %w", err)
+		if len(batchError.Errors) == 0 {
+			log.Printf("Successfully sent %d emails in batch %d", successCount, batchIndex)
+		} else {
+			log.Printf("Batch %d completed: %d sent, %d errors", batchIndex, successCount, len(batchError.Errors))
 		}
-
-		log.Printf("Successfully sent %d emails in this batch", successCount)
 	}
 
-	return nil
+	return batchError
 }
 
-func (s *Service) createEmailCampaignResult(campaignId uuid.UUID, recipientEmail string) error {
+func (s *Service) createEmailCampaignResult(campaignId uuid.UUID, companyId uuid.UUID, recipientEmail string) error {
 	_, err := s.store.CreateEmailCampaignResult(context.Background(), db.CreateEmailCampaignResultParams{
 		CampaignID:     campaignId,
+		CompanyID:      companyId,
 		Version:        sql.NullString{String: "1", Valid: true},
 		RecipientEmail: recipientEmail,
 		SentAt:         sql.NullTime{Time: time.Now(), Valid: true},
@@ -563,10 +731,10 @@ func (s *Service) addTrackingToTemplate(template string, campaignId string, reci
 	}
 
 	// Create tracking pixel and unsubscribe link
-	trackingPixel := fmt.Sprintf(`<img src="%s/campaigns/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, cfg.SERVER_URL, campaignId, url.QueryEscape(recipientEmail))
+	trackingPixel := fmt.Sprintf(`<img src="%s/misc/track/open/%s?email=%s" alt="" width="1" height="1" style="display:none;" />`, cfg.SERVER_URL, campaignId, url.QueryEscape(recipientEmail))
 	unsubscribeLink := fmt.Sprintf(
 		`<div style="margin-top: 20px; font-size: 12px; color: #666666; text-align: center;">
-        <a href="%s/campaigns/unsubscribe?email=%s&campaign=%s&companyId=%s" target="_blank" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
+        <a href="%s/misc/unsubscribe?email=%s&campaign=%s&companyId=%s" target="_blank" style="color: #666666; text-decoration: underline;">Unsubscribe</a>
     </div>`, cfg.SERVER_URL, url.QueryEscape(recipientEmail), url.QueryEscape(campaignId), url.QueryEscape(companyId))
 
 	// Inject tracking pixel and unsubscribe link at the end of the body or document
@@ -588,7 +756,7 @@ func (s *Service) addTrackingToTemplate(template string, campaignId string, reci
 			for i, a := range n.Attr {
 				if a.Key == "href" && !strings.Contains(a.Val, "unsubscribe") {
 					originalURL := a.Val
-					trackingURL := fmt.Sprintf("%s/campaigns/track/click/%s?email=%s&url=%s", cfg.SERVER_URL, campaignId, recipientEmail, url.QueryEscape(originalURL))
+					trackingURL := fmt.Sprintf("%s/misc/track/click/%s?email=%s&url=%s", cfg.SERVER_URL, campaignId, recipientEmail, url.QueryEscape(originalURL))
 					n.Attr[i].Val = trackingURL
 					break
 				}
@@ -609,18 +777,23 @@ func (s *Service) addTrackingToTemplate(template string, campaignId string, reci
 	return buf.String(), nil
 }
 
-// Helper function to simulate/handle actual email sending
-func (s *Service) sendEmail(ctx context.Context, recipient string, emailContent string, subject string, previewText string, from string, fromName string, userId uuid.UUID, companyId uuid.UUID) bool {
+// Modified sendEmail to return detailed error information
+func (s *Service) sendEmailWithError(ctx context.Context, recipient string, emailContent string, subject string, previewText string, from string, fromName string, userId uuid.UUID, companyId uuid.UUID) (bool, error) {
 	validEmail := helper.IsValidEmail(recipient)
 
 	if !validEmail {
-		return false
+		return false, fmt.Errorf("invalid email address format")
 	}
 
 	authUser, err := s.store.GetMasterSMTPKey(ctx, userId)
 	if err != nil {
 		log.Printf("error fetching master smtp key: %v", err)
-		return false
+		return false, fmt.Errorf("failed to fetch SMTP credentials: %w", err)
+	}
+
+	if authUser.Status != "active" {
+		log.Printf("user status is not active")
+		return false, fmt.Errorf("user status is not active")
 	}
 
 	authModel := &domain.SMTPAuthUser{
@@ -651,7 +824,7 @@ func (s *Service) sendEmail(ctx context.Context, recipient string, emailContent 
 	parts := strings.Split(from, "@")
 	if len(parts) != 2 {
 		log.Printf("invalid sender email format")
-		return false
+		return false, fmt.Errorf("invalid sender email format")
 	}
 	senderDomain := parts[1]
 
@@ -661,20 +834,27 @@ func (s *Service) sendEmail(ctx context.Context, recipient string, emailContent 
 	})
 
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if err == sql.ErrNoRows {
 			// If the domain is not found, proceed without signing
-			s.sendEmailWithSMTP(request)
-			return true
+			//the mail will be sent from the app's domain
+			// Sanitize fromName for email use
+			emailLocalPart := strings.ReplaceAll(strings.ToLower(fromName), " ", ".")
+			request.Sender.Email = fmt.Sprintf("%s@%s", emailLocalPart, cfg.DOMAIN)
+
+			if sendErr := s.sendEmailWithSMTP(request); sendErr != nil {
+				return false, fmt.Errorf("SMTP send failed: %w", sendErr)
+			}
+			return true, nil
 		}
 		log.Printf("failed to fetch domain: %v", err)
-		return false
+		return false, fmt.Errorf("failed to fetch domain configuration: %w", err)
 	}
 
 	if sender_domain != (db.Domain{}) && sender_domain.Verified.Valid && sender_domain.Verified.Bool {
 		// Check if the sender's domain matches or is a subdomain of the DKIM signing domain
 		if !strings.HasSuffix(senderDomain, sender_domain.Domain) {
 			log.Printf("sender domain %s does not align with DKIM signing domain %s", senderDomain, sender_domain.Domain)
-			return false
+			return false, fmt.Errorf("sender domain %s does not align with DKIM signing domain %s", senderDomain, sender_domain.Domain)
 		}
 
 		signedBody, err := s.signEmail(from, companyId, emailBytes)
@@ -686,15 +866,18 @@ func (s *Service) sendEmail(ctx context.Context, recipient string, emailContent 
 			request.HtmlContent = (*string)(unsafe.Pointer(&emailBytes))
 		}
 	}
-	s.sendEmailWithSMTP(request)
-	return true
+
+	if err := s.sendEmailWithSMTP(request); err != nil {
+		return false, fmt.Errorf("SMTP send failed: %w", err)
+	}
+	return true, nil
 }
 
 func (s *Service) sendEmailWithSMTP(request *domain.EmailRequest) error {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
-	analyzer, err := helper.NewContentAnalyzer("config.json", logger)
+	analyzer, err := helper.NewContentAnalyzer("internal/config/config.json", logger)
 	if err != nil {
 		return fmt.Errorf("failed to create content analyzer: %w", err)
 	}
@@ -738,12 +921,6 @@ func (s *Service) signEmail(domainEmail string, companyId uuid.UUID, emailBody [
 		return nil, fmt.Errorf("domain not found or not verified")
 	}
 
-	// Load the DKIM private key
-	// privateKey, err := base64.StdEncoding.DecodeString(domain.DKIMPrivateKey)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to decode DKIM private key: %v", err)
-	// }
-
 	helper.ValidatePrivateKey(domain.DkimPrivateKey.String)
 
 	// DKIM signing process
@@ -755,41 +932,145 @@ func (s *Service) signEmail(domainEmail string, companyId uuid.UUID, emailBody [
 	return signedEmail, nil
 }
 
-// func (s *CampaignService) GetAllRecipientsForACampaign(campaignId string) (*[]model.EmailCampaignResultResponse, error) {
-// 	result, err := s.CampaignRepo.GetAllRecipientsForACampaign(campaignId)
+// Helper function to store campaign errors for later analysis
+func (s *Service) storeCampaignError(ctx context.Context, campaignID uuid.UUID, err error) {
+	dbErr := s.store.CreateCampaignError(ctx, db.CreateCampaignErrorParams{
+		CampaignID:   campaignID,
+		ErrorType:    sql.NullString{String: fmt.Sprintf("%v", err), Valid: true},
+		ErrorMessage: err.Error(),
+	})
+	if dbErr != nil {
+		log.Printf("Failed to store campaign error: %v", dbErr)
+	}
+}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *Service) GetAllRecipientsForACampaign(ctx context.Context, campaignId string, companyId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"campaign": campaignId,
+		"company":  companyId,
+	})
 
-// 	return result, nil
-// }
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
 
-// func (s *CampaignService) GetEmailResultStats(campaignId string) (map[string]interface{}, error) {
-// 	result, err := s.CampaignRepo.GetEmailResultStats(campaignId)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	result, err := s.store.GetEmailCampaignResultsByCampaign(ctx, db.GetEmailCampaignResultsByCampaignParams{
+		CampaignID: _uuid["campaign"],
+		CompanyID:  _uuid["company"],
+	})
 
-// 	return result, nil
-// }
+	if err != nil {
+		return nil, err
+	}
 
-// func (s *CampaignService) GetUserCampaignStats(userId string) (map[string]int64, error) {
-// 	userStats, err := s.CampaignRepo.GetUserCampaignStats(userId)
+	return result, nil
+}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *Service) GetEmailResultStats(ctx context.Context, campaignId string, companyId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"campaign": campaignId,
+		"company":  companyId,
+	})
 
-// 	return userStats, nil
-// }
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
 
-// func (s *CampaignService) GetUserCampaignsStats(userId string) ([]map[string]interface{}, error) {
-// 	userStats, err := s.CampaignRepo.GetAllCampaignStatsByUser(userId)
+	result, err := s.store.GetEmailCampaignStats(ctx, db.GetEmailCampaignStatsParams{
+		CampaignID: _uuid["campaign"],
+		CompanyID:  _uuid["company"],
+	})
+	if err != nil {
+		return nil, err
+	}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	return result, nil
+}
 
-// 	return userStats, nil
-// }
+func (s *Service) GetUserCampaignStats(ctx context.Context, userID string) (map[string]int64, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": userID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	stats, err := s.store.GetUserCampaignStats(ctx, _uuid["user"])
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching user campaign stats: %w", err)
+	}
+	// Convert to int64 with proper type assertions
+	totalEmailsSent := int64(stats.TotalEmailsSent)
+	totalOpens := stats.TotalOpens.(int64)
+	uniqueOpens := int64(stats.UniqueOpens)
+	totalClicks := stats.TotalClicks.(int64)
+	uniqueClicks := int64(stats.UniqueClicks)
+	softBounces := int64(stats.SoftBounces)
+	hardBounces := int64(stats.HardBounces)
+	totalBounces := int64(stats.TotalBounces)
+	totalDeliveries := int64(stats.TotalDeliveries)
+
+	// Calculate open rate
+	var openRate float64
+	if totalEmailsSent > 0 {
+		openRate = (float64(uniqueOpens) / float64(totalEmailsSent)) * 100
+	}
+
+	result := map[string]int64{
+		"total_emails_sent": totalEmailsSent,
+		"total_opens":       totalOpens,
+		"unique_opens":      uniqueOpens,
+		"total_clicks":      totalClicks,
+		"unique_clicks":     uniqueClicks,
+		"soft_bounces":      softBounces,
+		"hard_bounces":      hardBounces,
+		"total_bounces":     totalBounces,
+		"total_deliveries":  totalDeliveries,
+		"open_rate":         int64(openRate),
+	}
+
+	return result, nil
+}
+
+func (s *Service) GetAllCampaignStatsByUser(ctx context.Context, userID string) ([]map[string]interface{}, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": userID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+	// First get all campaigns for the user
+	campaigns, err := s.store.GetAllCampaignsByUser(ctx, _uuid["user"])
+	if err != nil {
+		return nil, fmt.Errorf("error fetching campaigns for user: %w", err)
+	}
+
+	var allCampaignStats []map[string]interface{}
+
+	// For each campaign, get its individual stats
+	for _, campaign := range campaigns {
+		stats, err := s.store.GetCampaignStats(ctx, campaign.CampaignID)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching stats for campaign %s: %w", campaign.CampaignID, err)
+		}
+
+		campaignStats := map[string]interface{}{
+			"campaign_id":  campaign.CampaignID,
+			"name":         campaign.Name,
+			"recipients":   stats.TotalEmailsSent,
+			"opened":       stats.UniqueOpens,
+			"clicked":      stats.UniqueClicks,
+			"unsubscribed": stats.Unsubscribed,
+			"complaints":   stats.Complaints,
+			"bounces":      stats.TotalBounces,
+			"sent_date":    campaign.SentAt.Time,
+		}
+
+		allCampaignStats = append(allCampaignStats, campaignStats)
+	}
+
+	return allCampaignStats, nil
+}

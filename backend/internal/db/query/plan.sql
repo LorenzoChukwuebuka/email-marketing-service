@@ -12,6 +12,9 @@ INSERT INTO plans (
     $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
+-- name: PlanExists :one
+SELECT EXISTS(SELECT 1 FROM plans WHERE name = $1);
+
 -- name: GetPlanByID :one
 SELECT * FROM plans
 WHERE id = $1 AND deleted_at IS NULL;

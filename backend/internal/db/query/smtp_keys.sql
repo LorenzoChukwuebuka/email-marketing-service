@@ -53,7 +53,7 @@ WHERE
 -- name: SoftDeleteSMTPKey :exec
 UPDATE smtp_keys
 SET
-    update_at = now(),
+    updated_at = now(),
     deleted_at = now()
 WHERE
     id = $1;

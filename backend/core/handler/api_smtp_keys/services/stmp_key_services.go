@@ -83,17 +83,32 @@ func (s *SMTPKeyService) GetSMTPKeys(ctx context.Context, userId string) (any, e
 		return nil, err
 	}
 
-	Keys, err := s.store.GetUserSmtpKeys(ctx, userID)
-
+	keys, err := s.store.GetUserSmtpKeys(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	var keyValue interface{}
-	if len(Keys) == 0 {
-		keyValue = []interface{}{} // Empty array
-	} else {
-		keyValue = Keys
+	var formattedKeys []map[string]interface{}
+	for _, key := range keys {
+		formattedKey := map[string]interface{}{
+			"id":         key.ID,
+			"company_id": key.CompanyID,
+			"user_id":    key.UserID,
+			"key_name":   key.KeyName,
+			"password":   key.Password,
+			"status":     key.Status,
+			"smtp_login": key.SmtpLogin,
+			"created_at": key.CreatedAt,
+			"updated_at": key.UpdatedAt,
+		}
+
+		if key.DeletedAt.Valid {
+			formattedKey["deleted_at"] = key.DeletedAt.Time.Format("2006-01-02")
+		} else {
+			formattedKey["deleted_at"] = nil
+		}
+
+		formattedKeys = append(formattedKeys, formattedKey)
 	}
 
 	result := map[string]interface{}{
@@ -104,7 +119,7 @@ func (s *SMTPKeyService) GetSMTPKeys(ctx context.Context, userId string) (any, e
 		"smtp_server":          cfg.SMTP_SERVER,
 		"smtp_master_status":   masterSMTP.Status,
 		"smtp_created_at":      masterSMTP.CreatedAt,
-		"keys":                 keyValue,
+		"keys":                 formattedKeys,
 	}
 
 	return result, nil
@@ -181,7 +196,7 @@ func (s *SMTPKeyService) ToggleSMTPKeyStatus(ctx context.Context, userId string,
 		ID:     smtpkeyID,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to retrieve SMTP key: %w", err)
+		return common.ErrRecordNotFound
 	}
 
 	// Toggle the status

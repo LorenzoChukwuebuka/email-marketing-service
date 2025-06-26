@@ -6,10 +6,12 @@ import (
 	"email-marketing-service/core/server/asynqserver"
 	"email-marketing-service/core/server/httpserver"
 	"email-marketing-service/core/server/websocketserver"
+	"email-marketing-service/internal/logger"
 	"email-marketing-service/internal/config"
 	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
 	smtp_server "email-marketing-service/internal/smtp"
+
 	//"email-marketing-service/internal/workers/tasks"
 	"fmt"
 	"log"
@@ -67,9 +69,12 @@ func main() {
 	client := asynqserver.GetClient()
 	defer client.Close()
 
+	err = logger.InitDefaultLogger("logs/app.log", logger.INFO)
+	if err != nil {
+		log.Fatal("Failed to initialize logger:", err)
+	}
 	//simulating mail sending
 	//_ = tasks.EnqueueWelcomeEmail(client, "hello@hello.com", "obi")
-
 
 	var wg sync.WaitGroup
 	wg.Add(1)
