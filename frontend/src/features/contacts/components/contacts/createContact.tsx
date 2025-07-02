@@ -6,9 +6,10 @@ import useContactStore from "./../../store/contact.store";
 interface CreateContactProps {
     isOpen: boolean;
     onClose: () => void;
+    refetch: () => void; // Optional refetch function to refresh contacts after creation   
 }
 
-const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
+const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose, refetch }) => {
     const [form] = Form.useForm();
     const { createContact, setContactFormValues } = useContactStore();
     const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -28,9 +29,10 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose }) => {
             setContactFormValues({ ...values })
             await createContact();
             await new Promise((resolve) => setTimeout(resolve, 3000));
+            refetch()
             onClose();
             form.resetFields();
-            location.reload();
+
         } catch (error) {
             console.error('Failed to create contact:', error);
         } finally {

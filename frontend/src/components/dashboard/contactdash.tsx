@@ -1,13 +1,9 @@
 import { useContactCountQuery } from "../../features/contacts/hooks/useContactQuery";
-import eventBus from "../../utils/eventbus";
 import LoadingSpinnerComponent from "../loadingSpinnerComponent";
 
 const ContactsDashboard: React.FC = () => {
-    const { data: contactCount, isLoading, isError } = useContactCountQuery();
-
-    if (isError) {
-        eventBus.emit("error", "Error fetching contacts");
-    }
+    const { data: contactCount, isLoading } = useContactCountQuery();
+ 
 
     return (
         <div className="w-full mx-auto mb-10 mt-10 p-4">

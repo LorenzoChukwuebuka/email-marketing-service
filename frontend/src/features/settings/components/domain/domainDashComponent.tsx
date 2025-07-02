@@ -19,7 +19,7 @@ const DomainDashboardComponent: React.FC = () => {
         setPageSize(size);
     };
     const navigate = useNavigate()
-    const { data: domainData } = useDomainQuery(currentPage, pageSize, debouncedSearchQuery)
+    const { data: domainData, refetch } = useDomainQuery(currentPage, pageSize, debouncedSearchQuery)
     const dData = useMemo(() => domainData?.payload?.data || [], [domainData])
     const handleSearchInput = (query: string) => {
         setSearchQuery(query);
@@ -38,7 +38,7 @@ const DomainDashboardComponent: React.FC = () => {
             onOk: async () => {
                 await deleteDomain(id);
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                location.reload()
+                refetch()
             },
         });
     }
@@ -95,16 +95,16 @@ const DomainDashboardComponent: React.FC = () => {
                                         <td className="py-3 px-6 text-right">
 
                                             {data.verified ? (<>
-                                                <button className="text-blue-500 hover:text-blue-700 mr-2" onClick={() => handleRedirect(data.uuid)}> View Configuration </button>
+                                                <button className="text-blue-500 hover:text-blue-700 mr-2" onClick={() => handleRedirect(data.id)}> View Configuration </button>
                                             </>) : (<>
-                                                <button className="text-blue-500 hover:text-blue-700 mr-2" onClick={() => handleRedirect(data.uuid)}> Authenticate </button>
+                                                <button className="text-blue-500 hover:text-blue-700 mr-2" onClick={() => handleRedirect(data.id)}> Authenticate </button>
                                             </>)}
 
                                         </td>
 
                                         <td className="py-3 px-6 text-right">
 
-                                            <button className="text-red-500 hover:text-red-700" onClick={() => handleDelete(data.uuid)}>
+                                            <button className="text-red-500 hover:text-red-700" onClick={() => handleDelete(data.id)}>
                                                 <i className="bi bi-trash3-fill"></i>
                                             </button>
                                         </td>
@@ -118,7 +118,7 @@ const DomainDashboardComponent: React.FC = () => {
                             <Pagination
                                 current={currentPage}
                                 pageSize={pageSize}
-                                total={domainData?.payload?.total_count || 0} // Ensure your API returns a total count
+                                total={domainData?.payload?.total || 0} // Ensure your API returns a total count
                                 onChange={onPageChange}
                                 showSizeChanger
                                 pageSizeOptions={["10", "20", "50", "100"]}

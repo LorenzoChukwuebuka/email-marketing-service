@@ -4,7 +4,7 @@ import axiosInstance from "../utils/api";
 
 class DailyMailCalculationApi {
     async getDailyMailCalculation(): Promise<APIResponse<MailData>> {
-        const response = await axiosInstance.get<APIResponse<MailData>>("/get-user-current-sub")
+        const response = await axiosInstance.get<APIResponse<MailData>>("/users/current-running-subscription")
         return response.data
     }
 }

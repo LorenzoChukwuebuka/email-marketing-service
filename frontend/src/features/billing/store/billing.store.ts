@@ -46,6 +46,7 @@ const useBillingStore = create<BillingStore>((set, get) => ({
     initializePayment: async () => {
         try {
             const { paymentValues } = get()
+            console.log("Payment Values: ", paymentValues)
             const response = await BillingApi.initializePayment(paymentValues)
             if (response.status == true) {
                 window.location.href = response.payload.data.authorization_url

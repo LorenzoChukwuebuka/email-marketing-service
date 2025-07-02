@@ -5,7 +5,7 @@ import { ResponseT } from "../../../interface/api.interface";
 
 class PlanAPI {
     static async getPlans(): Promise<APIResponse<PlanData[]>> {
-        const response = await axiosInstance.get<APIResponse<PlanData[]>>("/get-all-plans");
+        const response = await axiosInstance.get<APIResponse<PlanData[]>>("/misc/plan/get");
         return response.data;
     }
 
@@ -28,6 +28,7 @@ class PlanAPI {
         )
         return response.data
     }
+
 }
 
 export default PlanAPI

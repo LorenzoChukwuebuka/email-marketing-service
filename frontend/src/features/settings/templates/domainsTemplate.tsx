@@ -10,9 +10,6 @@ import DomainDashboardComponent from "../components/domain/domainDashComponent";
 import SendersDashComponent from "../components/senders/sendersDashComponent";
 
 type TabType = "Domain" | "Sender";
-
-
-
 interface ModalContent {
     title: string;
     content: string;

@@ -23,7 +23,7 @@ const EditSenderComponent: React.FC<Props> = ({ isOpen, onClose, Sender }) => {
 
     const handleSubmit = async (values: { name: string; email: string }) => {
         try {
-            await updateSender(Sender.uuid, values);
+            await updateSender(Sender.id, values);
             message.success('Sender updated successfully');
             onClose();
             await new Promise(resolve => setTimeout(resolve, 500));

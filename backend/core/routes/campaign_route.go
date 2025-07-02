@@ -30,7 +30,9 @@ func (c *CampaignRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/update/{id}", handler.UpdateCampaign).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/send", handler.SendCampaign).Methods("POST", "OPTIONS")
 	r.HandleFunc("/add-campaign-group", handler.CreateCampaignGroup).Methods("POST", "OPTIONS")
-	r.HandleFunc("/all-camapaign-stats",handler.GetUserCampaignsStats).Methods("GET","OPTIONS")
-	r.HandleFunc("/user-campaign-stat",handler.GetUserCampaignStats).Methods("GET","OPTIONS")
+	r.HandleFunc("/all-campaign-stats", handler.GetAllUserCampaignsStats).Methods("GET", "OPTIONS")
+	r.HandleFunc("/user-campaign-stat", handler.GetUserCampaignStats).Methods("GET", "OPTIONS")
+	r.HandleFunc("/campaign-stat/{id}", handler.GetCampaignStats).Methods("GET", "OPTIONS")
+	r.HandleFunc("/get-email-recipients/{id}", handler.GetAllRecipientsForACampaign).Methods("GET", "OPTIONS")
+	r.HandleFunc("/scheduled", handler.GetAllScheduledCampaigns).Methods("GET", "OPTIONS")
 }
- 

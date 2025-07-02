@@ -102,8 +102,10 @@ func MapSingleGroupwithContacts(rows []db.GetSingleGroupWithContactsRow) *dto.Gr
 	}
 
 	group := &dto.GroupwithContactResponse{
-		GroupID:   rows[0].GroupID,
-		GroupName: rows[0].GroupName,
+		GroupID:        rows[0].GroupID,
+		GroupName:      rows[0].GroupName,
+		Description:    &rows[0].Description.String,
+		GroupCreatedAt: &rows[0].GroupCreatedAt.Time,
 	}
 
 	for _, row := range rows {

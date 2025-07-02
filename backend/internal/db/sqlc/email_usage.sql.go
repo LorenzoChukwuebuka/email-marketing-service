@@ -266,6 +266,8 @@ WHERE
     company_id = $1
     AND usage_period_start <= CURRENT_DATE
     AND usage_period_end >= CURRENT_DATE
+    ORDER BY usage_period_start DESC
+LIMIT 1
 `
 
 func (q *Queries) GetCurrentEmailUsage(ctx context.Context, companyID uuid.UUID) (EmailUsage, error) {

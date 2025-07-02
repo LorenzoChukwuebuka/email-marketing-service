@@ -24,7 +24,7 @@ func (c *ContactRoutes) InitRoutes(r *mux.Router) {
 	r.Use(middleware.JWTMiddleware)
 	r.HandleFunc("/create", handler.CreateContact).Methods("POST", "OPTIONS")
 	r.HandleFunc("/upload-csv", handler.UploadContactViaCSV).Methods("POST", "OPTIONS")
-	r.HandleFunc("/getall", handler.GetAllContacts).Methods("GET", "OPTIONS")
+	r.HandleFunc("/get", handler.GetAllContacts).Methods("GET", "OPTIONS")
 	r.HandleFunc("/update/{contactId}", handler.EditContact).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/delete/{contactId}", handler.DeleteContact).Methods("DELETE", "OPTIONS")
 	r.HandleFunc("/creategroup", handler.CreateGroup).Methods("POST", "OPTIONS")
@@ -35,4 +35,6 @@ func (c *ContactRoutes) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/getgroupwithcontacts", handler.GetAllContactGroups).Methods("GET", "OPTIONS")
 	r.HandleFunc("/getgroupwithcontacts/{groupId}", handler.GetSingleGroupWithContacts).Methods("GET", "OPTIONS")
 	r.HandleFunc("/getdashboardstats", handler.GetDashboardStats).Methods("GET", "OPTIONS")
+	r.HandleFunc("/count",handler.GetContactCount).Methods("GET", "OPTIONS")
+	r.HandleFunc("/engagement", handler.GetContactSubscriptionStatusForDashboard).Methods("GET", "OPTIONS")
 }

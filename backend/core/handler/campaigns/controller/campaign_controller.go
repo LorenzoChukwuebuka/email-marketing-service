@@ -230,7 +230,7 @@ func (c *CampaignController) GetAllRecipientsForACampaign(w http.ResponseWriter,
 		return
 	}
 	vars := mux.Vars(r)
-	campaignId := vars["campaignId"]
+	campaignId := vars["id"]
 
 	result, err := c.service.GetAllRecipientsForACampaign(ctx, campaignId, companyId)
 
@@ -261,7 +261,7 @@ func (c *CampaignController) GetUserCampaignStats(w http.ResponseWriter, r *http
 	helper.SuccessResponse(w, 200, result)
 }
 
-func (c *CampaignController) GetUserCampaignsStats(w http.ResponseWriter, r *http.Request) {
+func (c *CampaignController) GetAllUserCampaignsStats(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
@@ -271,8 +271,71 @@ func (c *CampaignController) GetUserCampaignsStats(w http.ResponseWriter, r *htt
 		return
 	}
 
-	result, err := c.service.GetAllCampaignStatsByUser(ctx, userId)
+	page, pageSize, _, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	offset := (page - 1) * pageSize
+	limit := pageSize
 
+	req := &dto.FetchCampaignDTO{
+		UserID: userId,
+		Offset: offset,
+		Limit:  limit,
+	}
+
+	result, err := c.service.GetAllCampaignStatsByUser(ctx, req)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetCampaignStats(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	campaignId := vars["id"]
+
+	result, err := c.service.GetCampaignStats(ctx, campaignId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
+}
+
+func (c *CampaignController) GetAllScheduledCampaigns(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, companyID, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	page, pageSize, _, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	offset := (page - 1) * pageSize
+	limit := pageSize
+
+	req := &dto.FetchCampaignDTO{
+		UserID:    userId,
+		CompanyID: companyID,
+		Offset:    offset,
+		Limit:     limit,
+	}
+
+	result, err := c.service.GetAllScheduledCampaigns(ctx, req)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return

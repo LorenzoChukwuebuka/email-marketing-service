@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Table } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import EmptyState from "../../../../components/emptyStateComponent";
 import useContactStore from "../../store/contact.store";
-import { Pagination } from 'antd';
 import { ContactAPIResponse } from "../../interface/contact.interface";
 import EditContact from './editContactComponent';
 import useContactGroupStore from "../../store/contactgroup.store";
@@ -12,41 +13,31 @@ import LoadingSpinnerComponent from "../../../../components/loadingSpinnerCompon
 interface Props {
     contactData: APIResponse<PaginatedResponse<ContactAPIResponse>>
     loading: boolean
-    currentPage:number 
-    pageSize:number
-    onPageChange: (page: number, size: number) => void 
+    currentPage: number
+    pageSize: number
+    onPageChange: (page: number, size: number) => void
 }
 
-
- 
-const GetAllContacts: React.FC<Props> = ({ contactData, loading,currentPage,pageSize,onPageChange }) => {
+const GetAllContacts: React.FC<Props> = ({ contactData, loading, currentPage, pageSize, onPageChange }) => {
     const { selectedIds, setSelectedId } = useContactStore();
     const { setSelectedContactIds } = useContactGroupStore()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedContact, setSelectedContact] = useState<ContactAPIResponse | null>(null);
 
+    // Local state for selection to ensure it works
+    const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([]);
     const cdata = contactData?.payload?.data || []
 
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            const allIds = cdata?.map((contact) => contact.uuid);
-            setSelectedId(allIds as string[]);
-            setSelectedContactIds(allIds as string[])
-        } else {
-            setSelectedId([]);
-            setSelectedContactIds([])
-        }
-    };
+    // Sync local state with store state
+    useEffect(() => {
+        setLocalSelectedIds(selectedIds);
+    }, [selectedIds]);
 
-    const handleSelect = (uuid: string) => {
-        if (selectedIds.includes(uuid)) {
-            setSelectedId(selectedIds.filter((id) => id !== uuid));
-            setSelectedContactIds(selectedIds.filter((id) => id !== uuid));
-        } else {
-            setSelectedId([...selectedIds, uuid]);
-            setSelectedContactIds([...selectedIds, uuid])
-        }
-    };
+    // Update stores when local selection changes
+    useEffect(() => {
+        setSelectedId(localSelectedIds);
+        setSelectedContactIds(localSelectedIds);
+    }, [localSelectedIds, setSelectedId, setSelectedContactIds]);
 
     const openEditModal = (contact: ContactAPIResponse) => {
         setSelectedContact(contact);
@@ -58,118 +49,128 @@ const GetAllContacts: React.FC<Props> = ({ contactData, loading,currentPage,page
         setSelectedContact(null);
     };
 
+    const columns = [
+        {
+            title: 'First Name',
+            dataIndex: 'first_name',
+            key: 'first_name',
+        },
+        {
+            title: 'Last Name',
+            dataIndex: 'last_name',
+            key: 'last_name',
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+        },
+        {
+            title: 'From',
+            dataIndex: 'from_origin',
+            key: 'from_origin',
+        },
+        {
+            title: 'Created On',
+            dataIndex: 'contact_created_at',
+            key: 'contact_created_at',
+            render: (date: string) => {
+                return new Date(date).toLocaleString('en-US', {
+                    timeZone: 'UTC',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                });
+            }
+        },
+        {
+            title: 'Edit',
+            key: 'edit',
+            render: (_: any, record: ContactAPIResponse) => (
+                <button
+                    className="text-gray-400 hover:text-gray-600 p-1"
+                    onClick={() => openEditModal(record)}
+                >
+                    <EditOutlined />
+                </button>
+            ),
+        },
+    ];
+
+    // Row selection configuration using local state
+    const rowSelection = {
+        selectedRowKeys: localSelectedIds,
+        onChange: (selectedRowKeys: React.Key[]) => {
+            const stringKeys = selectedRowKeys.map(key => String(key));
+            setLocalSelectedIds(stringKeys);
+        },
+        onSelect: (record: ContactAPIResponse, selected: boolean) => {
+            if (selected) {
+                setLocalSelectedIds(prev => [...prev, record.contact_id]);
+            } else {
+                setLocalSelectedIds(prev => prev.filter(id => id !== record.contact_id));
+            }
+        },
+        onSelectAll: (selected: boolean) => {
+            if (selected) {
+                const allIds = cdata.map(contact => contact.contact_id);
+                setLocalSelectedIds(allIds);
+            } else {
+                setLocalSelectedIds([]);
+            }
+        },
+    };
+
+    // Pagination configuration
+    const paginationConfig = {
+        current: currentPage,
+        pageSize: pageSize,
+        total: contactData?.payload?.total || 0,
+        onChange: onPageChange,
+        showSizeChanger: true,
+        pageSizeOptions: ["10", "20", "50", "100"],
+        showTotal: (total: number) => `Total ${total} Contacts`,
+        className: "mt-4 flex justify-center items-center mb-5"
+    };
+
+    if (loading) {
+        return <LoadingSpinnerComponent />;
+    }
+
+    if (!contactData || !contactData?.payload?.data?.length) {
+        return (
+            <div className="py-4 px-4 text-center">
+                <EmptyState
+                    title="You have not created any Contacts"
+                    description="Create contacts"
+                    icon={<i className="bi bi-emoji-frown text-xl"></i>}
+                />
+            </div>
+        );
+    }
+
     return (
         <>
+            <div className="mt-8">
+                <Table
+                    columns={columns}
+                    dataSource={cdata}
+                    rowKey="contact_id"
+                    rowSelection={rowSelection}
+                    pagination={paginationConfig}
+                    className="bg-white rounded-sm"
+                    rowClassName="hover:bg-slate-100"
+                />
+            </div>
 
-            {loading ? <LoadingSpinnerComponent /> : (
-                <>
-                    <div className="overflow-x-auto mt-8">
-                        {contactData && contactData?.payload?.data?.length > 0 ? (
-                            <>
-                                <table className="md:min-w-5xl min-w-full w-full rounded-sm  bg-white">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="py-3 px-4 text-left">
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-checkbox h-4 w-4 text-blue-600"
-                                                    onChange={handleSelectAll}
-                                                    checked={selectedIds.length === (contactData?.payload?.data?.length ?? 0)}
-                                                />
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                First Name
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Last Name
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Email
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                From
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Created On
-                                            </th>
-                                            <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Edit
-                                            </th>
-
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {cdata?.map((contact) => (
-                                            <tr key={contact.uuid} className="hover:bg-slate-100">
-                                                <td className="py-4 px-4">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="form-checkbox h-4 w-4 text-blue-600"
-                                                        checked={selectedIds.includes(contact.uuid)}
-                                                        onChange={() => handleSelect(contact.uuid)}
-                                                    />
-                                                </td>
-                                                <td className="py-4 px-4">{contact.first_name}</td>
-                                                <td className="py-4 px-4">{contact.last_name}</td>
-                                                <td className="py-4 px-4">{contact.email}</td>
-                                                <td className="py-4 px-4">{contact.from}</td>
-                                                <td className="py-4 px-4">
-                                                    {new Date(contact.created_at).toLocaleString('en-US', {
-                                                        timeZone: 'UTC',
-                                                        year: 'numeric',
-                                                        month: 'long',
-                                                        day: 'numeric',
-                                                        hour: 'numeric',
-                                                        minute: 'numeric',
-                                                        second: 'numeric',
-                                                    })}
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <button
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                        onClick={() => openEditModal(contact)}
-                                                    >
-                                                        ✏️
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-
-                                <div className="mt-4 flex justify-center items-center mb-5">
-                                    {/* Pagination */}
-                                    <Pagination
-                                        current={currentPage}
-                                        pageSize={pageSize}
-                                        total={contactData?.payload?.total_count || 0} // Ensure your API returns a total count
-                                        onChange={onPageChange}
-                                        showSizeChanger
-                                        pageSizeOptions={["10", "20", "50", "100"]}
-                                        showTotal={(total) => `Total ${total} Contacts`}
-                                    />
-                                </div>
-
-
-                            </>
-                        ) : (
-                            <div className="py-4 px-4 text-center">
-                                <EmptyState
-                                    title="You have not created any Contacts"
-                                    description="Create contacts"
-                                    icon={<i className="bi bi-emoji-frown text-xl"></i>}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <EditContact
-                        isOpen={isModalOpen}
-                        onClose={closeEditModal}
-                        contact={selectedContact}
-                    />
-                </>
-            )}
+            <EditContact
+                isOpen={isModalOpen}
+                onClose={closeEditModal}
+                contact={selectedContact}
+            />
         </>
     );
 };

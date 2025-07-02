@@ -9,7 +9,6 @@ interface DecodedToken {
 
 interface CookieData {
     token: string;
-    // Add other properties if needed
 }
 
 const useTokenExpiration = () => {

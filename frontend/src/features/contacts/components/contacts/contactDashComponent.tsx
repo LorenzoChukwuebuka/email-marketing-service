@@ -1,9 +1,16 @@
 import { FormEvent, useState } from "react";
+import { Button, Input, Modal, Badge, Tooltip, Card } from "antd";
+import {
+    PlusOutlined,
+    ImportOutlined,
+    DeleteOutlined,
+    TeamOutlined,
+    SearchOutlined,
+} from "@ant-design/icons";
 import useDebounce from "../../../../hooks/useDebounce";
 import CreateContact from './createContact';
 import useContactStore from "../../store/contact.store";
 import GetAllContacts from "./getAllContacts";
-import { Modal } from "antd";
 import { useContactQuery } from "../../hooks/useContactQuery";
 import ContactUpload from "./contactBatchUploadComponent";
 import AddContactsToGroupComponent from './addContactsToGroupComponent';
@@ -16,26 +23,32 @@ const ContactsDashComponent: React.FC = () => {
     const { selectedIds, deleteContact } = useContactStore();
     const [importModalOpen, setImportModalOpen] = useState<boolean>(false);
     const [groupModalOpen, setGroupModalOpen] = useState<boolean>(false);
-    const [searchQuery, setSearchQuery] = useState<string>(""); // New state for search query
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     // Debounce the search query
-    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
 
-    const { data: contacts, isLoading } = useContactQuery(currentPage, pageSize, debouncedSearchQuery)
+    const { data: contacts, isLoading, refetch } = useContactQuery(currentPage, pageSize, debouncedSearchQuery);
 
     const handleDelete = async (e: FormEvent<HTMLButtonElement>) => {
         e.preventDefault();
         Modal.confirm({
-            title: "Are you sure?",
-            content: "Do you want to delete contact(s)?",
-            okText: "Yes",
-            cancelText: "No",
+            title: "Delete Contacts",
+            content: `Are you sure you want to delete ${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''}?`,
+            okText: "Delete",
+            cancelText: "Cancel",
+            okType: "danger",
+            icon: <DeleteOutlined />,
             onOk: async () => {
-                await deleteContact();
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                location.reload()
+                try {
+                    await deleteContact();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    refetch();
+                } catch (error) {
+                    console.error('Error deleting contacts:', error);
+                }
             },
         });
     };
@@ -45,7 +58,7 @@ const ContactsDashComponent: React.FC = () => {
         setPageSize(size);
     };
 
-    const addContactToGroupt = () => {
+    const addContactToGroup = () => {
         setGroupModalOpen(true);
     };
 
@@ -53,69 +66,113 @@ const ContactsDashComponent: React.FC = () => {
         setImportModalOpen(true);
     };
 
-    // Update search query state
-    const handleSearchInput = (query: string) => {
-        setSearchQuery(query);
+    const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
     };
 
+    const selectedCount = selectedIds.length;
+
     return (
-        <>
+        <div className="space-y-6 mt-10">
+            {/* Header Card */}
+            <Card className="shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsModalOpen(true)}
+                            size="middle"
+                        >
+                            Create Contact
+                        </Button>
 
-            <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-                <div className="space-x-1 h-auto w-full p-2 px-2">
-                    <button
-                        className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Create Contact
-                    </button>
+                        <Button
+                            icon={<ImportOutlined />}
+                            onClick={importContact}
+                            size="middle"
+                        >
+                            Import Contacts
+                        </Button>
 
-                    <button
-                        className="bg-gray-300 px-2 py-2 rounded-md transition duration-300"
-                        onClick={() => importContact()}
-                    >
-                        Import Contact
-                    </button>
+                        {/* Bulk Actions - Show when contacts are selected */}
+                        {selectedCount > 0 && (
+                            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+                                <Badge count={selectedCount} className="mr-2">
+                                    <span className="text-sm text-gray-600">Selected</span>
+                                </Badge>
 
-                    {selectedIds.length > 0 && (
-                        <>
-                            <button
-                                className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
-                                onClick={(e) => handleDelete(e)}
-                            >
-                                <span className="text-red-500"> Delete Contact </span>
-                                <i className="bi bi-trash text-red-500"></i>
-                            </button>
+                                <Tooltip title={`Delete ${selectedCount} contact${selectedCount > 1 ? 's' : ''}`}>
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={handleDelete as any}
+                                        size="middle"
+                                    >
+                                        Delete
+                                    </Button>
+                                </Tooltip>
 
-                            <button
-                                className="bg-blue-200 px-4 py-2 rounded-md transition duration-300"
-                                onClick={() => addContactToGroupt()}
-                            >
-                                <span className="text-blue-700"> Add to Group </span>
-                                <i className="bi bi-people text-blue-500"></i>
-                            </button>
-                        </>
-                    )}
+                                <Tooltip title={`Add ${selectedCount} contact${selectedCount > 1 ? 's' : ''} to group`}>
+                                    <Button
+                                        type="primary"
+                                        ghost
+                                        icon={<TeamOutlined />}
+                                        onClick={addContactToGroup}
+                                        size="middle"
+                                    >
+                                        Add to Group
+                                    </Button>
+                                </Tooltip>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="flex-shrink-0">
+                        <Input
+                            placeholder="Search contacts..."
+                            prefix={<SearchOutlined className="text-gray-400" />}
+                            value={searchQuery}
+                            onChange={handleSearchInput}
+                            allowClear
+                            className="w-64"
+                            size="middle"
+                        />
+                    </div>
                 </div>
+            </Card>
 
-                <div className="ml-3">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                        onChange={(e) => handleSearchInput(e.target.value)}
-                        value={searchQuery}
-                    />
-                </div>
-            </div>
-            <CreateContact isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-            <GetAllContacts contactData={contacts as APIResponse<PaginatedResponse<ContactAPIResponse>>} loading={isLoading} currentPage={currentPage} pageSize={pageSize}  onPageChange={(page, size) => onPageChange(page, size)} />
-            <ContactUpload isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} />
-            <AddContactsToGroupComponent isOpen={groupModalOpen} onClose={() => setGroupModalOpen(false)} />
-        </>
+            {/* Contacts Table */}
+            <Card className="shadow-sm">
+                <GetAllContacts
+                    contactData={contacts as APIResponse<PaginatedResponse<ContactAPIResponse>>}
+                    loading={isLoading}
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    onPageChange={onPageChange}
+                />
+            </Card>
 
-    )
+            {/* Modals */}
+            <CreateContact
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                refetch={refetch}
+            />
 
+            <ContactUpload
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
+            />
+
+            <AddContactsToGroupComponent
+                isOpen={groupModalOpen}
+                onClose={() => setGroupModalOpen(false)}
+            />
+        </div>
+    );
 };
 
 export default ContactsDashComponent;

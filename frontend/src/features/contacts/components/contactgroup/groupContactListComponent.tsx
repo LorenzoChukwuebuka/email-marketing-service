@@ -1,50 +1,149 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Table, Button, Input, Card, Typography, Space, message } from 'antd';
+import { DeleteOutlined, ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons';
+import type { ColumnsType, TableProps } from 'antd/es/table';
 import useContactGroupStore from "../../store/contactgroup.store";
-import { ContactGroupData } from '../../interface/contactgroup.interface';
+import { ContactGroupData, ContactInGroup } from '../../interface/contactgroup.interface';
 import { useSingleContactGroupQuery } from "../../hooks/useContactGroupQuery";
 import LoadingSpinnerComponent from "../../../../components/loadingSpinnerComponent";
 
+const { Title, Text } = Typography;
 
 const GroupContactList: React.FC = () => {
-    const { setSelectedContactIds, setSelectedGroupIds, selectedContactIds, removeContactFromGroup } = useContactGroupStore();
+    const navigate = useNavigate();
+    const { setSelectedContactIds, setSelectedGroupIds, removeContactFromGroup } = useContactGroupStore();
     const [group, setGroup] = useState<ContactGroupData | null>(null);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [searchText, setSearchText] = useState<string>('');
+    const [filteredContacts, setFilteredContacts] = useState<ContactInGroup[]>([]);
 
     const location = useLocation();
     const stateData = location.state as { groupId: string };
 
-    const { data: contactgroupData, isLoading } = useSingleContactGroupQuery(stateData.groupId)
+    const { data: contactgroupData, isLoading } = useSingleContactGroupQuery(stateData.groupId);
 
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            const allIds = group?.contacts?.map((contact) => contact.uuid) || [];
-            setSelectedIds(allIds);
-            setSelectedContactIds(allIds);
+    // Filter contacts based on search text
+    useEffect(() => {
+        if (!group?.contacts) {
+            setFilteredContacts([]);
+            return;
+        }
+
+        if (!searchText) {
+            setFilteredContacts(group.contacts);
         } else {
-            setSelectedIds([]);
-            setSelectedContactIds([]);
+            const filtered = group.contacts.filter(contact =>
+                contact.contact_first_name.toLowerCase().includes(searchText.toLowerCase()) ||
+                contact.contact_last_name.toLowerCase().includes(searchText.toLowerCase()) ||
+                contact.contact_email.toLowerCase().includes(searchText.toLowerCase())
+            );
+            setFilteredContacts(filtered);
         }
+    }, [group?.contacts, searchText]);
+
+    // Handle row selection
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedContactIds(newSelectedRowKeys as string[]);
     };
 
-    const handleSelect = (uuid: string) => {
-        const updatedIds = selectedIds.includes(uuid)
-            ? selectedIds.filter((id) => id !== uuid)
-            : [...selectedIds, uuid];
-        setSelectedIds(updatedIds);
-        setSelectedContactIds(updatedIds);
+    const rowSelection: TableProps<ContactInGroup>['rowSelection'] = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+        selections: [
+            Table.SELECTION_ALL,
+            Table.SELECTION_INVERT,
+            Table.SELECTION_NONE,
+        ],
     };
 
-    const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Handle remove contacts
+    const handleRemoveContacts = async () => {
         try {
-            e.preventDefault()
             const stateData = location.state as { groupId: string };
-            setSelectedGroupIds([stateData.groupId])
-            await removeContactFromGroup()
+            setSelectedGroupIds([stateData.groupId]);
+            await removeContactFromGroup();
+            message.success('Contacts removed successfully');
+            setSelectedRowKeys([]);
         } catch (error) {
-            console.log(error)
+            console.error(error);
+            message.error('Failed to remove contacts');
         }
-    }
+    };
+
+    // Handle search
+    const handleSearch = (value: string) => {
+        setSearchText(value);
+    };
+
+    // Handle back navigation
+    const handleBack = () => {
+        navigate(-1);
+    };
+
+    // Format date
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString('en-US', {
+            timeZone: 'UTC',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric'
+        });
+    };
+
+    // Table columns
+    const columns: ColumnsType<ContactInGroup> = [
+        {
+            title: 'First Name',
+            dataIndex: 'contact_first_name',
+            key: 'contact_first_name',
+            sorter: (a, b) => a.contact_first_name.localeCompare(b.contact_first_name),
+        },
+        {
+            title: 'Last Name',
+            dataIndex: 'contact_last_name',
+            key: 'contact_last_name',
+            sorter: (a, b) => a.contact_last_name.localeCompare(b.contact_last_name),
+        },
+        {
+            title: 'Email',
+            dataIndex: 'contact_email',
+            key: 'contact_email',
+            sorter: (a, b) => a.contact_email.localeCompare(b.contact_email),
+        },
+        {
+            title: 'From',
+            dataIndex: 'contact_from_origin',
+            key: 'contact_from_origin',
+            sorter: (a, b) => a.contact_from_origin.localeCompare(b.contact_from_origin),
+        },
+        {
+            title: 'Subscribed',
+            dataIndex: 'contact_is_subscribed',
+            key: 'contact_is_subscribed',
+            render: (subscribed: boolean) => (
+                <span style={{ color: subscribed ? '#52c41a' : '#ff4d4f' }}>
+                    {subscribed ? 'Yes' : 'No'}
+                </span>
+            ),
+            filters: [
+                { text: 'Subscribed', value: true },
+                { text: 'Unsubscribed', value: false },
+            ],
+            onFilter: (value, record) => record.contact_is_subscribed === value,
+        },
+        {
+            title: 'Created At',
+            dataIndex: 'contact_created_at',
+            key: 'contact_created_at',
+            render: (date: string) => formatDate(date),
+            sorter: (a, b) => new Date(a.contact_created_at).getTime() - new Date(b.contact_created_at).getTime(),
+        },
+    ];
 
     useEffect(() => {
         if (contactgroupData) {
@@ -56,123 +155,90 @@ const GroupContactList: React.FC = () => {
         }
     }, [contactgroupData]);
 
-    return (
-        <main className="mt-5">
-            <div className="p-6">
-                {isLoading ? (
-                    <LoadingSpinnerComponent />
-                ) : group ? (
-                    <>
-                        <div className="flex items-start flex-col mb-5">
-                            <button className="text-blue-600 mr-2" onClick={() => window.history.back()}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                            </button>
-                            <h2 className="text-xl font-bold text-gray-800">Group Name: {group.group_name}</h2>
-                            <p className="text-md block text-gray-500 p-2 px-2 mt-2">Description: {group.description}</p>
-                        </div>
-
-                        <h1 className="text-xl font-semibold mt-5">Contacts</h1>
-
-                        <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-                            <div className="space-x-1  h-auto w-full p-2 px-2 ">
-                                {selectedContactIds.length > 0 && (
-                                    <>
-                                        <button
-                                            className="bg-red-200 px-4 py-2 rounded-md transition duration-300"
-                                            onClick={(e) => handleSubmit(e)}
-                                        >
-                                            <span className="text-red-500"> Remove Contact(s)  </span>
-                                            <i className="bi bi-trash text-red-500"></i>
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-
-                            <div className="ml-3">
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                                // onChange={(e) => handleSearch(e.target.value)}
-                                />
-                            </div>
-
-                        </div>
-
-                        <table className="md:min-w-5xl min-w-full w-full mt-5 rounded-sm bg-white">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="py-3 px-4 text-left">
-                                        <input
-                                            type="checkbox"
-                                            className="form-checkbox h-4 w-4 text-blue-600"
-                                            onChange={handleSelectAll}
-                                            checked={selectedIds.length === (group.contacts?.length ?? 0)}
-                                        />
-                                    </th>
-                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        First Name
-                                    </th>
-                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Last Name
-                                    </th>
-                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email
-                                    </th>
-                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        From
-                                    </th>
-                                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Created At
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {group.contacts && group.contacts.length > 0 ? (
-                                    group.contacts.map((contact) => (
-                                        <tr key={contact.uuid}>
-                                            <td className="py-4 px-4">
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-checkbox h-4 w-4 text-blue-600"
-                                                    checked={selectedIds.includes(contact.uuid)}
-                                                    onChange={() => handleSelect(contact.uuid)}
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4">{contact.first_name}</td>
-                                            <td className="py-4 px-4">{contact.last_name}</td>
-                                            <td className="py-4 px-4">{contact.email}</td>
-                                            <td className="py-4 px-4">{contact.from}</td>
-                                            <td className="py-4 px-4">
-                                                {new Date(contact.created_at).toLocaleString('en-US', {
-                                                    timeZone: 'UTC',
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: 'numeric',
-                                                    second: 'numeric'
-                                                })}
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6} className="py-4 px-4 text-center">
-                                            No contacts available
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </>
-                ) : (
-                    <p>No group data available.</p>
-                )}
+    if (isLoading) {
+        return (
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+                <LoadingSpinnerComponent />
             </div>
-        </main>
+        );
+    }
+
+    if (!group) {
+        return (
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+                <Text>No group data available.</Text>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ padding: '24px' }}>
+            {/* Header */}
+            <Card style={{ marginBottom: '24px' }}>
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <Button
+                        type="link"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={handleBack}
+                        style={{ padding: 0, height: 'auto' }}
+                    >
+                        Back
+                    </Button>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Group: {group.group_name}
+                    </Title>
+                    <Text type="secondary">
+                        Description: {group.description}
+                    </Text>
+                </Space>
+            </Card>
+
+            {/* Actions Bar */}
+            <Card style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Space>
+                        {selectedRowKeys.length > 0 && (
+                            <Button
+                                type="primary"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={handleRemoveContacts}
+                            >
+                                Remove Contact{selectedRowKeys.length > 1 ? 's' : ''} ({selectedRowKeys.length})
+                            </Button>
+                        )}
+                    </Space>
+                    <Input
+                        placeholder="Search contacts..."
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        style={{ width: '300px' }}
+                        allowClear
+                    />
+                </div>
+            </Card>
+
+            {/* Table */}
+            <Card>
+                <Table<ContactInGroup>
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={filteredContacts}
+                    rowKey="contact_id"
+                    pagination={{
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total, range) =>
+                            `${range[0]}-${range[1]} of ${total} contacts`,
+                    }}
+                    scroll={{ x: 'max-content' }}
+                    locale={{
+                        emptyText: 'No contacts available'
+                    }}
+                />
+            </Card>
+        </div>
     );
 };
 

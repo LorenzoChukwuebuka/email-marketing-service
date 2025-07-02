@@ -41,7 +41,7 @@ const InitializeState: ContactState = {
     selectedIds: [],
 
     editContactValues: {
-        uuid: '',
+        id: '',
     }
 }
 
@@ -79,7 +79,6 @@ const useContactStore = create<ContactStore>((set, get) => ({
                 results.every(response => response.payload.status === true)
 
                 eventBus.emit('success', "contact(s) deleted successfully")
-
             }
             invalidateContactQuery(queryClient)
         } catch (error) {
@@ -89,8 +88,8 @@ const useContactStore = create<ContactStore>((set, get) => ({
 
     editContact: async () => {
         const { editContactValues } = get()
-        try {
-            const response = await contactApi.editContact(editContactValues.uuid, editContactValues)
+        try { 
+            const response = await contactApi.editContact(editContactValues.id, editContactValues)
             if (response) {
                 eventBus.emit('success', 'contact has been edited successfully')
             }

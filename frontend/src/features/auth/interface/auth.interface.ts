@@ -10,6 +10,15 @@ export type FormValues = {
     phonenumber: string;
 }
 
+export interface Company {
+    company_id: string;
+    companyname: string;
+    company_created_at: string; // ISO 8601 datetime string
+    company_updated_at: string;
+    company_deleted_at: string | null;
+}
+
+
 export type LoginValues = Pick<FormValues, 'email' | 'password'>
 
 export type ForgetPasswordValues = Pick<FormValues, 'email'>
@@ -25,7 +34,7 @@ export type UserDetails = {
     phonenumber: string
     verified: boolean,
     blocked: boolean,
-} & BaseEntity
+} & BaseEntity & Company
 
 export type ChangePasswordValues = {
     old_password: string;

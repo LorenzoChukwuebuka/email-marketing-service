@@ -5,6 +5,7 @@ import (
 	"email-marketing-service/core/handler/auth/dto"
 	"email-marketing-service/core/handler/auth/service"
 	"email-marketing-service/internal/common"
+	"email-marketing-service/internal/config"
 	"email-marketing-service/internal/helper"
 	"fmt"
 	"net/http"
@@ -14,6 +15,10 @@ import (
 type Controller struct {
 	authSrv *service.Service
 }
+
+var (
+	cfg = config.LoadEnv()
+)
 
 func NewAuthController(authSrv *service.Service) *Controller {
 	return &Controller{
@@ -160,6 +165,62 @@ func (c *Controller) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helper.SuccessResponse(w, 200, "password changed successfully")
+}
+
+// RefreshTokenHandler handles refreshing access tokens using the refresh token
+func (c *Controller) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+	var reqdata *dto.RefreshAccessToken
+	if err := helper.DecodeRequestBody(r, &reqdata); err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("unable to decode request body"), nil)
+		return
+	}
+
+	key := cfg.JWTKey
+
+	// Parse and validate the refresh token
+	claims, err := helper.ParseToken(reqdata.RefreshToken, []byte(key))
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("invalid refresh token"), nil)
+		return
+	}
+
+	// Safe type assertions with validation
+	userId, ok := claims["userId"].(string)
+	if !ok {
+		helper.ErrorResponse(w, fmt.Errorf("invalid userId in token"), nil)
+		return
+	}
+
+	companyId, ok := claims["company_id"].(string)
+	if !ok {
+		helper.ErrorResponse(w, fmt.Errorf("invalid company_id in token"), nil)
+		return
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		helper.ErrorResponse(w, fmt.Errorf("invalid username in token"), nil)
+		return
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		helper.ErrorResponse(w, fmt.Errorf("invalid email in token"), nil)
+		return
+	}
+
+	// Generate a new access token using the claims
+	accessToken, err := helper.GenerateAccessToken(userId, companyId, username, email)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("failed to generate access token"), nil)
+		return
+	}
+
+	// Send the new access token to the client
+	res := map[string]string{
+		"access_token": accessToken,
+	}
+	helper.SuccessResponse(w, 200, res)
 }
 
 func (c *Controller) GoogleLogin(http.ResponseWriter, *http.Request) {}

@@ -353,7 +353,7 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}
 
 	// Generate refresh token
-	refreshToken, err := helper.GenerateRefreshToken(user.ID.String(), user.ID.String(), user.Fullname, user.Email)
+	refreshToken, err := helper.GenerateRefreshToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
 	if err != nil {
 		return nil, err
 	}

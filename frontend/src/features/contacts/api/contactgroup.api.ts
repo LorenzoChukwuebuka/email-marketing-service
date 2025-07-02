@@ -5,10 +5,11 @@ import { AddToGroup, ContactGroupData, ContactGroupFormValues } from '../interfa
 
 
 export class ContactGroupAPI {
+    private baseurl = "/contacts";
     async getAllGroups(page?: number, pageSize?: number, query?: string): Promise<APIResponse<PaginatedResponse<ContactGroupData>>> {
         const response = await axiosInstance
             .get<APIResponse<PaginatedResponse<ContactGroupData>>>
-            (`/contact/get-all-contact-groups`, {
+            (`${this.baseurl}/getgroupwithcontacts`, {
                 params: {
                     page: page || undefined,
                     page_size: pageSize || undefined,
@@ -20,28 +21,27 @@ export class ContactGroupAPI {
     }
 
     async addContactToGroup(data: AddToGroup) {
-
-        const response = await axiosInstance.post<ResponseT>("/contact/add-contact-to-group", data);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseurl}/addcontacttogroup`, data);
         return response.data;
     }
 
     async getSingleGroup(uuid: string) {
-        const response = await axiosInstance.get<APIResponse<ContactGroupData>>('/contact/get-single-group/' + uuid);
+        const response = await axiosInstance.get<APIResponse<ContactGroupData>>(`${this.baseurl}/getgroupwithcontacts/` + uuid);
         return response.data.payload;
     }
 
     async createGroup(formValues: ContactGroupFormValues) {
-        const response = await axiosInstance.post<ResponseT>("/contact/create-contact-group", formValues);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseurl}/creategroup`, formValues);
         return response.data;
     }
 
     async updateGroup(uuid: string, values: ContactGroupFormValues) {
-        const response = await axiosInstance.put<ResponseT>("/contact/edit-group/" + uuid, values);
+        const response = await axiosInstance.put<ResponseT>(`${this.baseurl}/updatecontactgroup/` + uuid, values);
         return response.data;
     }
 
     async deleteGroup(groupId: string): Promise<APIResponse<ResponseT>> {
-        const response = await axiosInstance.delete<APIResponse<ResponseT>>("/contact/delete-group/" + groupId);
+        const response = await axiosInstance.delete<APIResponse<ResponseT>>(`${this.baseurl}/deletecontactgroup/` + groupId);
         return response.data;
     }
 
@@ -51,11 +51,9 @@ export class ContactGroupAPI {
             contact_id: contactId
         };
 
-        const response = await axiosInstance.post<ResponseT>("/contact/remove-contact-from-group", data);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseurl}/removecontactfromgroup`, data);
         return response.data;
-    }
-
-
+    } 
 }
 
 export const contactGroupAPI = new ContactGroupAPI();

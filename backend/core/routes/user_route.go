@@ -27,4 +27,5 @@ func (t *UserRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/mark-for-deletion", handler.MarkUserForDeletion).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/cancel-deletion", handler.CancelUserDeletion).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/details", handler.GetUserDetails).Methods("GET", "OPTIONS")
+	r.HandleFunc("/current-running-subscription", handler.GetCurrentRunningSubscription).Methods("GET", "OPTIONS")
 }

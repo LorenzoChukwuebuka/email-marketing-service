@@ -109,6 +109,31 @@ func (s *UserService) CancelUserDeletion(ctx context.Context, userId string) err
 	return nil
 }
 
+func (c *UserService) GetCurrentRunningSubscription(ctx context.Context, company_id string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"company": company_id,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	subscription, err := c.store.GetCurrentRunningSubscription(ctx, _uuid["company"])
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	emailUsage, err := c.store.GetCurrentEmailUsage(ctx, _uuid["company"])
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	return map[string]interface{}{
+		"plan":           subscription.PlanName,
+		"mailsPerDay":    emailUsage.EmailsLimit,
+		"remainingMails": emailUsage.RemainingEmails.Int32,
+	}, nil
+}
+
 // func (s *UserService) EditUser(ctx context.Context, userId string) error {
 // 	_uuid, err := common.ParseUUIDMap(map[string]string{
 // 		"user": userId,
@@ -121,7 +146,6 @@ func (s *UserService) CancelUserDeletion(ctx context.Context, userId string) err
 // 	if err != nil {
 // 		return err
 // 	}
-
 
 // 	return nil
 

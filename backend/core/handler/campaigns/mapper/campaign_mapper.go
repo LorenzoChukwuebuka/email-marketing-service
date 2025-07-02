@@ -74,7 +74,7 @@ func MapScheduledCampaignResponse(row db.ListScheduledCampaignsByCompanyIDRow) *
 		TemplateUpdatedAt:         row.TemplateUpdatedAt,
 		TemplateDeletedAt:         row.TemplateDeletedAt,
 	}
-	
+
 	return MapCampaignResponse(baseRow)
 }
 
@@ -151,7 +151,7 @@ func MapGetCampaignResponse(row db.GetCampaignByIDRow) *dto.CampaignResponseDTO 
 		TemplateUpdatedAt:         row.TemplateUpdatedAt,
 		TemplateDeletedAt:         row.TemplateDeletedAt,
 	}
-	
+
 	return MapCampaignResponse(baseRow)
 }
 
@@ -287,4 +287,60 @@ func nullRawMessageToPtr(nrm pqtype.NullRawMessage) *json.RawMessage {
 		return nil
 	}
 	return &nrm.RawMessage
+}
+
+func nullInt32ToPtr(ni sql.NullInt32) *int32 {
+	if !ni.Valid {
+		return nil
+	}
+	return &ni.Int32
+}
+
+func MapCampaignEmailResponse(req []db.EmailCampaignResult) []*dto.EmailCampaignResultResponse {
+	if len(req) == 0 {
+		return nil
+	}
+
+	var result []*dto.EmailCampaignResultResponse
+	for _, r := range req {
+		result = append(result, &dto.EmailCampaignResultResponse{
+			ID:              r.ID.String(),
+			CompanyID:       r.CompanyID.String(),
+			CampaignID:      r.CampaignID.String(),
+			RecipientEmail:  r.RecipientEmail,
+			RecipientName:   nullStringToPtr(r.RecipientName),
+			Version:         nullStringToPtr(r.Version),
+			SentAt:          nullTimeToPtr(r.SentAt),
+			OpenedAt:        nullTimeToPtr(r.OpenedAt),
+			OpenCount:       nullInt32ToPtr(r.OpenCount),
+			ClickedAt:       nullTimeToPtr(r.ClickedAt),
+			ClickCount:      nullInt32ToPtr(r.ClickCount),
+			ConversionAt:    nullTimeToPtr(r.ConversionAt),
+			BounceStatus:    nullStringToPtr(r.BounceStatus),
+			UnsubscribedAt:  nullTimeToPtr(r.UnsubscribedAt),
+			ComplaintStatus: &r.ComplaintStatus.Valid,
+			DeviceType:      nullStringToPtr(r.DeviceType),
+			Location:        nullStringToPtr(r.Location),
+			RetryCount:      nullInt32ToPtr(r.RetryCount),
+			Notes:           nullStringToPtr(r.Notes),
+			CreatedAt:       nullTimeToPtr(r.CreatedAt),
+			UpdatedAt:       nullTimeToPtr(r.UpdatedAt),
+			DeletedAt:       nullTimeToPtr(r.DeletedAt),
+		})
+	}
+
+	return result
+}
+
+func MapCampaignGroups(row []db.GetCampaignContactGroupsRow) []*dto.GetCampaignContactGroupsResponse {
+	var groups []*dto.GetCampaignContactGroupsResponse
+	for _, r := range row {
+		groups = append(groups, &dto.GetCampaignContactGroupsResponse{
+			ID:          r.ID.String(),
+			GroupName:   r.GroupName,
+			Description: nullStringToPtr(r.Description),
+			CreatedAt:   nullTimeToPtr(r.CreatedAt),
+		})
+	}
+	return groups
 }

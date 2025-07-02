@@ -26,7 +26,7 @@ export const campaignQueryOptions = (page?: number, pageSize?: number, query?: s
 
 // Custom hook for using the mailCalc query
 export const useCampaignQuery = (page?: number, pageSize?: number, query?: string) => {
-    return useQuery<APIResponse<PaginatedResponse<CampaignResponse[]>>>(
+    return useQuery<APIResponse<PaginatedResponse<CampaignResponse>>>(
         campaignQueryOptions(page, pageSize, query)
     );
 };

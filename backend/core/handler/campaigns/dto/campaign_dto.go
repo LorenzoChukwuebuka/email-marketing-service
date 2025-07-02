@@ -36,7 +36,7 @@ type CampaignGroupDTO struct {
 type SendCampaignDTO struct {
 	CampaignId string `json:"campaign_id" validate:"required"`
 	UserId     string `json:"user_id"`
-	CompanyId string `json:"company_id"`
+	CompanyId  string `json:"company_id"`
 }
 
 type FetchCampaignDTO struct {
@@ -120,4 +120,37 @@ type TemplateResponse struct {
 	TemplateCreatedAt         *time.Time       `json:"template_created_at"`
 	TemplateUpdatedAt         *time.Time       `json:"template_updated_at"`
 	TemplateDeletedAt         *time.Time       `json:"template_deleted_at"`
+}
+
+type EmailCampaignResultResponse struct {
+	ID              string                             `json:"id"`
+	CompanyID       string                             `json:"company_id"`
+	CampaignID      string                             `json:"campaign_id"`
+	RecipientEmail  string                             `json:"recipient_email"`
+	RecipientName   *string                            `json:"recipient_name"`
+	Version         *string                            `json:"version"`
+	SentAt          *time.Time                         `json:"sent_at"`
+	OpenedAt        *time.Time                         `json:"opened_at"`
+	OpenCount       *int32                             `json:"open_count"`
+	ClickedAt       *time.Time                         `json:"clicked_at"`
+	ClickCount      *int32                             `json:"click_count"`
+	ConversionAt    *time.Time                         `json:"conversion_at"`
+	BounceStatus    *string                            `json:"bounce_status"`
+	UnsubscribedAt  *time.Time                         `json:"unsubscribed_at"`
+	ComplaintStatus *bool                              `json:"complaint_status"`
+	DeviceType      *string                            `json:"device_type"`
+	Location        *string                            `json:"location"`
+	RetryCount      *int32                             `json:"retry_count"`
+	Notes           *string                            `json:"notes"`
+	CreatedAt       *time.Time                         `json:"created_at"`
+	UpdatedAt       *time.Time                         `json:"updated_at"`
+	DeletedAt       *time.Time                         `json:"deleted_at"`
+	Group           []GetCampaignContactGroupsResponse `json:"group"`
+}
+
+type GetCampaignContactGroupsResponse struct {
+	ID          string     `json:"id"`
+	GroupName   string     `json:"group_name"`
+	Description *string    `json:"description"`
+	CreatedAt   *time.Time `json:"created_at"`
 }

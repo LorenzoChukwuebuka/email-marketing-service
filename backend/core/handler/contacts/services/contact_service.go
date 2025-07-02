@@ -453,6 +453,10 @@ func (s *Service) GetAllContactGroups(ctx context.Context, req *dto.FetchContact
 
 	contact_count, err := s.store.CountContactGroups(ctx, _uuid["company"])
 
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
 	groups, err := s.store.GetGroupsWithContacts(ctx, db.GetGroupsWithContactsParams{
 		UserID:     _uuid["user"],
 		CompanyID:  _uuid["company"],
@@ -515,5 +519,72 @@ func (s *Service) GetDashboardStats(ctx context.Context, userId string) (any, er
 		TenDaysAgo: sql.NullTime{Time: tenDaysAgo, Valid: true},
 	})
 
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
 	return stats, nil
+}
+
+func (s *Service) GetContactCount(ctx context.Context, req *dto.FetchContactDTO) (map[string]int64, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    req.UserId,
+		"company": req.CompanyID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	contactCounts := make(map[string]int64)
+
+	count, err := s.store.GetContactsCount(ctx, db.GetContactsCountParams{
+		UserID:    _uuid["user"],
+		CompanyID: _uuid["company"],
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
+	}
+
+	recentContact, err := s.store.GetNewContactsCount(ctx, db.GetNewContactsCountParams{
+		UserID:     _uuid["user"],
+		TenDaysAgo: sql.NullTime{Time: time.Now().AddDate(0, 0, -10), Valid: true},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching recent contact count: %w", err)
+	}
+
+	contactCounts["total"] = count
+	contactCounts["recent"] = recentContact
+
+	return contactCounts, nil
+}
+
+func (s *Service) GetContactSubscriptionStatusForDashboard(ctx context.Context, userId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": userId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	stats, err := s.store.GetContactStats(ctx, db.GetContactStatsParams{
+		UserID:     _uuid["user"],
+		TenDaysAgo: sql.NullTime{Time: time.Now().AddDate(0, 0, -10), Valid: true},
+	})
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	
+
+	return map[string]interface{}{
+		"unsubscribed": stats.UnsubscribedCount,
+		"total":        stats.TotalCount,
+		 "new": stats.NewContactsCount,
+		"engaged": stats.EngagedCount,
+	}, nil
 }

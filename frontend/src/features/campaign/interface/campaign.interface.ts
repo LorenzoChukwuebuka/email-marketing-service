@@ -1,7 +1,63 @@
-import { BaseEntity } from '../../../interface/baseentity.interface';
-import { Template } from '../../email-templates/interface/email-templates.interface';
+ import { BaseEntity } from '../../../interface/baseentity.interface';
 
  
+export type Template = {
+    template_id_ref: string;
+    template_user_id: string;
+    template_company_id: string;
+    template_name: string;
+    template_sender_name: string;
+    template_from_email: string;
+    template_subject: string;
+    template_type: string;
+    template_email_html: string;
+    template_email_design: string | null;
+    template_is_editable: boolean;
+    template_is_published: boolean;
+    template_is_public_template: boolean;
+    template_is_gallery_template: boolean;
+    template_tags: string;
+    template_description: string;
+    template_image_url: string;
+    template_is_active: boolean;
+    template_editor_type: string;
+    template_created_at: string;
+    template_updated_at: string;
+    template_deleted_at: string | null;
+};
+
+ 
+export type CampaignUser = {
+    user_id_2: string;
+    user_fullname: string;
+    user_email: string;
+    user_phonenumber: string | null;
+    user_picture: string | null;
+    user_verified: boolean;
+    user_blocked: boolean;
+    user_verified_at: string;
+    user_status: string;
+    user_last_login_at: string | null;
+    user_created_at: string;
+    user_updated_at: string;
+};
+
+ 
+export type CampaignCompany = {
+    company_id_ref: string;
+    company_name: string;
+    company_created_at: string;
+    company_updated_at: string;
+};
+
+ 
+export type CampaignGroupInfo = {
+    id: string;
+    group_name: string;
+    description: string;
+    created_at: string;
+};
+
 export type Campaign = {
     name: string;
     subject?: string;
@@ -10,31 +66,41 @@ export type Campaign = {
     user_id: string;
     sender_from_name?: string;
     template_id?: string;
-    sent_template_id?: string;
+    sent_template_id?: string | null;
     recipient_info?: string;
     is_published: boolean;
     status: string;
     track_type: string;
     is_archived: boolean;
     sent_at?: string;
-    created_by: string;
-    last_edited_by: string;
+    created_by?: string;
+    last_edited_by?: string;
     template?: Template;
-    scheduled_at?: string
+    scheduled_at?: string;
     sender?: string;
-    campaign_groups: CampaignGroup[]
+    campaign_groups?: CampaignGroup[];
+    // Additional fields from API response
+    has_custom_logo?: boolean;
+    user?: CampaignUser;
+    company?: CampaignCompany;
+    groups?: CampaignGroupInfo[];
 };
 
+export type CampaignResponse = Campaign & BaseEntity;
 
-export type CampaignResponse = Campaign  & BaseEntity
+export type CampaignGroup = { 
+    campaign_id: string; 
+    group_id: string; 
+} & BaseEntity;
 
-export type CampaignGroup = { campaign_id: number; group_id: number } & BaseEntity
+export type CreateCampaignValues = Partial<Campaign>;
 
-export type CreateCampaignValues = Partial<Campaign>
+export type CampaignGroupValues = { 
+    group_name: string; 
+    description: string; 
+};
 
-export type CampaignGroupValues = { campaign_id: string; group_id: string }
-
-export type CampaignData = BaseEntity & Campaign
+export type CampaignData = BaseEntity & Campaign;
 
 export type CampaignStats = {
     hard_bounces: number;
@@ -47,7 +113,7 @@ export type CampaignStats = {
     total_opens: number;
     unique_clicks: number;
     unique_opens: number;
-}
+};
 
 export type CampaignEmailRecipientStats = {
     campaign_id: string;
@@ -88,4 +154,3 @@ export type EmailCampaignStats = {
     sent_date: string | null;
     unsubscribed: number;
 };
-

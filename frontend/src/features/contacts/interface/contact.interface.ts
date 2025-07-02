@@ -1,4 +1,5 @@
-import { BaseEntity } from '../../../interface/baseentity.interface';
+import { BaseEntity, WithPrefix } from '../../../interface/baseentity.interface';
+type GroupBase = WithPrefix<BaseEntity, 'group_'>;
 
 export type ContactFormValues = {
     first_name: string
@@ -10,10 +11,10 @@ export type ContactFormValues = {
 
 export type Group = {
     group_name: string;
-    user_id: string;
+    group_id: string;
+    group_creator_id: string;
     description: string;
-} & BaseEntity;
-
+} & GroupBase;
 
 
 export type ContactBase = {
@@ -21,11 +22,14 @@ export type ContactBase = {
     groups: Group[] | null;
 }
 
-export type ContactAPIResponse = BaseEntity & ContactFormValues & ContactBase;
+export type ContactAPIResponse = BaseEntity & Omit<ContactFormValues, 'from'> & {
+    from_origin: string;
+    contact_id: string
+} & ContactBase;
 
 export type ContactCount = { recent: number; total: number }
 
-export type EditContactValues = { uuid: string } & Partial<ContactFormValues>
+export type EditContactValues = { id: string } & Partial<ContactFormValues>
 
 export type ContactEngageCount = {
     engaged: number

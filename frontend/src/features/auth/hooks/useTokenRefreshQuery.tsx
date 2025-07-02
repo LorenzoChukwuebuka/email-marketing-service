@@ -48,7 +48,7 @@ const refreshToken = async () => {
                 return response.data.payload;
             }
         } else {
-            const response = await axiosInstance.post('/refresh-access-token',
+            const response = await axiosInstance.post('/auth/refresh-token',
                 data
             );
             if (response.data?.payload?.access_token) {
