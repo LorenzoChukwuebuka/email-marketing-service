@@ -1,103 +1,364 @@
-import React, { useMemo, useState } from 'react';
-import { useContactGroupQuery } from '../../../contacts/hooks/useContactGroupQuery';
-import { CampaignGroup, CampaignData } from '../../interface/campaign.interface';
-import { ContactGroupData } from '../../../contacts/interface/contactgroup.interface';
-import { Empty } from 'antd';
+import React, { useState } from 'react';
+import {
+    Card,
+    Typography,
+    Tag,
+    Button,
+    Space,
+    Modal,
+    Avatar,
+    Row,
+    Col,
+    Empty
+} from 'antd';
+import {
+    EyeOutlined,
+    CalendarOutlined,
+    UserOutlined,
+    MailOutlined,
+    TeamOutlined,
+    SendOutlined,
+    LayoutOutlined
+} from '@ant-design/icons';
+import { CampaignData } from '../../interface/campaign.interface';
+const { Title, Text } = Typography;
 
-type InfoItemProp = { label: string; value: string | React.ReactNode }
-
-const InfoItem = ({ label, value }: InfoItemProp) => (
-    <div className="mb-4">
-        <span className="text-sm font-medium text-gray-500">{label}</span>
-        <div className="mt-1 text-sm text-gray-900">{value}</div>
-    </div>
-);
-
-type GProps = { campaignGroups: CampaignGroup[], contactGroups: ContactGroupData[] }
-
-const CampaignGroupsList = ({ campaignGroups, contactGroups }: GProps) => {
-    const matchedGroups = Array.isArray(campaignGroups) && Array.isArray(contactGroups)
-        ? campaignGroups.map(campaignGroup => {
-            const matchedGroup = contactGroups.find(contactGroup => contactGroup.id === campaignGroup.group_id);
-            return matchedGroup ? matchedGroup.group_name : 'Unknown Group';
-        })
-        : [];
-
-    return (
-        <ul className="mt-1 text-sm text-gray-900">
-            {matchedGroups.length > 0 ? (
-                matchedGroups.map((groupName, index) => (
-                    <li key={index}>{groupName}</li>
-                ))
-            ) : (
-                <li><Empty description={"no groups available"} /></li>
-            )}
-        </ul>
-    );
+type CampaignInfoProps = {
+    campaignData: CampaignData;
 };
 
-type CampaignInfoProps = { campaignData: CampaignData }
-
 const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
-    const [templatePreview, setTemplatePreview] = useState<string | null>(null);
-    const { data: contactgroupData } = useContactGroupQuery(1, 2000, undefined)
-    const cgdata = useMemo(() => contactgroupData?.payload.data || [], [contactgroupData])
+    const [templatePreviewVisible, setTemplatePreviewVisible] = useState(false);
 
-    const handleClick = () => {
-        setTemplatePreview(campaignData.template?.email_html as any)
-    }
+    // Get status color based on campaign status
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'sent': return 'success';
+            case 'draft': return 'default';
+            case 'sending': return 'processing';
+            case 'scheduled': return 'warning';
+            case 'failed': return 'error';
+            default: return 'default';
+        }
+    };
+
+    // Format date for display
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString || dateString === '0001-01-01T00:00:00Z') return 'Not set';
+        return new Date(dateString).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
+    // Get group names from the API response
+    const getGroupNames = () => {
+        if (campaignData?.groups && campaignData?.groups?.length > 0) {
+            return campaignData?.groups.map(group => group?.group_name);
+        }
+        return [];
+    };
+
+    const groupNames = getGroupNames();
 
     return (
-        <div className="bg-white mt-5 shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg leading-6 font-medium text-indigo-900">Campaign Info</h3>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-                <dl className="sm:divide-y sm:divide-gray-200">
-                    <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <InfoItem label="Email Subject" value={campaignData?.subject as string} />
-                        <InfoItem label="Sender Email" value={campaignData?.sender} />
-                        <InfoItem label="Sender From" value={campaignData?.sender_from_name as string} />
-                    </div>
-                    <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <InfoItem
-                            label="Group/Segment Sent To"
-                            value={<CampaignGroupsList campaignGroups={campaignData.campaign_groups} contactGroups={cgdata} />}
-                        />
-                        <InfoItem
-                            label="Sent On"
-                            value={new Date(campaignData.sent_at as string).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                            })}
-                        />
-                        {/* <InfoItem label="Audience" value={campaignData.audience} /> */}
-                    </div>
-                    <div className="py-4 sm:py-5 sm:px-6">
-                        <h4 className="text-md font-medium text-gray-900 mb-2">Content</h4>
-                        <InfoItem label="Template Selected" value={campaignData.template?.template_name as string} />
-                        <div className="mt-4 space-x-2">
-                            <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onClick={() => handleClick()}>
-                                Preview template
-                            </button>
-                            <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onClick={() => setTemplatePreview(null)}>
-                                Hide Preview
-                            </button>
+        <div style={{ padding: '24px' }}>
+            <Card
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <MailOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                            <Title level={3} style={{ margin: 0 }}>
+                                {campaignData?.name}
+                            </Title>
                         </div>
-
-                        {templatePreview && (
-                            <div className="mt-4">
-                                <h3 className="text-lg font-semibold">Template Preview</h3>
-                                <div className="border p-4 mt-2" dangerouslySetInnerHTML={{ __html: templatePreview }} />
-                            </div>
-                        )}
+                        <Tag color={getStatusColor(campaignData?.status)} style={{ fontSize: '12px' }}>
+                            {campaignData?.status.toUpperCase()}
+                        </Tag>
                     </div>
-                </dl>
-            </div>
+                }
+                bordered={false}
+                style={{
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+            >
+                <Row gutter={[24, 24]}>
+                    {/* Basic Information */}
+                    <Col xs={24} lg={12}>
+                        <Card
+                            type="inner"
+                            title={
+                                <Space>
+                                    <SendOutlined />
+                                    <span>Email Details</span>
+                                </Space>
+                            }
+                            style={{ height: '100%' }}
+                        >
+                            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                <div>
+                                    <Text type="secondary">Subject</Text>
+                                    <div>
+                                        <Text strong>{campaignData?.subject || 'No subject'}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">Sender</Text>
+                                    <div>
+                                        <Text strong>{campaignData?.sender || 'Not specified'}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">From Name</Text>
+                                    <div>
+                                        <Text strong>{campaignData?.sender_from_name || 'Not specified'}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">Preview Text</Text>
+                                    <div>
+                                        <Text>{campaignData?.preview_text || 'No preview text'}</Text>
+                                    </div>
+                                </div>
+                            </Space>
+                        </Card>
+                    </Col>
+
+                    {/* Campaign Timeline */}
+                    <Col xs={24} lg={12}>
+                        <Card
+                            type="inner"
+                            title={
+                                <Space>
+                                    <CalendarOutlined />
+                                    <span>Timeline</span>
+                                </Space>
+                            }
+                            style={{ height: '100%' }}
+                        >
+                            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                <div>
+                                    <Text type="secondary">Created At</Text>
+                                    <div>
+                                        <Text strong>{formatDate(campaignData?.created_at)}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">Sent At</Text>
+                                    <div>
+                                        <Text strong>{formatDate(campaignData?.sent_at)}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">Scheduled At</Text>
+                                    <div>
+                                        <Text strong>{formatDate(campaignData?.scheduled_at)}</Text>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Text type="secondary">Last Updated</Text>
+                                    <div>
+                                        <Text strong>{formatDate(campaignData?.updated_at)}</Text>
+                                    </div>
+                                </div>
+                            </Space>
+                        </Card>
+                    </Col>
+
+                    {/* Recipients */}
+                    <Col xs={24}>
+                        <Card
+                            type="inner"
+                            title={
+                                <Space>
+                                    <TeamOutlined />
+                                    <span>Recipients</span>
+                                </Space>
+                            }
+                        >
+                            <div>
+                                <Text type="secondary">Groups/Segments</Text>
+                                <div style={{ marginTop: '8px' }}>
+                                    {groupNames.length > 0 ? (
+                                        <Space wrap>
+                                            {groupNames.map((groupName, index) => (
+                                                <Tag
+                                                    key={index}
+                                                    color="blue"
+                                                    icon={<TeamOutlined />}
+                                                    style={{ marginBottom: '4px' }}
+                                                >
+                                                    {groupName}
+                                                </Tag>
+                                            ))}
+                                        </Space>
+                                    ) : (
+                                        <Empty
+                                            description="No groups selected"
+                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                            style={{ margin: '16px 0' }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+
+                    {/* Template Information */}
+                    <Col xs={24}>
+                        <Card
+                            type="inner"
+                            title={
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Space>
+                                        <LayoutOutlined />
+                                        <span>Template</span>
+                                    </Space>
+                                    <Space>
+                                        <Button
+                                            type="primary"
+                                            icon={<EyeOutlined />}
+                                            onClick={() => setTemplatePreviewVisible(true)}
+                                            disabled={!campaignData.template?.template_email_html}
+                                        >
+                                            Preview Template
+                                        </Button>
+                                    </Space>
+                                </div>
+                            }
+                        >
+                            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                <div>
+                                    <Text type="secondary">Template Name</Text>
+                                    <div>
+                                        <Text strong>
+                                            {campaignData.template?.template_name || 'No template selected'}
+                                        </Text>
+                                    </div>
+                                </div>
+
+                                {campaignData.template && (
+                                    <>
+                                        <div>
+                                            <Text type="secondary">Template Type</Text>
+                                            <div>
+                                                <Tag color="geekblue">
+                                                    {campaignData.template.template_type}
+                                                </Tag>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <Text type="secondary">Template Description</Text>
+                                            <div>
+                                                <Text>{campaignData.template.template_description}</Text>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </Space>
+                        </Card>
+                    </Col>
+
+                    {/* User & Company Info */}
+                    {(campaignData.user || campaignData.company) && (
+                        <Col xs={24}>
+                            <Card
+                                type="inner"
+                                title={
+                                    <Space>
+                                        <UserOutlined />
+                                        <span>Created By</span>
+                                    </Space>
+                                }
+                            >
+                                <Row gutter={[16, 16]}>
+                                    {campaignData.user && (
+                                        <Col xs={24} sm={12}>
+                                            <div>
+                                                <Text type="secondary">User</Text>
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <Space>
+                                                        <Avatar icon={<UserOutlined />} />
+                                                        <div>
+                                                            <div>
+                                                                <Text strong>{campaignData.user.user_fullname}</Text>
+                                                            </div>
+                                                            <div>
+                                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                                    {campaignData.user.user_email}
+                                                                </Text>
+                                                            </div>
+                                                        </div>
+                                                    </Space>
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    )}
+
+                                    {campaignData.company && (
+                                        <Col xs={24} sm={12}>
+                                            <div>
+                                                <Text type="secondary">Company</Text>
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <Text strong>{campaignData.company.company_name}</Text>
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    )}
+                                </Row>
+                            </Card>
+                        </Col>
+                    )}
+                </Row>
+            </Card>
+
+            {/* Template Preview Modal */}
+            <Modal
+                title={
+                    <Space>
+                        <EyeOutlined />
+                        <span>Template Preview</span>
+                    </Space>
+                }
+                open={templatePreviewVisible}
+                onCancel={() => setTemplatePreviewVisible(false)}
+                footer={[
+                    <Button key="close" onClick={() => setTemplatePreviewVisible(false)}>
+                        Close
+                    </Button>
+                ]}
+                width="80%"
+                style={{ top: 20 }}
+            >
+                {campaignData.template?.template_email_html ? (
+                    <div
+                        style={{
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '6px',
+                            padding: '16px',
+                            backgroundColor: '#fff',
+                            maxHeight: '60vh',
+                            overflow: 'auto'
+                        }}
+                        dangerouslySetInnerHTML={{
+                            __html: campaignData.template.template_email_html
+                        }}
+                    />
+                ) : (
+                    <Empty description="No template content available" />
+                )}
+            </Modal>
         </div>
     );
 };

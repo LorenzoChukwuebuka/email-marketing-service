@@ -114,3 +114,22 @@ func (c *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) 
 
 	helper.SuccessResponse(w, http.StatusOK, result)
 }
+
+func (c *UserController) GetCurrentRunningSubscription(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	_, companyId, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch company id from jwt"), nil)
+		return
+	}
+
+	result, err := c.userService.GetCurrentRunningSubscription(ctx, companyId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
+}

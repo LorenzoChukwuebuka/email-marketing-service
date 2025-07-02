@@ -17,6 +17,7 @@ const StatItem = ({ value, label }: StatProp) => (
 const AnalyticsTemplateDash: React.FC = () => {
     const { data: campaignUserStatsData, isLoading } = useCampaignUserStatsQuery()
     const cusdata = useMemo(() => campaignUserStatsData?.payload, [campaignUserStatsData])
+
     const stats = [
         { value: `${cusdata?.total_emails_sent ?? 0}`, label: 'Total Emails Sent' },
         { value: `${cusdata?.total_deliveries ?? 0}`, label: 'Total Delivered' },

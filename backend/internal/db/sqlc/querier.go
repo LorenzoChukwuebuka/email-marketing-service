@@ -93,7 +93,7 @@ type Querier interface {
 	GetAdminNotifications(ctx context.Context, userID uuid.UUID) ([]AdminNotification, error)
 	GetAllActiveSubscriptions(ctx context.Context) ([]Subscription, error)
 	GetAllAdmins(ctx context.Context) ([]Admin, error)
-	GetAllCampaignsByUser(ctx context.Context, userID uuid.UUID) ([]GetAllCampaignsByUserRow, error)
+	GetAllCampaignsByUser(ctx context.Context, arg GetAllCampaignsByUserParams) ([]GetAllCampaignsByUserRow, error)
 	GetAllContacts(ctx context.Context, arg GetAllContactsParams) ([]GetAllContactsRow, error)
 	GetAllTicketsWithPagination(ctx context.Context, arg GetAllTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams) (GetCampaignByIDRow, error)

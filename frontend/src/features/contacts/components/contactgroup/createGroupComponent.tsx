@@ -6,9 +6,10 @@ import useContactGroupStore from "../../store/contactgroup.store";
 interface CreateGroupProps {
     isOpen: boolean;
     onClose: () => void;
+    refetch: () => void; 
 }
 
-const CreateGroup: React.FC<CreateGroupProps> = ({ isOpen, onClose }) => {
+const CreateGroup: React.FC<CreateGroupProps> = ({ isOpen, onClose,refetch }) => {
     const [form] = Form.useForm();
     const { createGroup, setFormValues } = useContactGroupStore();
 
@@ -22,7 +23,7 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ isOpen, onClose }) => {
             await new Promise((resolve) => setTimeout(resolve, 3000));
             onClose();
             form.resetFields(); // Reset the form after successful submission
-            location.reload();
+            refetch();
         } catch (error) {
             console.error("Error creating group:", error);
         } finally {

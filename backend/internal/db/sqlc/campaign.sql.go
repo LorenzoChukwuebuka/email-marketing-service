@@ -357,7 +357,15 @@ SELECT
 FROM campaigns c
 WHERE c.user_id = $1 
 AND c.deleted_at IS NULL
+LIMIT $2
+OFFSET $3
 `
+
+type GetAllCampaignsByUserParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
 
 type GetAllCampaignsByUserRow struct {
 	CampaignID uuid.UUID    `json:"campaign_id"`
@@ -365,8 +373,8 @@ type GetAllCampaignsByUserRow struct {
 	SentAt     sql.NullTime `json:"sent_at"`
 }
 
-func (q *Queries) GetAllCampaignsByUser(ctx context.Context, userID uuid.UUID) ([]GetAllCampaignsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCampaignsByUser, userID)
+func (q *Queries) GetAllCampaignsByUser(ctx context.Context, arg GetAllCampaignsByUserParams) ([]GetAllCampaignsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCampaignsByUser, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -1631,19 +1639,9 @@ WHERE
      AND (
         $5::TEXT IS NULL OR $5 = '' OR (
             -- Search in campaign fields
-            LOWER(c.campaign_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.name) LIKE LOWER('%' || $5 || '%') OR
             LOWER(c.subject) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.description) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_email) LIKE LOWER('%' || $5 || '%') OR
-            -- Search in user fields
-            LOWER(u.fullname) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(u.email) LIKE LOWER('%' || $5 || '%') OR
-            -- Search in template fields
-            LOWER(t.template_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.sender_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.subject) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.description) LIKE LOWER('%' || $5 || '%')
+            LOWER(c.sender_from_name) LIKE LOWER('%' || $5 || '%') 
         )
     )
 ORDER BY 

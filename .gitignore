@@ -28,3 +28,4 @@ go.work
 tmp
 out
 requests.log
+app.log

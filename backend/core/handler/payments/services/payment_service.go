@@ -58,7 +58,7 @@ func (s *PaymentService) InitiateNewTransaction(ctx context.Context, req domain.
 	})
 
 	if err != nil {
-		return  nil,common.ErrCreatingRecord
+		return  nil,err
 	}
 
 	req.PaymentIntentID = paymentIntent.ID.String()

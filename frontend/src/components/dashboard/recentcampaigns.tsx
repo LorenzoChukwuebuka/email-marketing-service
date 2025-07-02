@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCampaignQuery } from '../../features/campaign/hooks/useCampaignQuery';
 import EmptyState from '../emptyStateComponent';
 import { useState } from 'react';
-import eventBus from '../../utils/eventbus';
 import LoadingSpinnerComponent from '../loadingSpinnerComponent';
 
 
@@ -12,11 +11,7 @@ const RecentCampaigns = () => {
     const [currentPage, _setCurrentPage] = useState(1);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [pageSize, _setPageSize] = useState(20);
-    const { data: campaignData, isError, isLoading } = useCampaignQuery(currentPage, pageSize);
-
-    if (isError) {
-        eventBus.emit('error', 'Error fetching recent campaigns')
-    }
+    const { data: campaignData, isLoading } = useCampaignQuery(currentPage, pageSize);
 
     return (
         <div className="mx-auto mt-5 p-6">

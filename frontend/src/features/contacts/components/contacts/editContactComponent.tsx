@@ -3,7 +3,6 @@ import { Modal, Form, Input, Button } from "antd";
 import useContactStore from "./../../store/contact.store";
 import { ContactAPIResponse } from "../../interface/contact.interface";
 
-
 interface EditContactProps {
     isOpen: boolean;
     onClose: () => void;
@@ -18,11 +17,11 @@ const EditContact: React.FC<EditContactProps> = ({ isOpen, onClose, contact }) =
     useEffect(() => {
         if (contact) {
             form.setFieldsValue({
-                uuid: contact.uuid,
+                id: contact.contact_id,
                 first_name: contact.first_name,
                 last_name: contact.last_name,
                 email: contact.email,
-                from: contact.from,
+                from: contact.from_origin,
                 is_subscribed: contact.is_subscribed
             });
         }
@@ -31,6 +30,7 @@ const EditContact: React.FC<EditContactProps> = ({ isOpen, onClose, contact }) =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSubmit = async (values: any) => {
         setIsLoading(true)
+        console.log(values)
         try {
             setEditContactValues({ ...values })
             await editContact();
@@ -55,15 +55,15 @@ const EditContact: React.FC<EditContactProps> = ({ isOpen, onClose, contact }) =
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                    uuid: contact?.uuid,
+                    id: contact?.id,
                     first_name: contact?.first_name,
                     last_name: contact?.last_name,
                     email: contact?.email,
-                    from: contact?.from,
+                    from: contact?.from_origin,
                     is_subscribed: contact?.is_subscribed
                 }}
             >
-                <Form.Item name="uuid" hidden>
+                <Form.Item name="id" hidden>
                     <Input />
                 </Form.Item>
 

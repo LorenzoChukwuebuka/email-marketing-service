@@ -4,36 +4,36 @@ import { Campaign, CampaignGroupValues, CampaignResponse, CreateCampaignValues, 
 import { PaginatedResponse } from '../../../interface/pagination.interface';
 
 class CampaignApi {
+    private baseUrl: string = "/campaigns";
     async createCampaign(createCampaignValues: Partial<CreateCampaignValues>): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>("/campaigns/create-campaign", createCampaignValues);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/create`, createCampaignValues);
         return response.data;
     }
 
-    async getAllCampaigns(page?: number, pageSize?: number, query?: string): Promise<APIResponse<PaginatedResponse<CampaignResponse[]>>> {
-        const response = await axiosInstance.get<APIResponse<PaginatedResponse<CampaignResponse[]>>>("/campaigns/get-all-campaigns", {
+    async getAllCampaigns(page?: number, pageSize?: number, query?: string): Promise<APIResponse<PaginatedResponse<CampaignResponse>>> {
+        const response = await axiosInstance.get<APIResponse<PaginatedResponse<CampaignResponse>>>(`${this.baseUrl}/get`, {
             params: { page, page_size: pageSize, search: query },
         });
         return response.data;
     }
 
     async getSingleCampaign(uuid: string): Promise<APIResponse<CampaignResponse>> {
-        const response = await axiosInstance.get<APIResponse<CampaignResponse>>(`/campaigns/get-campaign/${uuid}`);
+        const response = await axiosInstance.get<APIResponse<CampaignResponse>>(`${this.baseUrl}/get/${uuid}`);
         return response.data;
     }
 
     async updateCampaign(uuid: string, updatePayload: Partial<Campaign>): Promise<ResponseT> {
-        const response = await axiosInstance.put<ResponseT>(`/campaigns/update-campaign/${uuid}`, updatePayload);
+        const response = await axiosInstance.put<ResponseT>(`${this.baseUrl}/update-campaign/${uuid}`, updatePayload);
         return response.data
     }
 
     async createCampaignGroup(values: CampaignGroupValues): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>("/campaigns/add-campaign-group", values);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/add-campaign-group`, values);
         return response.data
     }
 
     async getScheduledCampaigns(page?: number, pageSize?: number, searchQuery?: string): Promise<APIResponse<PaginatedResponse<CampaignResponse>>> {
-        const response = await axiosInstance.get<APIResponse<PaginatedResponse<CampaignResponse>>>(`/campaigns/get-scheduled-campaigns`, {
-
+        const response = await axiosInstance.get<APIResponse<PaginatedResponse<CampaignResponse>>>(`${this.baseUrl}/scheduled`, {
             params: { page, page_size: pageSize, search: searchQuery || undefined },
 
         });
@@ -41,23 +41,23 @@ class CampaignApi {
     }
 
     async deleteCampaign(campaignId: string): Promise<ResponseT> {
-        const response = await axiosInstance.delete<ResponseT>("/campaigns/delete-campaign/" + campaignId)
+        const response = await axiosInstance.delete<ResponseT>(`${this.baseUrl}/delete-campaign/${campaignId}`)
         return response.data
     }
 
     async sendCampaign(value: Record<string, string>): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>(`/campaigns/send-campaign`, value);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/send-campaign`, value);
         return response.data
 
     }
 
-    async getCampaignStats(id: string):Promise<APIResponse<CampaignStats>> {
-        const response = await axiosInstance.get<APIResponse<CampaignStats>>("/campaigns/get-stats/" + id)
+    async getCampaignStats(id: string): Promise<APIResponse<CampaignStats>> {
+        const response = await axiosInstance.get<APIResponse<CampaignStats>>(`${this.baseUrl}/campaign-stat/${id}`)
         return response.data
     }
 
-    async getCampaignRecipients(id: string):Promise<APIResponse<CampaignEmailRecipientStats[]>> {
-        const response = await axiosInstance.get<APIResponse<CampaignEmailRecipientStats[]>>("/campaigns/get-email-recipients/" + id)
+    async getCampaignRecipients(id: string): Promise<APIResponse<CampaignEmailRecipientStats[]>> {
+        const response = await axiosInstance.get<APIResponse<CampaignEmailRecipientStats[]>>(`${this.baseUrl}/get-email-recipients/${id}`)
         return response.data
     }
 

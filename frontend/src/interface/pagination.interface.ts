@@ -1,7 +1,16 @@
 export type PaginatedResponse<T> = {
+    currentPage: number;
     data: T[];
-    total_count: number;
-    total_pages: number;
-    current_page: number;
-    page_size: number;
+    nextPage: number | null;
+    perPage: number;
+    prevPage: number | null;
+    total: number;
+    totalPages: number;
 };
+
+export interface PaginationParams {
+    page?: number;
+    pageSize?: number;
+}
+
+

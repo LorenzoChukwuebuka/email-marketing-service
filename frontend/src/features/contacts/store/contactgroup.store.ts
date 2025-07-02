@@ -40,7 +40,7 @@ const InitialState: ContactGroupState = {
     selectedContactIds: [],
     selectedGroupIds: [],
     formValues: { group_name: '', description: '' },
-    editValues: { uuid: '', group_name: '', description: '' },
+    editValues: { group_id: '', group_name: '', description: '' },
 
 };
 
@@ -70,9 +70,7 @@ const useContactGroupStore = create<ContactGroupStore>((set, get) => ({
 
                 const results = await Promise.all(promises)
                 results.every(response => response.payload.status === true)
-
                 eventBus.emit('success', "Contacts added to group successfully")
-
             }
         } catch (error) {
             handleError(error)
@@ -96,7 +94,7 @@ const useContactGroupStore = create<ContactGroupStore>((set, get) => ({
     updateGroup: async () => {
         const { editValues } = get();
         try {
-            const response = await contactGroupAPI.updateGroup(editValues.uuid, editValues)
+            const response = await contactGroupAPI.updateGroup(editValues.group_id, editValues)
             if (response) {
                 eventBus.emit('success', 'Group edited successfully')
             }

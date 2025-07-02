@@ -367,3 +367,42 @@ func (c *Controller) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
 	}
 	helper.SuccessResponse(w, 200, stats)
 }
+
+func (c *Controller) GetContactCount(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	userId, companyId, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	query := &dto.FetchContactDTO{
+		UserId:    userId,
+		CompanyID: companyId,
+	}
+
+	count, err := c.service.GetContactCount(ctx, query)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	helper.SuccessResponse(w, 200, count)
+}
+
+func (c *Controller) GetContactSubscriptionStatusForDashboard(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	status, err := c.service.GetContactSubscriptionStatusForDashboard(ctx, userId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	helper.SuccessResponse(w, 200, status)
+}

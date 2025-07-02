@@ -4,12 +4,12 @@ import axiosInstance from "../utils/api";
 
 class NotificationAPI {
     async getNotifications(): Promise<APIResponse<UserNotification[]>> {
-        const response = await axiosInstance.get<APIResponse<UserNotification[]>>("/user-notifications");
+        const response = await axiosInstance.get<APIResponse<UserNotification[]>>("/users/notifications");
         return response.data
     }
 
     async updateReadStatus(): Promise<APIResponse<UserNotification>> {
-        const response = await axiosInstance.put<APIResponse<UserNotification>>("/update-read-status");
+        const response = await axiosInstance.put<APIResponse<UserNotification>>("/users/read-notifications");
         return response.data
     }
 }

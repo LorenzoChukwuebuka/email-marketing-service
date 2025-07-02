@@ -5,8 +5,10 @@ import { Sender, SenderFormValues, VerifySender } from '../interface/sender.inte
 
 class SenderAPI {
 
+    private baseUrl = "/senders"
+
     async getAllSenders(page?: number, pageSize?: number, query?: string): Promise<APIResponse<PaginatedResponse<Sender>>> {
-        const response = await axiosInstance.get<APIResponse<PaginatedResponse<Sender>>>("/sender/get-all-senders", {
+        const response = await axiosInstance.get<APIResponse<PaginatedResponse<Sender>>>(`${this.baseUrl}/get`, {
             params: {
                 page: page || undefined,
                 page_size: pageSize || undefined,
@@ -17,22 +19,22 @@ class SenderAPI {
     }
 
     async createSender(formValues: SenderFormValues): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>("/sender/create-sender", formValues)
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/create`, formValues)
         return response.data
     }
 
     async updateSender(id: string, data: Partial<Sender>): Promise<ResponseT> {
-        const response = await axiosInstance.put<ResponseT>("/sender/update-sender/" + id, data)
+        const response = await axiosInstance.put<ResponseT>(`${this.baseUrl}/update/${id}`, data)
         return response.data
     }
 
     async deleteSender(id: string): Promise<ResponseT> {
-        const response = await axiosInstance.delete<ResponseT>("/sender/delete-sender/" + id)
+        const response = await axiosInstance.delete<ResponseT>(`${this.baseUrl}/delete/${id}`)
         return response.data
     }
 
     async verifySender(values: VerifySender): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>("/sender/verify-sender", values)
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/verify`, values)
         return response.data
     }
 }

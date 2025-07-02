@@ -73,6 +73,11 @@ type SendCampaignUUIDStruct struct {
 	CampaignID uuid.UUID `json:"campaign_id"`
 }
 
+type CampaignWithGroupsResponse struct {
+	*dto.CampaignResponseDTO
+	Groups []*dto.GetCampaignContactGroupsResponse `json:"groups"`
+}
+
 func (s *Service) CreateCampaign(ctx context.Context, req *dto.CampaignDTO) (*dto.CampaignDTO, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
 		"company": req.CompanyID,
@@ -159,7 +164,7 @@ func (s *Service) GetAllCampaigns(ctx context.Context, req *dto.FetchCampaignDTO
 	return data, nil
 }
 
-func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignDTO) (*dto.CampaignResponseDTO, error) {
+func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignDTO) (any, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
 		"company":  req.CompanyID,
 		"user":     req.UserID,
@@ -180,8 +185,22 @@ func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignD
 		return nil, common.ErrFetchingRecord
 	}
 
-	data := mapper.MapCampaignResponse(db.ListCampaignsByCompanyIDRow(campaign))
-	return data, nil
+	//get contact groups
+
+	campaign_group, err := s.store.GetCampaignContactGroups(ctx, _uuid["campaign"])
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	// Map the campaign data to the response DTO
+	groupData := mapper.MapCampaignGroups(campaign_group)
+	campaignData := mapper.MapCampaignResponse(db.ListCampaignsByCompanyIDRow(campaign))
+
+	return &CampaignWithGroupsResponse{
+		CampaignResponseDTO: campaignData,
+		Groups:              groupData,
+	}, nil
 }
 
 func (s *Service) UpdateCampaign(ctx context.Context, req *dto.CampaignDTO, campaignId string) error {
@@ -306,7 +325,7 @@ func (s *Service) GetAllScheduledCampaigns(ctx context.Context, req *dto.FetchCa
 	})
 
 	if err != nil {
-		return nil, common.ErrFetchingRecord
+		return nil, fmt.Errorf("error fetching scheduled campaigns: %v", err)
 	}
 
 	count_campaigns, err := s.store.GetCampaignCounts(ctx, db.GetCampaignCountsParams{
@@ -963,7 +982,8 @@ func (s *Service) GetAllRecipientsForACampaign(ctx context.Context, campaignId s
 		return nil, err
 	}
 
-	return result, nil
+	data := mapper.MapCampaignEmailResponse(result)
+	return data, nil
 }
 
 func (s *Service) GetEmailResultStats(ctx context.Context, campaignId string, companyId string) (any, error) {
@@ -1034,18 +1054,33 @@ func (s *Service) GetUserCampaignStats(ctx context.Context, userID string) (map[
 	return result, nil
 }
 
-func (s *Service) GetAllCampaignStatsByUser(ctx context.Context, userID string) ([]map[string]interface{}, error) {
+func (s *Service) GetAllCampaignStatsByUser(ctx context.Context, req *dto.FetchCampaignDTO) (any, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
-		"user": userID,
+		"user": req.UserID,
 	})
 
 	if err != nil {
 		return nil, common.ErrInvalidUUID
 	}
 	// First get all campaigns for the user
-	campaigns, err := s.store.GetAllCampaignsByUser(ctx, _uuid["user"])
+	campaigns, err := s.store.GetAllCampaignsByUser(ctx, db.GetAllCampaignsByUserParams{
+		UserID: _uuid["user"],
+		Limit:  int32(req.Limit),
+		Offset: int32(req.Offset),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error fetching campaigns for user: %w", err)
+	}
+
+	//get campaign counts 
+
+	count_campaigns, err := s.store.GetCampaignCounts(ctx, db.GetCampaignCountsParams{
+		UserID:    _uuid["user"],
+		CompanyID: _uuid["company"],
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
 	}
 
 	var allCampaignStats []map[string]interface{}
@@ -1072,5 +1107,29 @@ func (s *Service) GetAllCampaignStatsByUser(ctx context.Context, userID string) 
 		allCampaignStats = append(allCampaignStats, campaignStats)
 	}
 
-	return allCampaignStats, nil
+	items := make([]any, len(allCampaignStats))
+	for i, v := range allCampaignStats {
+		items[i] = v
+	}
+
+	data := common.Paginate(int(count_campaigns), items, req.Offset, req.Limit)
+
+	return data, nil
+}
+
+func (s *Service) GetCampaignStats(ctx context.Context, campaignId string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"campaign": campaignId,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	result, err := s.store.GetCampaignStats(ctx, _uuid["campaign"])
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

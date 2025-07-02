@@ -22,12 +22,12 @@ const refreshTokenExpiration = time.Hour * 24 * 7 // 7 days
 // GenerateAccessToken generates an access token with a short expiration time
 func GenerateAccessToken(userId string, company_id string, username string, email string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub":      "The server",
-		"exp":      time.Now().Add(accessTokenExpiration).Unix(), // 15 minutes expiration
-		"username": username,
-		"email":    email,
-		"company_id":  company_id,
-		"userId":   userId,
+		"sub":        "The server",
+		"exp":        time.Now().Add(accessTokenExpiration).Unix(), // 15 minutes expiration
+		"username":   username,
+		"email":      email,
+		"company_id": company_id,
+		"userId":     userId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -40,14 +40,14 @@ func GenerateAccessToken(userId string, company_id string, username string, emai
 }
 
 // GenerateRefreshToken generates a refresh token with a long expiration time
-func GenerateRefreshToken(userId string, user_uuid string, username string, email string) (string, error) {
+func GenerateRefreshToken(userId string, company_id string, username string, email string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub":      "The server",
-		"exp":      time.Now().Add(refreshTokenExpiration).Unix(), // 7 days expiration
-		"username": username,
-		"email":    email,
-		"uuid":     user_uuid,
-		"userId":   userId,
+		"sub":        "The server",
+		"exp":        time.Now().Add(refreshTokenExpiration).Unix(), // 7 days expiration
+		"username":   username,
+		"email":      email,
+		"company_id": company_id,
+		"userId":     userId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

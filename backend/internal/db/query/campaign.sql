@@ -381,19 +381,9 @@ WHERE
      AND (
         $5::TEXT IS NULL OR $5 = '' OR (
             -- Search in campaign fields
-            LOWER(c.campaign_name) LIKE LOWER('%' || $5 || '%') OR
+            LOWER(c.name) LIKE LOWER('%' || $5 || '%') OR
             LOWER(c.subject) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.description) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(c.from_email) LIKE LOWER('%' || $5 || '%') OR
-            -- Search in user fields
-            LOWER(u.fullname) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(u.email) LIKE LOWER('%' || $5 || '%') OR
-            -- Search in template fields
-            LOWER(t.template_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.sender_name) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.subject) LIKE LOWER('%' || $5 || '%') OR
-            LOWER(t.description) LIKE LOWER('%' || $5 || '%')
+            LOWER(c.sender_from_name) LIKE LOWER('%' || $5 || '%') 
         )
     )
 ORDER BY 
@@ -665,7 +655,9 @@ SELECT
     c.sent_at
 FROM campaigns c
 WHERE c.user_id = $1 
-AND c.deleted_at IS NULL;
+AND c.deleted_at IS NULL
+LIMIT $2
+OFFSET $3;
 
 -- name: GetCampaignStats :one
 SELECT
@@ -733,15 +725,4 @@ UPDATE campaigns
 SET scheduled_at = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
-/* -- name: GetCampaignContactGroups :many
--- Get contact groups associated with a campaign
-SELECT 
-    cg.id,
-    cg.campaign_id,
-    cg.contact_group_id,
-    cg.created_at,
-    cg.updated_at
-FROM campaign_groups cg
-WHERE cg.campaign_id = $1 
-AND cg.deleted_at IS NULL;
-  */
+ 

@@ -142,7 +142,7 @@ const SendersDashComponent: React.FC = () => {
                             verified={sender.verified}
                             verificationText={`${sender.email} has been verified.`}
                             onEdit={() => handleEdit(sender)}
-                            onDelete={() => handleDelete(sender.uuid)}
+                            onDelete={() => handleDelete(sender.id)}
                         />
                     ))}
 
@@ -153,7 +153,7 @@ const SendersDashComponent: React.FC = () => {
                         <Pagination
                             current={currentPage}
                             pageSize={pageSize}
-                            total={senderData?.payload?.total_count || 0} // Ensure your API returns a total count
+                            total={senderData?.payload?.total || 0} // Ensure your API returns a total count
                             onChange={onPageChange}
                             showSizeChanger
                             pageSizeOptions={["10", "20", "50", "100"]}
