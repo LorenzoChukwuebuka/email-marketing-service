@@ -72,10 +72,12 @@ SELECT
     p.created_at,
     p.updated_at,
     p.deleted_at,
+
     -- Company details
     c.companyname as companyname,
     c.created_at as companycreatedat,
     c.updated_at as companyupdatedat,
+
     -- User details
     u.fullname as userfullname,
     u.email as useremail,
@@ -86,6 +88,7 @@ SELECT
     u.status as userstatus,
     u.last_login_at as userlastloginat,
     u.created_at as usercreatedat,
+
     -- Subscription details
     s.plan_id as subscriptionplanid,
     s.amount as subscriptionamount,
@@ -95,12 +98,18 @@ SELECT
     s.starts_at as subscriptionstartsat,
     s.ends_at as subscriptionendsat,
     s.status as subscriptionstatus,
-    s.created_at as subscriptioncreatedat
+    s.created_at as subscriptioncreatedat,
+
+    -- Plan name
+    pl.name as planname
+
 FROM
     payments p
     INNER JOIN companies c ON p.company_id = c.id
     INNER JOIN users u ON p.user_id = u.id
     INNER JOIN subscriptions s ON p.subscription_id = s.id
+    INNER JOIN plans pl ON s.plan_id = pl.id
+
 WHERE
     p.company_id = $1
     AND p.user_id = $2
@@ -108,10 +117,12 @@ WHERE
     AND c.deleted_at IS NULL
     AND u.deleted_at IS NULL
     AND s.deleted_at IS NULL
+    AND pl.deleted_at IS NULL  -- Optional: if your plans table uses soft deletes
+
 ORDER BY p.created_at DESC
 LIMIT $3
-OFFSET
-    $4;
+OFFSET $4;
+
 
 -- name: GetPaymentsByCompanyAndUserSimple :many
 SELECT

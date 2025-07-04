@@ -41,7 +41,7 @@ class CampaignApi {
     }
 
     async deleteCampaign(campaignId: string): Promise<ResponseT> {
-        const response = await axiosInstance.delete<ResponseT>(`${this.baseUrl}/delete-campaign/${campaignId}`)
+        const response = await axiosInstance.delete<ResponseT>(`${this.baseUrl}/delete/${campaignId}`)
         return response.data
     }
 

@@ -30,13 +30,13 @@ SELECT EXISTS (
     ) AS exists;
 
 -- name: GetUserSMTPKey :many
-SELECT * FROM smtp_keys WHERE user_id = $1;
+SELECT * FROM smtp_keys WHERE user_id = $1 AND deleted_at IS NULL;
 
 -- name: UpdateSMTPKeyLogin :exec
 UPDATE smtp_keys SET smtp_login = $1 WHERE user_id = $2;
 
 -- name: GetUserSmtpKeys :many
-SELECT * FROM smtp_keys WHERE user_id = $1;
+SELECT * FROM smtp_keys WHERE user_id = $1  AND deleted_at IS NULL;
 
 -- name: GetSMTPKeyByID :one
 SELECT * FROM smtp_keys WHERE user_id = $1 AND id = $2 LIMIT 1;

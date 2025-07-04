@@ -58,7 +58,7 @@ func (s *PaymentService) InitiateNewTransaction(ctx context.Context, req domain.
 	})
 
 	if err != nil {
-		return  nil,err
+		return nil, err
 	}
 
 	req.PaymentIntentID = paymentIntent.ID.String()
@@ -142,11 +142,11 @@ func (s *PaymentService) VerifyPayment(ctx context.Context, paymentMethod, refer
 		return nil, common.ErrInvalidUUID
 	}
 
-	//check if payment intent already exists in payment
+	// //check if payment intent already exists in payment
 	intentExists, err := s.store.CheckPaymentIntentExists(ctx, sql.NullString{String: data.PaymentIntentID, Valid: true})
 
 	if err != nil {
-		//s.updatePaymentIntentErrorWithReference(ctx, reference, fmt.Sprintf("error fetching intent: %v", err))
+		s.updatePaymentIntentErrorWithReference(ctx, reference, fmt.Sprintf("error fetching intent: %v", err))
 		return nil, err
 	}
 
@@ -287,8 +287,6 @@ func (s *PaymentService) createsubscription(ctx context.Context, q db.Queries, d
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error parsing duration: %w", err)
 	}
-
-	billingCycle := common.GetBillingCycle(data.Duration)
 	now := time.Now().UTC()
 
 	amount := decimal.NewFromFloat(data.Amount)
@@ -297,13 +295,13 @@ func (s *PaymentService) createsubscription(ctx context.Context, q db.Queries, d
 		CompanyID:       _uuid["company"],
 		PlanID:          _uuid["plan"],
 		Amount:          amount,
-		BillingCycle:    sql.NullString{String: billingCycle, Valid: true},
+		BillingCycle:    sql.NullString{String: data.Duration, Valid: true},
 		TrialStartsAt:   sql.NullTime{}, // Set if needed
 		TrialEndsAt:     sql.NullTime{}, // Set if needed
 		StartsAt:        sql.NullTime{Time: now, Valid: true},
-		EndsAt:          sql.NullTime{Time: now.AddDate(0, 0, durationDays), Valid: true},
+		EndsAt:          sql.NullTime{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
 		Status:          sql.NullString{String: string(enums.SubscriptionActive), Valid: true},
-		NextBillingDate: sql.NullTime{Time: now.AddDate(0, 0, durationDays), Valid: true},
+		NextBillingDate: sql.NullTime{Time: time.Now().Add(31 * 24 * time.Hour), Valid: true},
 		AutoRenew:       sql.NullBool{Bool: true, Valid: true}, // Set based on your business logic
 	})
 	if err != nil {
@@ -324,7 +322,7 @@ func (s *PaymentService) createsubscription(ctx context.Context, q db.Queries, d
 		TransactionReference: sql.NullString{String: reference, Valid: true},
 		PaymentDate:          sql.NullTime{Time: now, Valid: true},
 		BillingPeriodStart:   sql.NullTime{Time: now, Valid: true},
-		BillingPeriodEnd:     sql.NullTime{Time: now.AddDate(0, 0, durationDays), Valid: true},
+		BillingPeriodEnd:     sql.NullTime{Time: time.Now().Add(30 * 24 * time.Hour), Valid: true},
 	})
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error creating payment: %w", err)

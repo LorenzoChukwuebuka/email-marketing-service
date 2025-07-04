@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
+import { Card, Tabs, Typography, Empty, Spin } from "antd";
+import { 
+    AppstoreOutlined, 
+    FileAddOutlined, 
+    CodeOutlined, 
+    EditOutlined,
+    SmileOutlined 
+} from "@ant-design/icons";
 import CreateTransactionalTemplateComponent from '../../components/transactional/createTransactionalComponent';
-import EmptyState from '../../../../../../frontend/src/components/emptyStateComponent';
 
+const { Title, Text } = Typography;
 
-type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML" | "Rich Text"
+type templateTypes = "Templates Gallery" | "Blank Template" | "Custom HTML" | "Rich Text";
 
 const CreateTransactionalTemplateDashBoard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<templateTypes>(() => {
@@ -42,72 +50,158 @@ const CreateTransactionalTemplateDashBoard: React.FC = () => {
         }
     };
 
+    const tabItems = [
+        {
+            key: 'Templates Gallery',
+            label: (
+                <div className="flex items-center gap-2">
+                    <AppstoreOutlined />
+                    <span>Templates Gallery</span>
+                </div>
+            ),
+            children: (
+                <div className="py-8">
+                    <Empty
+                        image={<SmileOutlined className="text-6xl text-blue-400" />}
+                        imageStyle={{
+                            height: 80,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                        description={
+                            <div className="text-center">
+                                <Text className="text-lg font-medium text-gray-600 block mb-2">
+                                    Template Gallery
+                                </Text>
+                                <Text className="text-gray-500">
+                                    Template Gallery... coming soon
+                                </Text>
+                            </div>
+                        }
+                    />
+                </div>
+            ),
+        },
+        {
+            key: 'Blank Template',
+            label: (
+                <div className="flex items-center gap-2">
+                    <FileAddOutlined />
+                    <span>Blank Template</span>
+                </div>
+            ),
+            children: null,
+        },
+        {
+            key: 'Custom HTML',
+            label: (
+                <div className="flex items-center gap-2">
+                    <CodeOutlined />
+                    <span>Custom HTML</span>
+                </div>
+            ),
+            children: null,
+        },
+        {
+            key: 'Rich Text',
+            label: (
+                <div className="flex items-center gap-2">
+                    <EditOutlined />
+                    <span>Text Editor</span>
+                </div>
+            ),
+            children: null,
+        },
+    ];
+
     return (
-        <div className="p-6 max-w-full">
-            <h1 className="text-xl font-semibold mb-5"> Create Transactional Templates </h1>
-            <nav className="flex space-x-8 border-b">
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Templates Gallery"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Templates Gallery")}
-                >
-                    Templates Gallery
-                </button>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/20 p-6">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <Title level={2} className="!mb-2 text-gray-800">
+                        Create Transactional Templates
+                    </Title>
+                    <Text className="text-gray-600">
+                        Choose your preferred template creation method
+                    </Text>
+                </div>
 
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Blank Template"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Blank Template")}
-                >
-                    Blank Template
-                </button>
+                {/* Main Content Card */}
+                <Card className="shadow-lg border-0 rounded-xl overflow-hidden">
+                    <Tabs
+                        activeKey={activeTab}
+                        onChange={(key) => handleTabChange(key as templateTypes)}
+                        items={tabItems}
+                        size="large"
+                        className="custom-tabs"
+                    />
 
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Custom HTML"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Custom HTML")}
-                >
-                    Custom HTML
-                </button>
+                    {/* Loading State */}
+                    {isLoading && (
+                        <div className="flex items-center justify-center py-20">
+                            <Spin size="large" />
+                        </div>
+                    )}
+                </Card>
 
-                <button
-                    className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Rich Text"
-                        ? "border-blue-500 text-blue-500"
-                        : "border-transparent hover:border-gray-300"
-                        } transition-colors`}
-                    onClick={() => handleTabChange("Rich Text")}
-                >
-                    Text Editor
-                </button>
-            </nav>
-
-            {activeTab === "Templates Gallery" && (
-
-                <EmptyState className="mt-10"
-                    title="Template Gallery"
-                    description="Template Gallery... coming soon"
-                    icon={<i className="bi bi-emoji-smile text-xl"></i>}
+                {/* Modal */}
+                <CreateTransactionalTemplateComponent 
+                    isOpen={isModalOpen} 
+                    onClose={handleCloseModal} 
+                    editorType={
+                        activeTab === "Blank Template"
+                            ? "drag-and-drop"
+                            : activeTab === "Custom HTML"
+                                ? "html-editor"
+                                : "rich-text"
+                    } 
                 />
+            </div>
 
-            )}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                    .custom-tabs .ant-tabs-tab {
+                        padding: 12px 24px !important;
+                        font-weight: 500 !important;
+                        border-radius: 8px 8px 0 0 !important;
+                        margin-right: 4px !important;
+                        transition: all 0.3s ease !important;
+                        background: transparent !important;
+                        border: none !important;
+                    }
 
-            {isLoading && <div className="flex items-center justify-center mt-20"><span className="loading loading-spinner loading-lg"></span></div>}
+                    .custom-tabs .ant-tabs-tab:hover {
+                        background: rgba(59, 130, 246, 0.05) !important;
+                        color: #3b82f6 !important;
+                    }
 
-            <CreateTransactionalTemplateComponent isOpen={isModalOpen} onClose={handleCloseModal} editorType={
-                activeTab === "Blank Template"
-                    ? "drag-and-drop"
-                    : activeTab === "Custom HTML"
-                        ? "html-editor"
-                        : "rich-text"
-            } />
+                    .custom-tabs .ant-tabs-tab-active {
+                        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+                        color: white !important;
+                    }
+
+                    .custom-tabs .ant-tabs-tab-active:hover {
+                        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+                        color: white !important;
+                    }
+
+                    .custom-tabs .ant-tabs-ink-bar {
+                        display: none !important;
+                    }
+
+                    .custom-tabs .ant-tabs-content-holder {
+                        padding: 0 !important;
+                    }
+
+                    .custom-tabs .ant-tabs-tabpane {
+                        padding: 0 !important;
+                    }
+                `
+            }} />
         </div>
     );
-}
+};
 
 export default CreateTransactionalTemplateDashBoard;

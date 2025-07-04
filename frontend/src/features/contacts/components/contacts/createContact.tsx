@@ -32,7 +32,6 @@ const CreateContact: React.FC<CreateContactProps> = ({ isOpen, onClose, refetch 
             refetch()
             onClose();
             form.resetFields();
-
         } catch (error) {
             console.error('Failed to create contact:', error);
         } finally {

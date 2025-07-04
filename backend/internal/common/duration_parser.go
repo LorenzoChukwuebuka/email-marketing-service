@@ -10,8 +10,20 @@ import (
 // ParseDuration parses duration strings like "1 month", "30 days", "1 year", etc.
 func ParseDuration(duration string) (time.Duration, error) {
 	duration = strings.TrimSpace(strings.ToLower(duration))
+
+	// Normalize one-word durations like "monthly" to "1 month"
+	aliases := map[string]string{
+		"daily":    "1 day",
+		"weekly":   "1 week",
+		"monthly":  "1 month",
+		"yearly":   "1 year",
+		"annually": "1 year",
+	}
+	if val, ok := aliases[duration]; ok {
+		duration = val
+	}
+
 	parts := strings.Fields(duration)
-	
 	if len(parts) != 2 {
 		return 0, fmt.Errorf("invalid duration format: %s", duration)
 	}
@@ -22,7 +34,6 @@ func ParseDuration(duration string) (time.Duration, error) {
 	}
 
 	unit := parts[1]
-	// Handle plural forms
 	if strings.HasSuffix(unit, "s") {
 		unit = unit[:len(unit)-1]
 	}
@@ -48,19 +59,4 @@ func GetDurationInDays(duration string) (int, error) {
 		return 0, err
 	}
 	return int(d.Hours() / 24), nil
-}
-
-// GetBillingCycle converts duration to billing cycle string
-func GetBillingCycle(duration string) string {
-	duration = strings.TrimSpace(strings.ToLower(duration))
-	
-	if strings.Contains(duration, "month") {
-		return "monthly"
-	} else if strings.Contains(duration, "year") {
-		return "yearly"
-	} else if strings.Contains(duration, "week") {
-		return "weekly"
-	} else {
-		return "custom"
-	}
 }

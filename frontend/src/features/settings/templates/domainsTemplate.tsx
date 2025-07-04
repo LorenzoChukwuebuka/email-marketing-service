@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Tabs } from "antd";
-// import SendersDashComponent from "../components/senders/sendersDashComponent";
-// import DomainDashboardComponent from "../components/domain/domainDashComponent";
 import useMetadata from "../../../hooks/useMetaData";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import useSenderStore from "../store/sender.store";
 import useDomainStore from "../store/domain.store";
 import DomainDashboardComponent from "../components/domain/domainDashComponent";
 import SendersDashComponent from "../components/senders/sendersDashComponent";
+import { useSenderQuery } from "../hooks/useSenderQuery";
+import { useDomainQuery } from "../hooks/useDomainQuery";
 
 type TabType = "Domain" | "Sender";
 interface ModalContent {
@@ -28,6 +28,9 @@ const DomainTemplateDash: React.FC = () => {
 
     const { createDomain, setDomainFormValues } = useDomainStore();
     const { createSender, setSenderFormValues } = useSenderStore();
+
+    const { refetch: senderRefectch } = useSenderQuery(undefined, undefined, undefined)
+    const { refetch: domainRefectch } = useDomainQuery(undefined, undefined, undefined)
 
     useEffect(() => {
         localStorage.setItem("activeTab", activeTab);
@@ -61,7 +64,7 @@ const DomainTemplateDash: React.FC = () => {
                     title: "New Domain Added",
                     content: "Your new domain has been added successfully.",
                 });
-                location.reload()
+                domainRefectch()
             } else if (keyType === "Sender") {
                 setSenderFormValues({ ...values })
                 await createSender();
@@ -70,7 +73,7 @@ const DomainTemplateDash: React.FC = () => {
                     content: "Your new sender has been added successfully. An email has been sent to you to verify your sender",
                 });
             }
-            location.reload()
+            senderRefectch()
             setResultModalOpen(true);
         } catch (error) {
             console.log(error);

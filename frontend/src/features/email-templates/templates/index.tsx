@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
 import useMetadata from "../../../hooks/useMetaData";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import MarketingTemplateDash from './marketing/marketingDashTemplate';
 import TransactionalTemplateDash from './transactional/transactionalDashTemplate';
 
-type Tabtype = 'Transactional' | 'Marketing'
+//type Tabtype = 'Transactional' | 'Marketing'
 
 const TemplateBuilderDashComponent: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<Tabtype>(() => {
+    const [activeTab, setActiveTab] = useState<string>(() => {
         const storedTab = localStorage.getItem("activeTab");
         return (storedTab === "Transactional" || storedTab === "Marketing") ? storedTab : "Transactional";
     });
@@ -17,7 +19,7 @@ const TemplateBuilderDashComponent: React.FC = () => {
     useEffect(() => {
         const storedActiveTab = localStorage.getItem("activeTab");
         if (storedActiveTab) {
-            setActiveTab(storedActiveTab as "Transactional" | "Marketing");
+            setActiveTab(storedActiveTab);
         }
     }, []);
 
@@ -25,46 +27,46 @@ const TemplateBuilderDashComponent: React.FC = () => {
         localStorage.setItem("activeTab", activeTab);
     }, [activeTab]);
 
+    const handleTabChange = (key: string) => {
+        setActiveTab(key);
+    };
 
-    return <>
+    const items: TabsProps['items'] = [
+        {
+            key: 'Transactional',
+            label: 'Transactional Templates',
+            children: <TransactionalTemplateDash />,
+        },
+        {
+            key: 'Marketing',
+            label: 'Marketing Templates',
+            children: <MarketingTemplateDash />,
+        },
+    ];
+
+    return (
         <HelmetProvider>
-            <Helmet {...metaData} title={activeTab === "Marketing" ? "Marketing Templates - CrabMailer" : "Transactional Templates - CrabMailer"} />
+            <Helmet 
+                {...metaData} 
+                title={activeTab === "Marketing" ? "Marketing Templates - CrabMailer" : "Transactional Templates - CrabMailer"} 
+            />
 
             <div className="p-6 max-w-full">
-
-                <nav className="flex space-x-8  border-b">
-                    <button
-                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Transactional"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
-                            } transition-colors`}
-                        onClick={() => setActiveTab("Transactional")}
-                    >
-                        Transactional Templates
-                    </button>
-
-                    <button
-                        className={`py-2 border-b-2 text-lg font-semibold ${activeTab === "Marketing"
-                            ? "border-blue-500 text-blue-500"
-                            : "border-transparent hover:border-gray-300"
-                            } transition-colors`}
-                        onClick={() => setActiveTab("Marketing")}
-                    >
-                        Marketing Templates
-                    </button>
-                </nav>
-
-                {activeTab === "Transactional" &&
-                    <TransactionalTemplateDash />
-                }
-
-                {activeTab === "Marketing" &&
-                    <MarketingTemplateDash />
-                }
+                <Tabs
+                    activeKey={activeTab}
+                    items={items}
+                    onChange={handleTabChange}
+                    size="large"
+                    type="line"
+                    className="custom-tabs"
+                    tabBarStyle={{
+                        marginBottom: 24,
+                        borderBottom: '1px solid #f0f0f0'
+                    }}
+                />
             </div>
-
         </HelmetProvider>
-    </>
+    );
 };
 
 export default TemplateBuilderDashComponent;

@@ -41,6 +41,7 @@ type SubscriptionResponse struct {
 	Subscriptionendsat        *time.Time      `json:"subscriptionendsat"`
 	Subscriptionstatus        *string         `json:"subscriptionstatus"`
 	Subscriptioncreatedat     *time.Time      `json:"subscriptioncreatedat"`
+	Plan                      PlanResponse_   `json:"plan"`
 }
 
 type CompanyResponse struct {
@@ -59,4 +60,8 @@ type UserResponse struct {
 	Userstatus      string     `json:"userstatus"`
 	Userlastloginat *time.Time `json:"userlastloginat"`
 	Usercreatedat   time.Time  `json:"usercreatedat"`
+}
+
+type PlanResponse_ struct {
+	Planname string `json:"plan_name"`
 }

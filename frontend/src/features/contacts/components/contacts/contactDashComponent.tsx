@@ -165,6 +165,7 @@ const ContactsDashComponent: React.FC = () => {
             <ContactUpload
                 isOpen={importModalOpen}
                 onClose={() => setImportModalOpen(false)}
+                refetch={refetch}
             />
 
             <AddContactsToGroupComponent

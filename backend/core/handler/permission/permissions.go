@@ -1,9 +1,13 @@
 package permission
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 func CheckFeatureAccess(plan string, feature string) error {
-	if features, ok := PlanFeatureMap[plan]; ok {
+	toLower := strings.ToLower(plan)
+	if features, ok := PlanFeatureMap[toLower]; ok {
 		if allowed, found := features[feature]; found {
 			if allowed {
 				return nil
@@ -16,10 +20,11 @@ func CheckFeatureAccess(plan string, feature string) error {
 
 func GetFileSizeLimit(plan string) int64 {
 	limits := map[string]int64{
-		"free":    2 << 20,  // 2 MB
-		"basic":   5 << 20,  // 5 MB
-		"premium": 10 << 20, // 10 MB
-		"custom":  20 << 20, // 20 MB
+		"free":         2 << 20,  // 2 MB
+		"basic":        5 << 20,  // 5 MB
+		"starter":      5 << 20,  // 5 MB
+		"professional": 10 << 20, // 10 MB
+		"enterprise":   20 << 20, // 20 MB
 	}
 	if limit, ok := limits[plan]; ok {
 		return limit
