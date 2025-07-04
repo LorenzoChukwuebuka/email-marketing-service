@@ -24,4 +24,11 @@ var PlanFeatureMap = map[string]map[string]bool{
 		"custom_domain": true,
 		"dedicated_ip":  true,
 	},
+	"professional": {
+		"upload_csv":    true,
+		"max_file_size": true,
+		"send_campaign": true,
+		"custom_domain": true,
+		"dedicated_ip":  true,
+	},
 }

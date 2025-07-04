@@ -142,7 +142,7 @@ func (q *Queries) GetSMTPKeyUserAndPass(ctx context.Context, arg GetSMTPKeyUserA
 }
 
 const getUserSMTPKey = `-- name: GetUserSMTPKey :many
-SELECT id, company_id, user_id, key_name, password, status, smtp_login, created_at, updated_at, deleted_at FROM smtp_keys WHERE user_id = $1
+SELECT id, company_id, user_id, key_name, password, status, smtp_login, created_at, updated_at, deleted_at FROM smtp_keys WHERE user_id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error) {
@@ -180,7 +180,7 @@ func (q *Queries) GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpK
 }
 
 const getUserSmtpKeys = `-- name: GetUserSmtpKeys :many
-SELECT id, company_id, user_id, key_name, password, status, smtp_login, created_at, updated_at, deleted_at FROM smtp_keys WHERE user_id = $1
+SELECT id, company_id, user_id, key_name, password, status, smtp_login, created_at, updated_at, deleted_at FROM smtp_keys WHERE user_id = $1  AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error) {

@@ -47,6 +47,8 @@ func (c *Controller) InitiateNewTransaction(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	fmt.Printf("request body: %+v\n", req)
+
 	req.UserId = userId
 	req.Email = email
 	req.CompanyId = companyID
@@ -55,6 +57,8 @@ func (c *Controller) InitiateNewTransaction(w http.ResponseWriter, r *http.Reque
 		helper.ErrorResponse(w, err, err)
 		return
 	}
+
+
 
 	helper.SuccessResponse(w, http.StatusOK, result)
 }
@@ -85,6 +89,11 @@ func (c *Controller) GetAllPayments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page, pageSize, _, err := common.ParsePaginationParams(r)
+
+	if err != nil {
+		helper.ErrorResponse(w, err, err)
+		return
+	}
 	offset := (page - 1) * pageSize
 	limit := pageSize
 

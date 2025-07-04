@@ -8,6 +8,32 @@ import (
 	"time"
 )
 
+
+func MapTemplateToDTO(dbTemplate db.Template) any {
+	return &dto.TemplateDTO{
+		TemplateID:        dbTemplate.ID.String(),
+		UserId:           dbTemplate.UserID.String(),
+		CompanyID:        dbTemplate.CompanyID.String(),
+		TemplateName:     dbTemplate.TemplateName,
+		SenderName:       dbTemplate.SenderName.String,
+		FromEmail:        dbTemplate.FromEmail.String,
+		Subject:          dbTemplate.Subject.String,
+		Type:             dbTemplate.Type,
+		EmailHtml:        dbTemplate.EmailHtml.String,
+		EmailDesign:      dbTemplate.EmailDesign.RawMessage,
+		IsEditable:       dbTemplate.IsEditable.Bool,
+		IsPublished:      dbTemplate.IsPublished.Bool,
+		IsPublicTemplate: dbTemplate.IsPublicTemplate.Bool,
+		IsGalleryTemplate: dbTemplate.IsGalleryTemplate.Bool,
+		Tags:             dbTemplate.Tags.String,
+		Description:      dbTemplate.Description.String,
+		ImageUrl:         dbTemplate.ImageUrl.String,
+		IsActive:         dbTemplate.IsActive.Bool,
+		EditorType:       dbTemplate.EditorType.String,
+	}
+}
+
+
 func MapTemplateResponse(templates []db.ListTemplatesByTypeRow) []dto.TemplateResponse {
 	if len(templates) == 0 {
 		return []dto.TemplateResponse{}

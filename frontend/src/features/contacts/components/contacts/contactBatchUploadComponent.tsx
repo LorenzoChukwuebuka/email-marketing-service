@@ -20,9 +20,10 @@ const fileValidationSchema = Yup.object().shape({
 interface ContactUploadProps {
     isOpen: boolean;
     onClose: () => void;
+    refetch:()=>void;
 }
 
-const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
+const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose,refetch }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -62,7 +63,7 @@ const ContactUpload: React.FC<ContactUploadProps> = ({ isOpen, onClose }) => {
         new Promise((resolve) => setTimeout(resolve, 3000));
 
         onClose();
-        location.reload();
+        refetch()
         setSelectedCSVFile(null);
     };
 

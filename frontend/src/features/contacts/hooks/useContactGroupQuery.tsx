@@ -15,7 +15,7 @@ export const contactGroupQueryOptions = (page?: number, pageSize?: number, query
     staleTime: 1 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
     retry: 3,
-    refetchInterval: 3 * 60 * 1000,
+    refetchInterval: 3 * 60 * 1000, // Refetch every 3 minute
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
 });

@@ -49,7 +49,7 @@ class ContactAPI {
     }
 
     async batchUploadContact(file: FormData): Promise<APIResponse<Record<string, string>>> {
-        const response = await axiosInstance.post('${this.baseurl}/upload-csv', file)
+        const response = await axiosInstance.post(`${this.baseurl}/upload-csv`, file)
         return response.data
     }
 }

@@ -11,6 +11,7 @@ import (
 	"email-marketing-service/internal/domain"
 	"email-marketing-service/internal/factory/smtpFactory"
 	"email-marketing-service/internal/helper"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/sqlc-dev/pqtype"
@@ -33,10 +34,11 @@ func NewTemplateService(store db.Store) *Service {
 	}
 }
 
-func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dto.TemplateDTO, error) {
+func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (any, error) {
 	if err := helper.ValidateData(req); err != nil {
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
+	
 	_uuid, err := common.ParseUUIDMap(map[string]string{
 		"user":    req.UserId,
 		"company": req.CompanyID,
@@ -59,7 +61,28 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dt
 		return nil, common.ErrRecordExists
 	}
 
-	_, err = s.store.CreateTemplate(ctx, db.CreateTemplateParams{
+	// Handle EmailDesign JSON properly
+	var emailDesign pqtype.NullRawMessage
+	if req.EmailDesign != nil && len(req.EmailDesign) > 0 {
+		// Check if it's valid JSON and not just empty brackets
+		var temp interface{}
+		if err := json.Unmarshal(req.EmailDesign, &temp); err != nil {
+			// Invalid JSON, set to null
+			emailDesign = pqtype.NullRawMessage{Valid: false}
+		} else {
+			// Check if it's meaningful content (not just empty array/object)
+			jsonStr := string(req.EmailDesign)
+			if jsonStr == "[]" || jsonStr == "{}" || strings.TrimSpace(jsonStr) == "" {
+				emailDesign = pqtype.NullRawMessage{Valid: false}
+			} else {
+				emailDesign = pqtype.NullRawMessage{RawMessage: req.EmailDesign, Valid: true}
+			}
+		}
+	} else {
+		emailDesign = pqtype.NullRawMessage{Valid: false}
+	}
+
+	template, err := s.store.CreateTemplate(ctx, db.CreateTemplateParams{
 		UserID:       _uuid["user"],
 		CompanyID:    _uuid["company"],
 		TemplateName: req.TemplateName,
@@ -68,7 +91,7 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dt
 		Subject:      sql.NullString{String: req.Subject, Valid: true},
 		Type:         req.Type,
 		EmailHtml:    sql.NullString{String: req.EmailHtml, Valid: true},
-		EmailDesign:  pqtype.NullRawMessage{RawMessage: req.EmailDesign, Valid: true},
+		EmailDesign:  emailDesign, // Use the properly handled emailDesign
 		IsEditable:   sql.NullBool{Bool: req.IsEditable, Valid: true},
 		IsPublished:  sql.NullBool{Bool: req.IsPublished, Valid: true},
 		IsPublicTemplate: sql.NullBool{
@@ -86,7 +109,12 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dt
 		EditorType:  sql.NullString{String: req.EditorType, Valid: true},
 	})
 
-	return req, nil
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrCreatingRecord
+	}
+	data := mapper.MapTemplateToDTO(template)
+	return data, nil
 }
 
 func (s *Service) GetAllTemplateByType(ctx context.Context, req dto.FetchTemplateDTO) (any, error) {

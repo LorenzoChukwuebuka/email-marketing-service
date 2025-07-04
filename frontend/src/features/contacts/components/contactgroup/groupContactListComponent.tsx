@@ -21,8 +21,7 @@ const GroupContactList: React.FC = () => {
     const location = useLocation();
     const stateData = location.state as { groupId: string };
 
-    const { data: contactgroupData, isLoading } = useSingleContactGroupQuery(stateData.groupId);
-
+    const { data: contactgroupData, isLoading, refetch } = useSingleContactGroupQuery(stateData.groupId);
     // Filter contacts based on search text
     useEffect(() => {
         if (!group?.contacts) {
@@ -66,6 +65,7 @@ const GroupContactList: React.FC = () => {
             await removeContactFromGroup();
             message.success('Contacts removed successfully');
             setSelectedRowKeys([]);
+            refetch()
         } catch (error) {
             console.error(error);
             message.error('Failed to remove contacts');

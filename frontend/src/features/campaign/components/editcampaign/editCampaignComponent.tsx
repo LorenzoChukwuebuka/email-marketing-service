@@ -28,7 +28,7 @@ const EditCampaignForm: React.FC = () => {
     useEffect(() => {
         if (campaignData) {
             setCampaign(campaignData.payload as CampaignData);
-            setTemplatePreview(campaignData?.payload.template?.email_html || null);
+            setTemplatePreview(campaignData?.payload.template?.template_email_html || null);
             setScheduledDate(campaignData?.payload.scheduled_at as any)
         }
     }, [campaignData]);
@@ -56,7 +56,7 @@ const EditCampaignForm: React.FC = () => {
         if (scheduledDate) {
             setCreateCampaignValues({ scheduled_at: scheduledDate.toISOString() });
             setIsCalendarOpen(false);
-            await updateCampaign(campaign?.uuid as string)
+            await updateCampaign(campaign?.id as string)
             await new Promise((resolve) => setTimeout(resolve, 500))
             refetch()
         }
@@ -65,7 +65,7 @@ const EditCampaignForm: React.FC = () => {
     const sendCampgn = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         try {
-            await sendCampaign(campaign?.uuid as string);
+            await sendCampaign(campaign?.id as string);
         } catch (error) {
             console.error(error);
         }
@@ -187,8 +187,6 @@ const EditCampaignForm: React.FC = () => {
 
                 </main>
             )}
-
-
         </HelmetProvider>
     );
 };

@@ -25,6 +25,7 @@ import adminAnalyticsRoute from '../features/analytics/routes/admin.analytics.ro
 import adminUsersRoute from '../features/[admin]users/routes/adminusers.route';
 import adminSupportRoute from '../features/support/routes/adminsupport.route';
 import adminCampaignRoute from '../features/campaign/routes/admincampaign.route';
+import BillingSuccessTemplate from '../features/billing/templates/billingsuccessTemplate';
 
 const router = createBrowserRouter([
     {
@@ -51,6 +52,13 @@ const router = createBrowserRouter([
         children: [
             ...authRoute
         ]
+    },
+
+    //billing success route
+
+    {
+        path: "/payment",
+        element: <BillingSuccessTemplate />
     },
 
     //admin auth route
@@ -99,8 +107,8 @@ const router = createBrowserRouter([
                         ]
                     },
                     {
-                        path:"campaigns",
-                        children:[
+                        path: "campaigns",
+                        children: [
                             ...adminCampaignRoute
                         ]
                     }

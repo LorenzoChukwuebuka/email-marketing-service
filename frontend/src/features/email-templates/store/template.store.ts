@@ -24,6 +24,13 @@ type TemplateAsyncActions = {
     sendTestMail: () => Promise<void>
 }
 
+const editorPathMap: Record<"drag-and-drop" | "html-editor" | "rich-text", number> = {
+    "drag-and-drop": 1,
+    "html-editor": 2,
+    "rich-text": 3,
+};
+
+
 const InitialState: TemplateState = {
     formValues: {
         template_name: '',
@@ -67,29 +74,25 @@ const useTemplateStore = create<TemplateStore>((set, get) => ({
         const { formValues } = get()
         const response = await TemplateAPI.createTemplate(formValues)
 
-        const editorType = response.payload["editor-type"];
-        const templateType = response.payload.type;
-        const templateId = response.payload.templateId;
         try {
-            let redirectUrl = "";
+            const editorType = response.payload.editor_type;
+            const templateType = response.payload.type;
+            const templateId = response.payload.template_id;
+
             const typeParam = templateType === "marketing" ? "m" : "t";
-            switch (editorType) {
-                case "html-editor":
-                    redirectUrl = `/editor/2?type=${typeParam}&uuid=${templateId}`;
-                    break;
-                case "drag-and-drop":
-                    redirectUrl = `/editor/1?type=${typeParam}&uuid=${templateId}`;
-                    break;
-                case "rich-text":
-                    redirectUrl = `/editor/3?type=${typeParam}&uuid=${templateId}`
-                    break;
-                default:
-                    console.log("Unknown editor type:", editorType);
-                    return;
+
+            const editorCode = editorPathMap[editorType as keyof typeof editorPathMap];
+
+            if (!editorCode) {
+                console.error("Unknown editor type:", editorType);
+                return;
             }
+
+            const redirectUrl = `/editor/${editorCode}?type=${typeParam}&uuid=${templateId}`;
             window.location.href = redirectUrl;
+
         } catch (error) {
-            handleError(error)
+            handleError(error);
         }
     },
 

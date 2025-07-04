@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS payment_intents (
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
     subscription_id UUID REFERENCES subscriptions(id),
-    payment_intent_id VARCHAR(255) UNIQUE NOT NULL, -- External payment gateway intent ID
+    payment_intent_id VARCHAR(255)  NOT NULL, -- External payment gateway intent ID
     amount DECIMAL(10, 2) NOT NULL,
     currency VARCHAR(10) DEFAULT 'NGN',
     payment_method_types TEXT[], -- Array of allowed payment methods ['card', 'bank_transfer', etc.]

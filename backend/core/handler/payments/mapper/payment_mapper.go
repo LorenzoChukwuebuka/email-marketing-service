@@ -94,6 +94,9 @@ func MapPaymentResponse(row db.GetPaymentsByCompanyAndUserRow) *dto.PaymentRespo
 	response.Subscription = dto.SubscriptionResponse{
 		Subscriptionplanid: row.Subscriptionplanid.String(),
 		Subscriptionamount: row.Subscriptionamount,
+		Plan: dto.PlanResponse_{
+			Planname: row.Planname,
+		},
 	}
 
 	// Handle nullable Subscription billing cycle

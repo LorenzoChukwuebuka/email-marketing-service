@@ -7,6 +7,7 @@ import useSMTPKeyStore from "../store/smtpkey.store";
 import APIKeysTableComponent from "../components/keys/apiComponentTable";
 import APIInfo from "../components/keys/apiInfoComponent";
 import SMTPKeysTableComponent from '../components/keys/smtpComponentTable';
+import { generateRandomName } from "../../../utils/generateRandomName";
 
 interface ModalContent {
     title: string;
@@ -45,19 +46,18 @@ const APISettingsDashTemplate: React.FC = () => {
 
     const handleGenerateAPIKey = (): void => {
         setKeyType("API");
-        setAPIFormValues({ name: "" });
+        setAPIFormValues({ name: generateRandomName() });
         openModal("Generate New API Key", "Please provide a name or description for your new API key.");
     };
 
     const handleGenerateSMTPKey = (): void => {
         setKeyType("SMTP");
-        setSmtpFormValues({ key_name: "" });
+        setSmtpFormValues({ key_name: generateRandomName() });
         openModal("Generate New SMTP Key", "Please provide a name or description for your new SMTP key.");
     };
 
     const handleSubmitKeyForm = async (): Promise<void> => {
         setIsModalOpen(false);
-
 
         try {
             if (keyType === "SMTP") {
@@ -156,7 +156,7 @@ const APISettingsDashTemplate: React.FC = () => {
                         <APIInfo />
                     </>
                 )}
-                    {activeTab === "SMTP" && <SMTPKeysTableComponent />}
+                {activeTab === "SMTP" && <SMTPKeysTableComponent />}
 
                 <Modal
                     title={modalContent.title}

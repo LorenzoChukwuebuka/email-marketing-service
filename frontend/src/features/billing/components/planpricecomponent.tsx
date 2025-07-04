@@ -6,7 +6,6 @@ import { usePlansQuery } from '../../plans/hooks/usePlanQuery';
 import { useMailCalcQuery } from '../../../hooks/useMailDataQuery';
 import { APIPlanData } from '../../plans/interface/plan.interface';
 
-
 const { Title, Text, Paragraph } = Typography;
 
 const PricingPlans: React.FC = () => {
@@ -53,7 +52,7 @@ const PricingPlans: React.FC = () => {
 
     const getButtonStyle = (plan: APIPlanData) => {
         const isCurrentPlan = currentPlan === plan.name;
-       // const isLoading = loadingPlanId === plan.id;
+        // const isLoading = loadingPlanId === plan.id;
         const isFreePlan = plan.price === 0;
 
         if (isCurrentPlan) {

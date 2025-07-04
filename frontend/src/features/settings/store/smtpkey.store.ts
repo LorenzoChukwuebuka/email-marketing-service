@@ -60,8 +60,6 @@ const useSMTPKeyStore = create<SMTPStore>((set, get) => ({
             if (response) {
                 eventBus.emit('success', 'SMTP credentials changed successfully');
             }
-
-
         } catch (error) {
             handleError(error)
         }
