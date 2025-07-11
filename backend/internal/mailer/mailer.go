@@ -5,12 +5,12 @@ import (
 	"email-marketing-service/internal/config"
 	"email-marketing-service/internal/helper"
 	"fmt"
+	"github.com/google/uuid"
 	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"github.com/google/uuid"
 )
 
 // EmailConfig holds configuration for email service
@@ -136,6 +136,20 @@ func (s *EmailService) SignUpMail(email string, username string, userID uuid.UUI
 	}
 	fmt.Printf("%v", emailData)
 	return s.SendEmail(common.VerifyUserTemplate, emailData)
+}
+
+// verify user login
+func (s *EmailService) VerifyUserLogin(email, username, otp, userID string) error {
+	emailData := EmailData{
+		To:      email,
+		Subject: "Email Verification",
+		Data: map[string]any{
+			"Username": username,
+			"Token":    otp,
+			"Email":    email,
+		},
+	}
+	return s.SendEmail(common.VerifyUserLoginTemplate, emailData)
 }
 
 // ResetPasswordMail sends a password reset email

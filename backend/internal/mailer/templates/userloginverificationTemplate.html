@@ -1,0 +1,301 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Login Verification Code</title>
+    <style>
+        /* -------------------------------------
+          GLOBAL RESETS
+      ------------------------------------- */
+
+        img {
+            border: none;
+            -ms-interpolation-mode: bicubic;
+            max-width: 100%;
+        }
+
+        body {
+            background-color: #f6f6f6;
+            font-family: sans-serif;
+            -webkit-font-smoothing: antialiased;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        table {
+            border-collapse: separate;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+            width: 100%;
+        }
+
+        table td {
+            font-family: sans-serif;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        /* -------------------------------------
+          BODY & CONTAINER
+      ------------------------------------- */
+
+        .body {
+            background-color: #f6f6f6;
+            width: 100%;
+        }
+
+        .container {
+            display: block;
+            margin: 0 auto !important;
+            max-width: 580px;
+            padding: 10px;
+            width: 580px;
+        }
+
+        .content {
+            box-sizing: border-box;
+            display: block;
+            margin: 0 auto;
+            max-width: 580px;
+            padding: 10px;
+        }
+
+        /* -------------------------------------
+          HEADER, FOOTER, MAIN
+      ------------------------------------- */
+        .main {
+            background: #ffffff;
+            border-radius: 3px;
+            width: 100%;
+        }
+
+        .wrapper {
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .content-block {
+            padding-bottom: 10px;
+            padding-top: 10px;
+        }
+
+        .footer {
+            clear: both;
+            margin-top: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .footer td,
+        .footer p,
+        .footer span,
+        .footer a {
+            color: #999999;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* -------------------------------------
+          TYPOGRAPHY
+      ------------------------------------- */
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #000000;
+            font-family: sans-serif;
+            font-weight: 400;
+            line-height: 1.4;
+            margin: 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 35px;
+            font-weight: 300;
+            text-align: center;
+            text-transform: capitalize;
+        }
+
+        p,
+        ul,
+        ol {
+            font-family: sans-serif;
+            font-size: 14px;
+            font-weight: normal;
+            margin: 0;
+            margin-bottom: 15px;
+        }
+
+        p li,
+        ul li,
+        ol li {
+            list-style-position: inside;
+            margin-left: 5px;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: underline;
+        }
+
+        /* -------------------------------------
+          TOKEN STYLES
+      ------------------------------------- */
+        .token-container {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .token-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            letter-spacing: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .token-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .expiry-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .expiry-text {
+            color: #856404;
+            font-size: 13px;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        /* -------------------------------------
+          RESPONSIVE AND MOBILE FRIENDLY STYLES
+      ------------------------------------- */
+        @media only screen and (max-width: 620px) {
+            table[class=body] h1 {
+                font-size: 28px !important;
+                margin-bottom: 10px !important;
+            }
+
+            table[class=body] p,
+            table[class=body] ul,
+            table[class=body] ol,
+            table[class=body] td,
+            table[class=body] span,
+            table[class=body] a {
+                font-size: 16px !important;
+            }
+
+            table[class=body] .wrapper,
+            table[class=body] .article {
+                padding: 10px !important;
+            }
+
+            table[class=body] .content {
+                padding: 0 !important;
+            }
+
+            table[class=body] .container {
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            table[class=body] .main {
+                border-left-width: 0 !important;
+                border-radius: 0 !important;
+                border-right-width: 0 !important;
+            }
+
+            .token-code {
+                font-size: 28px !important;
+                letter-spacing: 2px !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="">
+    <span class="preheader">Your verification code for secure login access.</span>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+        <tr>
+            <td>&nbsp;</td>
+            <td class="container">
+                <div class="content">
+
+                    <!-- START CENTERED WHITE CONTAINER -->
+                    <table role="presentation" class="main">
+
+                        <!-- START MAIN CONTENT AREA -->
+                        <tr>
+                            <td class="wrapper">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>
+                                            <h2>Hi {{.Username}},</h2>
+                                            <p>We received a request to sign in to your account. Please use the verification code below to complete your login:</p>
+                                            
+                                            <div class="token-container">
+                                                <div class="token-label">Verification Code</div>
+                                                <div class="token-code">{{.Token}}</div>
+                                            </div>
+
+                                            <div class="expiry-warning">
+                                                <p class="expiry-text">⚠️ This code will expire in 5 minutes</p>
+                                            </div>
+
+                                            <p>Enter this code in your login screen to access your account. If you did not attempt to sign in, please ignore this email and consider changing your password.</p>
+                                            
+                                            <p><strong>Security tip:</strong> Never share this code with anyone. {{.AppName}} will never ask for your verification code.</p>
+                                            
+                                            <p>Best regards,<br>The {{.AppName}} Team</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- END MAIN CONTENT AREA -->
+                    </table>
+                    <!-- END CENTERED WHITE CONTAINER -->
+
+                    <!-- START FOOTER -->
+                    <div class="footer">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td class="content-block">
+                                    <span class="apple-link">{{.AppName}} Security Team</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <!-- END FOOTER -->
+
+                </div>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+    </table>
+</body>
+
+</html>

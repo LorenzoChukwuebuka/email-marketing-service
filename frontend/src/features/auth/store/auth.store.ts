@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FormValues, LoginValues, ForgetPasswordValues, ResetPasswordValues, EditFormValues, ChangePasswordValues, OtpValue } from '../interface/auth.interface';
+import { FormValues, LoginValues, ForgetPasswordValues, ResetPasswordValues, EditFormValues, ChangePasswordValues, OtpValue, VerifyLoginFormData } from '../interface/auth.interface';
 import authApi from '../api/auth.api';
 import { persist } from 'zustand/middleware';
 import Cookies from 'js-cookie';
@@ -12,6 +12,7 @@ interface AuthState {
     otpValue: OtpValue;
     isVerified: boolean;
     userId: string;
+    isLoginVerified: boolean
     loginValues: LoginValues;
     forgetPasswordValues: ForgetPasswordValues;
     resetPasswordValues: ResetPasswordValues;
@@ -20,6 +21,7 @@ interface AuthState {
     //  userData: any;
     token: string | undefined;
     changePasswordValues: ChangePasswordValues;
+    verifyloginValues: VerifyLoginFormData
 }
 
 interface AuthAsyncActions {
@@ -32,8 +34,9 @@ interface AuthAsyncActions {
     changePassword: () => Promise<void>;
     loginUser: () => Promise<void>;
     editUserDetails: () => Promise<void>;
-    deleteUser:()=>Promise<void>
-    cancelDelete:()=>Promise<void>
+    deleteUser: () => Promise<void>
+    cancelDelete: () => Promise<void>
+    verifyLogin: () => Promise<void>
 }
 
 interface AuthActions {
@@ -49,6 +52,7 @@ interface AuthActions {
     setEditFormValues: (newEditFormValues: EditFormValues) => void;
     //  setUserData: (newUserData: unknown) => void;
     setChangePasswordValues: (newChangePasswordValues: ChangePasswordValues) => void;
+    setVerifyLoginValues: (newVerifyLoginValues: VerifyLoginFormData) => void;
 }
 
 type AuthStore = AuthState & AuthActions & AuthAsyncActions
@@ -85,6 +89,11 @@ const InitialState: AuthState = {
         confirm_password: ''
     },
     token: Cookies.get('Cookies'),
+    verifyloginValues: {
+        user_id: '',
+        token: ''
+    },
+    isLoginVerified: false
 }
 
 const useAuthStore = create<AuthStore>()(
@@ -109,6 +118,8 @@ const useAuthStore = create<AuthStore>()(
             // setUserData: (newUserData) => set({ userData: newUserData }),
             setChangePasswordValues: (newChangePasswordValues) =>
                 set({ changePasswordValues: newChangePasswordValues }),
+            setVerifyLoginValues: (newVerifyLoginValues) => set({ verifyloginValues: newVerifyLoginValues }),
+
 
             registerUser: async () => {
                 const {
@@ -192,16 +203,31 @@ const useAuthStore = create<AuthStore>()(
                 try {
                     const response = await authApi.loginUser(loginValues)
                     console.log(response)
-                    if (response) {
-                        Cookies.set('Cookies', JSON.stringify(response.payload), {
-                            expires: 3,
-                            sameSite: 'Strict',
-                            secure: true
-                        })
-                        window.location.href = '/app'
-                    }
+                    //@ts-ignore
+                    set({ userId: response?.payload?.details?.id })
+
+                    window.location.href = '/auth/verify-login'
+
                 } catch (error) {
                     handleError(error)
+                }
+            },
+
+            verifyLogin: async () => {
+                const { verifyloginValues, userId } = get()
+
+                let formatData = {
+                    ...verifyloginValues,
+                    userId: userId
+                }
+                let response = await authApi.verifyLogin(formatData as any)
+                if (response) {
+                    Cookies.set('Cookies', JSON.stringify(response.payload), {
+                        expires: 3,
+                        sameSite: 'Strict',
+                        secure: true
+                    })
+                    window.location.href = '/app'
                 }
             },
 
@@ -217,20 +243,20 @@ const useAuthStore = create<AuthStore>()(
                 }
             },
 
-            deleteUser:async()=>{
+            deleteUser: async () => {
                 try {
                     const response = await authApi.deleteUserAccount()
-                    if(response){
-                        eventBus.emit('success','Your account has been scheduled for deletion')
+                    if (response) {
+                        eventBus.emit('success', 'Your account has been scheduled for deletion')
                     }
                 } catch (error) {
                     handleError(error)
                 }
             },
-            cancelDelete:async()=>{
+            cancelDelete: async () => {
                 try {
                     const response = await authApi.cancelDeleteUserAccount()
-                    if(response){
+                    if (response) {
                         eventBus.emit('success', 'The delete proces has been cancelled?')
                     }
                 } catch (error) {

@@ -28,4 +28,6 @@ func (t *UserRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/cancel-deletion", handler.CancelUserDeletion).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/details", handler.GetUserDetails).Methods("GET", "OPTIONS")
 	r.HandleFunc("/current-running-subscription", handler.GetCurrentRunningSubscription).Methods("GET", "OPTIONS")
+	r.HandleFunc("/edit", handler.EditUser).Methods("PUT", "OPTIONS")
+	
 }

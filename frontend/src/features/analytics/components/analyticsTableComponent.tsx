@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
-import { Table, Card, Typography, Input, Empty } from "antd";
+import { Table, Card, Typography,  Empty } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { SearchOutlined } from "@ant-design/icons";
 import { useAllCampaignStatsQuery } from "../hooks/useAnalyticsQuery";
 import { parseDate } from "../../../utils/utils";
 import useDebounce from "../../../hooks/useDebounce";
 
 const { Title } = Typography;
-const { Search } = Input;
+ 
 
 
 const AnalyticsTableComponent: React.FC = () => {

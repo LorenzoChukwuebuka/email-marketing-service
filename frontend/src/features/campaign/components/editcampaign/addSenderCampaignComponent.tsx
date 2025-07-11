@@ -25,23 +25,38 @@ const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
     const sData = useMemo(() => senderData?.payload.data || [], [senderData])
 
     useEffect(() => {
-        if (createCampaignValues.sender) {
-            const sender = sData.find(s => s.email === createCampaignValues.sender);
-            if (sender) {
-                form.setFieldsValue({
-                    sender_email: sender.email,
-                    sender_from_name: sender.name,
-                });
-            }
+        if (isOpen && campaign) {
+            // Set form values from campaign data
+            form.setFieldsValue({
+                sender_email: campaign.sender || "",
+                sender_from_name: campaign.sender_from_name || "",
+            });
+            
+            // Also update the store with current campaign values
+            setCreateCampaignValues({
+                sender: campaign.sender || "",
+                sender_from_name: campaign.sender_from_name || "",
+            });
         }
-    }, [createCampaignValues.sender, sData, form]);
+    }, [isOpen, campaign, form, setCreateCampaignValues]);
+
+    // Handle when sender email is selected from dropdown
+    const handleSenderChange = (selectedEmail: string) => {
+        const sender = sData.find(s => s.email === selectedEmail);
+        if (sender) {
+            form.setFieldsValue({
+                sender_email: selectedEmail,
+                sender_from_name: sender.name,
+            });
+        }
+    };
 
     const handleFormSubmit = async (values: { sender_email: string; sender_from_name: string }) => {
         setCreateCampaignValues({
             sender: values.sender_email,
             sender_from_name: values.sender_from_name,
         });
-        await updateCampaign(campaign?.uuid as string);
+        await updateCampaign(campaign?.id as string);
         onClose();
     };
 
@@ -58,10 +73,6 @@ const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
             <Form
                 form={form}
                 layout="vertical"
-                initialValues={{
-                    sender_email: createCampaignValues.sender || "",
-                    sender_from_name: createCampaignValues.sender_from_name || "",
-                }}
                 onFinish={handleFormSubmit}
             >
                 <Form.Item
@@ -69,10 +80,13 @@ const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
                     name="sender_email"
                     rules={[{ required: true, message: "Please select an email address" }]}
                 >
-                    <Select placeholder="Select an email...">
+                    <Select 
+                        placeholder="Select an email..."
+                        onChange={handleSenderChange}
+                    >
                         {Array.isArray(sData) &&
                             sData.map((sender) => (
-                                <Option key={sender.uuid} value={sender.email}>
+                                <Option key={sender.id} value={sender.email}>
                                     {sender.email}
                                 </Option>
                             ))}

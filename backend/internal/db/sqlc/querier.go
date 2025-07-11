@@ -241,6 +241,7 @@ type Querier interface {
 	UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) (Campaign, error)
 	UpdateCampaignGroup(ctx context.Context, arg UpdateCampaignGroupParams) error
 	UpdateCampaignStatus(ctx context.Context, arg UpdateCampaignStatusParams) error
+	UpdateCompanyName(ctx context.Context, arg UpdateCompanyNameParams) error
 	UpdateContact(ctx context.Context, arg UpdateContactParams) error
 	// Updates a contact group's details
 	UpdateContactGroup(ctx context.Context, arg UpdateContactGroupParams) (ContactGroup, error)
@@ -269,6 +270,7 @@ type Querier interface {
 	UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error)
 	UpdateTicketStatus(ctx context.Context, arg UpdateTicketStatusParams) (SupportTicket, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
+	UpdateUserRecords(ctx context.Context, arg UpdateUserRecordsParams) error
 	UpsertAdmin(ctx context.Context, arg UpsertAdminParams) (Admin, error)
 	VerifyUser(ctx context.Context, id uuid.UUID) error
 }

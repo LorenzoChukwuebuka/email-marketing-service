@@ -22,7 +22,7 @@ type Service struct {
 }
 
 var (
-	otpLength = 15
+	otpLength = 8
 )
 
 func NewAuthService(store db.Store) *Service {
@@ -89,7 +89,7 @@ func (s *Service) SignUp(ctx context.Context, req *dto.UserSignUpRequest) (any, 
 		_, err = q.CreateOTP(ctx, db.CreateOTPParams{
 			UserID:    user.ID,
 			Token:     token,
-			ExpiresAt: sql.NullTime{Time: time.Now().Add(1 * time.Hour), Valid: true},
+			ExpiresAt: sql.NullTime{Time: time.Now().UTC().Add(1 * time.Hour), Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("error creating OTP: %w", err)
@@ -165,7 +165,10 @@ func (s *Service) VerifyUser(ctx context.Context, req *dto.VerifyUserRequest) er
 			return fmt.Errorf("%w: %v", common.ErrFetchingOTP, err)
 		}
 
-		if time.Now().UTC().After(getOtp.ExpiresAt.Time) {
+		now := time.Now().UTC()
+		expiresAt := getOtp.ExpiresAt.Time.UTC()
+
+		if now.After(expiresAt) {
 			return common.ErrVerificationCodeExpired
 		}
 
@@ -315,13 +318,13 @@ func (s *Service) ResendEmail(ctx context.Context, req *dto.ResendOTPRequest) er
 	default:
 		return common.ErrInvalidOTPType
 	}
-
 }
 
 func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse[dto.PublicUser], error) {
 	if err := helper.ValidateData(req); err != nil {
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
+
 	// Check if a user exists
 	user, err := s.store.GetUserByEmail(ctx, req.Email)
 	if err != nil {
@@ -331,29 +334,100 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		return nil, common.ErrFetchingUser
 	}
 
-	fmt.Printf("user_id:%v", user.ID)
-
-	//check if user is verified
+	// Check if user is blocked
 	if user.Blocked {
 		return nil, common.ErrBlocked
 	}
 
+	// Check if user is verified
 	if !user.Verified {
 		return nil, common.ErrAccountNotVerified
 	}
 
+	// Verify password
 	err = common.CheckPassword(req.Password, user.Password.String)
 	if err != nil {
 		return nil, common.ErrCheckingPasswordHash
 	}
 
-	token, err := helper.GenerateAccessToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
+	// Send OTP for login verification
+	otptoken := helper.GenerateOTP(otpLength)
+	_, err = s.store.CreateOTP(ctx, db.CreateOTPParams{
+		UserID:    user.ID,
+		Token:     otptoken,
+		ExpiresAt: sql.NullTime{Time: time.Now().UTC().Add(5 * time.Minute), Valid: true},
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating OTP: %w", err)
 	}
 
-	// Generate refresh token
-	refreshToken, err := helper.GenerateRefreshToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
+	// Send OTP email
+	go mailer.NewEmailService().VerifyUserLogin(req.Email, user.Fullname, user.ID.String(), otptoken)
+
+	return &dto.LoginResponse[dto.PublicUser]{
+		Status:  "OTP sent to your email. Please verify to complete login",
+		Details: mapper.MapPublicUser_(user),
+	}, nil
+}
+
+func (s *Service) VerifyUserLogin(ctx context.Context, req *dto.VerifyLoginRequest) (*dto.LoginResponse[dto.PublicUser], error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, fmt.Errorf("invalid verify login data: %w", err)
+	}
+
+	var token, refreshToken string
+
+	var user db.GetUserByIDRow
+
+	err := s.store.ExecTx(ctx, func(q *db.Queries) error {
+		// Get OTP
+		getOtp, err := q.GetOTPByToken(ctx, req.Token)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("%w: OTP not found for token", common.ErrFetchingOTP)
+			}
+			return fmt.Errorf("%w: %v", common.ErrFetchingOTP, err)
+		}
+
+		// Check if OTP is expired
+		now := time.Now().UTC()
+		expiresAt := getOtp.ExpiresAt.Time.UTC()
+
+		if now.After(expiresAt) {
+			return common.ErrVerificationCodeExpired
+		}
+
+		// Get user details for token generation
+		user, err = q.GetUserByID(ctx, getOtp.UserID)
+		if err != nil {
+			return fmt.Errorf("error fetching user: %w", err)
+		}
+
+		// Generate tokens
+		token, err = helper.GenerateAccessToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
+		if err != nil {
+			return fmt.Errorf("error generating access token: %w", err)
+		}
+
+		refreshToken, err = helper.GenerateRefreshToken(user.ID.String(), user.CompanyID.String(), user.Fullname, user.Email)
+		if err != nil {
+			return fmt.Errorf("error generating refresh token: %w", err)
+		}
+
+		// Update login time
+		err = q.UpdateUserLoginTime(ctx, user.ID)
+		if err != nil {
+			return fmt.Errorf("error updating user login time: %w", err)
+		}
+
+		// Delete used OTP
+		if err = q.DeleteOTPById(ctx, getOtp.ID); err != nil {
+			return fmt.Errorf("%w: %v", common.ErrDeletingOTP, err)
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}

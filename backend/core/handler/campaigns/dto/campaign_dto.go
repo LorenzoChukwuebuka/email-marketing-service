@@ -98,28 +98,28 @@ type CompanyResponse struct {
 }
 
 type TemplateResponse struct {
-	TemplateIDRef             *string          `json:"template_id_ref"`
-	TemplateUserID            *string          `json:"template_user_id"`
-	TemplateCompanyID         *string          `json:"template_company_id"`
-	TemplateName              *string          `json:"template_name"`
-	TemplateSenderName        *string          `json:"template_sender_name"`
-	TemplateFromEmail         *string          `json:"template_from_email"`
-	TemplateSubject           *string          `json:"template_subject"`
-	TemplateType              *string          `json:"template_type"`
-	TemplateEmailHtml         *string          `json:"template_email_html"`
-	TemplateEmailDesign       *json.RawMessage `json:"template_email_design"`
-	TemplateIsEditable        bool             `json:"template_is_editable"`
-	TemplateIsPublished       bool             `json:"template_is_published"`
-	TemplateIsPublicTemplate  bool             `json:"template_is_public_template"`
-	TemplateIsGalleryTemplate bool             `json:"template_is_gallery_template"`
-	TemplateTags              *string          `json:"template_tags"`
-	TemplateDescription       *string          `json:"template_description"`
-	TemplateImageUrl          *string          `json:"template_image_url"`
-	TemplateIsActive          bool             `json:"template_is_active"`
-	TemplateEditorType        *string          `json:"template_editor_type"`
-	TemplateCreatedAt         *time.Time       `json:"template_created_at"`
-	TemplateUpdatedAt         *time.Time       `json:"template_updated_at"`
-	TemplateDeletedAt         *time.Time       `json:"template_deleted_at"`
+	ID                  *string          `json:"id_ref"`
+	UserID              *string          `json:"user_id"`
+	CompanyID           *string          `json:"company_id"`
+	Name                *string          `json:"name"`
+	SenderName          *string          `json:"sender_name"`
+	FromEmail           *string          `json:"from_email"`
+	Subject             *string          `json:"subject"`
+	Type                *string          `json:"type"`
+	EmailHtml           *string          `json:"email_html"`
+	EmailDesign         *json.RawMessage `json:"email_design"`
+	IsEditable          bool             `json:"is_editable"`
+	IsPublished         bool             `json:"is_published"`
+	IsPublicTemplate    bool             `json:"is_public_template"`
+	IsGalleryTemplate   bool             `json:"is_gallery_template"`
+	Tags        *string          `json:"tags"`
+	Description *string          `json:"description"`
+	ImageUrl    *string          `json:"image_url"`
+	IsActive    bool             `json:"is_active"`
+	EditorType  *string          `json:"editor_type"`
+	CreatedAt   *time.Time       `json:"created_at"`
+	UpdatedAt   *time.Time       `json:"updated_at"`
+	DeletedAt   *time.Time       `json:"deleted_at"`
 }
 
 type EmailCampaignResultResponse struct {

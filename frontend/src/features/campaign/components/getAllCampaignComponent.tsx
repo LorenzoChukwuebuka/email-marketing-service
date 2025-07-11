@@ -9,7 +9,7 @@ import {
     Dropdown,
     Card,
     Typography,
-    Space,
+ 
     Layout,
     Empty
 } from 'antd';
@@ -20,7 +20,7 @@ import {
     EyeOutlined,
     PlusOutlined,
     SearchOutlined,
-    SendOutlined,
+ 
     MailOutlined
 } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
@@ -28,7 +28,6 @@ import type { MenuProps } from 'antd';
 import useCampaignStore from "../store/campaign.store";
 import { useCampaignQuery } from "../hooks/useCampaignQuery";
 import useDebounce from "../../../hooks/useDebounce";
-import EmptyState from "../../../components/emptyStateComponent";
 import { parseDate } from '../../../../../frontend/src/utils/utils';
 import CreateCampaignComponent from './createCampaignComponent';
 import { CampaignResponse } from "../interface/campaign.interface";

@@ -15,7 +15,7 @@ type UserResponse struct {
 	Blocked              bool            `json:"blocked"`
 	VerifiedAt           *time.Time      `json:"verified_at"`
 	Status               string          `json:"status"`
-	ScheduledForDeletion bool       `json:"scheduled_for_deletion"`
+	ScheduledForDeletion bool            `json:"scheduled_for_deletion"`
 	ScheduledDeletionAt  *time.Time      `json:"scheduled_deletion_at"`
 	LastLoginAt          *time.Time      `json:"last_login_at"`
 	CreatedAt            time.Time       `json:"created_at"`
@@ -31,3 +31,5 @@ type CompanyResponse struct {
 	CompanyUpdatedAt time.Time  `json:"company_updated_at"`
 	CompanyDeletedAt *time.Time `json:"company_deleted_at"`
 }
+
+ 

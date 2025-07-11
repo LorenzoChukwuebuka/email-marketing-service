@@ -234,24 +234,25 @@ OFFSET
 -- name: UpdateCampaign :one
 UPDATE campaigns
 SET
-    name = COALESCE($1, name),
-    subject = COALESCE($2, subject),
-    preview_text = COALESCE($3, preview_text),
-    sender_from_name = COALESCE($4, sender_from_name),
-    template_id = COALESCE($5, template_id),
-    recipient_info = COALESCE($6, recipient_info),
-    status = COALESCE($7, status),
-    track_type = COALESCE($8, track_type),
-    sender = COALESCE($9, sender),
-    scheduled_at = COALESCE($10, scheduled_at),
-    has_custom_logo = COALESCE($11, has_custom_logo),
-    is_published = COALESCE($12, is_published),
-    is_archived = COALESCE($13, is_archived),
+    name = COALESCE(sqlc.narg('name'), name),
+    subject = COALESCE(sqlc.narg('subject'), subject),
+    preview_text = COALESCE(sqlc.narg('preview_text'), preview_text),
+    sender_from_name = COALESCE(sqlc.narg('sender_from_name'), sender_from_name),
+    template_id = COALESCE(sqlc.narg('template_id'), template_id),
+    recipient_info = COALESCE(sqlc.narg('recipient_info'), recipient_info),
+    status = COALESCE(sqlc.narg('status'), status),
+    track_type = COALESCE(sqlc.narg('track_type'), track_type),
+    sender = COALESCE(sqlc.narg('sender'), sender),
+    scheduled_at = COALESCE(sqlc.narg('scheduled_at'), scheduled_at),
+    has_custom_logo = COALESCE(sqlc.narg('has_custom_logo'), has_custom_logo),
+    is_published = COALESCE(sqlc.narg('is_published'), is_published),
+    is_archived = COALESCE(sqlc.narg('is_archived'), is_archived),
     updated_at = CURRENT_TIMESTAMP
 WHERE
-    id = $14
-    AND user_id = $15
-    AND deleted_at IS NULL RETURNING *;
+    id = sqlc.arg('id')
+    AND user_id = sqlc.arg('user_id')
+    AND deleted_at IS NULL 
+RETURNING *;
 
 -- name: MarkCampaignAsSent :one
 UPDATE campaigns

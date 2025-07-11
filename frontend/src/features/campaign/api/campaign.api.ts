@@ -23,7 +23,7 @@ class CampaignApi {
     }
 
     async updateCampaign(uuid: string, updatePayload: Partial<Campaign>): Promise<ResponseT> {
-        const response = await axiosInstance.put<ResponseT>(`${this.baseUrl}/update-campaign/${uuid}`, updatePayload);
+        const response = await axiosInstance.put<ResponseT>(`${this.baseUrl}/update/${uuid}`, updatePayload);
         return response.data
     }
 

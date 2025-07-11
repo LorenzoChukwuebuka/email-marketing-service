@@ -48,3 +48,8 @@ export type SignUpAPIData = {
     userId: string,
     message: string
 }
+
+export interface VerifyLoginFormData {
+    token: string;
+    user_id:string
+}

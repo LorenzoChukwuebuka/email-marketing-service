@@ -164,6 +164,7 @@ func (s *Service) GetAllCampaigns(ctx context.Context, req *dto.FetchCampaignDTO
 	return data, nil
 }
 
+
 func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignDTO) (any, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
 		"company":  req.CompanyID,
@@ -186,9 +187,7 @@ func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignD
 	}
 
 	//get contact groups
-
 	campaign_group, err := s.store.GetCampaignContactGroups(ctx, _uuid["campaign"])
-
 	if err != nil {
 		return nil, common.ErrFetchingRecord
 	}
@@ -196,6 +195,27 @@ func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignD
 	// Map the campaign data to the response DTO
 	groupData := mapper.MapCampaignGroups(campaign_group)
 	campaignData := mapper.MapCampaignResponse(db.ListCampaignsByCompanyIDRow(campaign))
+
+	// Fetch template separately if template_id exists
+	if campaign.TemplateID.Valid && campaign.TemplateID.UUID != uuid.Nil {
+		template, err := s.store.GetTemplateByIDWithoutType(ctx, db.GetTemplateByIDWithoutTypeParams{
+			ID:     campaign.TemplateID.UUID,
+			UserID: _uuid["user"],
+		})
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// Template not found, set to nil
+				campaignData.Template = nil
+			} else {
+				return nil, fmt.Errorf("error fetching template: %w", err)
+			}
+		} else {
+			// Map the template data
+			templateData := mapper.MapTemplateFromSeparateQuery(template)
+			campaignData.Template = templateData
+		}
+	}
 
 	return &CampaignWithGroupsResponse{
 		CampaignResponseDTO: campaignData,
@@ -222,16 +242,16 @@ func (s *Service) UpdateCampaign(ctx context.Context, req *dto.CampaignDTO, camp
 	_, err = s.store.UpdateCampaign(ctx, db.UpdateCampaignParams{
 		ID:             _uuid["campaign"],
 		UserID:         _uuid["user"],
-		Name:           req.Name,
-		Subject:        sql.NullString{String: req.Subject, Valid: true},
-		PreviewText:    sql.NullString{String: req.PreviewText, Valid: true},
-		SenderFromName: sql.NullString{String: req.SenderFromName, Valid: true},
-		TemplateID:     uuid.NullUUID{UUID: _uuid["template"], Valid: true},
-		RecipientInfo:  sql.NullString{String: req.RecipientInfo, Valid: true},
-		Status:         sql.NullString{String: string(req.Status), Valid: true},
-		TrackType:      sql.NullString{String: req.TrackType, Valid: true},
-		Sender:         sql.NullString{String: req.Sender, Valid: true},
-		ScheduledAt:    sql.NullTime{Time: req.ScheduledAt, Valid: true},
+		Name:           sql.NullString{String: req.Name, Valid: req.Name != ""},
+		Subject:        sql.NullString{String: req.Subject, Valid: req.Subject != ""},
+		PreviewText:    sql.NullString{String: req.PreviewText, Valid: req.PreviewText != ""},
+		SenderFromName: sql.NullString{String: req.SenderFromName, Valid: req.SenderFromName != ""},
+		TemplateID:     uuid.NullUUID{UUID: _uuid["template"], Valid: req.TemplateId != ""},
+		RecipientInfo:  sql.NullString{String: req.RecipientInfo, Valid: req.RecipientInfo != ""},
+		Status:         sql.NullString{String: string(req.Status), Valid: req.Status != ""},
+		TrackType:      sql.NullString{String: req.TrackType, Valid: req.TrackType != ""},
+		Sender:         sql.NullString{String: req.Sender, Valid: req.Sender != ""},
+		ScheduledAt:    sql.NullTime{Time: req.ScheduledAt, Valid: req.ScheduledAt != time.Time{}},
 		HasCustomLogo:  sql.NullBool{Bool: req.HasCustomLogo, Valid: true},
 		IsPublished:    sql.NullBool{Bool: req.IsPublished, Valid: true},
 		IsArchived:     sql.NullBool{Bool: req.IsArchived, Valid: true},
@@ -1072,7 +1092,7 @@ func (s *Service) GetAllCampaignStatsByUser(ctx context.Context, req *dto.FetchC
 		return nil, fmt.Errorf("error fetching campaigns for user: %w", err)
 	}
 
-	//get campaign counts 
+	//get campaign counts
 
 	count_campaigns, err := s.store.GetCampaignCounts(ctx, db.GetCampaignCountsParams{
 		UserID:    _uuid["user"],

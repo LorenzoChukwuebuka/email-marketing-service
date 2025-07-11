@@ -627,5 +627,30 @@ export const metadataConfig = {
         ogSiteName: "CrabMailer",
         ogLocale: "en_US",
     },
+  VerifyLogin: {
+    title: "Verify Login - CrabMailer",
+    description: "Verify your login credentials.",
+    keywords: "login verification, authentication, security",
+    type: "website",
+    url: `${import.meta.env.VITE_REACT_APP_BASE}/verify-login`,
+    image: `${import.meta.env.VITE_REACT_APP_BASE}/logo.png`,
+    locale: "en_US",
+    siteName: "CrabMailer",
+    twitterCard: "summary_large_image",
+    twitterSite: "@youremailcompany",
+    twitterCreator: "@youremailcompany",
+    ogType: "website",
+    ogUrl: `${import.meta.env.VITE_REACT_APP_BASE}/verify-login`,
+    ogImage: `${import.meta.env.VITE_REACT_APP_BASE}/logo.png`,
+    ogImageAlt: "Verify Login Hero Image",
+    ogImageWidth: 1920,
+    ogImageHeight: 1080,
+    ogImageType: "image/jpeg",
+    ogTitle: "Verify Login - CrabMailer",
+    ogDescription: "Verify your login credentials.",
+    ogSiteName: "CrabMailer",
+    ogLocale: "en_US"
+}
+
 
 } as const satisfies Record<string, MetadataProps> 

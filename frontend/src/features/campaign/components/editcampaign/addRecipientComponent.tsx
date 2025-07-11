@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal, Checkbox } from "antd";
+import { Modal, Checkbox, Tag, Space, Typography, Empty, Badge, Card} from "antd";
+import { UserOutlined, TeamOutlined, CloseOutlined } from "@ant-design/icons";
 import { useContactGroupQuery } from "./../../../contacts/hooks/useContactGroupQuery";
 import { ContactGroupData } from "./../../../contacts/interface/contactgroup.interface";
 import useCampaignStore from "./../../store/campaign.store";
-import { Campaign } from "./../../interface/campaign.interface"
+import { Campaign } from "./../../interface/campaign.interface";
 import { BaseEntity } from "./../../../../interface/baseentity.interface";
 
+const { Title, Text } = Typography;
 
 interface Props {
     isOpen: boolean;
@@ -14,111 +16,206 @@ interface Props {
 }
 
 const AddCampaignRecipients: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
-
-    const { selectedGroupIds, setSelectedGroupIds, createCampaignGroup } = useCampaignStore();
+    const { createCampaignGroup } = useCampaignStore();
     const [selectedGroups, setSelectedGroups] = useState<ContactGroupData[]>([]);
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    const [currentPage, _setCurrentPage] = useState(1);
-    const [pageSize, _setPageSize] = useState(2000);
+    const [loading, setLoading] = useState(false);
+    
+    const currentPage = 1;
+    const pageSize = 2000;
 
-    const { data: contactgroupData } = useContactGroupQuery(currentPage, pageSize, undefined)
+    const { data: contactgroupData, isLoading } = useContactGroupQuery(currentPage, pageSize, undefined);
 
-    const cgdata = useMemo(() => contactgroupData?.payload.data || [], [contactgroupData]);
+    const availableGroups = useMemo(() => 
+        contactgroupData?.payload.data || [], 
+        [contactgroupData]
+    );
 
-
+    // Initialize selected groups based on campaign's existing groups
     useEffect(() => {
-        if (cgdata && selectedGroupIds) {
-            setSelectedGroups(
-                cgdata?.filter(group => selectedGroupIds.includes(group.uuid))
+        if (availableGroups.length > 0 && campaign?.groups) {
+            const preSelectedGroups = availableGroups.filter(group => 
+                (campaign?.groups as any).some(campaignGroup => campaignGroup.id === group.group_id)
             );
-        }
-    }, [selectedGroupIds, cgdata]);
-
-    useEffect(() => {
-        if (cgdata && campaign && campaign.campaign_groups) {
-            setSelectedGroups((cgdata).filter(group => {
-                if (campaign.campaign_groups.length > 0) {
-                    return campaign.campaign_groups.some(cg => cg.group_id === group.id);
-                }
-                return false;
-            }));
+            setSelectedGroups(preSelectedGroups);
         } else {
             setSelectedGroups([]);
         }
-    }, [cgdata, campaign]);
+    }, [availableGroups, campaign]);
 
-    const handleGroupSelect = (group: ContactGroupData) => {
-        setSelectedGroups((prevSelected) => {
-            const isSelected = prevSelected.find(g => g.uuid === group.uuid);
+    const handleGroupToggle = (group: ContactGroupData) => {
+        setSelectedGroups(prev => {
+            const isSelected = prev.some(g => g.group_id === group.group_id);
             return isSelected
-                ? prevSelected.filter((g) => g.uuid !== group.uuid)
-                : [...prevSelected, group];
+                ? prev.filter(g => g.group_id !== group.group_id)
+                : [...prev, group];
         });
     };
 
-    const handleRemoveGroup = (uuid: string) => {
-        setSelectedGroups((prevSelected) => {
-            const updatedGroups = prevSelected.filter((g) => g.uuid !== uuid);
-            setSelectedGroupIds(updatedGroups.map(g => g.uuid));
-            return updatedGroups;
-        });
+    const handleRemoveGroup = (groupId: string) => {
+        setSelectedGroups(prev => prev.filter(g => g.group_id !== groupId));
     };
 
-    const handleGroupSubmit = async () => {
-        const groupIds = selectedGroups.map(group => group.uuid);
-
-        if (campaign?.uuid) {
-            await createCampaignGroup(campaign.uuid, groupIds);
-        } else {
-            console.error("Campaign UUID is not available");
+    const handleSubmit = async () => {
+        if (!campaign?.id) {
+            console.error("Campaign ID is not available");
+            return;
         }
 
-        onClose();
+        setLoading(true);
+        try {
+            const groupIds = selectedGroups.map(group => group.group_id);
+            await createCampaignGroup(campaign.id, groupIds);
+            onClose();
+        } catch (error) {
+            console.error("Error creating campaign groups:", error);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const totalContacts = selectedGroups.reduce((sum, group) => 
+        sum + (group.contacts?.length || 0), 0
+    );
 
     return (
         <Modal
             open={isOpen}
             onCancel={onClose}
-            onOk={handleGroupSubmit}
-            title="Add Recipients"
-            okButtonProps={{ disabled: selectedGroups.length === 0 }}
+            onOk={handleSubmit}
+            title={
+                <div className="flex items-center gap-2">
+                    <TeamOutlined className="text-blue-500" />
+                    <span>Add Recipients to Campaign</span>
+                </div>
+            }
+            okText="Add Recipients"
+            cancelText="Cancel"
+            okButtonProps={{ 
+                disabled: selectedGroups.length === 0,
+                loading: loading
+            }}
+            width={600}
+            className="modern-modal"
         >
-            <div className="mb-2">
+            <div className="space-y-6">
+                {/* Selected Groups Summary */}
                 {selectedGroups.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {selectedGroups.map((group) => (
-                            <div key={group.uuid} className="flex items-center space-x-2 bg-gray-200 rounded px-2 py-1">
-                                <span>{group.group_name}</span>
-                                <button
-                                    onClick={() => handleRemoveGroup(group.uuid)}
-                                    className="text-red-500 font-semibold"
-                                >
-                                    &times;
-                                </button>
+                    <Card size="small" className="bg-blue-50 border-blue-200">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Title level={5} className="m-0 text-blue-800">
+                                    Selected Groups ({selectedGroups.length})
+                                </Title>
+                                <Badge 
+                                    count={totalContacts} 
+                                    showZero 
+                                    color="blue" 
+                                    title="Total contacts"
+                                />
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="max-h-60 overflow-y-auto">
-                <h1 className="mt-4 mb-4">Select one or more groups</h1>
-                {cgdata && cgdata.length > 0 ? (
-                    cgdata.map((group: ContactGroupData) => (
-                        <div key={group.uuid} className="mb-4">
-                            <Checkbox
-                                checked={selectedGroups.some(g => g.uuid === group.uuid)}
-                                onChange={() => handleGroupSelect(group)}
-                            >
-                                <span className="font-semibold space-x-5">{group.group_name} ({group.contacts ? group.contacts.length : 0}) contacts</span>
-                            </Checkbox>
-                            <p className="text-sm text-gray-500 ml-6">{group.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedGroups.map((group) => (
+                                    <Tag
+                                        key={group.group_id}
+                                        closable
+                                        onClose={() => handleRemoveGroup(group.group_id)}
+                                        closeIcon={<CloseOutlined />}
+                                        color="blue"
+                                        className="px-3 py-1 text-sm rounded-full"
+                                    >
+                                        <Space size={4}>
+                                            <TeamOutlined />
+                                            {group.group_name}
+                                            <Badge 
+                                                count={group.contacts?.length || 0} 
+                                                size="small"
+                                                color="rgba(255, 255, 255, 0.8)"
+                                                style={{ 
+                                                    color: '#1890ff',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.3)'
+                                                }}
+                                            />
+                                        </Space>
+                                    </Tag>
+                                ))}
+                            </div>
                         </div>
-                    ))
-                ) : (
-                    <div className="flex items-center justify-center text-lg font-semibold">No groups found</div>
+                    </Card>
                 )}
+
+                {/* Available Groups */}
+                <div>
+                    <Title level={5} className="mb-4 text-gray-800">
+                        Available Contact Groups
+                    </Title>
+                    
+                    <div className="max-h-80 overflow-y-auto space-y-3 p-2">
+                        {isLoading ? (
+                            <div className="flex justify-center py-8">
+                                <Text type="secondary">Loading contact groups...</Text>
+                            </div>
+                        ) : availableGroups.length > 0 ? (
+                            availableGroups.map((group: ContactGroupData) => {
+                                const isSelected = selectedGroups.some(g => g.group_id === group.group_id);
+                                const contactCount = group.contacts?.length || 0;
+                                
+                                return (
+                                    <Card 
+                                        key={group.group_id} 
+                                        size="small"
+                                        className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                                            isSelected 
+                                                ? 'border-blue-500 bg-blue-50' 
+                                                : 'border-gray-200 hover:border-blue-300'
+                                        }`}
+                                        onClick={() => handleGroupToggle(group)}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onChange={() => handleGroupToggle(group)}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <Text strong className="text-gray-800">
+                                                        {group.group_name}
+                                                    </Text>
+                                                    <Badge 
+                                                        count={contactCount} 
+                                                        showZero
+                                                        color={isSelected ? 'blue' : 'default'}
+                                                        title={`${contactCount} contacts`}
+                                                    />
+                                                </div>
+                                                {group.description && (
+                                                    <Text 
+                                                        type="secondary" 
+                                                        className="text-sm leading-relaxed block"
+                                                    >
+                                                        {group.description.trim()}
+                                                    </Text>
+                                                )}
+                                                <div className="flex items-center gap-1 mt-2">
+                                                    <UserOutlined className="text-gray-400 text-xs" />
+                                                    <Text type="secondary" className="text-xs">
+                                                        {contactCount} {contactCount === 1 ? 'contact' : 'contacts'}
+                                                    </Text>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            })
+                        ) : (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="No contact groups available"
+                                className="py-8"
+                            />
+                        )}
+                    </div>
+                </div>
             </div>
         </Modal>
     );

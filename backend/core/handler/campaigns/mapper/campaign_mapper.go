@@ -220,32 +220,33 @@ func mapCompanyResponse(row db.ListCampaignsByCompanyIDRow) dto.CompanyResponse 
 }
 
 func mapTemplateResponse(row db.ListCampaignsByCompanyIDRow) *dto.TemplateResponse {
-	if !row.TemplateIDRef.Valid || row.TemplateIDRef.UUID == uuid.Nil {
+	// Check TemplateID instead of TemplateIDRef
+	if !row.TemplateID.Valid || row.TemplateID.UUID == uuid.Nil {
 		return nil
 	}
 	return &dto.TemplateResponse{
-		TemplateIDRef:             nullUUIDToStringPtr(row.TemplateIDRef),
-		TemplateUserID:            nullUUIDToStringPtr(row.TemplateUserID),
-		TemplateCompanyID:         nullUUIDToStringPtr(row.TemplateCompanyID),
-		TemplateName:              nullStringToPtr(row.TemplateName),
-		TemplateSenderName:        nullStringToPtr(row.TemplateSenderName),
-		TemplateFromEmail:         nullStringToPtr(row.TemplateFromEmail),
-		TemplateSubject:           nullStringToPtr(row.TemplateSubject),
-		TemplateType:              nullStringToPtr(row.TemplateType),
-		TemplateEmailHtml:         nullStringToPtr(row.TemplateEmailHtml),
-		TemplateEmailDesign:       nullRawMessageToPtr(row.TemplateEmailDesign),
-		TemplateIsEditable:        nullBoolToBool(row.TemplateIsEditable),
-		TemplateIsPublished:       nullBoolToBool(row.TemplateIsPublished),
-		TemplateIsPublicTemplate:  nullBoolToBool(row.TemplateIsPublicTemplate),
-		TemplateIsGalleryTemplate: nullBoolToBool(row.TemplateIsGalleryTemplate),
-		TemplateTags:              nullStringToPtr(row.TemplateTags),
-		TemplateDescription:       nullStringToPtr(row.TemplateDescription),
-		TemplateImageUrl:          nullStringToPtr(row.TemplateImageUrl),
-		TemplateIsActive:          nullBoolToBool(row.TemplateIsActive),
-		TemplateEditorType:        nullStringToPtr(row.TemplateEditorType),
-		TemplateCreatedAt:         nullTimeToPtr(row.TemplateCreatedAt),
-		TemplateUpdatedAt:         nullTimeToPtr(row.TemplateUpdatedAt),
-		TemplateDeletedAt:         nullTimeToPtr(row.TemplateDeletedAt),
+		ID:                nullUUIDToStringPtr(row.TemplateIDRef),
+		UserID:            nullUUIDToStringPtr(row.TemplateUserID),
+		CompanyID:         nullUUIDToStringPtr(row.TemplateCompanyID),
+		Name:              nullStringToPtr(row.TemplateName),
+		SenderName:        nullStringToPtr(row.TemplateSenderName),
+		FromEmail:         nullStringToPtr(row.TemplateFromEmail),
+		Subject:           nullStringToPtr(row.TemplateSubject),
+		Type:              nullStringToPtr(row.TemplateType),
+		EmailHtml:         nullStringToPtr(row.TemplateEmailHtml),
+		EmailDesign:       nullRawMessageToPtr(row.TemplateEmailDesign),
+		IsEditable:        nullBoolToBool(row.TemplateIsEditable),
+		IsPublished:       nullBoolToBool(row.TemplateIsPublished),
+		IsPublicTemplate:  nullBoolToBool(row.TemplateIsPublicTemplate),
+		IsGalleryTemplate: nullBoolToBool(row.TemplateIsGalleryTemplate),
+		Tags:              nullStringToPtr(row.TemplateTags),
+		Description:       nullStringToPtr(row.TemplateDescription),
+		ImageUrl:          nullStringToPtr(row.TemplateImageUrl),
+		IsActive:          nullBoolToBool(row.TemplateIsActive),
+		EditorType:        nullStringToPtr(row.TemplateEditorType),
+		CreatedAt:         nullTimeToPtr(row.TemplateCreatedAt),
+		UpdatedAt:         nullTimeToPtr(row.TemplateUpdatedAt),
+		DeletedAt:         nullTimeToPtr(row.TemplateDeletedAt),
 	}
 }
 
@@ -343,4 +344,37 @@ func MapCampaignGroups(row []db.GetCampaignContactGroupsRow) []*dto.GetCampaignC
 		})
 	}
 	return groups
+}
+
+// MapTemplateFromSeparateQuery maps template data from GetTemplateByIDWithoutType query
+func MapTemplateFromSeparateQuery(template db.GetTemplateByIDWithoutTypeRow) *dto.TemplateResponse {
+	return &dto.TemplateResponse{
+		ID:                stringToPtr(template.ID.String()),
+		UserID:            stringToPtr(template.UserID.String()),
+		CompanyID:         stringToPtr(template.CompanyID.String()),
+		Name:              &template.TemplateName,
+		SenderName:        nullStringToPtr(template.SenderName),
+		FromEmail:         nullStringToPtr(template.FromEmail),
+		Subject:           nullStringToPtr(template.Subject),
+		Type:              &template.Type, // Not available in GetTemplateByIDWithoutType
+		EmailHtml:         nullStringToPtr(template.EmailHtml),
+		EmailDesign:       nullRawMessageToPtr(template.EmailDesign),
+		IsEditable:        nullBoolToBool(template.IsEditable),
+		IsPublished:       nullBoolToBool(template.IsPublished),
+		IsPublicTemplate:  nullBoolToBool(template.IsPublicTemplate),
+		IsGalleryTemplate: nullBoolToBool(template.IsGalleryTemplate),
+		Tags:              nullStringToPtr(template.Tags),
+		Description:       nullStringToPtr(template.Description),
+		ImageUrl:          nullStringToPtr(template.ImageUrl),
+		IsActive:          nullBoolToBool(template.IsActive),
+		EditorType:        nullStringToPtr(template.EditorType),
+		CreatedAt:         nullTimeToPtr(template.CreatedAt),
+		UpdatedAt:         nullTimeToPtr(template.UpdatedAt),
+		DeletedAt:         nullTimeToPtr(template.DeletedAt),
+	}
+}
+
+// Helper function to convert string to pointer
+func stringToPtr(s string) *string {
+	return &s
 }

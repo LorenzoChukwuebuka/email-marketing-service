@@ -146,16 +146,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deleteScheduledUsers = `-- name: DeleteScheduledUsers :many
-UPDATE users 
-SET 
+UPDATE users
+SET
     deleted_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     scheduled_for_deletion = TRUE
     AND deleted_at IS NULL
     AND scheduled_deletion_at IS NOT NULL
-    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
-RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
+    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days' RETURNING id, fullname, company_id, email, phonenumber, password, google_id, picture, verified, blocked, verified_at, status, scheduled_for_deletion, scheduled_deletion_at, last_login_at, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) DeleteScheduledUsers(ctx context.Context) ([]User, error) {
@@ -526,6 +525,24 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const updateCompanyName = `-- name: UpdateCompanyName :exec
+UPDATE companies
+SET 
+    companyname = COALESCE($2, companyname),
+    updated_at = now()
+WHERE id = $1
+`
+
+type UpdateCompanyNameParams struct {
+	ID          uuid.UUID      `json:"id"`
+	Companyname sql.NullString `json:"companyname"`
+}
+
+func (q *Queries) UpdateCompanyName(ctx context.Context, arg UpdateCompanyNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateCompanyName, arg.ID, arg.Companyname)
+	return err
+}
+
 const updateUserLoginTime = `-- name: UpdateUserLoginTime :exec
 UPDATE users
 SET
@@ -537,6 +554,34 @@ WHERE
 
 func (q *Queries) UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, updateUserLoginTime, id)
+	return err
+}
+
+const updateUserRecords = `-- name: UpdateUserRecords :exec
+UPDATE users
+SET
+    fullname = COALESCE($2, fullname),
+    email = COALESCE($3, email),
+    phonenumber = COALESCE($4, phonenumber),
+    updated_at = now()
+WHERE
+    id = $1
+`
+
+type UpdateUserRecordsParams struct {
+	ID          uuid.UUID      `json:"id"`
+	Fullname    sql.NullString `json:"fullname"`
+	Email       sql.NullString `json:"email"`
+	Phonenumber sql.NullString `json:"phonenumber"`
+}
+
+func (q *Queries) UpdateUserRecords(ctx context.Context, arg UpdateUserRecordsParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserRecords,
+		arg.ID,
+		arg.Fullname,
+		arg.Email,
+		arg.Phonenumber,
+	)
 	return err
 }
 

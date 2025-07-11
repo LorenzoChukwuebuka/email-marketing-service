@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"email-marketing-service/core/handler/auth/dto"
 	"email-marketing-service/core/handler/user/mapper"
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
@@ -134,19 +135,34 @@ func (c *UserService) GetCurrentRunningSubscription(ctx context.Context, company
 	}, nil
 }
 
-// func (s *UserService) EditUser(ctx context.Context, userId string) error {
-// 	_uuid, err := common.ParseUUIDMap(map[string]string{
-// 		"user": userId,
-// 	})
-// 	if err != nil {
-// 		return common.ErrInvalidUUID
-// 	}
+func (s *UserService) EditUser(ctx context.Context, userId string, companyId string, req *dto.EditUserDTO) error {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":    userId,
+		"company": companyId,
+	})
+	if err != nil {
+		return common.ErrInvalidUUID
+	}
 
-// 	_, err = s.store.EditUser(ctx, _uuid["user"])
-// 	if err != nil {
-// 		return err
-// 	}
+	err = s.store.UpdateUserRecords(ctx, db.UpdateUserRecordsParams{
+		ID:          _uuid["user"],
+		Fullname:    sql.NullString{String: req.FullName, Valid: req.FullName != ""},
+		Phonenumber: sql.NullString{String: req.PhoneNumber, Valid: req.PhoneNumber != ""},
+	})
 
-// 	return nil
+	if err != nil {
+		return err
+	}
 
-// }
+	//update company
+	err = s.store.UpdateCompanyName(ctx, db.UpdateCompanyNameParams{
+		ID:          _uuid["company"],
+		Companyname: sql.NullString{String: req.Company, Valid: req.Company != ""},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
