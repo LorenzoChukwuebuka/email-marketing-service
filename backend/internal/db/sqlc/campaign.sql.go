@@ -1912,11 +1912,12 @@ SET
 WHERE
     id = $14
     AND user_id = $15
-    AND deleted_at IS NULL RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+    AND deleted_at IS NULL 
+RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 type UpdateCampaignParams struct {
-	Name           string         `json:"name"`
+	Name           sql.NullString `json:"name"`
 	Subject        sql.NullString `json:"subject"`
 	PreviewText    sql.NullString `json:"preview_text"`
 	SenderFromName sql.NullString `json:"sender_from_name"`

@@ -8,4 +8,5 @@ const (
 	PlanExpiryReminderTemplate     = "planexpiryreminder.html"
 	WalletOTPEmailTemplate         = "walletotp.html"
 	Keysize                    int = 1024
+	VerifyUserLoginTemplate        = "userloginverificationTemplate.html"
 )

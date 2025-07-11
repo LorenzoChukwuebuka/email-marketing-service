@@ -1,27 +1,28 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Button, Typography, Badge, Tooltip, Spin, message } from 'antd';
+import { ArrowLeftOutlined, SendOutlined, SaveOutlined  } from '@ant-design/icons';
 import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
-import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useCampaignStore from '../../campaign/store/campaign.store';
 import SendTestEmail from '../../email-templates/components/sendTestEmail';
 import useTemplateStore from '../../email-templates/store/template.store';
 import { useSingleTransactionalTemplateQuery } from '../../email-templates/hooks/useTransactionTemplateQuery';
 import { useSingleMarketingTemplateQuery } from '../../email-templates/hooks/useMarketingTemplateQuery';
 
+const { Title } = Typography;
 
 const DragAndDropEditor: React.FC = () => {
     const emailEditorRef = useRef<EditorRef>(null);
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const { currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore()
-    const { setCreateCampaignValues, updateCampaign, currentCampaignId, clearCurrentCampaignId } = useCampaignStore()
-    const navigate = useNavigate()
+    const { currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore();
+    const { setCreateCampaignValues, updateCampaign, currentCampaignId, clearCurrentCampaignId } = useCampaignStore();
+    const navigate = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const uuid = queryParams.get('uuid');
-    const _type = queryParams.get('type')
-
-
+    const _type = queryParams.get('type');
 
     const transactionalQuery = useSingleTransactionalTemplateQuery(uuid as string);
     const marketingQuery = useSingleMarketingTemplateQuery(uuid as string);
@@ -38,42 +39,59 @@ const DragAndDropEditor: React.FC = () => {
                 setCurrentTemplate(marketingQuery.data);
             }
         }
-    }, [uuid, _type, transactionalQuery.data, marketingQuery.data, setCurrentTemplate])
-
+    }, [uuid, _type, transactionalQuery.data, marketingQuery.data, setCurrentTemplate]);
 
     useEffect(() => {
         return () => {
-            setCurrentTemplate(null)
-        }
-    }, [setCurrentTemplate])
+            setCurrentTemplate(null);
+        };
+    }, [setCurrentTemplate]);
 
-    const saveDesign = () => {
-        if (currentCampaignId) {
-            setCreateCampaignValues({ template_id: uuid as string })
-            new Promise(resolve => setTimeout(resolve, 3000));
-            updateCampaign(currentCampaignId)
-        }
-
-        const unlayer = emailEditorRef.current?.editor;
-
-        unlayer?.exportHtml(async (data) => {
-            const { design, html } = data;
-            if (uuid && currentTemplate) {
-                const updatedTemplate = {
-                    ...currentTemplate,
-                    email_design: design,
-                    email_html: html
-                };
-                new Promise(resolve => setTimeout(resolve, 3000));
-                await updateTemplate(uuid, updatedTemplate);
-                setAutoSaved(true);
-                console.log("Design saved to database!");
-
-                setTimeout(() => setAutoSaved(false), 3000);
-            } else {
-                console.log("UUID or template is missing", { uuid, currentTemplate });
+    const saveDesign = async () => {
+        if (isSaving) return; // Prevent multiple saves
+        
+        setIsSaving(true);
+        
+        try {
+            if (currentCampaignId) {
+                setCreateCampaignValues({ template_id: uuid as string });
+                await updateCampaign(currentCampaignId);
             }
-        });
+
+            const unlayer = emailEditorRef.current?.editor;
+
+            await new Promise<void>((resolve, reject) => {
+                unlayer?.exportHtml(async (data) => {
+                    try {
+                        const { design, html } = data;
+                        if (uuid && currentTemplate) {
+                            const updatedTemplate = {
+                                ...currentTemplate,
+                                email_design: design,
+                                email_html: html
+                            };
+                            await updateTemplate(uuid, updatedTemplate);
+                            setAutoSaved(true);
+                            message.success('Design saved successfully!');
+                            console.log("Design saved to database!");
+
+                            setTimeout(() => setAutoSaved(false), 3000);
+                            resolve();
+                        } else {
+                            console.log("UUID or template is missing", { uuid, currentTemplate });
+                            reject(new Error("UUID or template is missing"));
+                        }
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            });
+        } catch (error) {
+            message.error('Failed to save design');
+            console.error('Save error:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const onReady: EmailEditorProps['onReady'] = (unlayer) => {
@@ -84,61 +102,114 @@ const DragAndDropEditor: React.FC = () => {
         unlayer.addEventListener('design:updated', saveDesign);
     };
 
-    if (!currentTemplate) {
-        return <div>Loading template...</div>;
-    }
-
-    const testDesign = () => {
-        setIsModalOpen(true)
-    }
-
-
     const handleNavigate = () => {
         if (currentCampaignId) {
             clearCurrentCampaignId();
             navigate("/app/campaign/edit/" + currentCampaignId);
         } else {
-            if (_type === "t") {
-                navigate("/app/templates/transactional");
-            } else {
-                navigate("/app/templates/marketing");
-            }
+            navigate(`/app/templates/${_type === "t" ? "transactional" : "marketing"}`);
         }
+    };
 
+    const handleSaveAndExit = async () => {
+        await saveDesign();
+        handleNavigate();
+    };
+
+    const renderSaveStatus = () => {
+        if (isSaving) {
+            return <Badge status="processing" text="Saving..." />;
+        }
+        if (autoSaved) {
+            return <Badge status="success" text="Auto Saved!" />;
+        }
+        return null;
+    };
+
+    if (!currentTemplate) {
+        return (
+            <div className="h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Spin size="large" />
+                    <p className="mt-4 text-gray-600">Loading template...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="h-screen flex flex-col p-4">
-            <header className="flex items-center justify-between  bg-gray-100 px-4 h-[5em] py-2">
-                <div className="flex items-center">
-                    <button className="mr-2 text-gray-600" onClick={() => handleNavigate()}>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                    </button>
+        <div className="h-screen flex flex-col bg-white">
+            {/* Modern Header */}
+            <header className="flex items-center justify-between bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+                <div className="flex items-center space-x-4">
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={handleNavigate}
+                        className="flex items-center justify-center hover:bg-gray-100"
+                    />
                     <div>
-                        <h1 className="text-sm font-semibold">{currentTemplate?.template_name}</h1>
+                        <Title level={4} className="!m-0 !text-gray-900">
+                            {currentTemplate?.template_name}
+                        </Title>
+                        <p className="text-sm text-gray-500 mt-1">Drag & Drop Editor</p>
                     </div>
                 </div>
-                <div className="flex items-center space-x-2 text-xs">
 
-                    {autoSaved && (
-                        <span className="text-green-600 mr-2">Auto Saved!</span>
-                    )}
-                    <button className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded mr-2" onClick={testDesign}>
-                        Send Test
-                    </button>
-                    <button className="bg-navy-900 text-black border-black text-md cursor-pointer font-semibold px-3 py-1 rounded" onClick={() => { saveDesign(); handleNavigate() }}>
-                        Save and exit
-                    </button>
+                <div className="flex items-center space-x-3">
+                    {renderSaveStatus()}
+                    
+                    <Tooltip title="Send test email">
+                        <Button
+                            type="default"
+                            icon={<SendOutlined />}
+                            onClick={() => setIsModalOpen(true)}
+                            className="hover:border-blue-400 hover:text-blue-600"
+                        >
+                            Send Test
+                        </Button>
+                    </Tooltip>
+                    
+                    <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
+                        onClick={handleSaveAndExit}
+                        loading={isSaving}
+                        className="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700"
+                    >
+                        Save & Exit
+                    </Button>
                 </div>
             </header>
 
-            <div className="flex-grow">
-                <EmailEditor ref={emailEditorRef} onReady={onReady} style={{ height: "100vh" }} />
+            {/* Editor Container */}
+            <div className="flex-1 bg-gray-50">
+                <div className="h-full border border-gray-200 rounded-lg mx-4 my-4 overflow-hidden shadow-sm">
+                    <EmailEditor 
+                        ref={emailEditorRef} 
+                        onReady={onReady} 
+                        style={{ height: "calc(100vh - 120px)" }}
+                        options={{
+                            displayMode: 'email',
+                            appearance: {
+                                theme: 'modern_light',
+                                panels: {
+                                    tools: {
+                                        dock: 'left'
+                                    }
+                                }
+                            }
+                        }}
+                    />
+                </div>
             </div>
 
-            <SendTestEmail isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} template_id={uuid as string} />
+            {/* Modal */}
+            <SendTestEmail 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                template_id={uuid as string} 
+            />
         </div>
     );
 };

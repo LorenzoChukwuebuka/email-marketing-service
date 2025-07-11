@@ -1,66 +1,186 @@
+import React from 'react';
+import { Card, Statistic, Row, Col, Typography, Avatar, Space, Spin } from 'antd';
+import { UserOutlined, UsergroupAddOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContactCountQuery } from "../../features/contacts/hooks/useContactQuery";
-import LoadingSpinnerComponent from "../loadingSpinnerComponent";
+
+const { Title } = Typography;
 
 const ContactsDashboard: React.FC = () => {
     const { data: contactCount, isLoading } = useContactCountQuery();
- 
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <Spin size="large" />
+            </div>
+        );
+    }
 
     return (
-        <div className="w-full mx-auto mb-10 mt-10 p-4">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">Contacts</h1>
-            </div>
-
-            {isLoading ? (
-                <LoadingSpinnerComponent />
-            ) : (
-                <div className="flex flex-col md:flex-row rounded-md shadow overflow-hidden">
-                    <div className="flex-1 p-6 border-b md:border-r md:border-b-0">
-                        <div className="flex items-center mb-2">
-                            <span className="text-4xl font-bold">{contactCount?.payload?.total}</span>
-                            <span className="ml-2 text-gray-600">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                    />
-                                </svg>
-                            </span>
-                        </div>
-                        <p className="text-sm text-gray-600">Total contacts</p>
+        <div className="w-full mx-auto p-6 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 min-h-screen">
+            {/* Header Section */}
+            <div className="mb-8">
+                <div className="flex items-center space-x-4 mb-2">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                        <TeamOutlined className="text-white text-2xl" />
                     </div>
-                    <div className="flex-1 p-6">
-                        <div className="flex items-center mb-2">
-                            <span className="text-4xl font-bold">{contactCount?.payload?.recent}</span>
-                            <span className="ml-2 text-green-600">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                    />
-                                </svg>
-                            </span>
-                        </div>
-                        <p className="text-sm text-gray-600">New contacts over the last 30 days</p>
+                    <div>
+                        <Title level={2} className="!mb-0 !text-gray-800">
+                            Contacts Dashboard
+                        </Title>
+                        <p className="text-gray-600 mt-1">Manage and track your contact network</p>
                     </div>
                 </div>
-            )}
+            </div>
+
+            {/* Stats Cards */}
+            <Row gutter={[24, 24]} className="mb-8">
+                <Col xs={24} md={12}>
+                    <Card
+                        className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                        style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            borderRadius: '16px'
+                        }}
+                    >
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <Avatar 
+                                    size={56} 
+                                    className="bg-white/20 backdrop-blur-sm border-2 border-white/30"
+                                    icon={<UserOutlined className="text-white text-xl" />}
+                                />
+                                <div className="text-right">
+                                    <div className="text-white/80 text-sm font-medium">Total Contacts</div>
+                                    <div className="text-white text-3xl font-bold">
+                                        {contactCount?.payload?.total || 0}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="text-white/90 text-sm">
+                                    Your complete network
+                                </div>
+                                <div className="flex items-center space-x-1 text-white/80">
+                                    <TeamOutlined className="text-sm" />
+                                    <span className="text-xs">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Background decorative elements */}
+                        <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                    </Card>
+                </Col>
+
+                <Col xs={24} md={12}>
+                    <Card
+                        className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                        style={{
+                            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                            borderRadius: '16px'
+                        }}
+                    >
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <Avatar 
+                                    size={56} 
+                                    className="bg-white/20 backdrop-blur-sm border-2 border-white/30"
+                                    icon={<UsergroupAddOutlined className="text-white text-xl" />}
+                                />
+                                <div className="text-right">
+                                    <div className="text-white/80 text-sm font-medium">New This Month</div>
+                                    <div className="text-white text-3xl font-bold">
+                                        {contactCount?.payload?.recent || 0}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="text-white/90 text-sm">
+                                    Last 30 days growth
+                                </div>
+                                <div className="flex items-center space-x-1 text-white/80">
+                                    <TeamOutlined className="text-sm" />
+                                    <span className="text-xs">Growing</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Background decorative elements */}
+                        <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                        <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* Additional Info Cards */}
+            <Row gutter={[24, 24]}>
+                <Col xs={24} lg={8}>
+                    <Card 
+                        className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300"
+                        style={{ borderRadius: '12px' }}
+                    >
+                        <div className="text-center p-4">
+                            <div className="mb-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
+                                    <UserOutlined className="text-blue-600 text-2xl" />
+                                </div>
+                            </div>
+                            <Title level={4} className="!mb-2 !text-gray-800">
+                                Contact Management
+                            </Title>
+                            <p className="text-gray-600 text-sm">
+                                Organize and maintain your professional network efficiently
+                            </p>
+                        </div>
+                    </Card>
+                </Col>
+
+                <Col xs={24} lg={8}>
+                    <Card 
+                        className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300"
+                        style={{ borderRadius: '12px' }}
+                    >
+                        <div className="text-center p-4">
+                            <div className="mb-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
+                                    <UsergroupAddOutlined className="text-green-600 text-2xl" />
+                                </div>
+                            </div>
+                            <Title level={4} className="!mb-2 !text-gray-800">
+                                Network Growth
+                            </Title>
+                            <p className="text-gray-600 text-sm">
+                                Track your networking progress and expansion over time
+                            </p>
+                        </div>
+                    </Card>
+                </Col>
+
+                <Col xs={24} lg={8}>
+                    <Card 
+                        className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300"
+                        style={{ borderRadius: '12px' }}
+                    >
+                        <div className="text-center p-4">
+                            <div className="mb-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full">
+                                    <TeamOutlined className="text-purple-600 text-2xl" />
+                                </div>
+                            </div>
+                            <Title level={4} className="!mb-2 !text-gray-800">
+                                Team Collaboration
+                            </Title>
+                            <p className="text-gray-600 text-sm">
+                                Share and collaborate on contacts with your team members
+                            </p>
+                        </div>
+                    </Card>
+                </Col>
+            </Row>
         </div>
     );
 };

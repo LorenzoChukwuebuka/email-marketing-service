@@ -5,6 +5,7 @@ import ForgetPasswordTemplate from "../templates/forgetpasswordtemplate";
 import VerifyAccountTemplate from "../templates/verifyaccountTemplate";
 import ResetPasswordTemplate from "../templates/resetpasswordtemplate";
 import GoogleAuthCallbackTemplate from "../templates/googleauthcallbacktemplate";
+import VerifyLoginTemplate from "../templates/verifylogintemplate";
 
 const authRoute: RouteObject[] = [
     {
@@ -28,11 +29,15 @@ const authRoute: RouteObject[] = [
         element: <ResetPasswordTemplate />
     },
     {
+        path: "verify-login",
+        element: <VerifyLoginTemplate />
+    },
+    {
         path: "callback",
         element: <GoogleAuthCallbackTemplate />
     },
     {
-        path:"signup/callback"
+        path: "signup/callback"
     }
 ]
 

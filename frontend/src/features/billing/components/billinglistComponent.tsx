@@ -62,7 +62,7 @@ const BillingList: React.FC = () => {
 
     const columns: ColumnsType<BillingData> = [
         {
-            title: 'User',
+            title: 'Paid By',
             key: 'user',
             width: 180,
             fixed: 'left',

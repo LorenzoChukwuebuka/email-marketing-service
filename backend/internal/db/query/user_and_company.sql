@@ -121,13 +121,29 @@ WHERE
     id = $1 RETURNING *;
 
 -- name: DeleteScheduledUsers :many
-UPDATE users 
-SET 
+UPDATE users
+SET
     deleted_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP
-WHERE 
+WHERE
     scheduled_for_deletion = TRUE
     AND deleted_at IS NULL
     AND scheduled_deletion_at IS NOT NULL
-    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
-RETURNING *;
+    AND scheduled_deletion_at < CURRENT_TIMESTAMP - INTERVAL '30 days' RETURNING *;
+
+-- name: UpdateUserRecords :exec
+UPDATE users
+SET
+    fullname = COALESCE(sqlc.narg('fullname'), fullname),
+    email = COALESCE(sqlc.narg('email'), email),
+    phonenumber = COALESCE(sqlc.narg('phonenumber'), phonenumber),
+    updated_at = now()
+WHERE
+    id = $1;
+
+-- name: UpdateCompanyName :exec
+UPDATE companies
+SET 
+    companyname = COALESCE($2, companyname),
+    updated_at = now()
+WHERE id = $1;

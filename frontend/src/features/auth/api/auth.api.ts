@@ -1,6 +1,6 @@
 import { APIResponse, ResponseT } from '../../../interface/api.interface';
 import axiosInstance from '../../../utils/api';
-import { ChangePasswordValues, EditFormValues, ForgetPasswordValues, FormValues, LoginValues, OtpValue, ResetPasswordValues, SignUpAPIData, UserDetails } from '../interface/auth.interface';
+import { ChangePasswordValues, EditFormValues, ForgetPasswordValues, FormValues, LoginValues, OtpValue, ResetPasswordValues, SignUpAPIData, UserDetails, VerifyLoginFormData } from '../interface/auth.interface';
 class AuthApi {
 
     private static instance: AuthApi;
@@ -55,23 +55,28 @@ class AuthApi {
     }
 
     async editUserDetails(editFormValues: EditFormValues): Promise<APIResponse<ResponseT>> {
-        const response = await axiosInstance.put("/edit-user-details", editFormValues);
+        const response = await axiosInstance.put(`${this.baseurl2}/edit`, editFormValues);
         return response.data;
     }
 
     async deleteUserAccount() {
-        const response = await axiosInstance.delete(`${this.baseurl2}/delete-user`)
+        const response = await axiosInstance.put(`${this.baseurl2}/mark-for-deletion`)
         return response.data
     }
 
     async cancelDeleteUserAccount() {
-        const response = await axiosInstance.put(`${this.baseurl2}/cancel-delete`)
+        const response = await axiosInstance.put(`${this.baseurl2}/cancel-deletion`)
         return response.data
     }
 
     async getGoogleAuthLoginDetails(key: string): Promise<APIResponse<UserDetails>> {
         const response = await axiosInstance.get("/google-login-details?key=" + key)
         return response.data
+    }
+
+    async verifyLogin(data:VerifyLoginFormData): Promise<APIResponse<ResponseT>> {
+        const response = await axiosInstance.post(`${this.baseurl}/verify-login`, data);
+        return response.data;
     }
 }
 

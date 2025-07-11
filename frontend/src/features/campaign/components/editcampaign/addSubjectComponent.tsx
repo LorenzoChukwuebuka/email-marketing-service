@@ -33,12 +33,12 @@ const AddCampaignSubjectComponent: React.FC<Props> = ({ isOpen, onClose, campaig
     const handleSubmit = async (values: FormValues) => {
         try {
             setIsLoading(true)
-            if (campaign?.uuid) {
+            if (campaign?.id) {
                 setCreateCampaignValues({
                     subject: values.subject,
                     preview_text: values.preview_text
                 })
-                await updateCampaign(campaign.uuid)
+                await updateCampaign(campaign.id)
                 new Promise(resolve => setTimeout(resolve, 1000))
                 onClose()
             }

@@ -42,9 +42,9 @@ type LoginRequest struct {
 
 type LoginResponse[T any] struct {
 	Status       string `json:"status"`
-	Token        string `json:"token"`
+	Token        string `json:"token,omitempty"`
 	Details      T      `json:"details"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 type PublicUser struct {
@@ -106,4 +106,10 @@ type SenderDTO struct {
 	Email     string `json:"email" validate:"required"`
 	Name      string `json:"name" validate:"required"`
 	SenderId  string `json:"sender_id"`
+}
+
+
+type VerifyLoginRequest struct {
+	UserID string `json:"user_id"`
+	Token  string `json:"token" validate:"required"`
 }

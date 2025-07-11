@@ -223,6 +223,27 @@ func (c *Controller) RefreshTokenHandler(w http.ResponseWriter, r *http.Request)
 	helper.SuccessResponse(w, 200, res)
 }
 
+func (c *Controller) VerifyUserLogin(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	var req *dto.VerifyLoginRequest
+
+	err := helper.DecodeRequestBody(r, &req)
+	if err != nil {
+		helper.ErrorResponse(w, common.ErrDecodingRequestBody, nil)
+		return
+	}
+
+	result, err := c.authSrv.VerifyUserLogin(ctx, req)
+
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
+}
+
 func (c *Controller) GoogleLogin(http.ResponseWriter, *http.Request) {}
 
 func (c *Controller) GoogleCallback(http.ResponseWriter, *http.Request) {}

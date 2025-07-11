@@ -1,6 +1,9 @@
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { toast } from "react-toastify";
+import { notification } from 'antd';
+import {
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    InfoCircleOutlined
+} from '@ant-design/icons';
 import eventBus from "./utils/eventbus";
 import { useEffect } from "react";
 import { queryClient } from "./utils/queryclient";
@@ -11,53 +14,76 @@ import { TokenRefreshProvider } from "./features/auth/hooks/useTokenRefreshProvi
 import Cookies from "js-cookie";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+// Configure notification defaults
+notification.config({
+    placement: 'bottomRight',
+    duration: 4.5,
+    maxCount: 3,
+    rtl: false,
+});
 
 queryClient.setQueryDefaults(tokenRefreshOptions.queryKey, tokenRefreshOptions); // Pre-configure the token refresh query
 
 function App() {
     const handleSuccess = (message: string) => {
-        toast.success(message, {
-            position: "bottom-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
+        notification.success({
+            message: 'Success',
+            description: message,
+            icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+            duration: 4.5,
+            style: {
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
         });
     };
 
     const handleError = (message: string) => {
-        toast.error(message, {
-            position: "bottom-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
+        notification.error({
+            message: 'Error',
+            description: message,
+            icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+            duration: 5,
+            style: {
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
         });
     };
 
     const handleInfo = (message: string) => {
-        toast.info(message, {
-            position: "bottom-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
+        notification.info({
+            message: 'Information',
+            description: message,
+            icon: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
+            duration: 4.5,
+            style: {
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
         });
     };
 
     const handleRefreshError = (error: Error) => {
         console.error('Token refresh failed:', error);
-        Cookies.remove('Cookies', { path: '/' });
-        window.location.href = "/auth/login"
+
+        // Show error notification before redirect
+        notification.error({
+            message: 'Session Expired',
+            description: 'Your session has expired. Please log in again.',
+            icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+            duration: 3,
+            style: {
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
+        });
+
+        // Clean up and redirect after a short delay
+        setTimeout(() => {
+            Cookies.remove('Cookies', { path: '/' });
+            window.location.href = "/auth/login";
+        }, 1000);
     };
 
     useEffect(() => {
@@ -75,22 +101,17 @@ function App() {
             eventBus.off("error", errorListener);
             eventBus.off("message", infoListener);
         };
-    }, [])
-
+    }, []);
 
     return (
         <QueryClientProvider client={queryClient}>
-            <ToastContainer />
             <TokenRefreshProvider onRefreshError={handleRefreshError}>
                 <GoogleOAuthProvider clientId={import.meta.env.VITE_CLIENT_ID}>
                     <AppRouter />
                 </GoogleOAuthProvider>
             </TokenRefreshProvider>
         </QueryClientProvider>
-    )
-
+    );
 }
 
-
-
-export default App
+export default App;

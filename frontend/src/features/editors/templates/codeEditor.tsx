@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Button, Typography, Spin, message, Badge, Tooltip } from 'antd';
+import { ArrowLeftOutlined, SendOutlined, SaveOutlined, } from '@ant-design/icons';
 import Editor, { OnMount, OnChange, OnValidate } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,6 +10,8 @@ import useCampaignStore from '../../campaign/store/campaign.store';
 import useTemplateStore from '../../email-templates/store/template.store';
 import { useSingleMarketingTemplateQuery } from '../../email-templates/hooks/useMarketingTemplateQuery';
 import { useSingleTransactionalTemplateQuery } from '../../email-templates/hooks/useTransactionTemplateQuery';
+
+const { Title } = Typography;
 
 function CodeEditor(): JSX.Element {
     const defaultTemplate = `
@@ -27,12 +31,13 @@ function CodeEditor(): JSX.Element {
     <body>
     <!-- paste or write your code here -->
     </body>
-    `
+    </html>`;
 
     const [code, setCode] = useState<string>(defaultTemplate);
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    //@ts-ignore
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const {
@@ -75,13 +80,16 @@ function CodeEditor(): JSX.Element {
                 };
                 await updateTemplate(uuid, updatedTemplate);
                 setSaveStatus('saved');
+                message.success('Template saved successfully!');
 
                 // Reset status after 3 seconds
                 setTimeout(() => setSaveStatus('idle'), 3000);
             }
         } catch (error) {
             setSaveStatus('error');
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to save changes');
+            const errorMsg = error instanceof Error ? error.message : 'Failed to save changes';
+            setErrorMessage(errorMsg);
+            message.error(errorMsg);
 
             // Reset error after 5 seconds
             setTimeout(() => {
@@ -142,7 +150,6 @@ function CodeEditor(): JSX.Element {
     };
 
     const handleEditorValidation: OnValidate = (markers) => {
-        // Consider integrating validation errors with save status
         markers.forEach((marker: any) => console.log('Validation issue:', marker.message));
     };
 
@@ -158,67 +165,113 @@ function CodeEditor(): JSX.Element {
         }
     };
 
+    const renderSaveStatus = () => {
+        switch (saveStatus) {
+            case 'saving':
+                return (
+                    <Badge status="processing" text="Saving..." />
+                );
+            case 'saved':
+                return (
+                    <Badge status="success" text="Saved!" />
+                );
+            case 'error':
+                return (
+                    <Badge status="error" text="Error saving" />
+                );
+            default:
+                return null;
+        }
+    };
+
     if (!currentTemplate) {
-        return <div>Loading template...</div>;
+        return (
+            <div className="h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Spin size="large" />
+                    <p className="mt-4 text-gray-600">Loading template...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="h-screen flex flex-col">
-            <header className="flex items-center justify-between bg-gray-100 px-4 h-[5em] py-2">
-                <div className="flex items-center">
-                    <button
-                        className="mr-2 text-gray-600"
+        <div className="h-screen flex flex-col bg-white">
+            {/* Modern Header */}
+            <header className="flex items-center justify-between bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+                <div className="flex items-center space-x-4">
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
                         onClick={handleNavigate}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                    <h1 className="text-sm font-semibold">{currentTemplate.template_name}</h1>
+                        className="flex items-center justify-center hover:bg-gray-100"
+                    />
+                    <div>
+                        <Title level={4} className="!m-0 !text-gray-900">
+                            {currentTemplate.template_name}
+                        </Title>
+                        <p className="text-sm text-gray-500 mt-1">Code Editor</p>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2 text-xs">
-                    {saveStatus === 'saving' && (
-                        <span className="text-blue-600">Saving...</span>
-                    )}
-                    {saveStatus === 'saved' && (
-                        <span className="text-green-600">Saved!</span>
-                    )}
-                    {saveStatus === 'error' && (
-                        <span className="text-red-600">{errorMessage}</span>
-                    )}
-                    <button
-                        className="bg-white text-blue-600 border border-blue-300 px-3 py-1 rounded"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Send Test
-                    </button>
-                    <button
-                        className="bg-navy-900 text-black border-black font-semibold px-3 py-1 rounded"
+
+                <div className="flex items-center space-x-3">
+                    {renderSaveStatus()}
+
+                    <Tooltip title="Send test email">
+                        <Button
+                            type="default"
+                            icon={<SendOutlined />}
+                            onClick={() => setIsModalOpen(true)}
+                            className="hover:border-blue-400 hover:text-blue-600"
+                        >
+                            Send Test
+                        </Button>
+                    </Tooltip>
+
+                    <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
                         onClick={handleNavigate}
+                        className="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700"
                     >
-                        Save and exit
-                    </button>
+                        Save & Exit
+                    </Button>
                 </div>
             </header>
 
-            <Editor
-                height="100vh"
-                defaultLanguage="html"
-                value={code}
-                theme="vs-dark"
-                options={{
-                    selectOnLineNumbers: true,
-                    roundedSelection: false,
-                    readOnly: false,
-                    cursorStyle: 'line',
-                    automaticLayout: true,
-                    minimap: { enabled: false },
-                }}
-                onMount={handleEditorDidMount}
-                onChange={handleEditorChange}
-                onValidate={handleEditorValidation}
-            />
+            {/* Editor Container */}
+            <div className="flex-1 relative">
+                <Editor
+                    height="100%"
+                    defaultLanguage="html"
+                    value={code}
+                    theme="vs-dark"
+                    options={{
+                        selectOnLineNumbers: true,
+                        roundedSelection: false,
+                        readOnly: false,
+                        cursorStyle: 'line',
+                        automaticLayout: true,
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        padding: { top: 16, bottom: 16 },
+                        scrollBeyondLastLine: false,
+                        smoothScrolling: true,
+                        wordWrap: 'on',
+                        bracketPairColorization: { enabled: true },
+                        guides: {
+                            bracketPairs: true,
+                            indentation: true,
+                        },
+                    }}
+                    onMount={handleEditorDidMount}
+                    onChange={handleEditorChange}
+                    onValidate={handleEditorValidation}
+                />
+            </div>
 
+            {/* Modal */}
             <SendTestEmail
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

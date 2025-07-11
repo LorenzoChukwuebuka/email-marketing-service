@@ -210,4 +210,6 @@ WHERE
     AND t.user_id = $2
     AND t.deleted_at IS NULL
 ORDER BY t.created_at DESC
-LIMIT 1;
+LIMIT 1;  
+
+  

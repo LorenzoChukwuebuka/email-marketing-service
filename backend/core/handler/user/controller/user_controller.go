@@ -2,8 +2,11 @@ package controller
 
 import (
 	"context"
+	"email-marketing-service/core/handler/auth/dto"
 	"email-marketing-service/core/handler/user/services"
+
 	//"email-marketing-service/internal/common"
+	"email-marketing-service/internal/common"
 	"email-marketing-service/internal/helper"
 	"fmt"
 	"net/http"
@@ -132,4 +135,31 @@ func (c *UserController) GetCurrentRunningSubscription(w http.ResponseWriter, r 
 	}
 
 	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+
+func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request){
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	var req *dto.EditUserDTO
+
+	userId, companyId, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch company id from jwt"), nil)
+		return
+	}
+
+	if err := helper.DecodeRequestBody(r, &req); err != nil {
+		helper.ErrorResponse(w, common.ErrDecodingRequestBody, err)
+		return
+	}
+
+	if err := c.userService.EditUser(ctx, userId, companyId, req); err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, "User updated successfully")
+	
 }
