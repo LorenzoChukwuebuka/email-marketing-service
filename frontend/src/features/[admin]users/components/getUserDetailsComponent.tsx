@@ -58,7 +58,7 @@ const AdminUserDetailComponent = () => {
             icon: <ThunderboltOutlined className="text-blue-500" />,
             color: "from-blue-500 to-blue-600",
             action: (
-                <Link to={{ pathname: "/zen/campaigns/details/" + id, search: `?username=${userdetailsData?.fullname}` }}>
+                <Link to={{ pathname: "/zen/campaigns/details/" + id + "/" + userdetailsData?.company_id, search: `?username=${userdetailsData?.fullname}` }}>
                     <Button type="primary" size="small" icon={<EyeOutlined />}>
                         View Campaigns
                     </Button>
@@ -69,19 +69,40 @@ const AdminUserDetailComponent = () => {
             title: "Total Templates Created",
             value: userStatsData?.total_templates || 0,
             icon: <FileTextOutlined className="text-purple-500" />,
-            color: "from-purple-500 to-purple-600"
+            color: "from-purple-500 to-purple-600",
+            action: (
+                <Link to={{ pathname: "/zen/campaigns/details/" + id + "/" + userdetailsData?.company_id, search: `?username=${userdetailsData?.fullname}` }}>
+                    <Button type="primary" size="small" icon={<EyeOutlined />}>
+                        View Templates
+                    </Button>
+                </Link>
+            )
         },
         {
             title: "Total Groups Created",
             value: userStatsData?.total_groups || 0,
             icon: <TeamOutlined className="text-indigo-500" />,
-            color: "from-indigo-500 to-indigo-600"
+            color: "from-indigo-500 to-indigo-600",
+            action: (
+                <Link to={{ pathname: "/zen/campaigns/details/" + id + "/" + userdetailsData?.company_id, search: `?username=${userdetailsData?.fullname}` }}>
+                    <Button type="primary" size="small" icon={<EyeOutlined />}>
+                        View Groups
+                    </Button>
+                </Link>
+            )
         },
         {
             title: "Total Contacts",
             value: userStatsData?.total_contacts || 0,
             icon: <ContactsOutlined className="text-green-500" />,
-            color: "from-green-500 to-green-600"
+            color: "from-green-500 to-green-600",
+            action: (
+                <Link to={{ pathname: "/zen/campaigns/details/" + id + "/" + userdetailsData?.company_id, search: `?username=${userdetailsData?.fullname}` }}>
+                    <Button type="primary" size="small" icon={<EyeOutlined />}>
+                        View Contacts
+                    </Button>
+                </Link>
+            )
         }
     ];
 

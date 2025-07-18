@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"email-marketing-service/core/handler/admin/users/dto"
 	"email-marketing-service/core/handler/admin/users/mapper"
+
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/helper"
@@ -327,14 +328,6 @@ func (s *AdminUsersServices) ResendUserVerificationMail(ctx context.Context, use
 	return nil
 }
 
-func (s *AdminUsersServices) GetAllUserCampaigns(ctx context.Context, userId string) (any, error) {
-	uuiduserId, err := uuid.Parse(userId)
-	if err != nil {
-		return nil, common.ErrInvalidUUID
-	}
-	fmt.Print(uuiduserId)
-	return nil, nil
-}
 
 func (s *AdminUsersServices) GetAllUserContacts(ctx context.Context, userId string) (any, error) {
 	uuiduserId, err := uuid.Parse(userId)

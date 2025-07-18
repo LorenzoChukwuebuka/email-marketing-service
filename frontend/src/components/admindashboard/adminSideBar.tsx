@@ -12,6 +12,7 @@ import {
     CreditCardOutlined,
     DownOutlined,
     UpOutlined,
+    FileTextOutlined,
     FlagOutlined
 } from "@ant-design/icons";
 import { useAdminPendingTicketsQuery } from "../../features/support/hooks/useAdminSupportTicketQuery";
@@ -76,7 +77,13 @@ const AdminSidebar: React.FC<SidebarProps> = ({ apiName }) => {
             icon: <CreditCardOutlined />,
             label: "Billing",
             path: "/zen/billing"
-        }
+        },
+        {
+            key: "/zen/template",
+            icon: <FileTextOutlined />,
+            label: "Templates",
+            path: "/zen/template"
+        },
     ];
 
 
@@ -143,6 +150,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ apiName }) => {
                                             <UserOutlined className="text-sm" />
                                             <span className="text-sm font-medium">Users</span>
                                         </Link>
+
                                         <Link
                                             to="/zen/users/email"
                                             className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${isActiveRoute("/zen/users/email")
@@ -153,6 +161,18 @@ const AdminSidebar: React.FC<SidebarProps> = ({ apiName }) => {
                                             <MailOutlined className="text-sm" />
                                             <span className="text-sm font-medium">Email All Users</span>
                                         </Link>
+
+                                        <Link
+                                            to="/zen/users/email/custom"
+                                            className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${isActiveRoute("/zen/users/email/custom")
+                                                ? "bg-blue-500 text-white shadow-md"
+                                                : "text-slate-400 hover:bg-slate-700 hover:text-white"
+                                                }`}
+                                        >
+                                            <MailOutlined className="text-sm" />
+                                            <span className="text-sm font-medium">Email Custom Users</span>
+                                        </Link>
+
                                     </div>
                                 </div>
                             );

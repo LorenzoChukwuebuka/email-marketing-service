@@ -204,3 +204,4 @@ func (c *AdminUserController) SendEmailToUsers(w http.ResponseWriter, r *http.Re
 
 	helper.SuccessResponse(w, 200, "Email sent successfully")
 }
+

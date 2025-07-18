@@ -3,6 +3,8 @@ package routes
 import (
 	"email-marketing-service/core/handler/admin/auth/controller"
 	authService "email-marketing-service/core/handler/admin/auth/services"
+	campaigncontroller "email-marketing-service/core/handler/admin/campaigns/controller"
+	campaignservice "email-marketing-service/core/handler/admin/campaigns/services"
 	planController "email-marketing-service/core/handler/admin/plans/controller"
 	planservice "email-marketing-service/core/handler/admin/plans/service"
 	supportController "email-marketing-service/core/handler/admin/support/controller"
@@ -88,6 +90,17 @@ func (a *AdminRoute) InitRoutes(r *mux.Router) {
 		userRoute.HandleFunc("/delete/{userId}", userCtrl.DeleteUser).Methods("DELETE", "OPTIONS")
 		userRoute.HandleFunc("/get/{userId}", userCtrl.GetUserByID).Methods("GET", "OPTIONS")
 		userRoute.HandleFunc("/stats/{userId}", userCtrl.GetUserStats).Methods("GET", "OPTIONS")
+	}
+
+	campaignRoute := r.PathPrefix("/campaigns").Subrouter()
+	campaignRoute.Use(middleware.AdminJWTMiddleware)
+	cmpService := campaignservice.NewAdminCampaignService(a.store)
+	cmpController := campaigncontroller.NewAdminCampaignController(cmpService)
+
+	{
+		campaignRoute.HandleFunc("/get/{userId}/{companyId}", cmpController.GetAllUserCampaigns).Methods("GET", "OPTIONS")
+		campaignRoute.HandleFunc("/get/single/{userId}/{companyId}/{campaignId}", cmpController.GetSingleCampaign).Methods("GET", "OPTIONS")
+		campaignRoute.HandleFunc("/get-campaign-recipients/{campaignId}/{companyId}", cmpController.GetAllRecipientsForACampaign).Methods("GET", "OPTIONS")
 	}
 
 }
