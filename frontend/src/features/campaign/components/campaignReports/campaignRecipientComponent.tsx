@@ -3,13 +3,29 @@ import { Table, Typography } from 'antd';
 import { parseDate } from "../../../../utils/utils"
 import { useCampaignRecipientsQuery } from "../../hooks/useCampaignQuery"
 import { CampaignEmailRecipientStats } from "../../interface/campaign.interface";
+import { useAdminCampaignRecipientsQuery } from "../../hooks/useAdminCampaignQuery";
 
 const { Title } = Typography;
 
-type Props = { campaignId: string }
+type Props = {
+    campaignId: string;
+    isAdmin?: boolean; // Context flag
+    title?: string;
+    userId?: string;
+    companyId?: string
+}
 
-const CampaignRecipientComponent: React.FC<Props> = ({ campaignId }) => {
-    const { data: campaignRecipientData, isLoading } = useCampaignRecipientsQuery(campaignId)
+const CampaignRecipientComponent: React.FC<Props> = ({
+    campaignId,
+    isAdmin = false,
+    title = "Campaign Recipients",
+    companyId
+}) => {
+    // Use different hooks based on context
+    const userQuery = useCampaignRecipientsQuery(campaignId);
+    const adminQuery = useAdminCampaignRecipientsQuery(campaignId, companyId as string);
+
+    const { data: campaignRecipientData, isLoading } = isAdmin ? adminQuery : userQuery;
 
     const cRdata = useMemo(() => campaignRecipientData?.payload || [], [campaignRecipientData])
 
@@ -90,9 +106,9 @@ const CampaignRecipientComponent: React.FC<Props> = ({ campaignId }) => {
     return (
         <div className="mt-8">
             <Title level={4} className="mb-4">
-                Campaign Recipients
+                {title}
             </Title>
-            
+
             <Table<CampaignEmailRecipientStats>
                 columns={columns}
                 dataSource={cRdata}
@@ -118,3 +134,4 @@ const CampaignRecipientComponent: React.FC<Props> = ({ campaignId }) => {
 }
 
 export default CampaignRecipientComponent
+

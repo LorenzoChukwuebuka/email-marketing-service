@@ -17,12 +17,12 @@ const StatItem = ({ value, label }: StatProp) => (
 );
 
 const AdminUserSpecificCampaigns: React.FC = () => {
-    const { campaignid } = useParams<{ campaignid: string }>() as { campaignid: string };
+    const { campaignId, userId, companyId } = useParams()
 
     const [campData, setCampData] = useState<CampaignData | null>(null);
 
-    const { data: cmpData, isLoading } = useAdminUserSingleCampaignQuery(campaignid)
-    const { data: statsD } = useCampaignStatsQuery(campaignid)
+    const { data: cmpData, isLoading } = useAdminUserSingleCampaignQuery(campaignId as string, userId as string, companyId as string)
+    const { data: statsD } = useCampaignStatsQuery(campaignId as string)
 
     const campaignData = useMemo(() => cmpData?.payload, [cmpData])
     const campaignStatData = useMemo(() => statsD?.payload, [statsD])
@@ -96,7 +96,7 @@ const AdminUserSpecificCampaigns: React.FC = () => {
                     <CampaignInfo campaignData={campData} />
 
                     {/* Campaign Recipients */}
-                    <CampaignRecipientComponent campaignId={campData.uuid} />
+                    <CampaignRecipientComponent campaignId={campData.id} isAdmin={true} companyId={companyId} />
                 </>
             )}
         </HelmetProvider>
