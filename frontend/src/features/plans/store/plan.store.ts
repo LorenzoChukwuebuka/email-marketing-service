@@ -6,8 +6,8 @@ import { handleError } from '../../../utils/isError';
 
 
 interface PlanState {
-    planValues: PlanValues;
-    editPlanValues: EditPlanValues;
+    planValues: Partial<PlanValues>;
+    editPlanValues: Partial<EditPlanValues>;
     selectedId: string[];
 }
 
@@ -31,25 +31,8 @@ type PlanStore = PlanActions & PlanState & PlanAsyncActions
 
 
 const InitialState = {
-    planValues: {
-        planname: '',
-        duration: '',
-        price: 0,
-        details: '',
-        number_of_mails_per_day: '',
-        status: 'active',
-        features: []
-    },
-    editPlanValues: {
-        uuid: '',
-        planname: '',
-        duration: '',
-        price: 0,
-        details: '',
-        number_of_mails_per_day: '',
-        status: 'active',
-        features: []
-    },
+    planValues: {},
+    editPlanValues: {},
     selectedId: [],
 } satisfies PlanState
 
@@ -71,7 +54,7 @@ const usePlanStore = create<PlanStore>((set, get) => ({
     createPlan: async () => {
         const { planValues } = get()
         try {
-            const response = await PlanAPI.createPlans(planValues)
+            const response = await PlanAPI.createPlans(planValues as any)
             if (response.payload.status === true) {
                 eventBus.emit('success', 'Plan creation was successful')
             }
@@ -83,12 +66,20 @@ const usePlanStore = create<PlanStore>((set, get) => ({
 
     updatePlan: async () => {
         try {
-            const response = await PlanAPI.updatePlan(get().editPlanValues)
+            const values = get().editPlanValues as any
+            const transformed = {
+                ...values,
+                plan_name: values.name,
+            }
+            delete transformed.name
+
+            const response = await PlanAPI.updatePlan(transformed)
             eventBus.emit('success', response.status)
         } catch (error) {
             handleError(error)
         }
     },
+
 
     deletePlan: async () => {
         try {

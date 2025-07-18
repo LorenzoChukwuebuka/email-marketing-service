@@ -30,11 +30,11 @@ export type EditFormValues = Omit<FormValues, 'password' | 'confirmPassword' | '
 export type UserDetails = {
     fullname: string
     email: string
-    company: string
+    company: Company
     phonenumber: string
     verified: boolean,
     blocked: boolean,
-} & BaseEntity & Company
+} & BaseEntity  
 
 export type ChangePasswordValues = {
     old_password: string;

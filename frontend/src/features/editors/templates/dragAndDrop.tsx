@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Typography, Badge, Tooltip, Spin, message } from 'antd';
-import { ArrowLeftOutlined, SendOutlined, SaveOutlined  } from '@ant-design/icons';
+import { ArrowLeftOutlined, SendOutlined, SaveOutlined } from '@ant-design/icons';
 import EmailEditor, { EditorRef, EmailEditorProps } from 'react-email-editor';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useCampaignStore from '../../campaign/store/campaign.store';
@@ -16,6 +16,7 @@ const DragAndDropEditor: React.FC = () => {
     const [autoSaved, setAutoSaved] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [editorReady, setEditorReady] = useState<boolean>(false);
     const { currentTemplate, updateTemplate, setCurrentTemplate } = useTemplateStore();
     const { setCreateCampaignValues, updateCampaign, currentCampaignId, clearCurrentCampaignId } = useCampaignStore();
     const navigate = useNavigate();
@@ -27,6 +28,7 @@ const DragAndDropEditor: React.FC = () => {
     const transactionalQuery = useSingleTransactionalTemplateQuery(uuid as string);
     const marketingQuery = useSingleMarketingTemplateQuery(uuid as string);
 
+    // Load template data
     useEffect(() => {
         if (!uuid) return;
 
@@ -41,6 +43,40 @@ const DragAndDropEditor: React.FC = () => {
         }
     }, [uuid, _type, transactionalQuery.data, marketingQuery.data, setCurrentTemplate]);
 
+    // Load design into editor when both editor is ready and template is loaded
+    useEffect(() => {
+        if (editorReady && currentTemplate && emailEditorRef.current) {
+            const unlayer = emailEditorRef.current.editor;
+            if (unlayer) {
+                // Load design if it exists, otherwise load HTML
+                if (currentTemplate.email_design) {
+                    console.log('Loading design:', currentTemplate.email_design);
+                    unlayer.loadDesign(currentTemplate.email_design);
+                } else if (currentTemplate.email_html) {
+                    console.log('Loading HTML:', currentTemplate.email_html);
+                    // If no design but HTML exists, you might want to import HTML
+                    // Note: This depends on your email editor's capabilities
+                    unlayer.loadDesign({
+                        body: {
+                            rows: [{
+                                cells: [1],
+                                //@ts-ignore
+                                columns: [{
+                                    contents: [{
+                                        type: 'html',
+                                        values: {
+                                            html: currentTemplate.email_html
+                                        }
+                                    }]
+                                }]
+                            }]
+                        }
+                    });
+                }
+            }
+        }
+    }, [editorReady, currentTemplate]);
+
     useEffect(() => {
         return () => {
             setCurrentTemplate(null);
@@ -49,9 +85,9 @@ const DragAndDropEditor: React.FC = () => {
 
     const saveDesign = async () => {
         if (isSaving) return; // Prevent multiple saves
-        
+
         setIsSaving(true);
-        
+
         try {
             if (currentCampaignId) {
                 setCreateCampaignValues({ template_id: uuid as string });
@@ -96,9 +132,7 @@ const DragAndDropEditor: React.FC = () => {
 
     const onReady: EmailEditorProps['onReady'] = (unlayer) => {
         console.log("Editor is ready");
-        if (currentTemplate && currentTemplate.email_design) {
-            unlayer.loadDesign(currentTemplate.email_design);
-        }
+        setEditorReady(true);
         unlayer.addEventListener('design:updated', saveDesign);
     };
 
@@ -158,7 +192,7 @@ const DragAndDropEditor: React.FC = () => {
 
                 <div className="flex items-center space-x-3">
                     {renderSaveStatus()}
-                    
+
                     <Tooltip title="Send test email">
                         <Button
                             type="default"
@@ -169,7 +203,7 @@ const DragAndDropEditor: React.FC = () => {
                             Send Test
                         </Button>
                     </Tooltip>
-                    
+
                     <Button
                         type="primary"
                         icon={<SaveOutlined />}
@@ -185,9 +219,9 @@ const DragAndDropEditor: React.FC = () => {
             {/* Editor Container */}
             <div className="flex-1 bg-gray-50">
                 <div className="h-full border border-gray-200 rounded-lg mx-4 my-4 overflow-hidden shadow-sm">
-                    <EmailEditor 
-                        ref={emailEditorRef} 
-                        onReady={onReady} 
+                    <EmailEditor
+                        ref={emailEditorRef}
+                        onReady={onReady}
                         style={{ height: "calc(100vh - 120px)" }}
                         options={{
                             displayMode: 'email',
@@ -205,10 +239,10 @@ const DragAndDropEditor: React.FC = () => {
             </div>
 
             {/* Modal */}
-            <SendTestEmail 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                template_id={uuid as string} 
+            <SendTestEmail
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                template_id={uuid as string}
             />
         </div>
     );

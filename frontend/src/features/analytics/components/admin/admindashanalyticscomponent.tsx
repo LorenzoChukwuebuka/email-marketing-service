@@ -1,9 +1,34 @@
 import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Server, HardDrive, Cpu, Database } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+    Card, 
+    Row, 
+    Col, 
+    Statistic, 
+    Progress, 
+    Typography, 
+    Space, 
+    Badge,
+    Alert,
+    Spin
+} from 'antd';
+import {
+    DatabaseOutlined,
+    HddOutlined,
+    DashboardOutlined,
+    PlayCircleOutlined,
+    WarningOutlined
+} from '@ant-design/icons';
+import { 
+    Server,
+   
+} from 'lucide-react';
+
+const { Title, Text } = Typography;
 
 const SystemMonitorDashboard = () => {
     const [historicalData, setHistoricalData] = useState<Record<string, any>[]>([]);
+    const [isConnected, setIsConnected] = useState(false);
     const [currentData, setCurrentData] = useState({
         system: {
             operating_system: '',
@@ -31,6 +56,18 @@ const SystemMonitorDashboard = () => {
     useEffect(() => {
         const ws = new WebSocket(import.meta.env.VITE_SOCKET_SERVER as string);
 
+        ws.onopen = () => {
+            setIsConnected(true);
+        };
+
+        ws.onclose = () => {
+            setIsConnected(false);
+        };
+
+        ws.onerror = () => {
+            setIsConnected(false);
+        };
+
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             setCurrentData(data);
@@ -40,7 +77,7 @@ const SystemMonitorDashboard = () => {
                     time: new Date().toLocaleTimeString(),
                     memoryUsage: parseFloat(data.system.used_memory_percent),
                     diskUsage: parseFloat(data.disk.used_disk_percent),
-                    cpuUsage: parseFloat(data.cpu.cpu_usage[0].split(': ')[1])
+                    cpuUsage: parseFloat(data.cpu.cpu_usage[0]?.split(': ')[1] || '0')
                 }].slice(-20);
                 return newData;
             });
@@ -49,153 +86,290 @@ const SystemMonitorDashboard = () => {
         return () => ws.close();
     }, []);
 
+    const getUsageColor = (usage: number) => {
+        if (usage < 50) return '#52c41a';
+        if (usage < 80) return '#faad14';
+        return '#ff4d4f';
+    };
 
-    type Stat = {
-        title: string
-        value: any
-        icon: any
-        secondaryValue: any
-    }
+    const getUsageStatus = (usage: number) => {
+        if (usage < 50) return 'success';
+        if (usage < 80) return 'warning';
+        return 'exception';
+    };
 
-    const StatCard = ({ title, value, icon: Icon, secondaryValue = null }: Stat) => (
-        <div className="card bg-base-100 shadow">
-            <div className="card-body">
-                <div className="flex justify-between items-center">
-                    <h2 className="card-title text-sm">{title}</h2>
-                    <Icon className="w-4 h-4" />
-                </div>
-                <div className="text-2xl font-bold">{value}</div>
-                {secondaryValue && (
-                    <p className="text-xs opacity-70">{secondaryValue}</p>
-                )}
-            </div>
-        </div>
-    );
+    const memoryUsage = parseFloat(currentData.system.used_memory_percent) || 0;
+    const diskUsage = parseFloat(currentData.disk.used_disk_percent) || 0;
+    //@ts-ignore
+    const cpuUsage = parseFloat(currentData.cpu.cpu_usage[0]?.split(': ')[1] || '0') || 0;
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
-            <div className="text-3xl font-bold">
-                System Resource Monitor
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <Title level={2} className="!mb-2">
+                        <DashboardOutlined className="mr-3" />
+                        System Resource Monitor
+                    </Title>
+                    <Text type="secondary">Real-time system performance monitoring</Text>
+                </div>
+                <div className="flex items-center space-x-4">
+                    <Badge 
+                        status={isConnected ? "processing" : "error"} 
+                        text={isConnected ? "Connected" : "Disconnected"} 
+                    />
+                    {!isConnected && (
+                        <Alert
+                            message="Connection Lost"
+                            description="Attempting to reconnect..."
+                            type="warning"
+                            showIcon
+                            closable
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    title="Memory Usage"
-                    value={currentData.system.used_memory_percent}
-                    icon={Database}
-                    secondaryValue={`Free: ${currentData.system.free_memory} / Total: ${currentData.system.total_memory}`}
-                />
-                <StatCard
-                    title="Disk Usage"
-                    value={currentData.disk.used_disk_percent}
-                    icon={HardDrive}
-                    secondaryValue={`Free: ${currentData.disk.free_disk_space} / Total: ${currentData.disk.total_disk_space}`}
-                />
-                <StatCard
-                    title="CPU"
-                    //@ts-expect-error dodgy code
-                    value={currentData.cpu.cpu_usage[0]?.split(': ')[1] || '0%'}
-                    icon={Cpu}
-                    secondaryValue={currentData.cpu.model_name}
-                />
-                <StatCard
-                    title="System Info"
-                    value={currentData.system.platform}
-                    icon={Server}
-                    secondaryValue={`Processes: ${currentData.system.num_processes}`}
-                />
-            </div>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} lg={6}>
+                    <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                        <Statistic
+                            title={
+                                <Space>
+                                    <DatabaseOutlined className="text-blue-500" />
+                                    Memory Usage
+                                </Space>
+                            }
+                            value={memoryUsage}
+                            suffix="%"
+                            precision={1}
+                            valueStyle={{ color: getUsageColor(memoryUsage) }}
+                        />
+                        <Progress
+                            percent={memoryUsage}
+                            strokeColor={getUsageColor(memoryUsage)}
+                            size="small"
+                            className="mt-2"
+                        />
+                        <Text type="secondary" className="text-xs block mt-2">
+                            Free: {currentData.system.free_memory} / Total: {currentData.system.total_memory}
+                        </Text>
+                    </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                    <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                        <Statistic
+                            title={
+                                <Space>
+                                    <HddOutlined className="text-green-500" />
+                                    Disk Usage
+                                </Space>
+                            }
+                            value={diskUsage}
+                            suffix="%"
+                            precision={1}
+                            valueStyle={{ color: getUsageColor(diskUsage) }}
+                        />
+                        <Progress
+                            percent={diskUsage}
+                            strokeColor={getUsageColor(diskUsage)}
+                            size="small"
+                            className="mt-2"
+                        />
+                        <Text type="secondary" className="text-xs block mt-2">
+                            Free: {currentData.disk.free_disk_space} / Total: {currentData.disk.total_disk_space}
+                        </Text>
+                    </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                    <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                        <Statistic
+                            title={
+                                <Space>
+                                    <PlayCircleOutlined className="text-orange-500" />
+                                    CPU Usage
+                                </Space>
+                            }
+                            value={cpuUsage}
+                            suffix="%"
+                            precision={1}
+                            valueStyle={{ color: getUsageColor(cpuUsage) }}
+                        />
+                        <Progress
+                            percent={cpuUsage}
+                            strokeColor={getUsageColor(cpuUsage)}
+                            size="small"
+                            className="mt-2"
+                        />
+                        <Text type="secondary" className="text-xs block mt-2">
+                            {currentData.cpu.model_name || 'Unknown CPU'}
+                        </Text>
+                    </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                    <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                        <Statistic
+                            title={
+                                <Space>
+                                    <Server className="text-purple-500" />
+                                    System Info
+                                </Space>
+                            }
+                            value={currentData.system.platform || 'Unknown'}
+                            valueStyle={{ fontSize: '18px' }}
+                        />
+                        <div className="mt-4">
+                            <Text type="secondary" className="text-xs block">
+                                Processes: <span className="font-semibold">{currentData.system.num_processes}</span>
+                            </Text>
+                            <Text type="secondary" className="text-xs block">
+                                Hostname: <span className="font-semibold">{currentData.system.hostname}</span>
+                            </Text>
+                        </div>
+                    </Card>
+                </Col>
+            </Row>
 
             {/* Chart Section */}
-            <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                    <h2 className="card-title">Resource Usage History</h2>
-                    <LineChart
-                        width={800}
-                        height={400}
-                        data={historicalData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        className="mx-auto"
-                    >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line
-                            type="monotone"
-                            dataKey="memoryUsage"
-                            stroke="#8884d8"
-                            name="Memory Usage %"
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="diskUsage"
-                            stroke="#82ca9d"
-                            name="Disk Usage %"
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="cpuUsage"
-                            stroke="#ffc658"
-                            name="CPU Usage %"
-                        />
-                    </LineChart>
-                </div>
-            </div>
+            <Card 
+                title={
+                    <Space>
+                        <WarningOutlined className="text-blue-500" />
+                        Resource Usage History
+                    </Space>
+                }
+                className="shadow-lg"
+            >
+                {historicalData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={400}>
+                        <LineChart
+                            data={historicalData}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                                dataKey="time" 
+                                tick={{ fontSize: 12 }}
+                                stroke="#666"
+                            />
+                            <YAxis 
+                                tick={{ fontSize: 12 }}
+                                stroke="#666"
+                            />
+                            <Tooltip 
+                                contentStyle={{
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: '6px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                            <Legend />
+                            <Line
+                                type="monotone"
+                                dataKey="memoryUsage"
+                                stroke="#1890ff"
+                                strokeWidth={2}
+                                name="Memory Usage %"
+                                dot={{ fill: '#1890ff', strokeWidth: 2, r: 3 }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="diskUsage"
+                                stroke="#52c41a"
+                                strokeWidth={2}
+                                name="Disk Usage %"
+                                dot={{ fill: '#52c41a', strokeWidth: 2, r: 3 }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="cpuUsage"
+                                stroke="#faad14"
+                                strokeWidth={2}
+                                name="CPU Usage %"
+                                dot={{ fill: '#faad14', strokeWidth: 2, r: 3 }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="flex justify-center items-center h-64">
+                        <Spin size="large" />
+                        <Text className="ml-4">Loading chart data...</Text>
+                    </div>
+                )}
+            </Card>
 
             {/* CPU Details */}
-            <div className="card bg-base-100 shadow">
-                <div className="card-body">
-                    <h2 className="card-title">CPU Details</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 className="font-semibold mb-2">CPU Information</h3>
-                            <div className="space-y-2">
-                                <div className="stats shadow">
-                                    <div className="stat">
-                                        <div className="stat-title">Model</div>
-                                        <div className="stat-value text-lg">{currentData.cpu.model_name}</div>
-                                    </div>
-                                </div>
-                                <div className="stats shadow">
-                                    <div className="stat">
-                                        <div className="stat-title">Family</div>
-                                        <div className="stat-value text-lg">{currentData.cpu.family}</div>
-                                    </div>
-                                </div>
-                                <div className="stats shadow">
-                                    <div className="stat">
-                                        <div className="stat-title">Speed</div>
-                                        <div className="stat-value text-lg">{currentData.cpu.speed}</div>
-                                    </div>
-                                </div>
-                            </div>
+            <Card 
+                title={
+                    <Space>
+                        <PlayCircleOutlined className="text-orange-500" />
+                        CPU Details
+                    </Space>
+                }
+                className="shadow-lg"
+            >
+                <Row gutter={[24, 24]}>
+                    <Col xs={24} md={12}>
+                        <Title level={4} className="mb-4">CPU Information</Title>
+                        <div className="space-y-4">
+                            <Card size="small" className="bg-gray-50">
+                                <Statistic
+                                    title="Model"
+                                    value={currentData.cpu.model_name || 'Unknown'}
+                                    valueStyle={{ fontSize: '16px', fontWeight: 'bold' }}
+                                />
+                            </Card>
+                            <Card size="small" className="bg-gray-50">
+                                <Statistic
+                                    title="Family"
+                                    value={currentData.cpu.family || 'Unknown'}
+                                    valueStyle={{ fontSize: '16px', fontWeight: 'bold' }}
+                                />
+                            </Card>
+                            <Card size="small" className="bg-gray-50">
+                                <Statistic
+                                    title="Speed"
+                                    value={currentData.cpu.speed || 'Unknown'}
+                                    valueStyle={{ fontSize: '16px', fontWeight: 'bold' }}
+                                />
+                            </Card>
                         </div>
-                        <div>
-                            <h3 className="font-semibold mb-2">Core Usage</h3>
-                            <div className="space-y-2">
-                                {currentData.cpu.cpu_usage.map((usage, index) => {
-                                    //@ts-expect-error dodgy code
-                                    const usageValue = parseFloat(usage.split(': ')[1]);
-                                    return (
-                                        <div key={index} className="flex items-center gap-2">
-                                            <span className="text-sm w-20">{`CPU ${index}`}</span>
-                                            <progress
-                                                className="progress progress-primary w-full"
-                                                value={usageValue}
-                                                max="100"
-                                            ></progress>
-                                            <span className="text-sm w-16">{usageValue.toFixed(1)}%</span>
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <Title level={4} className="mb-4">Core Usage</Title>
+                        <div className="space-y-3">
+                            {currentData.cpu.cpu_usage.map((usage, index) => {
+                                //@ts-ignore
+                                const usageValue = parseFloat(usage.split(': ')[1] || '0');
+                                return (
+                                    <div key={index} className="flex items-center gap-4">
+                                        <Text className="w-16 text-sm font-medium">
+                                            CPU {index}
+                                        </Text>
+                                        <div className="flex-1">
+                                            <Progress
+                                                percent={usageValue}
+                                                strokeColor={getUsageColor(usageValue)}
+                                                size="small"
+                                                status={getUsageStatus(usageValue) as any}
+                                            />
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                        <Text className="w-16 text-sm font-mono">
+                                            {usageValue.toFixed(1)}%
+                                        </Text>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </Col>
+                </Row>
+            </Card>
         </div>
     );
 };

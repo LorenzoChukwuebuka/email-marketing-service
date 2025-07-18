@@ -33,7 +33,8 @@ function CodeEditor(): JSX.Element {
     </body>
     </html>`;
 
-    const [code, setCode] = useState<string>(defaultTemplate);
+    const [code, setCode] = useState<string>('');
+    const [initialLoad, setInitialLoad] = useState<boolean>(true);
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -61,6 +62,29 @@ function CodeEditor(): JSX.Element {
 
     const transactionalQuery = useSingleTransactionalTemplateQuery(uuid as string);
     const marketingQuery = useSingleMarketingTemplateQuery(uuid as string);
+
+    // Template loading effect
+    useEffect(() => {
+        if (!uuid) return;
+
+        const template = _type === "t"
+            ? transactionalQuery.data
+            : marketingQuery.data;
+
+        if (template) {
+            setCurrentTemplate(template);
+        }
+    }, [uuid, _type, transactionalQuery.data, marketingQuery.data, setCurrentTemplate]);
+
+    // Code initialization effect
+    useEffect(() => {
+        if (currentTemplate && initialLoad) {
+            const htmlContent = currentTemplate.email_html || defaultTemplate;
+            setCode(htmlContent);
+            setInitialLoad(false);
+            console.log('Template loaded:', currentTemplate.template_name);
+        }
+    }, [currentTemplate, initialLoad, defaultTemplate]);
 
     // Save function with proper error handling
     const saveCode = async (newCode: string): Promise<void> => {
@@ -101,8 +125,12 @@ function CodeEditor(): JSX.Element {
 
     // Debounced save function - only triggers after 1 second of no changes
     const debouncedSave = useCallback(
-        debounce((newCode: string) => saveCode(newCode), 1000),
-        [currentTemplate, uuid, currentCampaignId]
+        debounce((newCode: string) => {
+            if (!initialLoad) { // Only save if not initial load
+                saveCode(newCode);
+            }
+        }, 1000),
+        [currentTemplate, uuid, currentCampaignId, initialLoad]
     );
 
     // Cleanup debounce on unmount
@@ -111,26 +139,6 @@ function CodeEditor(): JSX.Element {
             debouncedSave.cancel();
         };
     }, [debouncedSave]);
-
-    // Template loading effect
-    useEffect(() => {
-        if (!uuid) return;
-
-        const template = _type === "t"
-            ? transactionalQuery.data
-            : marketingQuery.data;
-
-        if (template) {
-            setCurrentTemplate(template);
-        }
-    }, [uuid, _type, transactionalQuery.data, marketingQuery.data, setCurrentTemplate]);
-
-    // Code sync effect
-    useEffect(() => {
-        if (currentTemplate?.email_html) {
-            setCode(currentTemplate.email_html);
-        }
-    }, [currentTemplate]);
 
     // Cleanup effect
     useEffect(() => {
@@ -156,7 +164,6 @@ function CodeEditor(): JSX.Element {
     const handleNavigate = () => {
         // Save any pending changes before navigating
         debouncedSave.flush();
-
         if (currentCampaignId) {
             clearCurrentCampaignId();
             navigate("/app/campaign/edit/" + currentCampaignId);

@@ -32,7 +32,6 @@ const router = createBrowserRouter([
         path: "*",
         element: <Nopage />
     },
-
     {
         path: "/404",
         element: <Nopage />
@@ -55,7 +54,6 @@ const router = createBrowserRouter([
     },
 
     //billing success route
-
     {
         path: "/payment",
         element: <BillingSuccessTemplate />
@@ -70,7 +68,6 @@ const router = createBrowserRouter([
     },
 
     //for admin routes
-
     {
         path: "/zen",
         element: <ProtectedRoute />,

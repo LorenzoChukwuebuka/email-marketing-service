@@ -123,7 +123,7 @@ const useCampaignStore = create<CampaignStore>()(
                             eventBus.emit('error', 'You have not created a subject yet');
                             return;
                         }
-                        if (!currentCampaign.payload.campaign_groups?.length) {
+                        if (!currentCampaign.payload.groups?.length) {
                             eventBus.emit('error', 'You have not created a recipient yet');
                             return;
                         }
@@ -193,7 +193,7 @@ const useCampaignStore = create<CampaignStore>()(
                     }
 
                     // Check if campaign_groups exist and have recipients
-                    if (!campaign?.payload.campaign_groups || campaign?.payload.campaign_groups.length === 0) {
+                    if (!campaign?.payload.groups || campaign?.payload.groups.length === 0) {
                         eventBus.emit('error', 'You have not created a recipient yet')
                         return
                     }

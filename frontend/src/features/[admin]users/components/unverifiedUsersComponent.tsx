@@ -1,174 +1,262 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+    Table, 
+    Input, 
+    Switch, 
+    Tag, 
+    Space, 
+    Button, 
+    Modal, 
+    Avatar, 
+    Tooltip,
+    Card,
+    Badge
+} from 'antd';
+import { 
+    SearchOutlined, 
+    EyeOutlined, 
+    UserOutlined, 
+    ClockCircleOutlined, 
+    StopOutlined,
+    MailOutlined,
+    PhoneOutlined,
+    BankOutlined
+} from '@ant-design/icons';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import useDebounce from '../../../hooks/useDebounce';
 import { useUnverifiedUsersQuery } from '../hooks/useAdminUsersQueryHook';
-import { Pagination, Modal } from 'antd';
-import LoadingSpinnerComponent from '../../../components/loadingSpinnerComponent';
 import useAdminUserStore from '../store/adminuser.store';
+import LoadingSpinnerComponent from '../../../components/loadingSpinnerComponent';
 
 const UnVerifiedUsersTable: React.FC = () => {
+    const [searchQuery, setSearchQuery] = useState<string>("");
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    const [searchQuery, setSearchQuery] = useState<string>(""); // New state for search query
-    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
-    const navigate = useNavigate()
-    const { blockUser, unBlockUser, verifyUser } = useAdminUserStore()
+    const navigate = useNavigate();
 
-    const handleSearch = (query: string) => {
-        setSearchQuery(query)
-    }
+    const { blockUser, verifyUser, unBlockUser } = useAdminUserStore();
+    const { data: userData, isLoading } = useUnverifiedUsersQuery(currentPage, pageSize, debouncedSearchQuery);
 
-    const { data: userData, isLoading } = useUnverifiedUsersQuery(currentPage, pageSize, debouncedSearchQuery)
-    const userdetailsData = useMemo(() => userData?.payload.data, [userData])
+    const userdetailsData = useMemo(() => userData?.payload.data, [userData]);
 
     const handleToggle = async (userId: string, field: "verified" | "blocked", isChecked: boolean) => {
-
         const actionText = isChecked ?
             (field === "blocked" ? "unblock" : "unverify") :
             (field === "blocked" ? "block" : "verify");
 
         try {
-
             Modal.confirm({
-                title: "Are you sure?",
-                content: `Do you want to ${actionText} ${userId}?`,
+                title: "Confirm Action",
+                content: `Are you sure you want to ${actionText} this user?`,
                 okText: "Yes",
                 cancelText: "No",
+                okButtonProps: { 
+                    className: field === "blocked" ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+                },
                 onOk: async () => {
                     if (field === "blocked") {
                         if (isChecked) {
                             await unBlockUser(userId);
-                            new Promise(resolve => setTimeout(resolve, 1000))
-                            location.reload()
                         } else {
                             await blockUser(userId);
-                            new Promise(resolve => setTimeout(resolve, 1000))
-                            location.reload()
                         }
                     } else if (field === "verified") {
                         await verifyUser(userId);
                     }
+                    setTimeout(() => location.reload(), 1000);
                 },
             });
-
-
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
     };
 
-    const handlePageChange = (page: number, size: number) => {
-        setCurrentPage(page);
-        setPageSize(size);
-    };
-
-    return (
-        <>
-            <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-                <div className="ml-3">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                        onChange={(e) => handleSearch(e.target.value)}
+    const columns: ColumnsType<any> = [
+        {
+            title: 'User',
+            key: 'user',
+            render: (_, record) => (
+                <div className="flex items-center space-x-3">
+                    <Avatar 
+                        size={40} 
+                        icon={<UserOutlined />} 
+                        className="bg-gradient-to-r from-orange-500 to-red-600"
                     />
-                </div>
-            </div>
-            {isLoading ? <LoadingSpinnerComponent /> : (
-                <div className="overflow-x-auto mt-4">
-                    <h1 className="font-semibold text-lg mt-4 mb-4"> User List </h1>
-                    <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
-                        <thead className="bg-gray-50">
-
-                            <tr>
-                                {['Full Name', 'Email', 'Company', 'Phone', 'Verified', 'Blocked', 'Created At', 'Verified At', 'Details'].map((header, index) =>
-                                    <th key={index} className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        {header}
-                                    </th>
-                                )}
-                            </tr>
-
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {userdetailsData && userdetailsData.length > 0 ? (
-                                userdetailsData.map((user, index) => {
-                                    return (
-                                        <tr key={index} className="hover:bg-gray-100">
-                                            <td className="py-4 px-4">{user?.fullname}</td>
-                                            <td className="py-4 px-4">{user?.email}</td>
-                                            <td className="py-4 px-4">{user?.company || 'N/A'}</td>
-                                            <td className="py-4 px-4">{user?.phonenumber || 'N/A'}</td>
-                                            <td className="py-4 px-4">
-                                                <label className="inline-flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="form-checkbox h-5 w-5 text-blue-600"
-                                                        checked={user?.verified}
-                                                        onChange={() => handleToggle(user.uuid, 'verified', user.verified)}
-                                                    />
-                                                    <span className="ml-2">{user?.verified ? 'Verified' : 'Not Verified'}</span>
-                                                </label>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <label className="inline-flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="form-checkbox h-5 w-5 text-blue-600"
-                                                        checked={user?.blocked}
-                                                        onChange={() => handleToggle(user.uuid, 'blocked', user.blocked)}
-                                                    />
-                                                    <span className="ml-2">{user?.blocked ? 'Blocked' : 'Not Blocked'}</span>
-                                                </label>
-                                            </td>
-                                            <td className="py-4 px-4">{user.created_at && new Date(user.created_at).toLocaleString('en-US', {
-                                                timeZone: 'UTC',
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: 'numeric',
-                                                minute: 'numeric',
-                                                second: 'numeric'
-                                            }) || "Not available"}</td>
-                                            <td className="py-4 px-4">{user.verified_at && new Date(user.verified_at).toLocaleString('en-US', {
-                                                timeZone: 'UTC',
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: 'numeric',
-                                                minute: 'numeric',
-                                                second: 'numeric'
-                                            }) || "Not verified"}</td>
-                                            <td className="py-4 px-4" onClick={() => navigate("/zen/users/detail/" + user.uuid)}>   <i className="bi bi-eye"></i></td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={8} className="py-4 px-4 text-center">
-                                        No user data available
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-
-                    <div className="mt-4 flex justify-center items-center mb-5">
-                        {/* Pagination */}
-                        <Pagination
-                            current={currentPage}
-                            pageSize={pageSize}
-                            total={userData?.payload?.total_count || 0} // Ensure your API returns a total count
-                            onChange={handlePageChange}
-                            showSizeChanger
-                            pageSizeOptions={["10", "20", "50", "100"]}
-                            showTotal={(total) => `Total ${total} Campaigns`}
-                        />
+                    <div>
+                        <div className="font-medium text-gray-900">{record.fullname}</div>
+                        <div className="flex items-center text-sm text-gray-500">
+                            <MailOutlined className="mr-1" />
+                            {record.email}
+                        </div>
                     </div>
                 </div>
-            )}
+            ),
+            width: 280,
+        },
+        {
+            title: 'Company',
+            dataIndex: 'company',
+            key: 'company',
+            render: (company) => (
+                <div className="flex items-center">
+                    <BankOutlined className="mr-2 text-gray-400" />
+                    <span>{company || 'N/A'}</span>
+                </div>
+            ),
+        },
+        {
+            title: 'Phone',
+            dataIndex: 'phonenumber',
+            key: 'phonenumber',
+            render: (phone) => (
+                <div className="flex items-center">
+                    <PhoneOutlined className="mr-2 text-gray-400" />
+                    <span>{phone || 'N/A'}</span>
+                </div>
+            ),
+        },
+        {
+            title: 'Status',
+            key: 'status',
+            render: (_, record) => (
+                <Space direction="vertical" size={4}>
+                    <Tag 
+                        icon={<ClockCircleOutlined />} 
+                        color="orange"
+                        className="rounded-full"
+                    >
+                        Pending Verification
+                    </Tag>
+                    {record.blocked && (
+                        <Tag 
+                            icon={<StopOutlined />} 
+                            color="red" 
+                            className="rounded-full"
+                        >
+                            Blocked
+                        </Tag>
+                    )}
+                </Space>
+            ),
+        },
+        {
+            title: 'Verify User',
+            key: 'verified',
+            render: (_, record) => (
+                <Switch
+                    checked={record.verified}
+                    onChange={() => handleToggle(record.id, 'verified', record.verified)}
+                    checkedChildren="✓"
+                    unCheckedChildren="✗"
+                    className="bg-gray-300"
+                />
+            ),
+        },
+        {
+            title: 'Block User',
+            key: 'blocked',
+            render: (_, record) => (
+                <Switch
+                    checked={record.blocked}
+                    onChange={() => handleToggle(record.id, 'blocked', record.blocked)}
+                    checkedChildren="✓"
+                    unCheckedChildren="✗"
+                    className={record.blocked ? "bg-red-500" : "bg-gray-300"}
+                />
+            ),
+        },
+        {
+            title: 'Created',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            render: (date) => (
+                <div className="text-sm">
+                    {date ? new Date(date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    }) : 'N/A'}
+                </div>
+            ),
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Tooltip title="View Details">
+                    <Button
+                        type="primary"
+                        icon={<EyeOutlined />}
+                        size="small"
+                        className="bg-orange-500 hover:bg-orange-600 border-none rounded-full"
+                        onClick={() => navigate("/zen/users/detail/" + record.id)}
+                    />
+                </Tooltip>
+            ),
+        },
+    ];
 
-        </>
-    )
-}
+    const handleTableChange = (pagination: TablePaginationConfig) => {
+        setCurrentPage(pagination.current || 1);
+        setPageSize(pagination.pageSize || 20);
+    };
+
+    if (isLoading) {
+        return <LoadingSpinnerComponent />;
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Search Section */}
+            <Card className="shadow-sm border-0">
+                <div className="flex items-center justify-between">
+                    <div className="flex-1 max-w-md">
+                        <Input
+                            placeholder="Search unverified users..."
+                            prefix={<SearchOutlined className="text-gray-400" />}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="rounded-lg border-gray-200 focus:border-orange-500"
+                            size="large"
+                        />
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <Badge 
+                            count={userData?.payload?.total || 0} 
+                            showZero 
+                            className="bg-orange-100 text-orange-800"
+                        />
+                        <span className="text-sm text-gray-600">Unverified Users</span>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Table Section */}
+            <Card className="shadow-sm border-0 overflow-hidden">
+                <Table
+                    columns={columns}
+                    dataSource={userdetailsData}
+                    rowKey="id"
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: userData?.payload?.total || 0,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total, range) => 
+                            `${range[0]}-${range[1]} of ${total} unverified users`,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        className: "px-4 pb-4"
+                    }}
+                    onChange={handleTableChange}
+                    className="modern-table"
+                    scroll={{ x: 1200 }}
+                />
+            </Card>
+        </div>
+    );
+};
 
 export default UnVerifiedUsersTable;

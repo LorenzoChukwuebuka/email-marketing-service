@@ -6,10 +6,10 @@ import (
 	"email-marketing-service/core/server/asynqserver"
 	"email-marketing-service/core/server/httpserver"
 	"email-marketing-service/core/server/websocketserver"
-	"email-marketing-service/internal/logger"
 	"email-marketing-service/internal/config"
 	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
+	"email-marketing-service/internal/logger"
 	smtp_server "email-marketing-service/internal/smtp"
 
 	//"email-marketing-service/internal/workers/tasks"
@@ -58,6 +58,7 @@ func main() {
 	//seeders
 	seeders.SeedPlans(ctx, store)
 	seeders.SeedSMTPKey(ctx, store)
+	seeders.SeedAdmins(ctx, store)
 
 	//redis...
 	redisAddr := os.Getenv("REDIS_ADDR")

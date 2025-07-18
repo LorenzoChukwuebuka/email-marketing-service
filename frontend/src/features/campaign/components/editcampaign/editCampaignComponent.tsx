@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-    DatePicker, 
-    Card, 
-    Button, 
-    Typography, 
-    Space, 
-    Tag, 
-    Modal, 
+import {
+    DatePicker,
+    Card,
+    Button,
+    Typography,
+    Space,
+    Tag,
+    Modal,
     Divider,
     Avatar,
     Tooltip,
@@ -54,10 +54,28 @@ const EditCampaignForm: React.FC = () => {
 
     const { data: campaignData, refetch, isLoading } = useSingleCampaignQuery(id);
 
+    // useEffect(() => {
+    //     if (campaignData) {
+    //         setCampaign(campaignData.payload as CampaignData);
+    //         setTemplatePreview(campaignData?.payload.template?.email_html || null);
+    //         setScheduledDate(campaignData?.payload.scheduled_at as any);
+    //     }
+    // }, [campaignData]);
+
     useEffect(() => {
         if (campaignData) {
             setCampaign(campaignData.payload as CampaignData);
-            setTemplatePreview(campaignData?.payload.template?.template_email_html || null);
+
+            // More explicit template preview setting
+            const template = campaignData?.payload?.template;
+            if (template && template.email_html) {
+                console.log('Setting template preview from:', template.email_html);
+                setTemplatePreview(template.email_html);
+            } else {
+                console.log('No template HTML found');
+                setTemplatePreview(null);
+            }
+
             setScheduledDate(campaignData?.payload.scheduled_at as any);
         }
     }, [campaignData]);
@@ -268,7 +286,7 @@ const EditCampaignForm: React.FC = () => {
                                 </div>
 
                                 {/* Template Preview */}
-                                {section.key === 'Design' && templatePreview && (
+                                {section.key === 'Design' && (
                                     <>
                                         <Divider className="my-4" />
                                         <div>
@@ -276,10 +294,20 @@ const EditCampaignForm: React.FC = () => {
                                                 <EyeOutlined className="text-blue-600" />
                                                 <Text className="font-medium">Template Preview</Text>
                                             </div>
-                                            <div
-                                                className="border rounded-lg p-4 bg-gray-50 max-h-96 overflow-auto"
-                                                dangerouslySetInnerHTML={{ __html: templatePreview }}
-                                            />
+                                            {templatePreview ? (
+                                                <div className="border rounded-lg p-4 bg-white max-h-96 overflow-auto">
+                                                    <iframe
+                                                        srcDoc={templatePreview}
+                                                        title="Template Preview"
+                                                        className="w-full h-64 border-0"
+                                                        sandbox="allow-scripts"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="border rounded-lg p-4 bg-gray-50 text-center text-gray-500">
+                                                    No template preview available
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                                 )}
@@ -333,20 +361,20 @@ const EditCampaignForm: React.FC = () => {
                     </Modal>
 
                     {/* Component Modals */}
-                    <AddCampaignSubjectComponent 
-                        campaign={campaign} 
-                        isOpen={isSubjectModalOpen} 
-                        onClose={() => setIsSubjectModalOpen(false)} 
+                    <AddCampaignSubjectComponent
+                        campaign={campaign}
+                        isOpen={isSubjectModalOpen}
+                        onClose={() => setIsSubjectModalOpen(false)}
                     />
-                    <AddCampaignRecipients 
-                        campaign={campaign} 
-                        isOpen={isRecipientModalOpen} 
-                        onClose={() => setIsRecipientModalOpen(false)} 
+                    <AddCampaignRecipients
+                        campaign={campaign}
+                        isOpen={isRecipientModalOpen}
+                        onClose={() => setIsRecipientModalOpen(false)}
                     />
-                    <AddSenderComponent 
-                        campaign={campaign} 
-                        isOpen={isSenderModalOpen} 
-                        onClose={() => setIsSenderModalOpen(false)} 
+                    <AddSenderComponent
+                        campaign={campaign}
+                        isOpen={isSenderModalOpen}
+                        onClose={() => setIsSenderModalOpen(false)}
                     />
                 </div>
             </div>

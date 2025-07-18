@@ -4,7 +4,7 @@ import { AdminLoginValues } from "../interface/admin.auth.interface";
 
 class AdminAuthAPI {
   static  async adminlogin(loginValues: AdminLoginValues):Promise<ResponseT> {
-        const response = await axiosInstance.post('/admin/admin-login', loginValues)
+        const response = await axiosInstance.post('/admin/auth/login', loginValues)
         return response.data
     }
 }

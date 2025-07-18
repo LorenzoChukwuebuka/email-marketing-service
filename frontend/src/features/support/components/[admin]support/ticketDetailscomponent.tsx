@@ -241,7 +241,7 @@ const AdminTicketDetails: React.FC = () => {
 
                                 {(supportTicketData as Ticket)?.messages &&
                                     (supportTicketData as Ticket)?.messages.map((message) => (
-                                        <div key={message.uuid} className="mb-6 border-t border-b py-7 pt-4">
+                                        <div key={message.id} className="mb-6 border-t border-b py-7 pt-4">
                                             <div className="flex justify-between bg-gray-200 p-2">
                                                 <p className="text-sm space-x-2 text-gray-700">
                                                     Posted by <span className="font-semibold">{message.is_admin ? message.admin.firstname + " " + message.admin.lastname : (supportTicketData as Ticket).name}</span>

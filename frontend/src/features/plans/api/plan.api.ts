@@ -10,13 +10,13 @@ class PlanAPI {
     }
 
     static async createPlans(planValues: PlanValues): Promise<ResponseT> {
-        const response = await axiosInstance.post('/admin/create-plan', planValues)
+        const response = await axiosInstance.post('/admin/plans/create', planValues)
         return response.data
     }
 
     static async updatePlan(editPlanValues: EditPlanValues): Promise<ResponseT> {
         const response = await axiosInstance.put(
-            '/admin/edit-plan/' + editPlanValues.uuid,
+            '/admin/plans/update/' + editPlanValues.id,
             editPlanValues
         )
         return response.data
@@ -24,7 +24,7 @@ class PlanAPI {
 
     static async deletePlan(id: string) {
         const response = await axiosInstance.delete(
-            '/admin/delete-plan/' + id
+            '/admin/plans/delete/' + id
         )
         return response.data
     }

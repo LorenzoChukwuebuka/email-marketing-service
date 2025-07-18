@@ -5,7 +5,7 @@ import { AdminUserDetails, AdminUserStats } from "../interface/adminusers.interf
 
 class AdminUsersAPI {
     async getAllUsers(page?: number, pageSize?: number, query?: string):Promise<APIResponse<PaginatedResponse<AdminUserDetails>>> {
-        const response = await axiosInstance.get('/admin/users/users', {
+        const response = await axiosInstance.get('/admin/users/get', {
             params: {
                 page: page,
                 page_size: pageSize,
@@ -17,7 +17,7 @@ class AdminUsersAPI {
     }
 
     async getVerifiedUsers(page?: number, pageSize?: number, query?: string):Promise<APIResponse<PaginatedResponse<AdminUserDetails>>> {
-        const response = await axiosInstance.get('/admin/users/verified-users', {
+        const response = await axiosInstance.get('/admin/users/get/verified', {
             params: {
                 page: page,
                 page_size: pageSize,
@@ -29,7 +29,7 @@ class AdminUsersAPI {
     }
 
     async getUnverifiedUsers(page?: number, pageSize?: number, query?: string):Promise<APIResponse<PaginatedResponse<AdminUserDetails>>> {
-        const response = await axiosInstance.get('/admin/users/unverified-users', {
+        const response = await axiosInstance.get('/admin/users/get/unverified', {
             params: {
                 page: page,
                 page_size: pageSize,
@@ -56,12 +56,12 @@ class AdminUsersAPI {
     }
 
     async getSingleUser(userId: string):Promise<APIResponse<AdminUserDetails>> {
-        const response = await axiosInstance.get(`/admin/users/user/${userId}`)
+        const response = await axiosInstance.get(`/admin/users/get/${userId}`)
         return response.data
     }
 
     async getUserStats(userId:string):Promise<APIResponse<AdminUserStats>> { 
-        const response = await axiosInstance.get(`/admin/users/user-stats/${userId}`)
+        const response = await axiosInstance.get(`/admin/users/stats/${userId}`)
         return response.data
      }
 }

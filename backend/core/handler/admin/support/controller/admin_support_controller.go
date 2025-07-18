@@ -4,6 +4,7 @@ import (
 	"context"
 	"email-marketing-service/core/handler/admin/support/service"
 	"email-marketing-service/core/handler/support/dto"
+	"email-marketing-service/internal/common"
 	"email-marketing-service/internal/helper"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -28,7 +29,7 @@ func (c *AdminSupportController) ReplyTicket(w http.ResponseWriter, r *http.Requ
 	vars := mux.Vars(r)
 	ticketId := vars["ticketId"]
 
-	userId, _, err := helper.ExtractUserId(r)
+	userId, _, err := helper.ExtractAdminDetails(r)
 	if err != nil {
 		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
 		return
@@ -50,4 +51,85 @@ func (c *AdminSupportController) ReplyTicket(w http.ResponseWriter, r *http.Requ
 	}
 
 	helper.SuccessResponse(w, http.StatusOK, results)
+}
+
+func (c *AdminSupportController) GetAllTickets(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	page, pageSize, search, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	offset := (page - 1) * pageSize
+	limit := pageSize
+
+	result, err := c.service.GetAllTickets(ctx, search, offset, limit)
+
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("failed to get all tickets: %w", err), nil)
+		return
+	}
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *AdminSupportController) GetPendingTickets(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	page, pageSize, search, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	offset := (page - 1) * pageSize
+	limit := pageSize
+
+	result, err := c.service.GetPendingTickets(ctx, search, offset, limit)
+
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("failed to get all tickets: %w", err), nil)
+		return
+	}
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *AdminSupportController) GetClosedTickets(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	page, pageSize, search, err := common.ParsePaginationParams(r)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	offset := (page - 1) * pageSize
+	limit := pageSize
+
+	result, err := c.service.GetClosedTickets(ctx, search, offset, limit)
+
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("failed to get all tickets: %w", err), nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *AdminSupportController) GetTicketWithDetails(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	ticketId := vars["ticketId"]
+
+	result, err := c.service.GetTicketWithDetails(ctx, ticketId)
+
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("failed to get all tickets: %w", err), nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
 }
