@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	adminmapper "email-marketing-service/core/handler/admin/support/mapper"
 	"email-marketing-service/core/handler/support/dto"
 	"email-marketing-service/core/handler/support/mapper"
 	"email-marketing-service/internal/common"
@@ -104,7 +105,7 @@ func (s *AdminSupportService) ReplyToTicket(ctx context.Context, ticketID string
 		// Send notification to the admin
 		adminNotificationTitle := fmt.Sprintf("You have replied to ticket '%s'", ticket.Subject)
 		_, err = q.CreateAdminNotification(ctx, db.CreateAdminNotificationParams{
-			UserID: _uuid["admin"],
+			UserID:  ticket.UserID,
 			Title:  adminNotificationTitle,
 		})
 		if err != nil {
@@ -128,19 +129,93 @@ func (s *AdminSupportService) ReplyToTicket(ctx context.Context, ticketID string
 }
 
 func (s *AdminSupportService) GetAllTickets(ctx context.Context, search string, page int, pageSize int) (any, error) {
-	// This would need a new sqlc query for admin to get all tickets with pagination and search
-	// For now, returning a placeholder - you'll need to add the corresponding sqlc query
-	return nil, fmt.Errorf("GetAllTickets not implemented - need to add sqlc query for admin ticket listing")
+	result, err := s.store.GetAllTicketsWithPagination(ctx, db.GetAllTicketsWithPaginationParams{
+		Column1: search,
+		Limit:   int32(pageSize),
+		Offset:  int32(page),
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	ticket_count, err := s.store.GetAllTicketsCount(ctx)
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
+	}
+
+	data := adminmapper.MapSupportTicketsToResponse(result)
+
+	items := make([]any, len(data))
+
+	for i, v := range data {
+		items[i] = v
+	}
+
+	response := common.Paginate(int(ticket_count), items, page, pageSize)
+
+	return response, nil
 }
 
 func (s *AdminSupportService) GetPendingTickets(ctx context.Context, search string, page int, pageSize int) (any, error) {
-	// This would need a new sqlc query for getting pending tickets with pagination and search
-	return nil, fmt.Errorf("GetPendingTickets not implemented - need to add sqlc query")
+	result, err := s.store.GetPendingTicketsWithPagination(ctx, db.GetPendingTicketsWithPaginationParams{
+		Column1: search,
+		Limit:   int32(pageSize),
+		Offset:  int32(page),
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	ticket_count, err := s.store.GetPendingTicketsCount(ctx)
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
+	}
+
+	data := adminmapper.MapSupportTicketsToResponse(result)
+
+	items := make([]any, len(data))
+
+	for i, v := range data {
+		items[i] = v
+	}
+
+	response := common.Paginate(int(ticket_count), items, page, pageSize)
+
+	return response, nil
 }
 
 func (s *AdminSupportService) GetClosedTickets(ctx context.Context, search string, page int, pageSize int) (any, error) {
-	// This would need a new sqlc query for getting closed tickets with pagination and search
-	return nil, fmt.Errorf("GetClosedTickets not implemented - need to add sqlc query")
+	result, err := s.store.GetClosedTicketsWithPagination(ctx, db.GetClosedTicketsWithPaginationParams{
+		Column1: search,
+		Limit:   int32(pageSize),
+		Offset:  int32(page),
+	})
+
+	if err != nil {
+		return nil, common.ErrFetchingRecord
+	}
+
+	ticket_count, err := s.store.GetClosedTicketsCount(ctx)
+
+	if err != nil {
+		return nil, common.ErrFetchingCount
+	}
+
+	data := adminmapper.MapSupportTicketsToResponse(result)
+
+	items := make([]any, len(data))
+
+	for i, v := range data {
+		items[i] = v
+	}
+
+	response := common.Paginate(int(ticket_count), items, page, pageSize)
+
+	return response, nil
 }
 
 func (s *AdminSupportService) GetTicketWithDetails(ctx context.Context, ticketID string) (any, error) {

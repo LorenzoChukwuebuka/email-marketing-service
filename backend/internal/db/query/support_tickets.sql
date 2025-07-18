@@ -175,3 +175,13 @@ WHERE
     END
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
+
+
+-- name: GetAllTicketsCount :one
+SELECT COUNT(*) FROM support_tickets;
+
+-- name: GetPendingTicketsCount :one
+SELECT COUNT(*) FROM support_tickets WHERE status = 'pending';
+
+-- name: GetClosedTicketsCount :one
+SELECT COUNT(*) FROM support_tickets WHERE status = 'closed';

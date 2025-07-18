@@ -92,6 +92,26 @@ func (s *SupportService) CreateSupportTicket(ctx context.Context, userId string,
 			}
 		}
 
+		notificationTitle := fmt.Sprintf("Your ticket with subject '%s' has been sent. Kindly await a response from our support team", req.Subject)
+		_, err = q.CreateUserNotification(ctx, db.CreateUserNotificationParams{
+			UserID:          _uuid["user"],
+			Title:           notificationTitle,
+			AdditionalField: "support_reply",
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create user notification: %w", err)
+		}
+
+		// Send notification to the admin
+		adminNotificationTitle := fmt.Sprintf("You have an open ticket with subject '%s'", req.Subject)
+		_, err = q.CreateAdminNotification(ctx, db.CreateAdminNotificationParams{
+			UserID: _uuid["admin"],
+			Title:  adminNotificationTitle,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create admin notification: %w", err)
+		}
+
 		// Set the result to return
 		result = map[string]interface{}{
 			"ticket_id":     supportTicket.ID,

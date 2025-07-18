@@ -215,7 +215,6 @@ const useAuthStore = create<AuthStore>()(
 
             verifyLogin: async () => {
                 const { verifyloginValues, userId } = get()
-
                 let formatData = {
                     ...verifyloginValues,
                     userId: userId

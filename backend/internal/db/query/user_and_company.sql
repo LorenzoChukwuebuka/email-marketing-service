@@ -134,16 +134,209 @@ WHERE
 -- name: UpdateUserRecords :exec
 UPDATE users
 SET
-    fullname = COALESCE(sqlc.narg('fullname'), fullname),
-    email = COALESCE(sqlc.narg('email'), email),
-    phonenumber = COALESCE(sqlc.narg('phonenumber'), phonenumber),
+    fullname = COALESCE(
+        sqlc.narg ('fullname'),
+        fullname
+    ),
+    email = COALESCE(sqlc.narg ('email'), email),
+    phonenumber = COALESCE(
+        sqlc.narg ('phonenumber'),
+        phonenumber
+    ),
     updated_at = now()
 WHERE
     id = $1;
 
 -- name: UpdateCompanyName :exec
 UPDATE companies
-SET 
+SET
     companyname = COALESCE($2, companyname),
     updated_at = now()
-WHERE id = $1;
+WHERE
+    id = $1;
+
+-- name: GetAllUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountAllUsers :one
+SELECT COUNT(*) FROM users u WHERE u.deleted_at IS NULL;
+
+-- name: UnblockUser :one
+UPDATE users
+SET
+    blocked = false,
+    updated_at = now()
+WHERE
+    id = $1
+    AND deleted_at IS NULL RETURNING id,
+    fullname,
+    email,
+    phonenumber,
+    picture,
+    verified,
+    blocked,
+    verified_at,
+    status,
+    scheduled_for_deletion,
+    scheduled_deletion_at,
+    last_login_at,
+    created_at,
+    updated_at,
+    company_id;
+
+-- name: GetVerifiedUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND u.verified = true
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountVerifiedUsers :one
+SELECT COUNT(*)
+FROM users u
+WHERE
+    u.deleted_at IS NULL
+    AND u.verified = true;
+
+-- name: GetUnVerifiedUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND u.verified = false
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountUnVerifiedUsers :one
+SELECT COUNT(*)
+FROM users u
+WHERE
+    u.deleted_at IS NULL
+    AND u.verified = false;
+
+-- name: GetSingleUser :one
+SELECT
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+    LEFT JOIN companies c ON u.company_id = c.id
+WHERE
+    u.id = $1
+    AND u.deleted_at IS NULL
+    AND c.deleted_at IS NULL;
+
+--- Counts for user stats  ---
+
+-- name: CountUserContacts :one
+SELECT COUNT(*)
+FROM contacts
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL;
+
+-- name: CountUserCampaigns :one
+SELECT COUNT(*)
+FROM campaigns
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL;
+
+-- name: CountUserTemplates :one
+SELECT COUNT(*)
+FROM templates
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL;
+
+-- name: CountUserCampaignsSent :one
+SELECT COUNT(*)
+FROM campaigns
+WHERE
+    user_id = $1
+    AND status = 'SENT'
+    AND deleted_at IS NULL;
+
+-- name: CountUserGroups :one
+SELECT COUNT(*)
+FROM contact_groups
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL;
+
+-- name: GetAllVerifiedUserEmails :many
+SELECT id, fullname, email FROM users WHERE verified = true;

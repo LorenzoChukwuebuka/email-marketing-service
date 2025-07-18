@@ -58,6 +58,125 @@ func (q *Queries) CancelUserDeletion(ctx context.Context, id uuid.UUID) (User, e
 	return i, err
 }
 
+const countAllUsers = `-- name: CountAllUsers :one
+SELECT COUNT(*) FROM users u WHERE u.deleted_at IS NULL
+`
+
+func (q *Queries) CountAllUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countAllUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUnVerifiedUsers = `-- name: CountUnVerifiedUsers :one
+SELECT COUNT(*)
+FROM users u
+WHERE
+    u.deleted_at IS NULL
+    AND u.verified = false
+`
+
+func (q *Queries) CountUnVerifiedUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUnVerifiedUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserCampaigns = `-- name: CountUserCampaigns :one
+SELECT COUNT(*)
+FROM campaigns
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) CountUserCampaigns(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserCampaigns, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserCampaignsSent = `-- name: CountUserCampaignsSent :one
+SELECT COUNT(*)
+FROM campaigns
+WHERE
+    user_id = $1
+    AND status = 'SENT'
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) CountUserCampaignsSent(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserCampaignsSent, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserContacts = `-- name: CountUserContacts :one
+
+SELECT COUNT(*)
+FROM contacts
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
+`
+
+// - Counts for user stats  ---
+func (q *Queries) CountUserContacts(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserContacts, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserGroups = `-- name: CountUserGroups :one
+SELECT COUNT(*)
+FROM contact_groups
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) CountUserGroups(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserGroups, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserTemplates = `-- name: CountUserTemplates :one
+SELECT COUNT(*)
+FROM templates
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) CountUserTemplates(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUserTemplates, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countVerifiedUsers = `-- name: CountVerifiedUsers :one
+SELECT COUNT(*)
+FROM users u
+WHERE
+    u.deleted_at IS NULL
+    AND u.verified = true
+`
+
+func (q *Queries) CountVerifiedUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countVerifiedUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createCompany = `-- name: CreateCompany :one
 INSERT INTO companies (companyname) VALUES ($1) RETURNING id, companyname, created_at, updated_at, deleted_at
 `
@@ -199,6 +318,131 @@ func (q *Queries) DeleteScheduledUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetAllUsersParams struct {
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetAllUsersRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	CompanyID            uuid.NullUUID  `json:"company_id"`
+	Companyname          sql.NullString `json:"companyname"`
+}
+
+func (q *Queries) GetAllUsers(ctx context.Context, arg GetAllUsersParams) ([]GetAllUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllUsersRow{}
+	for rows.Next() {
+		var i GetAllUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fullname,
+			&i.Email,
+			&i.Phonenumber,
+			&i.Picture,
+			&i.Verified,
+			&i.Blocked,
+			&i.VerifiedAt,
+			&i.Status,
+			&i.ScheduledForDeletion,
+			&i.ScheduledDeletionAt,
+			&i.LastLoginAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompanyID,
+			&i.Companyname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllVerifiedUserEmails = `-- name: GetAllVerifiedUserEmails :many
+SELECT id, fullname, email FROM users WHERE verified = true
+`
+
+type GetAllVerifiedUserEmailsRow struct {
+	ID       uuid.UUID `json:"id"`
+	Fullname string    `json:"fullname"`
+	Email    string    `json:"email"`
+}
+
+func (q *Queries) GetAllVerifiedUserEmails(ctx context.Context) ([]GetAllVerifiedUserEmailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllVerifiedUserEmails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllVerifiedUserEmailsRow{}
+	for rows.Next() {
+		var i GetAllVerifiedUserEmailsRow
+		if err := rows.Scan(&i.ID, &i.Fullname, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCompanyByID = `-- name: GetCompanyByID :one
 SELECT id, companyname, created_at, updated_at, deleted_at FROM companies WHERE id = $1 AND deleted_at IS NULL
 `
@@ -214,6 +458,168 @@ func (q *Queries) GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, er
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const getSingleUser = `-- name: GetSingleUser :one
+SELECT
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+    LEFT JOIN companies c ON u.company_id = c.id
+WHERE
+    u.id = $1
+    AND u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+`
+
+type GetSingleUserRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	CompanyID            uuid.NullUUID  `json:"company_id"`
+	Companyname          sql.NullString `json:"companyname"`
+}
+
+func (q *Queries) GetSingleUser(ctx context.Context, id uuid.UUID) (GetSingleUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getSingleUser, id)
+	var i GetSingleUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Fullname,
+		&i.Email,
+		&i.Phonenumber,
+		&i.Picture,
+		&i.Verified,
+		&i.Blocked,
+		&i.VerifiedAt,
+		&i.Status,
+		&i.ScheduledForDeletion,
+		&i.ScheduledDeletionAt,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CompanyID,
+		&i.Companyname,
+	)
+	return i, err
+}
+
+const getUnVerifiedUsers = `-- name: GetUnVerifiedUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND u.verified = false
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetUnVerifiedUsersParams struct {
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetUnVerifiedUsersRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	CompanyID            uuid.NullUUID  `json:"company_id"`
+	Companyname          sql.NullString `json:"companyname"`
+}
+
+func (q *Queries) GetUnVerifiedUsers(ctx context.Context, arg GetUnVerifiedUsersParams) ([]GetUnVerifiedUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUnVerifiedUsers, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUnVerifiedUsersRow{}
+	for rows.Next() {
+		var i GetUnVerifiedUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fullname,
+			&i.Email,
+			&i.Phonenumber,
+			&i.Picture,
+			&i.Verified,
+			&i.Blocked,
+			&i.VerifiedAt,
+			&i.Status,
+			&i.ScheduledForDeletion,
+			&i.ScheduledDeletionAt,
+			&i.LastLoginAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompanyID,
+			&i.Companyname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -360,6 +766,99 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.CompanyDeletedAt,
 	)
 	return i, err
+}
+
+const getVerifiedUsers = `-- name: GetVerifiedUsers :many
+SELECT 
+    u.id,
+    u.fullname,
+    u.email,
+    u.phonenumber,
+    u.picture,
+    u.verified,
+    u.blocked,
+    u.verified_at,
+    u.status,
+    u.scheduled_for_deletion,
+    u.scheduled_deletion_at,
+    u.last_login_at,
+    u.created_at,
+    u.updated_at,
+    c.id as company_id,
+    c.companyname
+FROM users u
+LEFT JOIN companies c ON u.company_id = c.id
+WHERE u.deleted_at IS NULL
+    AND c.deleted_at IS NULL
+    AND u.verified = true
+    AND ($1::text = '' OR u.fullname ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%' OR c.companyname ILIKE '%' || $1 || '%')
+ORDER BY u.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetVerifiedUsersParams struct {
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetVerifiedUsersRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	CompanyID            uuid.NullUUID  `json:"company_id"`
+	Companyname          sql.NullString `json:"companyname"`
+}
+
+func (q *Queries) GetVerifiedUsers(ctx context.Context, arg GetVerifiedUsersParams) ([]GetVerifiedUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getVerifiedUsers, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetVerifiedUsersRow{}
+	for rows.Next() {
+		var i GetVerifiedUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fullname,
+			&i.Email,
+			&i.Phonenumber,
+			&i.Picture,
+			&i.Verified,
+			&i.Blocked,
+			&i.VerifiedAt,
+			&i.Status,
+			&i.ScheduledForDeletion,
+			&i.ScheduledDeletionAt,
+			&i.LastLoginAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompanyID,
+			&i.Companyname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listCompanies = `-- name: ListCompanies :many
@@ -525,12 +1024,78 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const unblockUser = `-- name: UnblockUser :one
+UPDATE users
+SET
+    blocked = false,
+    updated_at = now()
+WHERE
+    id = $1
+    AND deleted_at IS NULL RETURNING id,
+    fullname,
+    email,
+    phonenumber,
+    picture,
+    verified,
+    blocked,
+    verified_at,
+    status,
+    scheduled_for_deletion,
+    scheduled_deletion_at,
+    last_login_at,
+    created_at,
+    updated_at,
+    company_id
+`
+
+type UnblockUserRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	Fullname             string         `json:"fullname"`
+	Email                string         `json:"email"`
+	Phonenumber          sql.NullString `json:"phonenumber"`
+	Picture              sql.NullString `json:"picture"`
+	Verified             bool           `json:"verified"`
+	Blocked              bool           `json:"blocked"`
+	VerifiedAt           sql.NullTime   `json:"verified_at"`
+	Status               string         `json:"status"`
+	ScheduledForDeletion bool           `json:"scheduled_for_deletion"`
+	ScheduledDeletionAt  sql.NullTime   `json:"scheduled_deletion_at"`
+	LastLoginAt          sql.NullTime   `json:"last_login_at"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	CompanyID            uuid.UUID      `json:"company_id"`
+}
+
+func (q *Queries) UnblockUser(ctx context.Context, id uuid.UUID) (UnblockUserRow, error) {
+	row := q.db.QueryRowContext(ctx, unblockUser, id)
+	var i UnblockUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Fullname,
+		&i.Email,
+		&i.Phonenumber,
+		&i.Picture,
+		&i.Verified,
+		&i.Blocked,
+		&i.VerifiedAt,
+		&i.Status,
+		&i.ScheduledForDeletion,
+		&i.ScheduledDeletionAt,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CompanyID,
+	)
+	return i, err
+}
+
 const updateCompanyName = `-- name: UpdateCompanyName :exec
 UPDATE companies
-SET 
+SET
     companyname = COALESCE($2, companyname),
     updated_at = now()
-WHERE id = $1
+WHERE
+    id = $1
 `
 
 type UpdateCompanyNameParams struct {
@@ -560,9 +1125,15 @@ func (q *Queries) UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error {
 const updateUserRecords = `-- name: UpdateUserRecords :exec
 UPDATE users
 SET
-    fullname = COALESCE($2, fullname),
+    fullname = COALESCE(
+        $2,
+        fullname
+    ),
     email = COALESCE($3, email),
-    phonenumber = COALESCE($4, phonenumber),
+    phonenumber = COALESCE(
+        $4,
+        phonenumber
+    ),
     updated_at = now()
 WHERE
     id = $1

@@ -40,7 +40,7 @@ const refreshToken = async () => {
 
     try {
         if (cookies.includes('type')) {
-            const response = await axiosInstance.post('/admin/refresh-admin-token',
+            const response = await axiosInstance.post('/admin/auth/refresh-token',
                 data
             );
             if (response.data?.payload?.access_token) {

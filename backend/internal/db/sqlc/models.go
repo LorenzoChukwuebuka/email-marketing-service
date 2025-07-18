@@ -47,6 +47,19 @@ type ApiKey struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
+type AuditLog struct {
+	ID         uuid.UUID             `json:"id"`
+	ActorID    uuid.NullUUID         `json:"actor_id"`
+	ActorType  string                `json:"actor_type"`
+	Action     string                `json:"action"`
+	TargetID   uuid.NullUUID         `json:"target_id"`
+	TargetType sql.NullString        `json:"target_type"`
+	Metadata   pqtype.NullRawMessage `json:"metadata"`
+	IpAddress  sql.NullString        `json:"ip_address"`
+	UserAgent  sql.NullString        `json:"user_agent"`
+	CreatedAt  sql.NullTime          `json:"created_at"`
+}
+
 type Campaign struct {
 	ID             uuid.UUID      `json:"id"`
 	CompanyID      uuid.UUID      `json:"company_id"`
@@ -188,6 +201,21 @@ type EmailUsage struct {
 	CreatedAt        sql.NullTime  `json:"created_at"`
 	UpdatedAt        sql.NullTime  `json:"updated_at"`
 	RemainingEmails  sql.NullInt32 `json:"remaining_emails"`
+}
+
+type Invitation struct {
+	ID         uuid.UUID     `json:"id"`
+	CompanyID  uuid.UUID     `json:"company_id"`
+	InvitedBy  uuid.UUID     `json:"invited_by"`
+	Email      string        `json:"email"`
+	Token      string        `json:"token"`
+	Status     string        `json:"status"`
+	ExpiresAt  time.Time     `json:"expires_at"`
+	AcceptedAt sql.NullTime  `json:"accepted_at"`
+	AcceptedBy uuid.NullUUID `json:"accepted_by"`
+	CreatedAt  time.Time     `json:"created_at"`
+	UpdatedAt  time.Time     `json:"updated_at"`
+	DeletedAt  sql.NullTime  `json:"deleted_at"`
 }
 
 type MailingLimit struct {

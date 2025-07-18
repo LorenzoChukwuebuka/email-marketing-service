@@ -254,6 +254,17 @@ func (q *Queries) FindTicketByID(ctx context.Context, id uuid.UUID) (SupportTick
 	return i, err
 }
 
+const getAllTicketsCount = `-- name: GetAllTicketsCount :one
+SELECT COUNT(*) FROM support_tickets
+`
+
+func (q *Queries) GetAllTicketsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getAllTicketsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getAllTicketsWithPagination = `-- name: GetAllTicketsWithPagination :many
 SELECT 
    id, user_id, name, email, subject, description, ticket_number, status, priority, last_reply, created_at, updated_at
@@ -311,6 +322,17 @@ func (q *Queries) GetAllTicketsWithPagination(ctx context.Context, arg GetAllTic
 		return nil, err
 	}
 	return items, nil
+}
+
+const getClosedTicketsCount = `-- name: GetClosedTicketsCount :one
+SELECT COUNT(*) FROM support_tickets WHERE status = 'closed'
+`
+
+func (q *Queries) GetClosedTicketsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getClosedTicketsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getClosedTicketsWithPagination = `-- name: GetClosedTicketsWithPagination :many
@@ -403,6 +425,17 @@ func (q *Queries) GetMessageFiles(ctx context.Context, messageID uuid.UUID) ([]T
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPendingTicketsCount = `-- name: GetPendingTicketsCount :one
+SELECT COUNT(*) FROM support_tickets WHERE status = 'pending'
+`
+
+func (q *Queries) GetPendingTicketsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPendingTicketsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getPendingTicketsWithPagination = `-- name: GetPendingTicketsWithPagination :many

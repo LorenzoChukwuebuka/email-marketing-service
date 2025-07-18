@@ -1,139 +1,263 @@
-import { useState } from "react"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAdminPendingTicketsQuery } from "../../hooks/useAdminSupportTicketQuery";
 import useDebounce from "../../../../hooks/useDebounce";
-import { useNavigate } from "react-router-dom";
-import { Pagination } from 'antd';
-import LoadingSpinnerComponent from "../../../../components/loadingSpinnerComponent";
+import {
+    Table,
+    Input,
+    Space,
+    Tag,
+    Button,
+    Card,
+    Typography,
+    Tooltip,
+    Badge
+} from "antd";
+import {
+    SearchOutlined,
+    EyeOutlined,
+    UserOutlined,
+    MailOutlined,
+    NumberOutlined,
+    ClockCircleOutlined,
+    ExclamationCircleOutlined
+} from "@ant-design/icons";
+import type { ColumnsType } from 'antd/es/table';
+import { AdminTicketData } from "../../interface/support.interface";
 
-const tableHeaders = [
-    "Name",
-    "Email",
-    "Subject",
-    "Description",
-    "Ticket Number",
-    "Status",
-    "Priority",
-    "Last Reply",
-    "View"
-];
+const { Title } = Typography;
 
 const PendingSupportTicketComponentTable: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    const [searchQuery, setSearchQuery] = useState<string>(""); // New state for search query
-    // Debounce the search query
-    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
-    const navigate = useNavigate()
+    const [searchQuery, setSearchQuery] = useState<string>("");
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const navigate = useNavigate();
 
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-    }
+    const { data: apiResponse, isLoading } = useAdminPendingTicketsQuery(
+        currentPage,
+        pageSize,
+        debouncedSearchQuery
+    );
 
-    const { data: supportData, isLoading } = useAdminPendingTicketsQuery(currentPage, pageSize, debouncedSearchQuery)
+    const supportData = apiResponse?.payload?.data || [];
+    const totalRecords = apiResponse?.payload?.total || 0;
 
-    const onPageChange = (page: number, size: number) => {
-        setCurrentPage(page);
-        setPageSize(size);
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'open': return 'success';
+            case 'pending': return 'warning';
+            case 'closed': return 'default';
+            case 'resolved': return 'success';
+            default: return 'default';
+        }
     };
 
-    return <>
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
+            case 'high': return 'red';
+            case 'medium': return 'orange';
+            case 'low': return 'blue';
+            default: return 'default';
+        }
+    };
 
-        <div className="flex justify-between items-center rounded-md p-2 bg-white mt-10">
-            <div className="ml-3">
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    className="bg-gray-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    onChange={(e) => handleSearch(e.target.value)}
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return "Not available";
+        return new Date(dateString).toLocaleString('en-US', {
+            timeZone: 'UTC',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const columns: ColumnsType<AdminTicketData> = [
+        {
+            title: <Space><UserOutlined /> Name</Space>,
+            dataIndex: 'name',
+            key: 'name',
+            width: 150,
+            ellipsis: true,
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <span className="font-medium">{text}</span>
+                </Tooltip>
+            ),
+        },
+        {
+            title: <Space><MailOutlined /> Email</Space>,
+            dataIndex: 'email',
+            key: 'email',
+            width: 200,
+            ellipsis: true,
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <span className="text-blue-600">{text}</span>
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'Subject',
+            dataIndex: 'subject',
+            key: 'subject',
+            width: 200,
+            ellipsis: true,
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <span className="font-medium">{text}</span>
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'Description',
+            dataIndex: 'description',
+            key: 'description',
+            width: 250,
+            ellipsis: true,
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <span className="text-gray-600">{text || "N/A"}</span>
+                </Tooltip>
+            ),
+        },
+        {
+            title: <Space><NumberOutlined /> Ticket #</Space>,
+            dataIndex: 'ticket_number',
+            key: 'ticket_number',
+            width: 120,
+            render: (text: string) => (
+                <Badge
+                    count={`#${text}`}
+                    style={{ backgroundColor: '#faad14' }}
+                    className="font-mono"
                 />
-            </div>
-        </div>
+            ),
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            width: 100,
+            render: (status: string) => (
+                <Tag color={getStatusColor(status)} className="font-medium capitalize">
+                    {status}
+                </Tag>
+            ),
+        },
+        {
+            title: 'Priority',
+            dataIndex: 'priority',
+            key: 'priority',
+            width: 100,
+            render: (priority: string) => (
+                <Tag color={getPriorityColor(priority)} className="font-medium capitalize">
+                    {priority}
+                </Tag>
+            ),
+            filters: [
+                { text: 'High', value: 'high' },
+                { text: 'Medium', value: 'medium' },
+                { text: 'Low', value: 'low' },
+            ],
+            onFilter: (value, record) => record.priority === value,
+            sorter: (a, b) => {
+                const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                return priorityOrder[b.priority] - priorityOrder[a.priority];
+            },
+        },
+        {
+            title: <Space><ClockCircleOutlined /> Last Reply</Space>,
+            dataIndex: 'last_reply',
+            key: 'last_reply',
+            width: 160,
+            render: (date: string | null) => (
+                <span className="text-sm text-gray-500">
+                    {formatDate(date)}
+                </span>
+            ),
+            sorter: (a, b) => {
+                const dateA = a.last_reply ? new Date(a.last_reply).getTime() : 0;
+                const dateB = b.last_reply ? new Date(b.last_reply).getTime() : 0;
+                return dateB - dateA;
+            },
+        },
+        {
+            title: 'Action',
+            key: 'action',
+            width: 80,
+            render: (_, record) => (
+                <Button
+                    type="primary"
+                    icon={<EyeOutlined />}
+                    size="small"
+                    onClick={() => navigate(`/zen/support/details/${record.id}`)}
+                    className="bg-orange-500 hover:bg-orange-600"
+                >
+                    View
+                </Button>
+            ),
+        },
+    ];
 
-        {isLoading ? <LoadingSpinnerComponent /> : (
-            <div className="overflow-x-auto mt-4">
-                <h1 className="font-semibold text-lg mt-4 mb-4">Pending Ticket List </h1>
-                <table className="md:min-w-5xl min-w-full w-full rounded-sm bg-white">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            {tableHeaders.map((header, index) => (
-                                <th key={index} className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    {header}
-                                </th>
-                            ))}
-
-                        </tr>
-                    </thead>
-
-
-                    <tbody className="divide-y divide-gray-200">
-                        {Array.isArray(supportData) && supportData && supportData.length > 0 ? (
-                            supportData.map((ticket, index) => {
-                                return (
-                                    <tr key={index} className="hover:bg-gray-100">
-                                        <td className="py-4 px-4">{ticket?.name}</td>
-                                        <td className="py-4 px-4">{ticket?.email}</td>
-                                        <td className="py-4 px-4">{ticket?.subject}</td>
-                                        <td className="py-4 px-4">{ticket?.description}</td>
-                                        <td className="py-4 px-4">{"#" + ticket?.ticket_number}</td>
-                                        <td
-                                            className={`py-4 px-4 ${ticket?.status === 'closed' ? 'bg-black text-white' :
-                                                ticket?.status === 'pending' ? 'bg-red-500 text-white' :
-                                                    ticket?.status === 'open' ? 'bg-green-500 text-white' :
-                                                        ticket?.status === 'resolved' ? 'bg-green-500 text-white' : ''
-                                                }`}
-                                        >
-                                            {ticket?.status}
-                                        </td>
-
-                                        <td
-                                            className={`py-4 px-4 ${ticket?.priority === 'high' ? 'bg-red-500 text-white' :
-                                                ticket?.priority === 'medium' ? 'bg-yellow-500 text-black' :
-                                                    ticket?.priority === 'low' ? 'bg-blue-500 text-white' : '' // Use any suitable color for 'low'
-                                                }`}
-                                        >
-                                            {ticket?.priority}
-                                        </td>
-
-                                        <td className="py-4 px-4">{ticket.last_reply && new Date(ticket.last_reply).toLocaleString('en-US', {
-                                            timeZone: 'UTC',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: 'numeric',
-                                            second: 'numeric'
-                                        }) || "Not available"}</td>
-                                        <td className="py-4 px-4" onClick={() => navigate("/zen/support/details/" + ticket.uuid)}> <i className="bi bi-eye"></i> </td>
-                                    </tr>
-                                );
-                            })
-                        ) : (
-                            <tr>
-                                <td colSpan={8} className="py-4 px-4 text-center">
-                                    No ticket data available
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-
-                </table>
-
-                <div className="mt-4 flex justify-center items-center mb-5">
-                    {/* Pagination */}
-                    <Pagination
-                        current={currentPage}
-                        pageSize={pageSize}
-                        total={supportData?.payload?.total_count || 0} // Ensure your API returns a total count
-                        onChange={onPageChange}
-                        showSizeChanger
-                        pageSizeOptions={["10", "20", "50", "100"]}
-                        // showTotal={(total) => `Total ${total} Contacts`}
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <Card
+                className="shadow-lg border-0"
+                title={
+                    <div className="flex justify-between items-center">
+                        <Title level={3} className="mb-0 text-gray-800">
+                            <Space>
+                                <ExclamationCircleOutlined className="text-orange-500" />
+                                Pending Support Tickets
+                            </Space>
+                        </Title>
+                        <Badge
+                            count={totalRecords}
+                            style={{ backgroundColor: '#faad14' }}
+                            className="ml-2"
+                        />
+                    </div>
+                }
+                extra={
+                    <Input
+                        placeholder="Search pending tickets..."
+                        prefix={<SearchOutlined className="text-gray-400" />}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-64"
+                        allowClear
                     />
-                </div>
-            </div>
-        )}
+                }
+            >
+                <Table<AdminTicketData>
+                    columns={columns}
+                    dataSource={supportData as any}
+                    loading={isLoading}
+                    rowKey="id"
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: totalRecords,
+                        onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size || 20);
+                        },
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total, range) =>
+                            `${range[0]}-${range[1]} of ${total} pending tickets`,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                    }}
+                    scroll={{ x: 1200 }}
+                    className="custom-table"
+                    rowClassName="hover:bg-orange-50 transition-colors duration-200"
+                />
+            </Card>
+        </div>
+    );
+};
 
-    </>
-}
-
-export default PendingSupportTicketComponentTable
+export default PendingSupportTicketComponentTable;

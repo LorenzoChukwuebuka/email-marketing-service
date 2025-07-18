@@ -1,7 +1,11 @@
-import { Modal } from "antd";
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import { Modal, Form, Input, Select, InputNumber, Button, Card, Typography, Divider } from "antd";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
 import usePlanStore from "../store/plan.store";
 
+const { Title, Text } = Typography;
+const { Option } = Select;
+const { TextArea } = Input;
 
 interface CreatePlanProps {
     isOpen: boolean;
@@ -9,274 +13,295 @@ interface CreatePlanProps {
 }
 
 interface Feature {
-    plan_Id: number;
     name: string;
-    identifier: string;
-    count_limit: number;
-    size_limit: number;
-    is_active: boolean;
     description: string;
+    value: string;
+}
+
+interface MailingLimits {
+    daily_limit: number;
+    monthly_limit: number;
+    max_recipients_per_mail: number;
 }
 
 interface PlanValues {
-    planname: string;
-    details: string;
-    duration: string;
+    plan_name: string;
+    description: string;
     price: number;
-    number_of_mails_per_day: string;
+    billing_cycle: string;
     status: string;
     features: Feature[];
+    mailing_limits: MailingLimits;
 }
 
-const initialFeature: Feature = {
-    plan_Id: 0,
-    name: "",
-    identifier: "",
-    count_limit: 0,
-    size_limit: 0,
-    is_active: true,
-    description: "",
-};
-
 const CreatePlan: React.FC<CreatePlanProps> = ({ isOpen, onClose }) => {
-    const { setPlanValues, planValues, createPlan } = usePlanStore();
-    const [localPlanValues, setLocalPlanValues] = useState<PlanValues>({
-        ...planValues,
+    const { createPlan, setPlanValues } = usePlanStore();
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+
+    const initialValues: PlanValues = {
+        plan_name: "",
+        description: "",
+        price: 0,
+        billing_cycle: "monthly",
+        status: "active",
         features: [],
-    });
+        mailing_limits: {
+            daily_limit: 0,
+            monthly_limit: 0,
+            max_recipients_per_mail: 0,
+        },
+    };
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setPlanValues(localPlanValues);
-        await createPlan();
+    const handleSubmit = async (values: PlanValues) => {
+        setLoading(true);
+        setPlanValues({ ...values })
+        try {
+            await createPlan();
+            form.resetFields();
+            onClose();
+        } catch (error) {
+            console.error("Error creating plan:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = () => {
+        form.resetFields();
         onClose();
-    };
-
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { id, value } = e.target;
-        setLocalPlanValues((prev) => ({
-            ...prev,
-            [id]: id === "price" ? parseFloat(value) : value,
-        }));
-    };
-
-    const handleFeatureChange = (index: number, field: keyof Feature, value: string | number | boolean) => {
-        setLocalPlanValues((prev) => {
-            const updatedFeatures = [...prev.features];
-            updatedFeatures[index] = {
-                ...updatedFeatures[index],
-                [field]: field === "is_active" ? value === "true" : value,
-            };
-            return { ...prev, features: updatedFeatures };
-        });
-    };
-
-    const addFeature = () => {
-        setLocalPlanValues((prev) => ({
-            ...prev,
-            features: [...prev.features, { ...initialFeature }],
-        }));
-    };
-
-    const removeFeature = (index: number) => {
-        setLocalPlanValues((prev) => ({
-            ...prev,
-            features: prev.features.filter((_, i) => i !== index),
-        }));
     };
 
     return (
         <Modal
+            title={
+                <div className="flex items-center space-x-2">
+                    <Title level={4} className="mb-0">Create New Plan</Title>
+                </div>
+            }
             open={isOpen}
-            onCancel={onClose}
+            onCancel={handleCancel}
             footer={null}
-            title="Create Plan">
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label htmlFor="planname" className="block text-sm font-medium text-gray-700">
-                        Plan Name
-                    </label>
-                    <input
-                        type="text"
-                        id="planname"
-                        value={localPlanValues.planname}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                    />
-                </div>
+            width={800}
+            className="create-plan-modal"
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={initialValues}
+                className="space-y-4"
+            >
+                {/* Basic Plan Information */}
+                <Card className="shadow-sm border-gray-200">
+                    <Title level={5} className="text-gray-800 mb-4">Basic Information</Title>
 
-                <div>
-                    <label htmlFor="details" className="block text-sm font-medium text-gray-700">
-                        Description
-                    </label>
-                    <input
-                        type="text"
-                        id="details"
-                        value={localPlanValues.details}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                            label={<Text strong>Plan Name</Text>}
+                            name="plan_name"
+                            rules={[{ required: true, message: "Please enter plan name" }]}
+                        >
+                            <Input
+                                placeholder="Enter plan name"
+                                className="rounded-lg"
+                            />
+                        </Form.Item>
 
-                <div>
-                    <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                        Duration (days)
-                    </label>
-                    <input
-                        type="text"
-                        id="duration"
-                        value={localPlanValues.duration}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                    />
-                </div>
+                        <Form.Item
+                            label={<Text strong>Status</Text>}
+                            name="status"
+                            rules={[{ required: true, message: "Please select status" }]}
+                        >
+                            <Select className="rounded-lg">
+                                <Option value="active">Active</Option>
+                                <Option value="inactive">Inactive</Option>
+                            </Select>
+                        </Form.Item>
+                    </div>
 
-                <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                        Price
-                    </label>
-                    <input
-                        type="number"
-                        id="price"
-                        value={localPlanValues.price}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="number_of_mails_per_day" className="block text-sm font-medium text-gray-700">
-                        Number of Mails Per Day
-                    </label>
-                    <input
-                        type="text"
-                        id="number_of_mails_per_day"
-                        value={localPlanValues.number_of_mails_per_day}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                        Status
-                    </label>
-                    <select
-                        id="status"
-                        value={localPlanValues.status}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        required
+                    <Form.Item
+                        label={<Text strong>Description</Text>}
+                        name="description"
+                        rules={[{ required: true, message: "Please enter description" }]}
                     >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
+                        <TextArea
+                            rows={3}
+                            placeholder="Enter plan description"
+                            className="rounded-lg"
+                        />
+                    </Form.Item>
 
-                <div>
-                    <h3 className="text-lg font-medium text-gray-900">Features</h3>
-                    {localPlanValues.features.map((feature, index) => (
-                        <div key={index} className="mt-4 p-4 border border-gray-300 rounded-md">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                                    <input
-                                        type="text"
-                                        value={feature.name}
-                                        onChange={(e) => handleFeatureChange(index, "name", e.target.value)}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Identifier</label>
-                                    <input
-                                        type="text"
-                                        value={feature.identifier}
-                                        onChange={(e) => handleFeatureChange(index, "identifier", e.target.value)}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Count Limit</label>
-                                    <input
-                                        type="number"
-                                        value={feature.count_limit}
-                                        onChange={(e) => handleFeatureChange(index, "count_limit", parseInt(e.target.value))}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Size Limit</label>
-                                    <input
-                                        type="number"
-                                        value={feature.size_limit}
-                                        onChange={(e) => handleFeatureChange(index, "size_limit", parseInt(e.target.value))}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Is Active</label>
-                                    <select
-                                        value={feature.is_active.toString()}
-                                        onChange={(e) => handleFeatureChange(index, "is_active", e.target.value === "true")}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                            label={<Text strong>Price</Text>}
+                            name="price"
+                            rules={[{ required: true, message: "Please enter price" }]}
+                        >
+                            <InputNumber
+                                prefix="$"
+                                min={0}
+                                step={0.01}
+                                placeholder="0.00"
+                                className="w-full rounded-lg"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label={<Text strong>Billing Cycle</Text>}
+                            name="billing_cycle"
+                            rules={[{ required: true, message: "Please select billing cycle" }]}
+                        >
+                            <Select className="rounded-lg">
+                                <Option value="monthly">Monthly</Option>
+                                <Option value="yearly">Yearly</Option>
+                                <Option value="quarterly">Quarterly</Option>
+                            </Select>
+                        </Form.Item>
+                    </div>
+                </Card>
+
+                {/* Mailing Limits */}
+                <Card className="shadow-sm border-gray-200">
+                    <Title level={5} className="text-gray-800 mb-4">Mailing Limits</Title>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Form.Item
+                            label={<Text strong>Daily Limit</Text>}
+                            name={["mailing_limits", "daily_limit"]}
+                            rules={[{ required: true, message: "Please enter daily limit" }]}
+                        >
+                            <InputNumber
+                                min={0}
+                                placeholder="100"
+                                className="w-full rounded-lg"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label={<Text strong>Monthly Limit</Text>}
+                            name={["mailing_limits", "monthly_limit"]}
+                            rules={[{ required: true, message: "Please enter monthly limit" }]}
+                        >
+                            <InputNumber
+                                min={0}
+                                placeholder="3000"
+                                className="w-full rounded-lg"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label={<Text strong>Max Recipients per Mail</Text>}
+                            name={["mailing_limits", "max_recipients_per_mail"]}
+                            rules={[{ required: true, message: "Please enter max recipients" }]}
+                        >
+                            <InputNumber
+                                min={0}
+                                placeholder="50"
+                                className="w-full rounded-lg"
+                            />
+                        </Form.Item>
+                    </div>
+                </Card>
+
+                {/* Features */}
+                <Card className="shadow-sm border-gray-200">
+                    <Title level={5} className="text-gray-800 mb-4">Features</Title>
+
+                    <Form.List name="features">
+                        {(fields, { add, remove }) => (
+                            <>
+                                {fields.map((field, index) => (
+                                    <Card
+                                        key={field.key}
+                                        className="mb-4 bg-gray-50 border-gray-200"
+                                        size="small"
                                     >
-                                        <option value="true">Yes</option>
-                                        <option value="false">No</option>
-                                    </select>
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                                    <input
-                                        type="text"
-                                        value={feature.description}
-                                        onChange={(e) => handleFeatureChange(index, "description", e.target.value)}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                    />
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => removeFeature(index)}
-                                className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                            >
-                                Remove Feature
-                            </button>
-                        </div>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={addFeature}
-                        className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                        Add Feature
-                    </button>
-                </div>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <Text strong className="text-gray-700">
+                                                Feature {index + 1}
+                                            </Text>
+                                            <Button
+                                                type="text"
+                                                danger
+                                                size="small"
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => remove(field.name)}
+                                                className="hover:bg-red-50"
+                                            />
+                                        </div>
 
-                <div className="flex justify-end space-x-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Form.Item
+                                                label={<Text>Feature Name</Text>}
+                                                name={[field.name, "name"]}
+                                                rules={[{ required: true, message: "Please enter feature name" }]}
+                                            >
+                                                <Input
+                                                    placeholder="e.g., Emails per day"
+                                                    className="rounded-lg"
+                                                />
+                                            </Form.Item>
+
+                                            <Form.Item
+                                                label={<Text>Value</Text>}
+                                                name={[field.name, "value"]}
+                                                rules={[{ required: true, message: "Please enter feature value" }]}
+                                            >
+                                                <Input
+                                                    placeholder="e.g., 100"
+                                                    className="rounded-lg"
+                                                />
+                                            </Form.Item>
+                                        </div>
+
+                                        <Form.Item
+                                            label={<Text>Description</Text>}
+                                            name={[field.name, "description"]}
+                                            rules={[{ required: true, message: "Please enter feature description" }]}
+                                        >
+                                            <TextArea
+                                                rows={2}
+                                                placeholder="e.g., Maximum number of emails you can send daily"
+                                                className="rounded-lg"
+                                            />
+                                        </Form.Item>
+                                    </Card>
+                                ))}
+
+                                <Button
+                                    type="dashed"
+                                    onClick={() => add()}
+                                    icon={<PlusOutlined />}
+                                    className="w-full h-10 rounded-lg border-gray-300 hover:border-blue-400 hover:text-blue-400"
+                                >
+                                    Add Feature
+                                </Button>
+                            </>
+                        )}
+                    </Form.List>
+                </Card>
+
+                <Divider />
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3">
+                    <Button
+                        onClick={handleCancel}
+                        className="px-6 py-2 h-10 rounded-lg"
                     >
                         Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    </Button>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        className="px-6 py-2 h-10 rounded-lg bg-blue-600 hover:bg-blue-700"
                     >
-                        Submit
-                    </button>
+                        Create Plan
+                    </Button>
                 </div>
-            </form>
+            </Form>
         </Modal>
     );
 };

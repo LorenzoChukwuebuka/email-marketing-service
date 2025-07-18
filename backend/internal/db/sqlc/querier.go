@@ -18,6 +18,7 @@ type Querier interface {
 	ArchivePlan(ctx context.Context, id uuid.UUID) (Plan, error)
 	BlockUser(ctx context.Context, id uuid.UUID) error
 	CampaignGroupExists(ctx context.Context, campaignID uuid.UUID) (bool, error)
+	CancelInvitation(ctx context.Context, id uuid.UUID) error
 	CancelUserDeletion(ctx context.Context, id uuid.UUID) (User, error)
 	CheckCampaignNameExists(ctx context.Context, arg CheckCampaignNameExistsParams) (bool, error)
 	CheckDomainExists(ctx context.Context, arg CheckDomainExistsParams) (bool, error)
@@ -29,15 +30,25 @@ type Querier interface {
 	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
 	CheckSenderExists(ctx context.Context, arg CheckSenderExistsParams) (bool, error)
 	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
+	CleanupExpiredInvitations(ctx context.Context) error
 	// Clear the scheduled_at field after processing to prevent reprocessing
 	ClearCampaignSchedule(ctx context.Context, id uuid.UUID) error
 	CloseStaleTickets(ctx context.Context) ([]SupportTicket, error)
 	CloseTicketByID(ctx context.Context, id uuid.UUID) (SupportTicket, error)
+	CountAllUsers(ctx context.Context) (int64, error)
 	// Counts total number of contact groups for a company
 	CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountDomainByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountSenderByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountTemplatesByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUnVerifiedUsers(ctx context.Context) (int64, error)
+	CountUserCampaigns(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserCampaignsSent(ctx context.Context, userID uuid.UUID) (int64, error)
+	//- Counts for user stats  ---
+	CountUserContacts(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserGroups(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserTemplates(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountVerifiedUsers(ctx context.Context) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
@@ -52,6 +63,7 @@ type Querier interface {
 	CreateDomain(ctx context.Context, arg CreateDomainParams) (Domain, error)
 	CreateEmailBox(ctx context.Context, arg CreateEmailBoxParams) (EmailBox, error)
 	CreateEmailCampaignResult(ctx context.Context, arg CreateEmailCampaignResultParams) (EmailCampaignResult, error)
+	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (Invitation, error)
 	CreateMailingLimit(ctx context.Context, arg CreateMailingLimitParams) (MailingLimit, error)
 	CreateOTP(ctx context.Context, arg CreateOTPParams) (Otp, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
@@ -72,10 +84,12 @@ type Querier interface {
 	DeleteAPIKey(ctx context.Context, id uuid.UUID) error
 	DeleteContact(ctx context.Context, arg DeleteContactParams) error
 	DeleteEmailUsageByCompanyIDAndSubscriptionID(ctx context.Context, arg DeleteEmailUsageByCompanyIDAndSubscriptionIDParams) error
+	DeleteInvitation(ctx context.Context, id uuid.UUID) error
 	DeleteOTPById(ctx context.Context, id uuid.UUID) error
 	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
 	DeleteScheduledUsers(ctx context.Context) ([]User, error)
 	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
+	ExpireInvitation(ctx context.Context, id uuid.UUID) error
 	FindDomainByNameAndCompany(ctx context.Context, arg FindDomainByNameAndCompanyParams) (Domain, error)
 	FindTicketByID(ctx context.Context, id uuid.UUID) (SupportTicket, error)
 	FindUserWithAPIKey(ctx context.Context, apiKey string) (FindUserWithAPIKeyRow, error)
@@ -95,13 +109,17 @@ type Querier interface {
 	GetAllAdmins(ctx context.Context) ([]Admin, error)
 	GetAllCampaignsByUser(ctx context.Context, arg GetAllCampaignsByUserParams) ([]GetAllCampaignsByUserRow, error)
 	GetAllContacts(ctx context.Context, arg GetAllContactsParams) ([]GetAllContactsRow, error)
+	GetAllTicketsCount(ctx context.Context) (int64, error)
 	GetAllTicketsWithPagination(ctx context.Context, arg GetAllTicketsWithPaginationParams) ([]SupportTicket, error)
+	GetAllUsers(ctx context.Context, arg GetAllUsersParams) ([]GetAllUsersRow, error)
+	GetAllVerifiedUserEmails(ctx context.Context) ([]GetAllVerifiedUserEmailsRow, error)
 	GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams) (GetCampaignByIDRow, error)
 	GetCampaignContactEmails(ctx context.Context, campaignID uuid.UUID) ([]string, error)
 	GetCampaignContactGroups(ctx context.Context, campaignID uuid.UUID) ([]GetCampaignContactGroupsRow, error)
 	GetCampaignCounts(ctx context.Context, arg GetCampaignCountsParams) (int64, error)
 	GetCampaignStats(ctx context.Context, campaignID uuid.UUID) (GetCampaignStatsRow, error)
 	GetCampaignsByTemplateType(ctx context.Context, arg GetCampaignsByTemplateTypeParams) ([]GetCampaignsByTemplateTypeRow, error)
+	GetClosedTicketsCount(ctx context.Context) (int64, error)
 	GetClosedTicketsWithPagination(ctx context.Context, arg GetClosedTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetCompaniesNearLimit(ctx context.Context, arg GetCompaniesNearLimitParams) ([]GetCompaniesNearLimitRow, error)
 	GetCompanyByID(ctx context.Context, id uuid.UUID) (Company, error)
@@ -135,6 +153,11 @@ type Querier interface {
 	// Fetches all contact groups with their associated contacts for a specific user and company
 	// with pagination support using limit and offset
 	GetGroupsWithContacts(ctx context.Context, arg GetGroupsWithContactsParams) ([]GetGroupsWithContactsRow, error)
+	GetInvitationByAcceptedUser(ctx context.Context, acceptedBy uuid.NullUUID) (GetInvitationByAcceptedUserRow, error)
+	GetInvitationByID(ctx context.Context, id uuid.UUID) (Invitation, error)
+	GetInvitationByToken(ctx context.Context, token string) (GetInvitationByTokenRow, error)
+	GetInvitationStats(ctx context.Context, companyID uuid.UUID) (GetInvitationStatsRow, error)
+	GetInvitationsByCompany(ctx context.Context, companyID uuid.UUID) ([]GetInvitationsByCompanyRow, error)
 	GetLastPaymentByCompanyID(ctx context.Context, companyID uuid.UUID) (Payment, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
 	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
@@ -152,6 +175,8 @@ type Querier interface {
 	GetPaymentIntentsByUserID(ctx context.Context, userID uuid.UUID) ([]PaymentIntent, error)
 	GetPaymentsByCompanyAndUser(ctx context.Context, arg GetPaymentsByCompanyAndUserParams) ([]GetPaymentsByCompanyAndUserRow, error)
 	GetPaymentsByCompanyAndUserSimple(ctx context.Context, companyID uuid.UUID) ([]GetPaymentsByCompanyAndUserSimpleRow, error)
+	GetPendingInvitationsByEmail(ctx context.Context, email string) ([]GetPendingInvitationsByEmailRow, error)
+	GetPendingTicketsCount(ctx context.Context) (int64, error)
 	GetPendingTicketsWithPagination(ctx context.Context, arg GetPendingTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
@@ -166,18 +191,23 @@ type Querier interface {
 	GetSenderById(ctx context.Context, arg GetSenderByIdParams) (Sender, error)
 	// Fetches a specific contact group with all its associated contacts for a specific user and company
 	GetSingleGroupWithContacts(ctx context.Context, arg GetSingleGroupWithContactsParams) ([]GetSingleGroupWithContactsRow, error)
+	GetSingleUser(ctx context.Context, id uuid.UUID) (GetSingleUserRow, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error)
 	GetTemplateByIDWithoutType(ctx context.Context, arg GetTemplateByIDWithoutTypeParams) (GetTemplateByIDWithoutTypeRow, error)
 	GetTicketFiles(ctx context.Context, ticketID uuid.UUID) ([]TicketFile, error)
 	GetTicketWithMessages(ctx context.Context, id uuid.UUID) ([]GetTicketWithMessagesRow, error)
 	GetTicketsByUserID(ctx context.Context, userID uuid.UUID) ([]SupportTicket, error)
+	GetUnVerifiedUsers(ctx context.Context, arg GetUnVerifiedUsersParams) ([]GetUnVerifiedUsersRow, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
 	GetUserCampaignStats(ctx context.Context, userID uuid.UUID) (GetUserCampaignStatsRow, error)
 	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
 	GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
+	GetUserWhoAcceptedInvitation(ctx context.Context, id uuid.UUID) (GetUserWhoAcceptedInvitationRow, error)
+	GetUsersFromInvitations(ctx context.Context, companyID uuid.UUID) ([]GetUsersFromInvitationsRow, error)
+	GetVerifiedUsers(ctx context.Context, arg GetVerifiedUsersParams) ([]GetVerifiedUsersRow, error)
 	HardDeleteCampaign(ctx context.Context, id uuid.UUID) error
 	// Hard deletes a contact group (use with caution)
 	HardDeleteContactGroup(ctx context.Context, id uuid.UUID) error
@@ -236,6 +266,7 @@ type Querier interface {
 	SoftDeleteSender(ctx context.Context, arg SoftDeleteSenderParams) error
 	SoftDeleteTemplate(ctx context.Context, arg SoftDeleteTemplateParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	UnblockUser(ctx context.Context, id uuid.UUID) (UnblockUserRow, error)
 	UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (Admin, error)
 	UpdateBounceStatus(ctx context.Context, arg UpdateBounceStatusParams) error
 	UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) (Campaign, error)
@@ -255,6 +286,7 @@ type Querier interface {
 	UpdateEmailOpened(ctx context.Context, arg UpdateEmailOpenedParams) (EmailCampaignResult, error)
 	UpdateEmailUnsubscribed(ctx context.Context, arg UpdateEmailUnsubscribedParams) (EmailCampaignResult, error)
 	UpdateEmailsSentAndRemaining(ctx context.Context, arg UpdateEmailsSentAndRemainingParams) (EmailUsage, error)
+	UpdateInvitationStatus(ctx context.Context, arg UpdateInvitationStatusParams) (Invitation, error)
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
 	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error
 	UpdatePaymentIntent(ctx context.Context, arg UpdatePaymentIntentParams) (PaymentIntent, error)

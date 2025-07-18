@@ -2,28 +2,28 @@
 
  
 export type Template = {
-    template_id_ref: string;
-    template_user_id: string;
-    template_company_id: string;
-    template_name: string;
-    template_sender_name: string;
-    template_from_email: string;
-    template_subject: string;
-    template_type: string;
-    template_email_html: string;
-    template_email_design: string | null;
-    template_is_editable: boolean;
-    template_is_published: boolean;
-    template_is_public_template: boolean;
-    template_is_gallery_template: boolean;
-    template_tags: string;
-    template_description: string;
-    template_image_url: string;
-    template_is_active: boolean;
-    template_editor_type: string;
-    template_created_at: string;
-    template_updated_at: string;
-    template_deleted_at: string | null;
+   id: string;
+   user_id: string;
+   company_id: string;
+   name: string;
+   sender_name: string;
+   from_email: string;
+   subject: string;
+   type: string;
+   email_html: string;
+   email_design: string | null;
+   is_editable: boolean;
+   is_published: boolean;
+   is_public_template: boolean;
+   is_gallery_template: boolean;
+   tags: string;
+   description: string;
+   image_url: string;
+   is_active: boolean;
+   editor_type: string;
+   created_at: string;
+   updated_at: string;
+   deleted_at: string | null;
 };
 
  
@@ -78,8 +78,6 @@ export type Campaign = {
     template?: Template;
     scheduled_at?: string;
     sender?: string;
-    campaign_groups?: CampaignGroup[];
-    // Additional fields from API response
     has_custom_logo?: boolean;
     user?: CampaignUser;
     company?: CampaignCompany;
@@ -96,8 +94,8 @@ export type CampaignGroup = {
 export type CreateCampaignValues = Partial<Campaign>;
 
 export type CampaignGroupValues = { 
-    group_name: string; 
-    description: string; 
+    campaign_id: string; 
+    group_id: string; 
 };
 
 export type CampaignData = BaseEntity & Campaign;

@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import Cookies from "js-cookie";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import { Tooltip } from "antd";
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Tooltip, Card, Badge, Avatar, Button, Spin, Empty, Tag } from "antd";
+import { QuestionCircleOutlined, ArrowLeftOutlined, PaperClipOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
+import { MessageSquare, Clock, Download } from 'lucide-react';
 import useSupportStore from "../../../store/support.store";
 import { TicketFile, Ticket } from '../../../interface/support.interface';
 import { useTicketDetailsQuery } from "../../../hooks/useSupporTicketQuery";
@@ -28,9 +29,18 @@ const TicketDetails: React.FC = () => {
             day: 'numeric',
             hour: 'numeric',
             minute: 'numeric',
-            second: 'numeric',
             timeZone: 'UTC'
         });
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'open': return 'processing';
+            case 'closed': return 'default';
+            case 'pending': return 'warning';
+            case 'resolved': return 'success';
+            default: return 'default';
+        }
     };
 
     const renderAttachments = (files: TicketFile[]) => {
@@ -38,7 +48,10 @@ const TicketDetails: React.FC = () => {
         const baseUrl = import.meta.env.VITE_BASE_API_URL as string;
         return (
             <div className="mt-4">
-                <h4 className="text-sm font-semibold mb-2">Attachments:</h4>
+                <div className="flex items-center gap-2 mb-3">
+                    <PaperClipOutlined className="text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Attachments</span>
+                </div>
                 <div className="flex flex-wrap gap-2">
                     {files.map((file, index) => (
                         <a
@@ -46,11 +59,9 @@ const TicketDetails: React.FC = () => {
                             href={`${baseUrl}/${file.file_path}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
                         >
-                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-                            </svg>
+                            <Download className="w-4 h-4 mr-2" />
                             {file.file_name}
                         </a>
                     ))}
@@ -61,8 +72,11 @@ const TicketDetails: React.FC = () => {
 
     if (!supportTicketData) {
         return (
-            <div className="flex items-center justify-center mt-20">
-                <p>No ticket details available.</p>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+                <Empty
+                    description="No ticket details available"
+                    className="text-gray-500"
+                />
             </div>
         );
     }
@@ -71,66 +85,120 @@ const TicketDetails: React.FC = () => {
         <HelmetProvider>
             <Helmet title={`Ticket #${sTicketData?.ticket_number}`} />
             {isLoading ? (
-                <div className="flex items-center justify-center mt-20">
-                    <span className="loading loading-spinner loading-lg"></span>
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+                    <Spin size="large" />
                 </div>
             ) : (
-                <div className="flex flex-col lg:flex-row mb-10 mt-5 p-4 bg-gray-100 min-h-screen">
-                    <TicketSidebar ticketData={sTicketData as Ticket} onClose={closeTicket} />
-                    <div className="w-full lg:w-3/4 -mt-5 p-6">
-                        <div className="bg-white p-6 rounded-lg shadow mb-10">
-                            <div className="flex justify-between mb-6">
-                                <button
-                                    className="text-blue-600 mr-2 tooltip tooltip-right"
-                                    data-tip="Go Back"
-                                    onClick={() => window.history.back()}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
-                                </button>
-                                <h2 className="text-xl font-semibold">View Ticket #{sTicketData?.ticket_number}</h2>
-                                <span className={`${sTicketData?.status === 'closed' ? 'bg-black text-white' :
-                                    sTicketData?.status === 'pending' ? 'bg-red-500 text-white' :
-                                        sTicketData?.status === 'open' ? 'bg-green-500 text-white' :
-                                            sTicketData?.status === 'resolved' ? 'bg-green-500 text-white' : ''
-                                    } px-2 py-1 rounded`}>
-                                    {sTicketData?.status}
-                                </span>
-                                <Tooltip title="You can reopen a ticket by replying to the ticket">
-                                    <QuestionCircleOutlined />
-                                </Tooltip>
-                            </div>
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+                    <div className="max-w-7xl mx-auto p-6">
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            <TicketSidebar ticketData={sTicketData as Ticket} onClose={closeTicket} />
 
-                            {sTicketData?.messages &&
-                                sTicketData?.messages.map((message) => (
-                                    <div key={message.uuid} className="mb-6 border-t border-b py-7 pt-4">
-                                        <div className="flex justify-between bg-gray-200 p-2">
-                                            <p className="text-sm text-gray-700">
-                                                Posted by <span className="font-semibold">
-                                                    {message.is_admin ?
-                                                        message.admin.firstname + " " + message.admin.lastname :
-                                                        sTicketData.name}
-                                                </span>
-                                                on {formatDate(message.created_at)}
-                                            </p>
-                                            <span className="text-sm bg-blue-500 text-white rounded-md p-1">
-                                                {message.is_admin ? "admin/operator" : "authorized user"}
-                                            </span>
+                            <div className="flex-1">
+                                {/* Header */}
+                                <Card className="mb-6 shadow-lg border-0 backdrop-blur-sm bg-white/90">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <Button
+                                                icon={<ArrowLeftOutlined />}
+                                                onClick={() => window.history.back()}
+                                                className="flex items-center gap-2"
+                                            >
+                                                Back
+                                            </Button>
+                                            <div>
+                                                <h1 className="text-2xl font-bold text-gray-800 m-0">
+                                                    Ticket #{sTicketData?.ticket_number}
+                                                </h1>
+                                                <p className="text-gray-600 m-0">{sTicketData?.subject}</p>
+                                            </div>
                                         </div>
-                                        <p className="mt-2">{message.message}</p>
-                                        {renderAttachments(message.files)}
+                                        <div className="flex items-center gap-3">
+                                            <Badge
+                                                status={getStatusColor(sTicketData?.status as string)}
+                                                text={sTicketData?.status?.toUpperCase()}
+                                                className="text-sm font-medium"
+                                            />
+                                            <Tooltip title="You can reopen a ticket by replying to the ticket">
+                                                <QuestionCircleOutlined className="text-gray-500 cursor-help" />
+                                            </Tooltip>
+                                        </div>
                                     </div>
-                                ))}
-                        </div>
+                                </Card>
 
-                        <TicketReplyForm
-                            user={user}
-                            email={email}
-                            onSubmit={async (message, files) => {
-                                await replyTicket(id, message, files);
-                            }}
-                        />
+                                {/* Messages */}
+                                <Card
+                                    className="mb-6 shadow-lg border-0 backdrop-blur-sm bg-white/90"
+                                    title={
+                                        <div className="flex items-center gap-2">
+                                            <MessageSquare className="h-5 w-5 text-blue-600" />
+                                            <span>Conversation</span>
+                                        </div>
+                                    }
+                                >
+                                    <div className="space-y-6">
+                                        {sTicketData?.messages && sTicketData?.messages.length > 0 ? (
+                                            sTicketData?.messages.map((message, index) => (
+                                                <div key={message.id} className="relative">
+                                                    <div className="flex items-start gap-4">
+                                                        <Avatar
+                                                            icon={message.is_admin ? <CrownOutlined /> : <UserOutlined />}
+                                                            className={`${message.is_admin ? 'bg-purple-600' : 'bg-blue-600'} flex-shrink-0`}
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                                                <div className="flex items-center justify-between mb-3">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-semibold text-gray-800">
+                                                                            {message.is_admin ?
+                                                                                message.admin.firstname + " " + message.admin.lastname :
+                                                                                sTicketData.name}
+                                                                        </span>
+                                                                        <Tag
+                                                                            color={message.is_admin ? 'purple' : 'blue'}
+                                                                            className="text-xs"
+                                                                        >
+                                                                            {message.is_admin ? "Admin" : "User"}
+                                                                        </Tag>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                                                        <Clock className="w-4 h-4" />
+                                                                        {formatDate(message.created_at)}
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                                                    {message.message}
+                                                                </p>
+                                                                {renderAttachments(message.files)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {index < sTicketData.messages.length - 1 && (
+                                                        <div className="flex justify-center my-6">
+                                                            <div className="w-px h-6 bg-gray-300"></div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <Empty
+                                                description="No messages yet"
+                                                className="py-8"
+                                            />
+                                        )}
+                                    </div>
+                                </Card>
+
+                                {/* Reply Form */}
+                                <TicketReplyForm
+                                    user={user}
+                                    email={email}
+                                    onSubmit={async (message, files) => {
+                                        await replyTicket(id, message, files);
+                                    }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

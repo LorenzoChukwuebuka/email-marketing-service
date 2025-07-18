@@ -4,13 +4,13 @@ import { Ticket } from "./../interface/support.interface"
 
 export class SupportTicket {
     static async getTickets(): Promise<APIResponse<Ticket[]>> {
-        const response = await axiosInstance.get<APIResponse<Ticket[]>>("/support/get-tickets");
+        const response = await axiosInstance.get<APIResponse<Ticket[]>>("/support/get");
         return response.data;
     }
 
     static async createTicket(formData: FormData): Promise<APIResponse<Ticket>> {
         const response = await axiosInstance.post<APIResponse<Ticket>>(
-            "/support/create-ticket",
+            "/support/create",
             formData,
             {
                 headers: {
@@ -22,13 +22,13 @@ export class SupportTicket {
     }
 
     static async getTicketDetails(uuid: string): Promise<APIResponse<Ticket>> {
-        const response = await axiosInstance.get<APIResponse<Ticket>>(`/support/get-ticket/${uuid}`);
+        const response = await axiosInstance.get<APIResponse<Ticket>>(`/support/get/${uuid}`);
         return response.data;
     }
 
     static async replyTicket(formData: FormData, ticketId: string): Promise<APIResponse<Ticket>> {
         const response = await axiosInstance.put<APIResponse<Ticket>>(
-            `/support/reply-ticket/${ticketId}`,
+            `/support/reply/${ticketId}`,
             formData,
             {
                 headers: {
