@@ -13,6 +13,23 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const checkTemplateExists = `-- name: CheckTemplateExists :one
+SELECT EXISTS (
+        SELECT 1
+        FROM templates
+        WHERE
+            template_name = $1
+            AND deleted_at IS NULL
+    ) AS template_exists
+`
+
+func (q *Queries) CheckTemplateExists(ctx context.Context, templateName string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkTemplateExists, templateName)
+	var template_exists bool
+	err := row.Scan(&template_exists)
+	return template_exists, err
+}
+
 const checkTemplateNameExists = `-- name: CheckTemplateNameExists :one
 SELECT EXISTS (
         SELECT 1
@@ -25,8 +42,8 @@ SELECT EXISTS (
 `
 
 type CheckTemplateNameExistsParams struct {
-	TemplateName string    `json:"template_name"`
-	UserID       uuid.UUID `json:"user_id"`
+	TemplateName string        `json:"template_name"`
+	UserID       uuid.NullUUID `json:"user_id"`
 }
 
 func (q *Queries) CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error) {
@@ -37,13 +54,14 @@ func (q *Queries) CheckTemplateNameExists(ctx context.Context, arg CheckTemplate
 }
 
 const countTemplatesByUserID = `-- name: CountTemplatesByUserID :one
-SELECT COUNT(*) 
-FROM templates 
-WHERE user_id = $1 
-AND deleted_at IS NULL
+SELECT COUNT(*)
+FROM templates
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL
 `
 
-func (q *Queries) CountTemplatesByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (q *Queries) CountTemplatesByUserID(ctx context.Context, userID uuid.NullUUID) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countTemplatesByUserID, userID)
 	var count int64
 	err := row.Scan(&count)
@@ -95,8 +113,8 @@ VALUES (
 `
 
 type CreateTemplateParams struct {
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -177,7 +195,10 @@ FROM
     LEFT JOIN companies c ON t.company_id = c.id
 WHERE
     t.id = $1
-    AND t.user_id = $2
+    AND (
+        $2::uuid IS NULL
+        OR t.user_id = $2::uuid
+    )
     AND t.type = $3
     AND t.deleted_at IS NULL
 ORDER BY t.created_at DESC
@@ -185,15 +206,15 @@ LIMIT 1
 `
 
 type GetTemplateByIDParams struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-	Type   string    `json:"type"`
+	TemplateID uuid.UUID     `json:"template_id"`
+	UserID     uuid.NullUUID `json:"user_id"`
+	Type       string        `json:"type"`
 }
 
 type GetTemplateByIDRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -220,7 +241,7 @@ type GetTemplateByIDRow struct {
 }
 
 func (q *Queries) GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getTemplateByID, arg.ID, arg.UserID, arg.Type)
+	row := q.db.QueryRowContext(ctx, getTemplateByID, arg.TemplateID, arg.UserID, arg.Type)
 	var i GetTemplateByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -273,14 +294,14 @@ LIMIT 1
 `
 
 type GetTemplateByIDWithoutTypeParams struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+	ID     uuid.UUID     `json:"id"`
+	UserID uuid.NullUUID `json:"user_id"`
 }
 
 type GetTemplateByIDWithoutTypeRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -374,8 +395,8 @@ type ListTemplatesParams struct {
 
 type ListTemplatesRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -470,15 +491,15 @@ OFFSET
 `
 
 type ListTemplatesByCompanyIDParams struct {
-	CompanyID uuid.UUID `json:"company_id"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
+	CompanyID uuid.NullUUID `json:"company_id"`
+	Limit     int32         `json:"limit"`
+	Offset    int32         `json:"offset"`
 }
 
 type ListTemplatesByCompanyIDRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -555,41 +576,42 @@ func (q *Queries) ListTemplatesByCompanyID(ctx context.Context, arg ListTemplate
 }
 
 const listTemplatesByType = `-- name: ListTemplatesByType :many
-SELECT 
+SELECT
     t.id, t.user_id, t.company_id, t.template_name, t.sender_name, t.from_email, t.subject, t.type, t.email_html, t.email_design, t.is_editable, t.is_published, t.is_public_template, t.is_gallery_template, t.tags, t.description, t.image_url, t.is_active, t.editor_type, t.created_at, t.updated_at, t.deleted_at,
     u.fullname AS user_fullname,
     u.email AS user_email,
     u.picture AS user_picture,
     c.companyname AS company_name
-FROM 
+FROM
     templates t
-LEFT JOIN 
-    users u ON t.user_id = u.id
-LEFT JOIN 
-    companies c ON t.company_id = c.id
-WHERE 
+    LEFT JOIN users u ON t.user_id = u.id
+    LEFT JOIN companies c ON t.company_id = c.id
+WHERE
     t.type = $1
     AND t.user_id = $2
     AND t.deleted_at IS NULL
-    AND ($5 = '' OR t.template_name ILIKE '%' || $5 || '%')
-ORDER BY 
-    t.created_at DESC
+    AND (
+        $5 = ''
+        OR t.template_name ILIKE '%' || $5 || '%'
+    )
+ORDER BY t.created_at DESC
 LIMIT $3
-OFFSET $4
+OFFSET
+    $4
 `
 
 type ListTemplatesByTypeParams struct {
-	Type    string      `json:"type"`
-	UserID  uuid.UUID   `json:"user_id"`
-	Limit   int32       `json:"limit"`
-	Offset  int32       `json:"offset"`
-	Column5 interface{} `json:"column_5"`
+	Type    string        `json:"type"`
+	UserID  uuid.NullUUID `json:"user_id"`
+	Limit   int32         `json:"limit"`
+	Offset  int32         `json:"offset"`
+	Column5 interface{}   `json:"column_5"`
 }
 
 type ListTemplatesByTypeRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -692,15 +714,15 @@ OFFSET
 `
 
 type ListTemplatesByUserIDParams struct {
-	UserID uuid.UUID `json:"user_id"`
-	Limit  int32     `json:"limit"`
-	Offset int32     `json:"offset"`
+	UserID uuid.NullUUID `json:"user_id"`
+	Limit  int32         `json:"limit"`
+	Offset int32         `json:"offset"`
 }
 
 type ListTemplatesByUserIDRow struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
@@ -787,8 +809,8 @@ WHERE
 `
 
 type SoftDeleteTemplateParams struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+	ID     uuid.UUID     `json:"id"`
+	UserID uuid.NullUUID `json:"user_id"`
 }
 
 func (q *Queries) SoftDeleteTemplate(ctx context.Context, arg SoftDeleteTemplateParams) error {
@@ -840,7 +862,7 @@ type UpdateTemplateParams struct {
 	IsActive          sql.NullBool          `json:"is_active"`
 	EditorType        sql.NullString        `json:"editor_type"`
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
 }
 
 func (q *Queries) UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error) {

@@ -228,7 +228,7 @@ func (s *AdminUsersServices) GetUserStats(ctx context.Context, userId string) (a
 		return stats, fmt.Errorf("failed to count campaigns: %w", err)
 	}
 
-	stats.TotalTemplates, err = s.store.CountUserTemplates(ctx, uuiduserId)
+	stats.TotalTemplates, err = s.store.CountUserTemplates(ctx, uuid.NullUUID{UUID: uuiduserId, Valid: true})
 	if err != nil {
 		return stats, fmt.Errorf("failed to count templates: %w", err)
 	}
@@ -327,7 +327,6 @@ func (s *AdminUsersServices) ResendUserVerificationMail(ctx context.Context, use
 
 	return nil
 }
-
 
 func (s *AdminUsersServices) GetAllUserContacts(ctx context.Context, userId string) (any, error) {
 	uuiduserId, err := uuid.Parse(userId)

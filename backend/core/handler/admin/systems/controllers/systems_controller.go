@@ -69,3 +69,21 @@ func (c *SystemsController) DeleteDNSRecords(w http.ResponseWriter, r *http.Requ
 	}
 	helper.SuccessResponse(w, 200, "deleted successfully")
 }
+
+func (c *SystemsController) ReadAppLogs(w http.ResponseWriter, r *http.Request) {
+	result, err := c.SystemsService.ReadAppLogs()
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	helper.SuccessResponse(w, 200, result)
+}
+
+func (c *SystemsController) ReadRequestLogs(w http.ResponseWriter, r *http.Request) {
+	result, err := c.SystemsService.ReadRequestLogs()
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+	helper.SuccessResponse(w, 200, result)
+}

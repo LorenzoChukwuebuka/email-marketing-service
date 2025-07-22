@@ -200,7 +200,7 @@ func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignD
 	if campaign.TemplateID.Valid && campaign.TemplateID.UUID != uuid.Nil {
 		template, err := s.store.GetTemplateByIDWithoutType(ctx, db.GetTemplateByIDWithoutTypeParams{
 			ID:     campaign.TemplateID.UUID,
-			UserID: _uuid["user"],
+			UserID:      uuid.NullUUID{UUID: _uuid["user"], Valid: true},
 		})
 
 		if err != nil {

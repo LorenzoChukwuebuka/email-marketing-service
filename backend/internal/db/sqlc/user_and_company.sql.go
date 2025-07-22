@@ -155,7 +155,7 @@ WHERE
     AND deleted_at IS NULL
 `
 
-func (q *Queries) CountUserTemplates(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (q *Queries) CountUserTemplates(ctx context.Context, userID uuid.NullUUID) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUserTemplates, userID)
 	var count int64
 	err := row.Scan(&count)

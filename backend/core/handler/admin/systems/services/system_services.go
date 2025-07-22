@@ -178,3 +178,63 @@ func (s *Service) DeleteDNSRecords(ctx context.Context, domain string) error {
 
 	return nil
 }
+
+func (s *Service) ReadAppLogs() (any, error) {
+	var dir string
+	if os.Getenv("SERVER_MODE") == "production" {
+		dir = "/app/backend/logs"
+	} else {
+		dir = "./logs"
+	}
+
+	// Read the file
+	logBytes, err := os.ReadFile(filepath.Join(dir, "app.log"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read app.log: %w", err)
+	}
+
+	// Split the file into lines
+	lines := strings.Split(string(logBytes), "\n")
+
+	// Optional: reverse lines to show latest logs first
+	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
+		lines[i], lines[j] = lines[j], lines[i]
+	}
+
+	// You can return just the recent N logs if needed (e.g., 500 lines)
+	const maxLines = 500
+	if len(lines) > maxLines {
+		lines = lines[:maxLines]
+	}
+
+	return lines, nil
+}
+
+func (s *Service) ReadRequestLogs() (any, error) {
+	var dir string
+
+	if os.Getenv("SERVER_MODE") == "production" {
+		dir = "/app/backend/logs"
+	} else {
+		dir = "./logs"
+	}
+
+	// Read the file
+	logBytes, err := os.ReadFile(filepath.Join(dir, "requests.log"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request.log: %w", err)
+	}
+	// Split the file into lines
+	lines := strings.Split(string(logBytes), "\n")
+
+	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
+		lines[i], lines[j] = lines[j], lines[i]
+	}
+
+	const maxLines = 500
+	if len(lines) > maxLines {
+		lines = lines[:maxLines]
+	}
+
+	return lines, nil
+}

@@ -29,6 +29,7 @@ type Querier interface {
 	CheckSMTPKeyExists(ctx context.Context, arg CheckSMTPKeyExistsParams) (bool, error)
 	CheckSMTPMasterKeyExists(ctx context.Context, arg CheckSMTPMasterKeyExistsParams) (bool, error)
 	CheckSenderExists(ctx context.Context, arg CheckSenderExistsParams) (bool, error)
+	CheckTemplateExists(ctx context.Context, templateName string) (bool, error)
 	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
 	CleanupExpiredInvitations(ctx context.Context) error
 	// Clear the scheduled_at field after processing to prevent reprocessing
@@ -40,14 +41,14 @@ type Querier interface {
 	CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountDomainByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountSenderByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
-	CountTemplatesByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountTemplatesByUserID(ctx context.Context, userID uuid.NullUUID) (int64, error)
 	CountUnVerifiedUsers(ctx context.Context) (int64, error)
 	CountUserCampaigns(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserCampaignsSent(ctx context.Context, userID uuid.UUID) (int64, error)
 	//- Counts for user stats  ---
 	CountUserContacts(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserGroups(ctx context.Context, userID uuid.UUID) (int64, error)
-	CountUserTemplates(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserTemplates(ctx context.Context, userID uuid.NullUUID) (int64, error)
 	CountVerifiedUsers(ctx context.Context) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
