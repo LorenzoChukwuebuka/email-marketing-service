@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"strings"
 	"sync"
@@ -38,7 +39,7 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (any
 	if err := helper.ValidateData(req); err != nil {
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
-	
+
 	_uuid, err := common.ParseUUIDMap(map[string]string{
 		"user":    req.UserId,
 		"company": req.CompanyID,
@@ -49,7 +50,7 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (any
 	}
 
 	templateExists, err := s.store.CheckTemplateNameExists(ctx, db.CheckTemplateNameExistsParams{
-		UserID:       _uuid["user"],
+		UserID:       uuid.NullUUID{UUID: _uuid["user"], Valid: true},
 		TemplateName: req.TemplateName,
 	})
 
@@ -83,8 +84,8 @@ func (s *Service) CreateTemplate(ctx context.Context, req *dto.TemplateDTO) (any
 	}
 
 	template, err := s.store.CreateTemplate(ctx, db.CreateTemplateParams{
-		UserID:       _uuid["user"],
-		CompanyID:    _uuid["company"],
+		UserID:       uuid.NullUUID{UUID: _uuid["user"], Valid: true},
+		CompanyID:    uuid.NullUUID{UUID: _uuid["company"], Valid: true},
 		TemplateName: req.TemplateName,
 		SenderName:   sql.NullString{String: req.SenderName, Valid: true},
 		FromEmail:    sql.NullString{String: req.FromEmail, Valid: true},
@@ -127,7 +128,7 @@ func (s *Service) GetAllTemplateByType(ctx context.Context, req dto.FetchTemplat
 
 	templates, err := s.store.ListTemplatesByType(ctx, db.ListTemplatesByTypeParams{
 		Type:    req.Type,
-		UserID:  _uuid["user"],
+		UserID:  uuid.NullUUID{UUID: _uuid["user"], Valid: true},
 		Limit:   int32(req.Limit),
 		Offset:  int32(req.Offset),
 		Column5: req.SearchQuery,
@@ -137,7 +138,7 @@ func (s *Service) GetAllTemplateByType(ctx context.Context, req dto.FetchTemplat
 		return nil, common.ErrFetchingRecord
 	}
 
-	count_templates, err := s.store.CountTemplatesByUserID(ctx, _uuid["user"])
+	count_templates, err := s.store.CountTemplatesByUserID(ctx, uuid.NullUUID{UUID: _uuid["user"], Valid: true})
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
 		return nil, common.ErrFetchingRecord
@@ -164,8 +165,8 @@ func (s *Service) GetTemplateByID(ctx context.Context, req dto.FetchTemplateDTO)
 	}
 
 	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
-		UserID: _uuid["user"],
-		ID:     _uuid["template"],
+		UserID: uuid.NullUUID{UUID: _uuid["user"], Valid: true},
+		TemplateID:     _uuid["template"],
 		Type:   req.Type,
 	})
 	if err != nil {
@@ -191,7 +192,7 @@ func (s *Service) UpdateTemplate(ctx context.Context, req *dto.TemplateDTO) (*dt
 	}
 
 	_, err = s.store.UpdateTemplate(ctx, db.UpdateTemplateParams{
-		UserID:       _uuid["user"],
+		UserID:       uuid.NullUUID{UUID: _uuid["user"], Valid: true},
 		ID:           _uuid["template"],
 		TemplateName: req.TemplateName,
 		SenderName:   sql.NullString{String: req.SenderName, Valid: true},
@@ -234,7 +235,7 @@ func (s *Service) DeleteTemplate(ctx context.Context, req dto.FetchTemplateDTO) 
 
 	err = s.store.SoftDeleteTemplate(ctx, db.SoftDeleteTemplateParams{
 		ID:     _uuid["template"],
-		UserID: _uuid["user"],
+		UserID: uuid.NullUUID{UUID: _uuid["user"], Valid: true},
 	})
 	if err != nil {
 		fmt.Printf("Database error: %v\n", err)
@@ -273,8 +274,8 @@ func (s *Service) SendTestMail(ctx context.Context, d *dto.SendTestMailDTO) erro
 	}
 
 	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
-		UserID: _uuid["user"],
-		ID:     _uuid["template"],
+		UserID: uuid.NullUUID{UUID: _uuid["user"], Valid: true},
+		TemplateID:     _uuid["template"],
 		Type:   d.Type,
 	})
 	if err != nil {

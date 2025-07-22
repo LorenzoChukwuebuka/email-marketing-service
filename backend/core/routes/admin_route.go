@@ -5,6 +5,8 @@ import (
 	authService "email-marketing-service/core/handler/admin/auth/services"
 	campaigncontroller "email-marketing-service/core/handler/admin/campaigns/controller"
 	campaignservice "email-marketing-service/core/handler/admin/campaigns/services"
+	emailTemplateController "email-marketing-service/core/handler/admin/email-templates/controller"
+	emailTemplateService "email-marketing-service/core/handler/admin/email-templates/services"
 	planController "email-marketing-service/core/handler/admin/plans/controller"
 	planservice "email-marketing-service/core/handler/admin/plans/service"
 	supportController "email-marketing-service/core/handler/admin/support/controller"
@@ -48,6 +50,8 @@ func (a *AdminRoute) InitRoutes(r *mux.Router) {
 		systemRouter.HandleFunc("/create", sysHandler.CreateRecords).Methods("POST", "OPTIONS")
 		systemRouter.HandleFunc("/fetch/{domain}", sysHandler.GetDNSRecords).Methods("GET", "OPTIONS")
 		systemRouter.HandleFunc("/delete/{domain}", sysHandler.DeleteDNSRecords).Methods("DELETE", "OPTIONS")
+		systemRouter.HandleFunc("/logs/app", sysHandler.ReadAppLogs).Methods("GET", "OPTIONS")
+		systemRouter.HandleFunc("/logs/request", sysHandler.ReadRequestLogs).Methods("GET", "OPTIONS")
 	}
 
 	planRoute := r.PathPrefix("/plans").Subrouter()
@@ -101,6 +105,16 @@ func (a *AdminRoute) InitRoutes(r *mux.Router) {
 		campaignRoute.HandleFunc("/get/{userId}/{companyId}", cmpController.GetAllUserCampaigns).Methods("GET", "OPTIONS")
 		campaignRoute.HandleFunc("/get/single/{userId}/{companyId}/{campaignId}", cmpController.GetSingleCampaign).Methods("GET", "OPTIONS")
 		campaignRoute.HandleFunc("/get-campaign-recipients/{campaignId}/{companyId}", cmpController.GetAllRecipientsForACampaign).Methods("GET", "OPTIONS")
+	}
+
+	emailTemplateRoute := r.PathPrefix("/gallery-templates").Subrouter()
+	emailTemplateRoute.Use(middleware.AdminJWTMiddleware)
+	emailTemplateService := emailTemplateService.NewAdminTemplatesService(a.store)
+	emailTemplateController := emailTemplateController.NewAdminTemplateController(emailTemplateService)
+
+	{
+		emailTemplateRoute.HandleFunc("/create", emailTemplateController.CreateGalleryTemplate).Methods("POST", "OPTIONS")
+
 	}
 
 }

@@ -41,7 +41,6 @@ VALUES (
         $18
     ) RETURNING *;
 
-
 -- name: ListTemplates :many
 SELECT
     t.*,
@@ -97,7 +96,6 @@ LIMIT $2
 OFFSET
     $3;
 
-
 -- name: UpdateTemplate :one
 UPDATE templates
 SET
@@ -145,6 +143,15 @@ SELECT EXISTS (
             AND deleted_at IS NULL
     ) AS template_exists;
 
+-- name: CheckTemplateExists :one
+SELECT EXISTS (
+        SELECT 1
+        FROM templates
+        WHERE
+            template_name = $1
+            AND deleted_at IS NULL
+    ) AS template_exists;
+
 -- name: GetTemplateByID :one
 SELECT
     t.*,
@@ -157,42 +164,46 @@ FROM
     LEFT JOIN users u ON t.user_id = u.id
     LEFT JOIN companies c ON t.company_id = c.id
 WHERE
-    t.id = $1
-    AND t.user_id = $2
-    AND t.type = $3
+    t.id = @template_id
+    AND (
+        sqlc.narg('user_id')::uuid IS NULL
+        OR t.user_id = sqlc.narg('user_id')::uuid
+    )
+    AND t.type = @type
     AND t.deleted_at IS NULL
 ORDER BY t.created_at DESC
 LIMIT 1;
 
 -- name: ListTemplatesByType :many
-SELECT 
+SELECT
     t.*,
     u.fullname AS user_fullname,
     u.email AS user_email,
     u.picture AS user_picture,
     c.companyname AS company_name
-FROM 
+FROM
     templates t
-LEFT JOIN 
-    users u ON t.user_id = u.id
-LEFT JOIN 
-    companies c ON t.company_id = c.id
-WHERE 
+    LEFT JOIN users u ON t.user_id = u.id
+    LEFT JOIN companies c ON t.company_id = c.id
+WHERE
     t.type = $1
     AND t.user_id = $2
     AND t.deleted_at IS NULL
-    AND ($5 = '' OR t.template_name ILIKE '%' || $5 || '%')
-ORDER BY 
-    t.created_at DESC
+    AND (
+        $5 = ''
+        OR t.template_name ILIKE '%' || $5 || '%'
+    )
+ORDER BY t.created_at DESC
 LIMIT $3
-OFFSET $4;
+OFFSET
+    $4;
 
 -- name: CountTemplatesByUserID :one
-SELECT COUNT(*) 
-FROM templates 
-WHERE user_id = $1 
-AND deleted_at IS NULL;
-
+SELECT COUNT(*)
+FROM templates
+WHERE
+    user_id = $1
+    AND deleted_at IS NULL;
 
 -- name: GetTemplateByIDWithoutType :one
 SELECT
@@ -210,6 +221,4 @@ WHERE
     AND t.user_id = $2
     AND t.deleted_at IS NULL
 ORDER BY t.created_at DESC
-LIMIT 1;  
-
-  
+LIMIT 1;

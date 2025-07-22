@@ -2,7 +2,7 @@ package mapper
 
 import (
 	"database/sql"
-	"email-marketing-service/core/handler/templates/dto"
+	"email-marketing-service/core/handler/admin/email-templates/dto"
 	db "email-marketing-service/internal/db/sqlc"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -10,7 +10,7 @@ import (
 )
 
 func MapTemplateToDTO(dbTemplate db.Template) any {
-	return &dto.TemplateDTO{
+	return &dto.AdminTemplateDTO{
 		TemplateID: dbTemplate.ID.String(),
 		//UserId:     dbTemplate.UserID.String(),
 		//	CompanyID:        dbTemplate.CompanyID.String(),
@@ -33,15 +33,15 @@ func MapTemplateToDTO(dbTemplate db.Template) any {
 	}
 }
 
-func MapTemplateResponse(templates []db.ListTemplatesByTypeRow) []dto.TemplateResponse {
+func MapTemplateResponse(templates []db.ListTemplatesByTypeRow) []dto.AdminTemplateResponse {
 	if len(templates) == 0 {
-		return []dto.TemplateResponse{}
+		return []dto.AdminTemplateResponse{}
 	}
 
-	var response []dto.TemplateResponse
+	var response []dto.AdminTemplateResponse
 
 	for _, template := range templates {
-		templateResponse := dto.TemplateResponse{
+		templateResponse := dto.AdminTemplateResponse{
 			ID:           template.ID,
 			UserID:       getNullUUID(template.UserID),
 			CompanyID:    getNullUUID(template.CompanyID),
@@ -141,8 +141,8 @@ func getJSONValue(nullableJSON interface{}) json.RawMessage {
 	return nil
 }
 
-func MapSingleTemplateResponse(template db.GetTemplateByIDRow) dto.TemplateResponse {
-	templateResponse := dto.TemplateResponse{
+func MapSingleTemplateResponse(template db.GetTemplateByIDRow) dto.AdminTemplateResponse {
+	templateResponse := dto.AdminTemplateResponse{
 		ID:           template.ID,
 		UserID:       getNullUUID(template.UserID),
 		CompanyID:    getNullUUID(template.CompanyID),

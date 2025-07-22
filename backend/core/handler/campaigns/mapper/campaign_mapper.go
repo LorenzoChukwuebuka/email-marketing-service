@@ -297,6 +297,7 @@ func nullInt32ToPtr(ni sql.NullInt32) *int32 {
 	return &ni.Int32
 }
 
+
 func MapCampaignEmailResponse(req []db.EmailCampaignResult) []*dto.EmailCampaignResultResponse {
 	if len(req) == 0 {
 		return nil
@@ -350,13 +351,13 @@ func MapCampaignGroups(row []db.GetCampaignContactGroupsRow) []*dto.GetCampaignC
 func MapTemplateFromSeparateQuery(template db.GetTemplateByIDWithoutTypeRow) *dto.TemplateResponse {
 	return &dto.TemplateResponse{
 		ID:                stringToPtr(template.ID.String()),
-		UserID:            stringToPtr(template.UserID.String()),
-		CompanyID:         stringToPtr(template.CompanyID.String()),
+		UserID:            handleNullUUID(template.UserID),
+		CompanyID:         handleNullUUID(template.CompanyID), // Fixed: Handle nullable UUID
 		Name:              &template.TemplateName,
 		SenderName:        nullStringToPtr(template.SenderName),
 		FromEmail:         nullStringToPtr(template.FromEmail),
 		Subject:           nullStringToPtr(template.Subject),
-		Type:              &template.Type, // Not available in GetTemplateByIDWithoutType
+		Type:              &template.Type,
 		EmailHtml:         nullStringToPtr(template.EmailHtml),
 		EmailDesign:       nullRawMessageToPtr(template.EmailDesign),
 		IsEditable:        nullBoolToBool(template.IsEditable),
@@ -374,6 +375,17 @@ func MapTemplateFromSeparateQuery(template db.GetTemplateByIDWithoutTypeRow) *dt
 	}
 }
 
+// handleNullUUID handles nullable UUID conversion to string pointer
+func handleNullUUID(nu uuid.NullUUID) *string {
+	if !nu.Valid {
+		return nil
+	}
+	if nu.UUID == uuid.Nil {
+		return nil
+	}
+	str := nu.UUID.String()
+	return &str
+}
 // Helper function to convert string to pointer
 func stringToPtr(s string) *string {
 	return &s

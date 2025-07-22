@@ -432,8 +432,8 @@ type SystemsSmtpSetting struct {
 
 type Template struct {
 	ID                uuid.UUID             `json:"id"`
-	UserID            uuid.UUID             `json:"user_id"`
-	CompanyID         uuid.UUID             `json:"company_id"`
+	UserID            uuid.NullUUID         `json:"user_id"`
+	CompanyID         uuid.NullUUID         `json:"company_id"`
 	TemplateName      string                `json:"template_name"`
 	SenderName        sql.NullString        `json:"sender_name"`
 	FromEmail         sql.NullString        `json:"from_email"`
