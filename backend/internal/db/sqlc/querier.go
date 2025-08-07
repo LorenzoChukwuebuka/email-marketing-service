@@ -290,6 +290,7 @@ type Querier interface {
 	UpdateEmailOpened(ctx context.Context, arg UpdateEmailOpenedParams) (EmailCampaignResult, error)
 	UpdateEmailUnsubscribed(ctx context.Context, arg UpdateEmailUnsubscribedParams) (EmailCampaignResult, error)
 	UpdateEmailsSentAndRemaining(ctx context.Context, arg UpdateEmailsSentAndRemainingParams) (EmailUsage, error)
+	UpdateGalleryTemplate(ctx context.Context, arg UpdateGalleryTemplateParams) (Template, error)
 	UpdateInvitationStatus(ctx context.Context, arg UpdateInvitationStatusParams) (Invitation, error)
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
 	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error

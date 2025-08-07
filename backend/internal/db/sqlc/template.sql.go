@@ -953,6 +953,99 @@ func (q *Queries) SoftDeleteTemplate(ctx context.Context, arg SoftDeleteTemplate
 	return err
 }
 
+const updateGalleryTemplate = `-- name: UpdateGalleryTemplate :one
+UPDATE templates
+SET
+    template_name = COALESCE($1, template_name),
+    sender_name = COALESCE($2, sender_name),
+    from_email = COALESCE($3, from_email),
+    subject = COALESCE($4, subject),
+    type = COALESCE($5, type),
+    email_html = COALESCE($6, email_html),
+    email_design = COALESCE($7, email_design),
+    is_editable = COALESCE($8, is_editable),
+    is_published = COALESCE($9, is_published),
+    is_public_template = COALESCE($10, is_public_template),
+    is_gallery_template = COALESCE($11, is_gallery_template),
+    tags = COALESCE($12, tags),
+    description = COALESCE($13, description),
+    image_url = COALESCE($14, image_url),
+    is_active = COALESCE($15, is_active),
+    editor_type = COALESCE($16, editor_type),
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $17
+    AND deleted_at IS NULL RETURNING id, user_id, company_id, template_name, sender_name, from_email, subject, type, email_html, email_design, is_editable, is_published, is_public_template, is_gallery_template, tags, description, image_url, is_active, editor_type, created_at, updated_at, deleted_at
+`
+
+type UpdateGalleryTemplateParams struct {
+	TemplateName      string                `json:"template_name"`
+	SenderName        sql.NullString        `json:"sender_name"`
+	FromEmail         sql.NullString        `json:"from_email"`
+	Subject           sql.NullString        `json:"subject"`
+	Type              string                `json:"type"`
+	EmailHtml         sql.NullString        `json:"email_html"`
+	EmailDesign       pqtype.NullRawMessage `json:"email_design"`
+	IsEditable        sql.NullBool          `json:"is_editable"`
+	IsPublished       sql.NullBool          `json:"is_published"`
+	IsPublicTemplate  sql.NullBool          `json:"is_public_template"`
+	IsGalleryTemplate sql.NullBool          `json:"is_gallery_template"`
+	Tags              sql.NullString        `json:"tags"`
+	Description       sql.NullString        `json:"description"`
+	ImageUrl          sql.NullString        `json:"image_url"`
+	IsActive          sql.NullBool          `json:"is_active"`
+	EditorType        sql.NullString        `json:"editor_type"`
+	ID                uuid.UUID             `json:"id"`
+}
+
+func (q *Queries) UpdateGalleryTemplate(ctx context.Context, arg UpdateGalleryTemplateParams) (Template, error) {
+	row := q.db.QueryRowContext(ctx, updateGalleryTemplate,
+		arg.TemplateName,
+		arg.SenderName,
+		arg.FromEmail,
+		arg.Subject,
+		arg.Type,
+		arg.EmailHtml,
+		arg.EmailDesign,
+		arg.IsEditable,
+		arg.IsPublished,
+		arg.IsPublicTemplate,
+		arg.IsGalleryTemplate,
+		arg.Tags,
+		arg.Description,
+		arg.ImageUrl,
+		arg.IsActive,
+		arg.EditorType,
+		arg.ID,
+	)
+	var i Template
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.TemplateName,
+		&i.SenderName,
+		&i.FromEmail,
+		&i.Subject,
+		&i.Type,
+		&i.EmailHtml,
+		&i.EmailDesign,
+		&i.IsEditable,
+		&i.IsPublished,
+		&i.IsPublicTemplate,
+		&i.IsGalleryTemplate,
+		&i.Tags,
+		&i.Description,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.EditorType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const updateTemplate = `-- name: UpdateTemplate :one
 UPDATE templates
 SET

@@ -259,3 +259,27 @@ WHERE
     is_public_template = true
     AND is_gallery_template = true
     AND deleted_at IS NULL;
+
+-- name: UpdateGalleryTemplate :one
+UPDATE templates
+SET
+    template_name = COALESCE($1, template_name),
+    sender_name = COALESCE($2, sender_name),
+    from_email = COALESCE($3, from_email),
+    subject = COALESCE($4, subject),
+    type = COALESCE($5, type),
+    email_html = COALESCE($6, email_html),
+    email_design = COALESCE($7, email_design),
+    is_editable = COALESCE($8, is_editable),
+    is_published = COALESCE($9, is_published),
+    is_public_template = COALESCE($10, is_public_template),
+    is_gallery_template = COALESCE($11, is_gallery_template),
+    tags = COALESCE($12, tags),
+    description = COALESCE($13, description),
+    image_url = COALESCE($14, image_url),
+    is_active = COALESCE($15, is_active),
+    editor_type = COALESCE($16, editor_type),
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $17
+    AND deleted_at IS NULL RETURNING *;
