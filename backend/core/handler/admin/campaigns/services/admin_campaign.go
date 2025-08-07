@@ -8,6 +8,7 @@ import (
 	campaignMapper "email-marketing-service/core/handler/campaigns/mapper"
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
+	"email-marketing-service/internal/enums"
 	"fmt"
 	"github.com/google/uuid"
 )
@@ -141,6 +142,46 @@ func (s *AdminCampaignService) GetAllRecipientsForACampaign(ctx context.Context,
 	return data, nil
 }
 
-func (s *AdminCampaignService) SuspendCampaign() {}
+func (s *AdminCampaignService) SuspendCampaign(ctx context.Context, req *dto.AdminFetchCampaignDTO) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":     req.UserID,
+		"campaign": req.CampaignID,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
 
-func (s *AdminCampaignService) UnsuspendCampaign() {}
+	err = s.store.UpdateCampaignStatus(ctx, db.UpdateCampaignStatusParams{
+		ID:     _uuid["campaign"],
+		UserID: _uuid["user"],
+		Status: sql.NullString{String: string(enums.Suspended), Valid: true},
+	})
+
+	if err != nil {
+		return nil, common.ErrSuspendingCampaign
+	}
+
+	return nil, nil
+}
+
+func (s *AdminCampaignService) UnsuspendCampaign(ctx context.Context, req *dto.AdminFetchCampaignDTO) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"company":  req.CompanyID,
+		"user":     req.UserID,
+		"campaign": req.CampaignID,
+	})
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	err = s.store.UpdateCampaignStatus(ctx, db.UpdateCampaignStatusParams{
+		ID:     _uuid["campaign"],
+		UserID: _uuid["user"],
+		Status: sql.NullString{String: string(enums.Draft), Valid: true},
+	})
+	if err != nil {
+		return nil, common.ErrUnsuspendingCampaign
+	}
+
+	return nil, nil
+}

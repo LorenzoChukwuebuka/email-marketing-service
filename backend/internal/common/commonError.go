@@ -43,6 +43,9 @@ var (
 	ErrUserDeleted               = errors.New("user has been deleted")
 	ErrUserBlocked               = errors.New("user has been blocked")
 	ErrUserAlreadyVerified       = errors.New("user has already been verified")
+	ErrSuspendingCampaign 	  = errors.New("error suspending campaign")
+	ErrUnsuspendingCampaign     = errors.New("error unsuspending campaign")
+	
 )
 
 func TraceError(err error) error {

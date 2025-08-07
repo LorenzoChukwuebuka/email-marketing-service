@@ -26,10 +26,20 @@ type AdminTemplateDTO struct {
 	TemplateID        string          `json:"template_id"`
 }
 
-
 type AdminFetchGalleryTemplatesDTO struct {
 	TemplateId string `json:"template_id"`
 	Limit      int    `json:"limit"`
 	Offset     int    `json:"offset"`
 	Search     string `json:"search"`
+	Type       string `json:"type"`
+}
+
+type AdminFetchTemplateDTO struct {
+	TemplateId  string `json:"template_id"`
+	Limit       int    `json:"limit"`
+	Offset      int    `json:"offset"`
+	SearchQuery string `json:"search"`
+	UserID      string `json:"user_id"`
+	CompanyID   string `json:"company_id"`
+	Type        string `json:"type"`
 }

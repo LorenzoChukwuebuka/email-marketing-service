@@ -7,5 +7,6 @@ const (
 	Saved     CampaignStatus = "saved"
 	Scheduled CampaignStatus = "scheduled"
 	Sent      CampaignStatus = "sent"
-	Queued CampaignStatus = "queued"
+	Queued    CampaignStatus = "queued"
+	Suspended CampaignStatus = "suspended"
 )

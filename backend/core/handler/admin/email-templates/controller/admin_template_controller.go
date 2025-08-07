@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type AdminTemplateController struct {
@@ -38,4 +40,20 @@ func (c *AdminTemplateController) CreateGalleryTemplate(w http.ResponseWriter, r
 	}
 
 	helper.SuccessResponse(w, 201, result)
+}
+
+func (c *AdminTemplateController) GetTemplateById(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	templateId := vars["templateId"]
+
+	result, err := c.service.GetTemplate(ctx, templateId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, 200, result)
 }

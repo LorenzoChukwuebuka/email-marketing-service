@@ -40,6 +40,7 @@ type Querier interface {
 	// Counts total number of contact groups for a company
 	CountContactGroups(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountDomainByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
+	CountGalleryTemplates(ctx context.Context) (int64, error)
 	CountSenderByCompanyID(ctx context.Context, companyID uuid.UUID) (int64, error)
 	CountTemplatesByUserID(ctx context.Context, userID uuid.NullUUID) (int64, error)
 	CountUnVerifiedUsers(ctx context.Context) (int64, error)
@@ -195,6 +196,7 @@ type Querier interface {
 	GetSingleUser(ctx context.Context, id uuid.UUID) (GetSingleUserRow, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error)
+	GetTemplateByIDGallery(ctx context.Context, templateID uuid.UUID) (Template, error)
 	GetTemplateByIDWithoutType(ctx context.Context, arg GetTemplateByIDWithoutTypeParams) (GetTemplateByIDWithoutTypeRow, error)
 	GetTicketFiles(ctx context.Context, ticketID uuid.UUID) ([]TicketFile, error)
 	GetTicketWithMessages(ctx context.Context, id uuid.UUID) ([]GetTicketWithMessagesRow, error)
@@ -238,6 +240,7 @@ type Querier interface {
 	ListTemplates(ctx context.Context, arg ListTemplatesParams) ([]ListTemplatesRow, error)
 	ListTemplatesByCompanyID(ctx context.Context, arg ListTemplatesByCompanyIDParams) ([]ListTemplatesByCompanyIDRow, error)
 	ListTemplatesByType(ctx context.Context, arg ListTemplatesByTypeParams) ([]ListTemplatesByTypeRow, error)
+	ListTemplatesByTypeGallery(ctx context.Context, arg ListTemplatesByTypeGalleryParams) ([]Template, error)
 	ListTemplatesByUserID(ctx context.Context, arg ListTemplatesByUserIDParams) ([]ListTemplatesByUserIDRow, error)
 	ListUsersByCompany(ctx context.Context, companyID uuid.UUID) ([]User, error)
 	MarkAdminNotificationAsRead(ctx context.Context, id uuid.UUID) error

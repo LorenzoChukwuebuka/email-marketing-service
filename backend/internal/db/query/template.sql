@@ -222,3 +222,40 @@ WHERE
     AND t.deleted_at IS NULL
 ORDER BY t.created_at DESC
 LIMIT 1;
+
+-- name: GetTemplateByIDGallery :one
+
+SELECT t.*
+FROM templates t
+WHERE
+    t.id = @template_id
+    AND t.is_public_template = true
+    AND t.is_gallery_template = true
+    AND t.deleted_at IS NULL
+ORDER BY t.created_at DESC
+LIMIT 1;
+
+-- name: ListTemplatesByTypeGallery :many
+SELECT t.*
+FROM templates t
+WHERE
+    t.type = @template_type
+    AND t.is_public_template = true
+    AND t.is_gallery_template = true
+    AND t.deleted_at IS NULL
+    AND (
+        @template_search = ''
+        OR t.template_name ILIKE '%' || @template_search || '%'
+    )
+ORDER BY t.created_at DESC
+LIMIT @row_limit
+OFFSET
+    @row_offset;
+
+-- name: CountGalleryTemplates :one
+SELECT COUNT(*)
+FROM templates
+WHERE
+    is_public_template = true
+    AND is_gallery_template = true
+    AND deleted_at IS NULL;
