@@ -85,7 +85,6 @@ func (s *AdminTemplatesService) GetTemplate(ctx context.Context, templateId stri
 }
 
 func (s *AdminTemplatesService) GetTemplatesByType(ctx context.Context, req *dto.AdminFetchGalleryTemplatesDTO) (any, error) {
-
 	templates, err := s.store.ListTemplatesByTypeGallery(ctx, db.ListTemplatesByTypeGalleryParams{
 		TemplateType:   req.Type,
 		TemplateSearch: req.Search,
@@ -119,7 +118,51 @@ func (s *AdminTemplatesService) GetTemplatesByType(ctx context.Context, req *dto
 	return data, nil
 }
 
-func (s *AdminTemplatesService) UpdateTemplate() {}
+func (s *AdminTemplatesService) UpdateTemplate(ctx context.Context, req *dto.AdminTemplateDTO) (any, error) {
+	if err := helper.ValidateData(req); err != nil {
+		return nil, errors.Join(common.ErrValidatingRequest, err)
+	}
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user":     req.UserId,
+		"template": req.TemplateID,
+	})
+
+	if err != nil {
+		return nil, common.ErrInvalidUUID
+	}
+
+	_, err = s.store.UpdateGalleryTemplate(ctx, db.UpdateGalleryTemplateParams{
+		ID:           _uuid["template"],
+		TemplateName: req.TemplateName,
+		SenderName:   sql.NullString{String: req.SenderName, Valid: true},
+		FromEmail:    sql.NullString{String: req.FromEmail, Valid: true},
+		Subject:      sql.NullString{String: req.Subject, Valid: true},
+		Type:         req.Type,
+		EmailHtml:    sql.NullString{String: req.EmailHtml, Valid: true},
+		EmailDesign:  pqtype.NullRawMessage{RawMessage: req.EmailDesign, Valid: true},
+		IsEditable:   sql.NullBool{Bool: req.IsEditable, Valid: true},
+		IsPublished:  sql.NullBool{Bool: req.IsPublished, Valid: true},
+		IsPublicTemplate: sql.NullBool{
+			Bool:  req.IsPublicTemplate,
+			Valid: true,
+		},
+		IsGalleryTemplate: sql.NullBool{
+			Bool:  req.IsGalleryTemplate,
+			Valid: true,
+		},
+		Tags:        sql.NullString{String: req.Tags, Valid: true},
+		Description: sql.NullString{String: req.Description, Valid: true},
+		ImageUrl:    sql.NullString{String: req.ImageUrl, Valid: true},
+		IsActive:    sql.NullBool{Bool: req.IsActive, Valid: true},
+		EditorType:  sql.NullString{String: req.EditorType, Valid: true},
+	})
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrUpdatingRecord
+	}
+	
+	return req, nil
+}
 
 func (s *AdminTemplatesService) DeleteTemplate(ctx context.Context, templateId string) error {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
