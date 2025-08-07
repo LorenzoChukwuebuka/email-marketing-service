@@ -9,11 +9,38 @@ import (
 	"time"
 )
 
+type MappableTemplate interface {
+	GetID() uuid.UUID
+	GetUserID() uuid.NullUUID
+	GetCompanyID() uuid.NullUUID
+	GetTemplateName() string
+	GetType() string
+	GetSenderName() sql.NullString
+	GetFromEmail() sql.NullString
+	GetSubject() sql.NullString
+	GetEmailHtml() sql.NullString
+	GetTags() sql.NullString
+	GetDescription() sql.NullString
+	GetImageUrl() sql.NullString
+	GetEditorType() sql.NullString
+	GetIsEditable() sql.NullBool
+	GetIsPublished() sql.NullBool
+	GetIsPublicTemplate() sql.NullBool
+	GetIsGalleryTemplate() sql.NullBool
+	GetIsActive() sql.NullBool
+	GetEmailDesign() interface{}
+	GetCreatedAt() sql.NullTime
+	GetUpdatedAt() sql.NullTime
+	GetDeletedAt() sql.NullTime
+	GetUserFullname() sql.NullString
+	GetUserEmail() sql.NullString
+	GetUserPicture() sql.NullString
+	GetCompanyName() sql.NullString
+}
+
 func MapTemplateToDTO(dbTemplate db.Template) any {
 	return &dto.AdminTemplateDTO{
 		TemplateID: dbTemplate.ID.String(),
-		//UserId:     dbTemplate.UserID.String(),
-		//	CompanyID:        dbTemplate.CompanyID.String(),
 		TemplateName:      dbTemplate.TemplateName,
 		SenderName:        dbTemplate.SenderName.String,
 		FromEmail:         dbTemplate.FromEmail.String,
@@ -33,50 +60,50 @@ func MapTemplateToDTO(dbTemplate db.Template) any {
 	}
 }
 
-func MapTemplateResponse(templates []db.ListTemplatesByTypeRow) []dto.AdminTemplateResponse {
-	if len(templates) == 0 {
+func MapTemplateResponse[T MappableTemplate](t []T) []dto.AdminTemplateResponse {
+	if len(t) == 0 {
 		return []dto.AdminTemplateResponse{}
 	}
 
 	var response []dto.AdminTemplateResponse
 
-	for _, template := range templates {
+	for _, template := range t {
 		templateResponse := dto.AdminTemplateResponse{
-			ID:           template.ID,
-			UserID:       getNullUUID(template.UserID),
-			CompanyID:    getNullUUID(template.CompanyID),
-			TemplateName: template.TemplateName,
-			Type:         template.Type,
+			ID:           template.GetID(),
+			UserID:       getNullUUID(template.GetUserID()),
+			CompanyID:    getNullUUID(template.GetCompanyID()),
+			TemplateName: template.GetTemplateName(),
+			Type:         template.GetType(),
 			// Handle nullable string fields
-			SenderName:  getNullStringValue(template.SenderName),
-			FromEmail:   getNullStringValue(template.FromEmail),
-			Subject:     getNullStringValue(template.Subject),
-			EmailHtml:   getNullStringValue(template.EmailHtml),
-			Tags:        getNullStringValue(template.Tags),
-			Description: getNullStringValue(template.Description),
-			ImageUrl:    getNullStringValue(template.ImageUrl),
-			EditorType:  getNullStringValue(template.EditorType),
+			SenderName:  getNullStringValue(template.GetSenderName()),
+			FromEmail:   getNullStringValue(template.GetFromEmail()),
+			Subject:     getNullStringValue(template.GetSubject()),
+			EmailHtml:   getNullStringValue(template.GetEmailHtml()),
+			Tags:        getNullStringValue(template.GetTags()),
+			Description: getNullStringValue(template.GetDescription()),
+			ImageUrl:    getNullStringValue(template.GetImageUrl()),
+			EditorType:  getNullStringValue(template.GetEditorType()),
 			// Handle nullable boolean fields
-			IsEditable:        getNullBoolValue(template.IsEditable),
-			IsPublished:       getNullBoolValue(template.IsPublished),
-			IsPublicTemplate:  getNullBoolValue(template.IsPublicTemplate),
-			IsGalleryTemplate: getNullBoolValue(template.IsGalleryTemplate),
-			IsActive:          getNullBoolValue(template.IsActive),
+			IsEditable:        getNullBoolValue(template.GetIsEditable()),
+			IsPublished:       getNullBoolValue(template.GetIsPublished()),
+			IsPublicTemplate:  getNullBoolValue(template.GetIsPublicTemplate()),
+			IsGalleryTemplate: getNullBoolValue(template.GetIsGalleryTemplate()),
+			IsActive:          getNullBoolValue(template.GetIsActive()),
 			// Handle nullable JSONB field
-			EmailDesign: getJSONValue(template.EmailDesign),
+			EmailDesign: getJSONValue(template.GetEmailDesign()),
 			// Handle nullable time fields
-			CreatedAt: getNullTimeValue(template.CreatedAt),
-			UpdatedAt: getNullTimeValue(template.UpdatedAt),
-			DeletedAt: getNullTimeValue(template.DeletedAt),
+			CreatedAt: getNullTimeValue(template.GetCreatedAt()),
+			UpdatedAt: getNullTimeValue(template.GetUpdatedAt()),
+			DeletedAt: getNullTimeValue(template.GetDeletedAt()),
 			// Map user information
 			User: dto.TemplateUserResponse{
-				UserFullname: getNullStringValue(template.UserFullname),
-				UserEmail:    getNullStringValue(template.UserEmail),
-				UserPicture:  getNullStringValue(template.UserPicture),
+				UserFullname: getNullStringValue(template.GetUserFullname()),
+				UserEmail:    getNullStringValue(template.GetUserEmail()),
+				UserPicture:  getNullStringValue(template.GetUserPicture()),
 			},
 			// Map company information
 			Company: dto.TemplateCompanyResponse{
-				CompanyName: getNullStringValue(template.CompanyName),
+				CompanyName: getNullStringValue(template.GetCompanyName()),
 			},
 		}
 
@@ -141,45 +168,39 @@ func getJSONValue(nullableJSON interface{}) json.RawMessage {
 	return nil
 }
 
-func MapSingleTemplateResponse(template db.GetTemplateByIDRow) dto.AdminTemplateResponse {
-	templateResponse := dto.AdminTemplateResponse{
-		ID:           template.ID,
-		UserID:       getNullUUID(template.UserID),
-		CompanyID:    getNullUUID(template.CompanyID),
-		TemplateName: template.TemplateName,
-		Type:         template.Type,
-		// Handle nullable string fields
-		SenderName:  getNullStringValue(template.SenderName),
-		FromEmail:   getNullStringValue(template.FromEmail),
-		Subject:     getNullStringValue(template.Subject),
-		EmailHtml:   getNullStringValue(template.EmailHtml),
-		Tags:        getNullStringValue(template.Tags),
-		Description: getNullStringValue(template.Description),
-		ImageUrl:    getNullStringValue(template.ImageUrl),
-		EditorType:  getNullStringValue(template.EditorType),
-		// Handle nullable boolean fields
-		IsEditable:        getNullBoolValue(template.IsEditable),
-		IsPublished:       getNullBoolValue(template.IsPublished),
-		IsPublicTemplate:  getNullBoolValue(template.IsPublicTemplate),
-		IsGalleryTemplate: getNullBoolValue(template.IsGalleryTemplate),
-		IsActive:          getNullBoolValue(template.IsActive),
-		// Handle nullable JSONB field
-		EmailDesign: getJSONValue(template.EmailDesign),
-		// Handle nullable time fields
-		CreatedAt: getNullTimeValue(template.CreatedAt),
-		UpdatedAt: getNullTimeValue(template.UpdatedAt),
-		DeletedAt: getNullTimeValue(template.DeletedAt),
-		// Map user information
+ 
+
+func  MapSingleTemplateResponse[T MappableTemplate](t T) dto.AdminTemplateResponse {
+	return dto.AdminTemplateResponse{
+		ID:                t.GetID(),
+		UserID:            getNullUUID(t.GetUserID()),
+		CompanyID:         getNullUUID(t.GetCompanyID()),
+		TemplateName:      t.GetTemplateName(),
+		Type:              t.GetType(),
+		SenderName:        getNullStringValue(t.GetSenderName()),
+		FromEmail:         getNullStringValue(t.GetFromEmail()),
+		Subject:           getNullStringValue(t.GetSubject()),
+		EmailHtml:         getNullStringValue(t.GetEmailHtml()),
+		Tags:              getNullStringValue(t.GetTags()),
+		Description:       getNullStringValue(t.GetDescription()),
+		ImageUrl:          getNullStringValue(t.GetImageUrl()),
+		EditorType:        getNullStringValue(t.GetEditorType()),
+		IsEditable:        getNullBoolValue(t.GetIsEditable()),
+		IsPublished:       getNullBoolValue(t.GetIsPublished()),
+		IsPublicTemplate:  getNullBoolValue(t.GetIsPublicTemplate()),
+		IsGalleryTemplate: getNullBoolValue(t.GetIsGalleryTemplate()),
+		IsActive:          getNullBoolValue(t.GetIsActive()),
+		EmailDesign:       getJSONValue(t.GetEmailDesign()),
+		CreatedAt:         getNullTimeValue(t.GetCreatedAt()),
+		UpdatedAt:         getNullTimeValue(t.GetUpdatedAt()),
+		DeletedAt:         getNullTimeValue(t.GetDeletedAt()),
 		User: dto.TemplateUserResponse{
-			UserFullname: getNullStringValue(template.UserFullname),
-			UserEmail:    getNullStringValue(template.UserEmail),
-			UserPicture:  getNullStringValue(template.UserPicture),
+			UserFullname: getNullStringValue(t.GetUserFullname()),
+			UserEmail:    getNullStringValue(t.GetUserEmail()),
+			UserPicture:  getNullStringValue(t.GetUserPicture()),
 		},
-		// Map company information
 		Company: dto.TemplateCompanyResponse{
-			CompanyName: getNullStringValue(template.CompanyName),
+			CompanyName: getNullStringValue(t.GetCompanyName()),
 		},
 	}
-
-	return templateResponse
 }

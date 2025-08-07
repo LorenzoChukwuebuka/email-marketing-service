@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"email-marketing-service/core/handler/admin/email-templates/dto"
+	"email-marketing-service/core/handler/admin/email-templates/mapper"
 	"email-marketing-service/internal/common"
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/helper"
 	"errors"
+	"fmt"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -67,23 +69,72 @@ func (s *AdminTemplatesService) CreateTemplate(ctx context.Context, req *dto.Adm
 	return template, nil
 }
 
-func (s *AdminTemplatesService) GetTemplate(ctx context.Context, req *dto.AdminFetchGalleryTemplatesDTO) (any, error) {
+func (s *AdminTemplatesService) GetTemplate(ctx context.Context, templateId string) (any, error) {
 	_uuid, err := common.ParseUUIDMap(map[string]string{
-		"template": req.TemplateId})
+		"template": templateId})
 	if err != nil {
 		return nil, err
 	}
-	template, err := s.store.GetTemplateByID(ctx, db.GetTemplateByIDParams{
-		TemplateID: _uuid["template"],
-	})
+	template, err := s.store.GetTemplateByIDGallery(ctx, _uuid["template"])
 	if err != nil {
 		return nil, err
 	}
-	return template, nil
+
+	response := mapper.MapSingleTemplateResponse(mapper.TemplateAdapter(template))
+	return response, nil
 }
-func (s *AdminTemplatesService) GetTemplates() {}
+
+func (s *AdminTemplatesService) GetTemplatesByType(ctx context.Context, req *dto.AdminFetchGalleryTemplatesDTO) (any, error) {
+
+	templates, err := s.store.ListTemplatesByTypeGallery(ctx, db.ListTemplatesByTypeGalleryParams{
+		TemplateType:   req.Type,
+		TemplateSearch: req.Search,
+		RowOffset:      int32(req.Offset),
+		RowLimit:       int32(req.Limit),
+	})
+
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrFetchingRecord
+	}
+
+	count_templates, err := s.store.CountGalleryTemplates(ctx)
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return nil, common.ErrFetchingRecord
+	}
+
+	var adaptedTemplates []mapper.TemplateAdapter
+	for _, t := range templates {
+		adaptedTemplates = append(adaptedTemplates, mapper.TemplateAdapter(t))
+	}
+	response := mapper.MapTemplateResponse(adaptedTemplates)
+
+	items := make([]any, len(response))
+	for i, v := range response {
+		items[i] = v
+	}
+
+	data := common.Paginate(int(count_templates), items, req.Offset, req.Limit)
+	return data, nil
+}
 
 func (s *AdminTemplatesService) UpdateTemplate() {}
-func (s *AdminTemplatesService) DeleteTemplate() {}
 
-func (s *AdminTemplatesService) ArchiveTemplate() {}
+func (s *AdminTemplatesService) DeleteTemplate(ctx context.Context, templateId string) error {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"template": templateId})
+	if err != nil {
+		return err
+	}
+
+	if err := s.store.HardDeleteTemplate(ctx, _uuid["template"]); err != nil {
+		return common.ErrDeletingRecord
+	}
+
+	return nil
+}
+
+func (s *AdminTemplatesService) ArchiveOrUnArchiveTemplate() {}
+
+func (s *AdminTemplatesService) PublishOrUnpublishTemplate() {}

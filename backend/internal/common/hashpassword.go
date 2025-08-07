@@ -15,7 +15,6 @@ func HashPassword(password string) (string, error) {
 	}
 
 	return string(bs), nil
-
 }
 
 // CheckPassword checks if plainPassword matches hashedPassword.

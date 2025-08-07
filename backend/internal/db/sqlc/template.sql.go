@@ -53,6 +53,22 @@ func (q *Queries) CheckTemplateNameExists(ctx context.Context, arg CheckTemplate
 	return template_exists, err
 }
 
+const countGalleryTemplates = `-- name: CountGalleryTemplates :one
+SELECT COUNT(*)
+FROM templates
+WHERE
+    is_public_template = true
+    AND is_gallery_template = true
+    AND deleted_at IS NULL
+`
+
+func (q *Queries) CountGalleryTemplates(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countGalleryTemplates)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countTemplatesByUserID = `-- name: CountTemplatesByUserID :one
 SELECT COUNT(*)
 FROM templates
@@ -270,6 +286,49 @@ func (q *Queries) GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams
 		&i.UserEmail,
 		&i.UserPicture,
 		&i.CompanyName,
+	)
+	return i, err
+}
+
+const getTemplateByIDGallery = `-- name: GetTemplateByIDGallery :one
+
+SELECT t.id, t.user_id, t.company_id, t.template_name, t.sender_name, t.from_email, t.subject, t.type, t.email_html, t.email_design, t.is_editable, t.is_published, t.is_public_template, t.is_gallery_template, t.tags, t.description, t.image_url, t.is_active, t.editor_type, t.created_at, t.updated_at, t.deleted_at
+FROM templates t
+WHERE
+    t.id = $1
+    AND t.is_public_template = true
+    AND t.is_gallery_template = true
+    AND t.deleted_at IS NULL
+ORDER BY t.created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetTemplateByIDGallery(ctx context.Context, templateID uuid.UUID) (Template, error) {
+	row := q.db.QueryRowContext(ctx, getTemplateByIDGallery, templateID)
+	var i Template
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.TemplateName,
+		&i.SenderName,
+		&i.FromEmail,
+		&i.Subject,
+		&i.Type,
+		&i.EmailHtml,
+		&i.EmailDesign,
+		&i.IsEditable,
+		&i.IsPublished,
+		&i.IsPublicTemplate,
+		&i.IsGalleryTemplate,
+		&i.Tags,
+		&i.Description,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.EditorType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -679,6 +738,82 @@ func (q *Queries) ListTemplatesByType(ctx context.Context, arg ListTemplatesByTy
 			&i.UserEmail,
 			&i.UserPicture,
 			&i.CompanyName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTemplatesByTypeGallery = `-- name: ListTemplatesByTypeGallery :many
+SELECT t.id, t.user_id, t.company_id, t.template_name, t.sender_name, t.from_email, t.subject, t.type, t.email_html, t.email_design, t.is_editable, t.is_published, t.is_public_template, t.is_gallery_template, t.tags, t.description, t.image_url, t.is_active, t.editor_type, t.created_at, t.updated_at, t.deleted_at
+FROM templates t
+WHERE
+    t.type = $1
+    AND t.is_public_template = true
+    AND t.is_gallery_template = true
+    AND t.deleted_at IS NULL
+    AND (
+        $2 = ''
+        OR t.template_name ILIKE '%' || $2 || '%'
+    )
+ORDER BY t.created_at DESC
+LIMIT $4
+OFFSET
+    $3
+`
+
+type ListTemplatesByTypeGalleryParams struct {
+	TemplateType   string      `json:"template_type"`
+	TemplateSearch interface{} `json:"template_search"`
+	RowOffset      int32       `json:"row_offset"`
+	RowLimit       int32       `json:"row_limit"`
+}
+
+func (q *Queries) ListTemplatesByTypeGallery(ctx context.Context, arg ListTemplatesByTypeGalleryParams) ([]Template, error) {
+	rows, err := q.db.QueryContext(ctx, listTemplatesByTypeGallery,
+		arg.TemplateType,
+		arg.TemplateSearch,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Template{}
+	for rows.Next() {
+		var i Template
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CompanyID,
+			&i.TemplateName,
+			&i.SenderName,
+			&i.FromEmail,
+			&i.Subject,
+			&i.Type,
+			&i.EmailHtml,
+			&i.EmailDesign,
+			&i.IsEditable,
+			&i.IsPublished,
+			&i.IsPublicTemplate,
+			&i.IsGalleryTemplate,
+			&i.Tags,
+			&i.Description,
+			&i.ImageUrl,
+			&i.IsActive,
+			&i.EditorType,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

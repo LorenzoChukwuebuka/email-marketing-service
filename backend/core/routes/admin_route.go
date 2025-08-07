@@ -109,12 +109,22 @@ func (a *AdminRoute) InitRoutes(r *mux.Router) {
 
 	emailTemplateRoute := r.PathPrefix("/gallery-templates").Subrouter()
 	emailTemplateRoute.Use(middleware.AdminJWTMiddleware)
-	emailTemplateService := emailTemplateService.NewAdminTemplatesService(a.store)
-	emailTemplateController := emailTemplateController.NewAdminTemplateController(emailTemplateService)
+	emailTempService := emailTemplateService.NewAdminTemplatesService(a.store)
+	emailTempController := emailTemplateController.NewAdminTemplateController(emailTempService)
 
 	{
-		emailTemplateRoute.HandleFunc("/create", emailTemplateController.CreateGalleryTemplate).Methods("POST", "OPTIONS")
+		emailTemplateRoute.HandleFunc("/create", emailTempController.CreateGalleryTemplate).Methods("POST", "OPTIONS")
 
+	}
+
+	templateRoute := r.PathPrefix("/templates").Subrouter()
+	templateRoute.Use(middleware.AdminJWTMiddleware)
+	templateService := emailTemplateService.NewAdminUserTemplatesService(a.store)
+	adminUserTemplateController := emailTemplateController.NewAdminUserTemplateController(templateService)
+
+	{
+		templateRoute.HandleFunc("/get/{userId}/{type}", adminUserTemplateController.GetUserTemplates).Methods("GET", "OPTIONS")
+		templateRoute.HandleFunc("/get/single/{userId}/{templateId}", adminUserTemplateController.GetSingleTemplate).Methods("GET", "OPTIONS")
 	}
 
 }

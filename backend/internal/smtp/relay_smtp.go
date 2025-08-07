@@ -185,7 +185,7 @@ func (s *RelayService) sendToMXServer(mxHost, from string, to []string, data []b
 	var lastErr error
 
 	for _, port := range s.config.PreferredPorts {
-		addr := fmt.Sprintf("%s:%s", mxHost, port)
+		addr := fmt.Sprintf("%v:%v", mxHost, port)
 		s.debugLog(fmt.Sprintf("Attempting connection to %s", addr))
 
 		dialer := &net.Dialer{
