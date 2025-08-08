@@ -30,11 +30,14 @@ else
 	cp -r $(DIST_DIR)/* $(CLIENT_DIR)/
 endif
 
-git:
+deploy:
+ifndef MSG
+	$(error MSG is required. Usage: make deploy MSG="your commit message")
+endif
 	git add .
-	git commit -m "done"
+	git commit -m "$(MSG)"
 	git push
-
+	
 docker:
 	docker-compose up --build -d
 

@@ -43,3 +43,9 @@ type AdminFetchTemplateDTO struct {
 	CompanyID   string `json:"company_id"`
 	Type        string `json:"type"`
 }
+
+
+type TemplateStatusUpdate struct {
+	IsActive    *bool `json:"is_active,omitempty"`
+	IsPublished *bool `json:"is_published,omitempty"`
+}
