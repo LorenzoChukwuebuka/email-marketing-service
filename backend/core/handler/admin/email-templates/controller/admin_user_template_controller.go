@@ -76,3 +76,5 @@ func (c *AdminUserTemplateController) GetSingleTemplate(w http.ResponseWriter, r
 
 	helper.SuccessResponse(w, 200, template)
 }
+
+

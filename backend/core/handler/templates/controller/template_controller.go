@@ -67,6 +67,11 @@ func (c *Controller) GetTemplatesByType(w http.ResponseWriter, r *http.Request) 
 	offset := (page - 1) * pageSize
 	limit := pageSize
 
+	if err != nil {
+		helper.ErrorResponse(w, err, "an error occured")
+		return
+	}
+
 	req := &dto.FetchTemplateDTO{
 		UserId: userId,
 		Type:   tempType,
@@ -98,12 +103,12 @@ func (c *Controller) GetTemplateById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := &dto.FetchTemplateDTO{
-		UserId:       userId,
-		TemplateId:   tempId,
-		Type: temptype,
+		UserId:     userId,
+		TemplateId: tempId,
+		Type:       temptype,
 	}
 
-	fmt.Printf("ddd %+v",req)
+	fmt.Printf("ddd %+v", req)
 	template, err := c.service.GetTemplateByID(ctx, *req)
 	if err != nil {
 		helper.ErrorResponse(w, err, err)

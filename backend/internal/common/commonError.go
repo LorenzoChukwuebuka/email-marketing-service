@@ -45,6 +45,7 @@ var (
 	ErrUserAlreadyVerified       = errors.New("user has already been verified")
 	ErrSuspendingCampaign 	  = errors.New("error suspending campaign")
 	ErrUnsuspendingCampaign     = errors.New("error unsuspending campaign")
+	ErrGenericError = errors.New("an error occured")
 	
 )
 

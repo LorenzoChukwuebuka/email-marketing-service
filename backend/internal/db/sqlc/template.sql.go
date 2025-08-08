@@ -1141,3 +1141,51 @@ func (q *Queries) UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) 
 	)
 	return i, err
 }
+
+const updateTemplateStatus = `-- name: UpdateTemplateStatus :one
+UPDATE templates
+SET
+    is_active = COALESCE($2, is_active),
+    is_published = COALESCE($3, is_published),
+    updated_at = NOW()
+WHERE
+    id = $1
+    AND is_gallery_template = true 
+RETURNING id, user_id, company_id, template_name, sender_name, from_email, subject, type, email_html, email_design, is_editable, is_published, is_public_template, is_gallery_template, tags, description, image_url, is_active, editor_type, created_at, updated_at, deleted_at
+`
+
+type UpdateTemplateStatusParams struct {
+	ID          uuid.UUID    `json:"id"`
+	IsActive    sql.NullBool `json:"is_active"`
+	IsPublished sql.NullBool `json:"is_published"`
+}
+
+func (q *Queries) UpdateTemplateStatus(ctx context.Context, arg UpdateTemplateStatusParams) (Template, error) {
+	row := q.db.QueryRowContext(ctx, updateTemplateStatus, arg.ID, arg.IsActive, arg.IsPublished)
+	var i Template
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.TemplateName,
+		&i.SenderName,
+		&i.FromEmail,
+		&i.Subject,
+		&i.Type,
+		&i.EmailHtml,
+		&i.EmailDesign,
+		&i.IsEditable,
+		&i.IsPublished,
+		&i.IsPublicTemplate,
+		&i.IsGalleryTemplate,
+		&i.Tags,
+		&i.Description,
+		&i.ImageUrl,
+		&i.IsActive,
+		&i.EditorType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}

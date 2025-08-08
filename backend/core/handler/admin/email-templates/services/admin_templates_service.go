@@ -160,7 +160,7 @@ func (s *AdminTemplatesService) UpdateTemplate(ctx context.Context, req *dto.Adm
 		fmt.Printf("Database error: %v\n", err)
 		return nil, common.ErrUpdatingRecord
 	}
-	
+
 	return req, nil
 }
 
@@ -178,6 +178,22 @@ func (s *AdminTemplatesService) DeleteTemplate(ctx context.Context, templateId s
 	return nil
 }
 
-func (s *AdminTemplatesService) ArchiveOrUnArchiveTemplate() {}
+func (s *AdminTemplatesService) UpdatePublishAndTemplateStatus(ctx context.Context, templateId string, update *dto.TemplateStatusUpdate) error {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"template": templateId})
+	if err != nil {
+		return err
+	}
 
-func (s *AdminTemplatesService) PublishOrUnpublishTemplate() {}
+	// Call the sqlc generated method
+	_, err = s.store.UpdateTemplateStatus(ctx, db.UpdateTemplateStatusParams{
+		ID:          _uuid["template"],
+		IsActive:    sql.NullBool{Bool: *update.IsActive, Valid: update.IsActive != nil},
+		IsPublished: sql.NullBool{Bool: *update.IsPublished, Valid: update.IsPublished != nil},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update template status: %w", err)
+	}
+
+	return nil
+}

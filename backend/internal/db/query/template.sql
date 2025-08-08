@@ -283,3 +283,14 @@ SET
 WHERE
     id = $17
     AND deleted_at IS NULL RETURNING *;
+
+-- name: UpdateTemplateStatus :one
+UPDATE templates
+SET
+    is_active = COALESCE(sqlc.narg('is_active'), is_active),
+    is_published = COALESCE(sqlc.narg('is_published'), is_published),
+    updated_at = NOW()
+WHERE
+    id = $1
+    AND is_gallery_template = true 
+RETURNING *;

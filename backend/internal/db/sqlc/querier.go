@@ -305,6 +305,7 @@ type Querier interface {
 	UpdateSenderVerified(ctx context.Context, arg UpdateSenderVerifiedParams) error
 	UpdateSubscriptionStatus(ctx context.Context, arg UpdateSubscriptionStatusParams) (Subscription, error)
 	UpdateTemplate(ctx context.Context, arg UpdateTemplateParams) (Template, error)
+	UpdateTemplateStatus(ctx context.Context, arg UpdateTemplateStatusParams) (Template, error)
 	UpdateTicketStatus(ctx context.Context, arg UpdateTicketStatusParams) (SupportTicket, error)
 	UpdateUserLoginTime(ctx context.Context, id uuid.UUID) error
 	UpdateUserRecords(ctx context.Context, arg UpdateUserRecordsParams) error

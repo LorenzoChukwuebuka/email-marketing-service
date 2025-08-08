@@ -7,7 +7,6 @@ import (
 )
 
 
-
 func MapAdminToResponse(admin db.Admin) dto.AdminResponse {
 	var deletedAt *time.Time
 	if admin.DeletedAt.Valid {
