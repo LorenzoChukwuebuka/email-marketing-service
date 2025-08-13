@@ -54,6 +54,7 @@ type Querier interface {
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateAdminNotification(ctx context.Context, arg CreateAdminNotificationParams) (AdminNotification, error)
+	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error
 	CreateCampaign(ctx context.Context, arg CreateCampaignParams) (Campaign, error)
 	CreateCampaignError(ctx context.Context, arg CreateCampaignErrorParams) error
 	CreateCampaignGroups(ctx context.Context, arg CreateCampaignGroupsParams) error
@@ -115,6 +116,8 @@ type Querier interface {
 	GetAllTicketsWithPagination(ctx context.Context, arg GetAllTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetAllUsers(ctx context.Context, arg GetAllUsersParams) ([]GetAllUsersRow, error)
 	GetAllVerifiedUserEmails(ctx context.Context) ([]GetAllVerifiedUserEmailsRow, error)
+	GetAuditLogsByUser(ctx context.Context, arg GetAuditLogsByUserParams) ([]AuditLog, error)
+	GetAuditLogsForResource(ctx context.Context, arg GetAuditLogsForResourceParams) ([]AuditLog, error)
 	GetCampaignByID(ctx context.Context, arg GetCampaignByIDParams) (GetCampaignByIDRow, error)
 	GetCampaignContactEmails(ctx context.Context, campaignID uuid.UUID) ([]string, error)
 	GetCampaignContactGroups(ctx context.Context, campaignID uuid.UUID) ([]GetCampaignContactGroupsRow, error)

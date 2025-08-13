@@ -9,16 +9,19 @@ import (
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/enums"
 	"email-marketing-service/internal/helper"
+	"email-marketing-service/internal/logger"
 	"email-marketing-service/internal/mailer"
 	"errors"
 	"fmt"
+	"net"
+	"time"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"time"
 )
 
 type Service struct {
-	store db.Store
+	store    db.Store
+	auditLog *logger.AuditLogger
 }
 
 var (
@@ -26,8 +29,10 @@ var (
 )
 
 func NewAuthService(store db.Store) *Service {
+	auditLogger := logger.NewAuditLogger(store)
 	return &Service{
-		store: store,
+		store:    store,
+		auditLog: auditLogger,
 	}
 }
 
@@ -321,7 +326,15 @@ func (s *Service) ResendEmail(ctx context.Context, req *dto.ResendOTPRequest) er
 }
 
 func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse[dto.PublicUser], error) {
+
+	httpReq := common.RequestFromCtx(ctx)
+	var ip net.IP
+	if httpReq != nil {
+		ip = s.auditLog.GetClientIP(httpReq)
+	}
+
 	if err := helper.ValidateData(req); err != nil {
+		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
 
@@ -329,8 +342,10 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	user, err := s.store.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
 			return nil, common.ErrUserNotFound
 		}
+		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
 		return nil, common.ErrFetchingUser
 	}
 
@@ -358,11 +373,13 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		ExpiresAt: sql.NullTime{Time: time.Now().UTC().Add(5 * time.Minute), Valid: true},
 	})
 	if err != nil {
+		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
 		return nil, fmt.Errorf("error creating OTP: %w", err)
 	}
 
 	// Send OTP email
 	go mailer.NewEmailService().VerifyUserLogin(req.Email, user.Fullname, user.ID.String(), otptoken)
+	_ = s.auditLog.LogLogin(ctx, user.ID, "POST", "/auth/login", ip, user.Fullname)
 
 	return &dto.LoginResponse[dto.PublicUser]{
 		Status:  "OTP sent to your email. Please verify to complete login",

@@ -20,6 +20,7 @@ const AnalyticsTableComponent: React.FC = () => {
     const tableData = useMemo(() => analyticsData?.payload?.data, [analyticsData]);
     const totalItems = analyticsData?.payload?.total || 0;
 
+    //@ts-ignore
     const handleSearch = (value: string) => {
         setSearchQuery(value);
         setCurrentPage(1);

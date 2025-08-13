@@ -3,8 +3,8 @@ package seeders
 import (
 	"context"
 	"database/sql"
-	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/common"
+	db "email-marketing-service/internal/db/sqlc"
 	"fmt"
 	"log"
 	"os"
@@ -21,7 +21,7 @@ func SeedAdmins(ctx context.Context, queries db.Store) error {
 		adminEmail = "admin@example.com" // Default email
 		log.Println("Warning: ADMIN_EMAIL not set, using default email")
 	}
-	
+
 	if adminPassword == "" {
 		adminPassword = "defaultpassword123" // Default password
 		log.Println("Warning: ADMIN_PASSWORD not set, using default password")
@@ -57,9 +57,9 @@ func SeedAdmins(ctx context.Context, queries db.Store) error {
 	}
 
 	// Create the admin
-	firstName := "hello"
-	middleName := "wedon't really know"
-	lastName := "hello"
+	firstName := "Lawrence"
+	middleName := "Chukwuebuka"
+	lastName := "Obi"
 	adminType := "admin"
 
 	_, err = queries.CreateAdmin(ctx, db.CreateAdminParams{
@@ -92,7 +92,7 @@ func SeedMultipleAdmins(ctx context.Context, queries db.Store) error {
 	}{
 		{
 			firstName:  "hello",
-			middleName: "wedon't really know", 
+			middleName: "wedon't really know",
 			lastName:   "hello",
 			email:      getEnvOrDefault("ADMIN_EMAIL", "admin@example.com"),
 			password:   getEnvOrDefault("ADMIN_PASSWORD", "defaultpassword123"),

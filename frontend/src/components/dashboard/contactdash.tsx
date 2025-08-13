@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Statistic, Row, Col, Typography, Avatar, Space, Spin } from 'antd';
+import { Card,  Row, Col, Typography, Avatar,  Spin } from 'antd';
 import { UserOutlined, UsergroupAddOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContactCountQuery } from "../../features/contacts/hooks/useContactQuery";
 

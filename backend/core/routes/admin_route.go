@@ -114,6 +114,8 @@ func (a *AdminRoute) InitRoutes(r *mux.Router) {
 
 	{
 		emailTemplateRoute.HandleFunc("/create", emailTempController.CreateGalleryTemplate).Methods("POST", "OPTIONS")
+		emailTemplateRoute.HandleFunc("/get/{type}", emailTempController.GetTemplatesByType).Methods("GET", "OPTIONS")
+		emailTemplateRoute.HandleFunc("/get/{templateId}", emailTempController.GetTemplateById).Methods("GET", "OPTIONS")
 
 	}
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import { Tabs, Card, Badge, Avatar } from "antd";
+import { Tabs, Card } from "antd";
 import { UserOutlined, CheckCircleOutlined, ClockCircleOutlined, TeamOutlined } from "@ant-design/icons";
 import AllUsersTable from "../../components/allUserTableComponent";
 import UnVerifiedUsersTable from "../../components/unverifiedUsersComponent";

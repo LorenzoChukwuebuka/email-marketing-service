@@ -4,7 +4,7 @@ import { CheckCircleOutlined, CrownOutlined, RocketOutlined, StarOutlined } from
 import useBillingStore from '../store/billing.store';
 import { usePlansQuery } from '../../plans/hooks/usePlanQuery';
 import { useMailCalcQuery } from '../../../hooks/useMailDataQuery';
-import { APIPlanData } from '../../plans/interface/plan.interface';
+import { PlanData } from '../../plans/interface/plan.interface';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -16,7 +16,7 @@ const PricingPlans: React.FC = () => {
 
     const currentPlan = mailData?.payload.plan;
 
-    const handlePlanSelection = async (plan: APIPlanData) => {
+    const handlePlanSelection = async (plan: PlanData) => {
         setPaymentValues({
             plan_id: plan.id,
             duration: plan.billing_cycle,
@@ -50,7 +50,7 @@ const PricingPlans: React.FC = () => {
         return 'border-gray-200 hover:border-gray-400';
     };
 
-    const getButtonStyle = (plan: APIPlanData) => {
+    const getButtonStyle = (plan: PlanData) => {
         const isCurrentPlan = currentPlan === plan.name;
         // const isLoading = loadingPlanId === plan.id;
         const isFreePlan = plan.price === 0;
@@ -72,7 +72,7 @@ const PricingPlans: React.FC = () => {
         return { type: 'primary' as const, className: 'bg-gradient-to-r from-green-600 to-green-700 border-green-600' };
     };
 
-    const renderPlanCard = (plan: APIPlanData) => {
+    const renderPlanCard = (plan: PlanData) => {
         const isCurrentPlan = currentPlan === plan.name;
         const isLoading = loadingPlanId === plan.id;
         const isFreePlan = plan.price === 0;
