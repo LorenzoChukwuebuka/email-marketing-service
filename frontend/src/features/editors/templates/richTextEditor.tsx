@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Typography, Badge, Tooltip, Spin, message } from 'antd';
-import { ArrowLeftOutlined, SendOutlined, SaveOutlined, EditOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SendOutlined, SaveOutlined } from '@ant-design/icons';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useLocation, useNavigate } from 'react-router-dom';

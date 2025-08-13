@@ -6,12 +6,60 @@ package db
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/sqlc-dev/pqtype"
 )
+
+type AuditAction string
+
+const (
+	AuditActionCREATE      AuditAction = "CREATE"
+	AuditActionUPDATE      AuditAction = "UPDATE"
+	AuditActionDELETE      AuditAction = "DELETE"
+	AuditActionLOGIN       AuditAction = "LOGIN"
+	AuditActionLOGOUT      AuditAction = "LOGOUT"
+	AuditActionLOGINFAILED AuditAction = "LOGIN_FAILED"
+)
+
+func (e *AuditAction) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AuditAction(s)
+	case string:
+		*e = AuditAction(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AuditAction: %T", src)
+	}
+	return nil
+}
+
+type NullAuditAction struct {
+	AuditAction AuditAction `json:"audit_action"`
+	Valid       bool        `json:"valid"` // Valid is true if AuditAction is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAuditAction) Scan(value interface{}) error {
+	if value == nil {
+		ns.AuditAction, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AuditAction.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAuditAction) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AuditAction), nil
+}
 
 type Admin struct {
 	ID         uuid.UUID      `json:"id"`
@@ -48,16 +96,18 @@ type ApiKey struct {
 }
 
 type AuditLog struct {
-	ID         uuid.UUID             `json:"id"`
-	ActorID    uuid.NullUUID         `json:"actor_id"`
-	ActorType  string                `json:"actor_type"`
-	Action     string                `json:"action"`
-	TargetID   uuid.NullUUID         `json:"target_id"`
-	TargetType sql.NullString        `json:"target_type"`
-	Metadata   pqtype.NullRawMessage `json:"metadata"`
-	IpAddress  sql.NullString        `json:"ip_address"`
-	UserAgent  sql.NullString        `json:"user_agent"`
-	CreatedAt  sql.NullTime          `json:"created_at"`
+	ID          uuid.UUID             `json:"id"`
+	UserID      uuid.UUID             `json:"user_id"`
+	Action      AuditAction           `json:"action"`
+	Resource    string                `json:"resource"`
+	ResourceID  uuid.NullUUID         `json:"resource_id"`
+	Method      sql.NullString        `json:"method"`
+	Endpoint    sql.NullString        `json:"endpoint"`
+	IpAddress   pqtype.Inet           `json:"ip_address"`
+	OccurredAt  time.Time             `json:"occurred_at"`
+	Success     sql.NullBool          `json:"success"`
+	RequestBody pqtype.NullRawMessage `json:"request_body"`
+	Changes     pqtype.NullRawMessage `json:"changes"`
 }
 
 type Campaign struct {

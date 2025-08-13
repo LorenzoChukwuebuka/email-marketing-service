@@ -3,7 +3,7 @@ version: '3.8'
 services:
   traefik:
     image: traefik:v2.10
-    container_name: dev-crabmailer-traefik
+    container_name: crabmailer-staging-traefik
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -11,8 +11,8 @@ services:
       - "--api.insecure=true"  # Only for development
       - "--api.dashboard=true"
     ports:
-      - "81:80"
-      - "8080:8080"  # Traefik Dashboard
+      - "82:80"
+      - "8082:8080"  # Traefik Dashboard
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
@@ -44,7 +44,7 @@ services:
       - app-network
 
   go-backend:
-    container_name: dev-crabmailer-api
+    container_name: crabmailer-staging-api
     build:
       context: ./backend
       dockerfile: Dockerfile.backend
@@ -88,7 +88,7 @@ services:
       - postgres-db
 
   postgres-db:
-    container_name: dev-crabmailer-postgres-db
+    container_name: crabmailer-staging-postgres-db
     image: postgres:16
     restart: always
     environment:

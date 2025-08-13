@@ -1,9 +1,9 @@
 # Stage 1: Build the Go backend
-FROM golang:1.22 AS backend-builder
+FROM golang:1.24 AS backend-builder
 
 WORKDIR /app/backend
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api
 
 # Stage 2: Final backend image
 FROM alpine
@@ -17,7 +17,7 @@ RUN apk update && apk add bash nano vim curl
 COPY --from=backend-builder /app/backend/main .
 
 # Copy templates directory
-COPY --from=backend-builder /app/backend/api/v1/templates ./api/v1/templates
+COPY --from=backend-builder /app/backend/internal/mailer/templates ./internal/mailer/templates
 
 # Copy .env file for the backend
 COPY .env .

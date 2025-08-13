@@ -36,6 +36,9 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
+	// attach request to ctx so service layer can get IP
+	ctx = common.WithRequest(ctx, r)
+
 	var req *dto.LoginRequest
 
 	err := helper.DecodeRequestBody(r, &req)

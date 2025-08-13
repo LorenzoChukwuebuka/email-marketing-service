@@ -6,7 +6,7 @@ import { useUserDetailsQuery } from "../../../auth/hooks/useUserDetailsQuery";
 const ProfileInformationComponent: React.FC = () => {
     const {
         setEditFormValues,
-        editFormValues,
+       // editFormValues,
         editUserDetails,
     } = useAuthStore();
 
@@ -30,8 +30,8 @@ const ProfileInformationComponent: React.FC = () => {
             company: userData?.payload.company?.companyname || userData?.payload.company || "",
             phonenumber: userData?.payload.phonenumber || "",
         };
-        setFormData(newFormData);
-        setEditFormValues(newFormData);
+        setFormData(newFormData as any);
+        setEditFormValues(newFormData as any);
     };
 
     const handleInputChange = (field: string, value: string) => {
@@ -194,7 +194,7 @@ const ProfileInformationComponent: React.FC = () => {
                         <div className="space-y-6">
                             {/* Full Name */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+                                <label className="block text-gray-700 font-medium mb-2  items-center gap-2">
                                     <User className="w-4 h-4" />
                                     Full Name
                                 </label>
@@ -217,7 +217,7 @@ const ProfileInformationComponent: React.FC = () => {
 
                             {/* Email */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+                                <label className="text-gray-700 font-medium mb-2 flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
                                     Email Address
                                 </label>
@@ -235,7 +235,7 @@ const ProfileInformationComponent: React.FC = () => {
                         <div className="space-y-6">
                             {/* Company */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+                                <label className=" text-gray-700 font-medium mb-2 flex items-center gap-2">
                                     <Building className="w-4 h-4" />
                                     Company
                                 </label>
@@ -255,7 +255,7 @@ const ProfileInformationComponent: React.FC = () => {
 
                             {/* Phone Number */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+                                <label className=" text-gray-700 font-medium mb-2 flex items-center gap-2">
                                     <Phone className="w-4 h-4" />
                                     Phone Number
                                 </label>

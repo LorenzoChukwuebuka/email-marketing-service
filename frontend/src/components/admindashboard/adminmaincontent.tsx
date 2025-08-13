@@ -11,7 +11,7 @@ interface MainContentProps {
     toggleSidebar: () => void;
 }
 
-const AdminMainContent: React.FC<MainContentProps> = ({ sidebarOpen, toggleSidebar }) => {
+const AdminMainContent: React.FC<MainContentProps> = ({   toggleSidebar }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {

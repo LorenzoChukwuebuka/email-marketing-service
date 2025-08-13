@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useCampaignQuery } from '../../features/campaign/hooks/useCampaignQuery';
-import EmptyState from '../emptyStateComponent';
 import { useState } from 'react';
 import LoadingSpinnerComponent from '../loadingSpinnerComponent';
-import { Card, Button, Typography, Space, Tag, Divider, Avatar } from 'antd';
+import { Card, Button, Typography,  Tag, Divider, Avatar } from 'antd';
 import { 
   ArrowRightOutlined, 
   EditOutlined, 

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
-    const { createCampaignValues, setCreateCampaignValues, updateCampaign } = useCampaignStore();
+    const { setCreateCampaignValues, updateCampaign } = useCampaignStore();
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const [currentPage, _setCurrentPage] = useState(1);
     const [pageSize, _setPageSize] = useState(2000);
@@ -31,7 +31,7 @@ const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
                 sender_email: campaign.sender || "",
                 sender_from_name: campaign.sender_from_name || "",
             });
-            
+
             // Also update the store with current campaign values
             setCreateCampaignValues({
                 sender: campaign.sender || "",
@@ -80,7 +80,7 @@ const AddSenderComponent: React.FC<Props> = ({ isOpen, onClose, campaign }) => {
                     name="sender_email"
                     rules={[{ required: true, message: "Please select an email address" }]}
                 >
-                    <Select 
+                    <Select
                         placeholder="Select an email..."
                         onChange={handleSenderChange}
                     >
