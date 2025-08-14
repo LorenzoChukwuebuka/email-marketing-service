@@ -11,8 +11,6 @@ import (
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/logger"
 	smtp_server "email-marketing-service/internal/smtp"
-
-	//"email-marketing-service/internal/workers/tasks"
 	"fmt"
 	"log"
 	"os"
@@ -55,11 +53,6 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	//seeders
-	seeders.SeedPlans(ctx, store)
-	seeders.SeedSMTPKey(ctx, store)
-	seeders.SeedAdmins(ctx, store)
-
 	//redis...
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
@@ -74,8 +67,11 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to initialize logger:", err)
 	}
-	//simulating mail sending
-	//_ = tasks.EnqueueWelcomeEmail(client, "hello@hello.com", "obi")
+
+	// Run seeders
+	if err := runSeeders(ctx, store); err != nil {
+		log.Fatalf("Failed to run seeders: %v", err)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -84,18 +80,38 @@ func main() {
 		server.Start()
 	}()
 
-	//start the smtpserver
+	//Start the SMTP server with functional options
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		if err := smtp_server.StartSMTPServer(ctx, store); err != nil {
+		mode := os.Getenv("SERVER_MODE")
+		var err error
+
+		if mode == "production" {
+			// Production configuration with TLS
+			err = smtp_server.StartSMTPServer(ctx, store,
+				smtp_server.WithPort("587"),
+				smtp_server.WithTLS(
+					"/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem",
+					"/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem",
+				),
+				smtp_server.WithInsecureAuth(true),
+			)
+		} else {
+			// Development configuration
+			err = smtp_server.StartSMTPServer(ctx, store,
+				smtp_server.WithInsecureAuth(true),
+				// Port will use default from config
+			)
+		}
+
+		if err != nil {
 			log.Printf("SMTP server error: %v", err)
 		}
 	}()
 
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 		if err := asynqserver.StartAsynqServer(redisAddr, store, ctx); err != nil {
@@ -118,5 +134,15 @@ func main() {
 	// Wait for all components to shut down
 	wg.Wait()
 	log.Println("All components shut down gracefully")
+}
 
+func runSeeders(ctx context.Context, store db.Store) error {
+	// Create seeder manager
+	manager := seeders.NewManager()
+
+	// Register all seeders
+	manager.RegisterAll(seeders.GetAllSeeders()...)
+
+	// Run all seeders
+	return manager.SeedAll(ctx, store)
 }

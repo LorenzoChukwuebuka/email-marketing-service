@@ -67,6 +67,8 @@ type Querier interface {
 	CreateEmailBox(ctx context.Context, arg CreateEmailBoxParams) (EmailBox, error)
 	CreateEmailCampaignResult(ctx context.Context, arg CreateEmailCampaignResultParams) (EmailCampaignResult, error)
 	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (Invitation, error)
+	CreateJobExecutionLog(ctx context.Context, arg CreateJobExecutionLogParams) (uuid.UUID, error)
+	CreateJobSchedule(ctx context.Context, arg CreateJobScheduleParams) (uuid.UUID, error)
 	CreateMailingLimit(ctx context.Context, arg CreateMailingLimitParams) (MailingLimit, error)
 	CreateOTP(ctx context.Context, arg CreateOTPParams) (Otp, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
@@ -92,6 +94,8 @@ type Querier interface {
 	DeletePlanFeature(ctx context.Context, id uuid.UUID) error
 	DeleteScheduledUsers(ctx context.Context) ([]User, error)
 	DeleteSystemsSMTPSetting(ctx context.Context, domain sql.NullString) error
+	DisableJob(ctx context.Context, jobName string) error
+	EnableJob(ctx context.Context, jobName string) error
 	ExpireInvitation(ctx context.Context, id uuid.UUID) error
 	FindDomainByNameAndCompany(ctx context.Context, arg FindDomainByNameAndCompanyParams) (Domain, error)
 	FindTicketByID(ctx context.Context, id uuid.UUID) (SupportTicket, error)
@@ -153,6 +157,7 @@ type Querier interface {
 	GetEmailUsageBySubscription(ctx context.Context, subscriptionID uuid.UUID) ([]EmailUsage, error)
 	GetEmailUsageInDateRange(ctx context.Context, arg GetEmailUsageInDateRangeParams) ([]EmailUsage, error)
 	GetEmailUsageStats(ctx context.Context, arg GetEmailUsageStatsParams) (GetEmailUsageStatsRow, error)
+	GetEnabledJobSchedules(ctx context.Context) ([]JobSchedule, error)
 	// Find subscriptions that are marked as 'active' but have actually expired
 	GetExpiredActiveSubscriptions(ctx context.Context) ([]Subscription, error)
 	// Fetches all contact groups with their associated contacts for a specific user and company
@@ -163,6 +168,8 @@ type Querier interface {
 	GetInvitationByToken(ctx context.Context, token string) (GetInvitationByTokenRow, error)
 	GetInvitationStats(ctx context.Context, companyID uuid.UUID) (GetInvitationStatsRow, error)
 	GetInvitationsByCompany(ctx context.Context, companyID uuid.UUID) ([]GetInvitationsByCompanyRow, error)
+	GetJobExecutionHistory(ctx context.Context, arg GetJobExecutionHistoryParams) ([]GetJobExecutionHistoryRow, error)
+	GetJobScheduleByName(ctx context.Context, jobName string) (JobSchedule, error)
 	GetLastPaymentByCompanyID(ctx context.Context, companyID uuid.UUID) (Payment, error)
 	GetMailingLimitByPlanID(ctx context.Context, planID uuid.UUID) (MailingLimit, error)
 	GetMasterSMTPKey(ctx context.Context, userID uuid.UUID) (SmtpMasterKey, error)
@@ -295,6 +302,11 @@ type Querier interface {
 	UpdateEmailsSentAndRemaining(ctx context.Context, arg UpdateEmailsSentAndRemainingParams) (EmailUsage, error)
 	UpdateGalleryTemplate(ctx context.Context, arg UpdateGalleryTemplateParams) (Template, error)
 	UpdateInvitationStatus(ctx context.Context, arg UpdateInvitationStatusParams) (Invitation, error)
+	UpdateJobExecutionLog(ctx context.Context, arg UpdateJobExecutionLogParams) error
+	UpdateJobFailure(ctx context.Context, arg UpdateJobFailureParams) error
+	UpdateJobLastRun(ctx context.Context, arg UpdateJobLastRunParams) error
+	UpdateJobSchedule(ctx context.Context, arg UpdateJobScheduleParams) error
+	UpdateJobSuccess(ctx context.Context, arg UpdateJobSuccessParams) error
 	UpdateMailingLimit(ctx context.Context, arg UpdateMailingLimitParams) (MailingLimit, error)
 	UpdatePaymentHash(ctx context.Context, arg UpdatePaymentHashParams) error
 	UpdatePaymentIntent(ctx context.Context, arg UpdatePaymentIntentParams) (PaymentIntent, error)

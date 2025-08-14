@@ -268,6 +268,37 @@ type Invitation struct {
 	DeletedAt  sql.NullTime  `json:"deleted_at"`
 }
 
+type JobExecutionLog struct {
+	ID            uuid.UUID             `json:"id"`
+	JobScheduleID uuid.NullUUID         `json:"job_schedule_id"`
+	JobName       string                `json:"job_name"`
+	StartedAt     time.Time             `json:"started_at"`
+	FinishedAt    sql.NullTime          `json:"finished_at"`
+	Status        string                `json:"status"`
+	DurationMs    sql.NullInt32         `json:"duration_ms"`
+	ErrorMessage  sql.NullString        `json:"error_message"`
+	OutputData    pqtype.NullRawMessage `json:"output_data"`
+	CreatedAt     sql.NullTime          `json:"created_at"`
+}
+
+type JobSchedule struct {
+	ID             uuid.UUID      `json:"id"`
+	JobName        string         `json:"job_name"`
+	JobType        string         `json:"job_type"`
+	CronSchedule   string         `json:"cron_schedule"`
+	Enabled        sql.NullBool   `json:"enabled"`
+	Description    sql.NullString `json:"description"`
+	TimeoutSeconds sql.NullInt32  `json:"timeout_seconds"`
+	MaxRetries     sql.NullInt32  `json:"max_retries"`
+	LastRunAt      sql.NullTime   `json:"last_run_at"`
+	LastSuccessAt  sql.NullTime   `json:"last_success_at"`
+	LastFailureAt  sql.NullTime   `json:"last_failure_at"`
+	FailureCount   sql.NullInt32  `json:"failure_count"`
+	TotalRuns      sql.NullInt32  `json:"total_runs"`
+	CreatedAt      sql.NullTime   `json:"created_at"`
+	UpdatedAt      sql.NullTime   `json:"updated_at"`
+}
+
 type MailingLimit struct {
 	ID                   uuid.UUID     `json:"id"`
 	PlanID               uuid.UUID     `json:"plan_id"`

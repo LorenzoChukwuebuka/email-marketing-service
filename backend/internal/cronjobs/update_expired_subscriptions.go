@@ -9,18 +9,24 @@ import (
 )
 
 type UpdateExpiredSubscriptionJob struct {
-	store db.Store
-	ctx   context.Context
+	*BaseJob
 }
 
 func NewUpdateExpiredSubscriptionJob(store db.Store, ctx context.Context) *UpdateExpiredSubscriptionJob {
+	baseJob := NewBaseJob(
+		store,
+		ctx,
+		"auto_update_expired_subs",
+		"AutoUpdateExpiredSubscriptions",
+		"Automatically update expired subscriptions",
+	)
+
 	return &UpdateExpiredSubscriptionJob{
-		store: store,
-		ctx:   ctx,
+		BaseJob: baseJob,
 	}
 }
 
-func (j *UpdateExpiredSubscriptionJob) Run() {
+func (j *UpdateExpiredSubscriptionJob) Run()error {
 	//get the expired subscriptions still active
 	expired_subs, err := j.store.GetExpiredActiveSubscriptions(j.ctx)
 	if err != nil {
@@ -29,7 +35,7 @@ func (j *UpdateExpiredSubscriptionJob) Run() {
 	// Check if there are any expired subscriptions
 	if len(expired_subs) == 0 {
 		log.Println("No expired subscriptions found")
-		return
+		return err
 	}
 
 	log.Printf("Found %d expired subscriptions to update", len(expired_subs))
@@ -52,6 +58,8 @@ func (j *UpdateExpiredSubscriptionJob) Run() {
 	}
 
 	log.Printf("Completed processing %d expired subscriptions", len(expired_subs))
+
+	return  nil
 
 }
 

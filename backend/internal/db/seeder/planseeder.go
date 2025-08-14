@@ -12,8 +12,21 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// SeedPlans populates the database with initial plan data
-func SeedPlans(ctx context.Context, queries db.Store) error {
+// PlanSeeder implements the Seeder interface for plans
+type PlanSeeder struct{}
+
+// Name returns the seeder name
+func (p *PlanSeeder) Name() string {
+	return "Plans"
+}
+
+// Priority returns the execution priority
+func (p *PlanSeeder) Priority() int {
+	return 1 // High priority since other seeders might depend on plans
+}
+
+// Seed populates the database with initial plan data
+func (p *PlanSeeder) Seed(ctx context.Context, queries db.Store) error {
 	// Define plan UUIDs
 	freePlanID := uuid.New()
 	basicPlanID := uuid.New()
@@ -35,6 +48,9 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 		{proPlanID, "Professional", "Advanced email marketing solutions for growing businesses.", 49.99, "monthly"},
 		{enterprisePlanID, "Enterprise", "Complete email marketing platform for large organizations.", 99.99, "monthly"},
 	}
+
+	// Map to store actual plan IDs (either created or existing)
+	planIDs := make(map[string]uuid.UUID)
 
 	// Insert plans
 	for _, plan := range plans {
@@ -60,13 +76,29 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 				return fmt.Errorf("error creating plan %s: %w", plan.name, err)
 			}
 			log.Printf("Created plan: %s", plan.name)
+			planIDs[plan.name] = plan.id
 		} else {
 			// Plan exists, use its ID
 			log.Printf("Plan already exists: %s", plan.name)
-			plan.id = existingPlan.ID
+			planIDs[plan.name] = existingPlan.ID
 		}
 	}
 
+	// Create features for each plan
+	if err := p.seedPlanFeatures(ctx, queries, planIDs["Free"], planIDs["Basic"], planIDs["Professional"], planIDs["Enterprise"]); err != nil {
+		return err
+	}
+
+	// Create mailing limits
+	if err := p.seedMailingLimits(ctx, queries, planIDs["Free"], planIDs["Basic"], planIDs["Professional"], planIDs["Enterprise"]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// seedPlanFeatures creates features for all plans
+func (p *PlanSeeder) seedPlanFeatures(ctx context.Context, queries db.Store, freePlanID, basicPlanID, proPlanID, enterprisePlanID uuid.UUID) error {
 	// Create features for Free plan
 	freeFeatures := []struct {
 		name        string
@@ -81,7 +113,7 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 	}
 
 	for _, feature := range freeFeatures {
-		err := createFeatureIfNotExists(ctx, queries, freePlanID, feature.name, feature.description, feature.value)
+		err := p.createFeatureIfNotExists(ctx, queries, freePlanID, feature.name, feature.description, feature.value)
 		if err != nil {
 			return err
 		}
@@ -102,7 +134,7 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 	}
 
 	for _, feature := range basicFeatures {
-		err := createFeatureIfNotExists(ctx, queries, basicPlanID, feature.name, feature.description, feature.value)
+		err := p.createFeatureIfNotExists(ctx, queries, basicPlanID, feature.name, feature.description, feature.value)
 		if err != nil {
 			return err
 		}
@@ -124,7 +156,7 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 	}
 
 	for _, feature := range proFeatures {
-		err := createFeatureIfNotExists(ctx, queries, proPlanID, feature.name, feature.description, feature.value)
+		err := p.createFeatureIfNotExists(ctx, queries, proPlanID, feature.name, feature.description, feature.value)
 		if err != nil {
 			return err
 		}
@@ -148,38 +180,42 @@ func SeedPlans(ctx context.Context, queries db.Store) error {
 	}
 
 	for _, feature := range enterpriseFeatures {
-		err := createFeatureIfNotExists(ctx, queries, enterprisePlanID, feature.name, feature.description, feature.value)
+		err := p.createFeatureIfNotExists(ctx, queries, enterprisePlanID, feature.name, feature.description, feature.value)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Create mailing limits
+	return nil
+}
+
+// seedMailingLimits creates mailing limits for all plans
+func (p *PlanSeeder) seedMailingLimits(ctx context.Context, queries db.Store, freePlanID, basicPlanID, proPlanID, enterprisePlanID uuid.UUID) error {
 	mailingLimits := []struct {
 		planID               uuid.UUID
+		planName             string
 		dailyLimit           int32
 		monthlyLimit         int32
 		maxRecipientsPerMail int32
 	}{
-		{freePlanID, 500, 5000, 500},
-		{basicPlanID, 2500, 25000, 2500},
-		{proPlanID, 10000, 100000, 10000},
-		{enterprisePlanID, 0, 0, 0}, // 0 indicates unlimited
+		{freePlanID, "Free", 500, 5000, 500},
+		{basicPlanID, "Basic", 2500, 25000, 2500},
+		{proPlanID, "Professional", 10000, 100000, 10000},
+		{enterprisePlanID, "Enterprise", 0, 0, 0}, // 0 indicates unlimited
 	}
 
 	for _, limit := range mailingLimits {
-		err := createMailingLimitIfNotExists(ctx, queries, limit.planID, limit.dailyLimit, limit.monthlyLimit, limit.maxRecipientsPerMail)
+		err := p.createMailingLimitIfNotExists(ctx, queries, limit.planID, limit.planName, limit.dailyLimit, limit.monthlyLimit, limit.maxRecipientsPerMail)
 		if err != nil {
 			return err
 		}
 	}
 
-	log.Println("Plans seeding completed successfully")
 	return nil
 }
 
 // Helper function to create a feature if it doesn't exist
-func createFeatureIfNotExists(ctx context.Context, queries db.Store, planID uuid.UUID, name, description, value string) error {
+func (p *PlanSeeder) createFeatureIfNotExists(ctx context.Context, queries db.Store, planID uuid.UUID, name, description, value string) error {
 	// Check if feature exists for this plan
 	features, err := queries.GetPlanFeaturesByPlanID(ctx, planID)
 	if err != nil && err != sql.ErrNoRows {
@@ -216,7 +252,7 @@ func createFeatureIfNotExists(ctx context.Context, queries db.Store, planID uuid
 }
 
 // Helper function to create a mailing limit if it doesn't exist
-func createMailingLimitIfNotExists(ctx context.Context, queries db.Store, planID uuid.UUID, dailyLimit, monthlyLimit, maxRecipientsPerMail int32) error {
+func (p *PlanSeeder) createMailingLimitIfNotExists(ctx context.Context, queries db.Store, planID uuid.UUID, planName string, dailyLimit, monthlyLimit, maxRecipientsPerMail int32) error {
 	// Check if mailing limit exists for this plan
 	_, err := queries.GetMailingLimitByPlanID(ctx, planID)
 	if err != nil && err != sql.ErrNoRows {
@@ -234,11 +270,11 @@ func createMailingLimitIfNotExists(ctx context.Context, queries db.Store, planID
 			UpdatedAt:            time.Now(),
 		})
 		if err != nil {
-			return fmt.Errorf("error creating mailing limit for plan %s: %w", planID, err)
+			return fmt.Errorf("error creating mailing limit for plan %s (%s): %w", planName, planID, err)
 		}
-		log.Printf("Created mailing limit for plan %s", planID)
+		log.Printf("Created mailing limit for plan %s", planName)
 	} else {
-		log.Printf("Mailing limit already exists for plan %s", planID)
+		log.Printf("Mailing limit already exists for plan %s", planName)
 	}
 	return nil
 }

@@ -10,77 +10,21 @@ import (
 	"os"
 )
 
-// SeedAdmins populates the database with initial admin data
-func SeedAdmins(ctx context.Context, queries db.Store) error {
-	// Get admin credentials from environment variables
-	adminEmail := os.Getenv("ADMIN_EMAIL")
-	adminPassword := os.Getenv("ADMIN_PASSWORD")
+// AdminSeeder implements the Seeder interface for admin users
+type AdminSeeder struct{}
 
-	// Set default values if environment variables are not set
-	if adminEmail == "" {
-		adminEmail = "admin@example.com" // Default email
-		log.Println("Warning: ADMIN_EMAIL not set, using default email")
-	}
-
-	if adminPassword == "" {
-		adminPassword = "defaultpassword123" // Default password
-		log.Println("Warning: ADMIN_PASSWORD not set, using default password")
-	}
-
-	// Check if any admin exists
-	admins, err := queries.GetAllAdmins(ctx) // Assuming you have this method
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking for existing admins: %w", err)
-	}
-
-	// If admins exist, skip seeding
-	if len(admins) > 0 {
-		log.Println("Admins already exist, skipping admin seeding")
-		return nil
-	}
-
-	// Alternatively, check by email if GetAllAdmins doesn't exist
-	_, err = queries.GetAdminByEmail(ctx, adminEmail)
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking for existing admin: %w", err)
-	}
-
-	if err != sql.ErrNoRows {
-		log.Printf("Admin with email %s already exists, skipping seeding", adminEmail)
-		return nil
-	}
-
-	// Hash the password
-	hashedPassword, err := common.HashPassword(adminPassword)
-	if err != nil {
-		return fmt.Errorf("failed to hash admin password: %w", err)
-	}
-
-	// Create the admin
-	firstName := "Lawrence"
-	middleName := "Chukwuebuka"
-	lastName := "Obi"
-	adminType := "admin"
-
-	_, err = queries.CreateAdmin(ctx, db.CreateAdminParams{
-		Firstname:  sql.NullString{String: firstName, Valid: true},
-		Middlename: sql.NullString{String: middleName, Valid: true},
-		Lastname:   sql.NullString{String: lastName, Valid: true},
-		Email:      adminEmail,
-		Password:   hashedPassword,
-		Type:       adminType,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating admin: %w", err)
-	}
-
-	log.Printf("Created admin with email: %s", adminEmail)
-	log.Println("Admin seeding completed successfully")
-	return nil
+// Name returns the seeder name
+func (a *AdminSeeder) Name() string {
+	return "Admins"
 }
 
-// Alternative implementation if you want to create multiple default admins
-func SeedMultipleAdmins(ctx context.Context, queries db.Store) error {
+// Priority returns the execution priority
+func (a *AdminSeeder) Priority() int {
+	return 0 // Highest priority - admins should be created first
+}
+
+// Seed populates the database with initial admin data
+func (a *AdminSeeder) Seed(ctx context.Context, queries db.Store) error {
 	// Define default admins
 	defaultAdmins := []struct {
 		firstName  string
@@ -89,27 +33,52 @@ func SeedMultipleAdmins(ctx context.Context, queries db.Store) error {
 		email      string
 		password   string
 		adminType  string
+		envEmail   string
+		envPass    string
 	}{
 		{
-			firstName:  "hello",
-			middleName: "wedon't really know",
-			lastName:   "hello",
-			email:      getEnvOrDefault("ADMIN_EMAIL", "admin@example.com"),
-			password:   getEnvOrDefault("ADMIN_PASSWORD", "defaultpassword123"),
+			firstName:  "Lawrence",
+			middleName: "Chukwuebuka",
+			lastName:   "Obi",
+			email:      a.getEnvOrDefault("ADMIN_EMAIL", "admin@example.com"),
+			password:   a.getEnvOrDefault("ADMIN_PASSWORD", "defaultpassword123"),
 			adminType:  "admin",
+			envEmail:   "ADMIN_EMAIL",
+			envPass:    "ADMIN_PASSWORD",
 		},
 		{
 			firstName:  "Super",
 			middleName: "Admin",
 			lastName:   "User",
-			email:      getEnvOrDefault("SUPER_ADMIN_EMAIL", "superadmin@example.com"),
-			password:   getEnvOrDefault("SUPER_ADMIN_PASSWORD", "superadminpass123"),
+			email:      a.getEnvOrDefault("SUPER_ADMIN_EMAIL", "superadmin@example.com"),
+			password:   a.getEnvOrDefault("SUPER_ADMIN_PASSWORD", "superadminpass123"),
 			adminType:  "super_admin",
+			envEmail:   "SUPER_ADMIN_EMAIL",
+			envPass:    "SUPER_ADMIN_PASSWORD",
 		},
 	}
 
+	// Check if any admin exists first (optimization)
+	admins, err := queries.GetAllAdmins(ctx)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("error checking for existing admins: %w", err)
+	}
+
+	// If admins exist, check each one individually
+	if len(admins) > 0 {
+		log.Printf("Found %d existing admins, checking individual admin emails", len(admins))
+	}
+
 	for _, admin := range defaultAdmins {
-		// Check if admin exists
+		// Warn about default credentials
+		if admin.email == "admin@example.com" || admin.email == "superadmin@example.com" {
+			log.Printf("Warning: %s not set, using default email: %s", admin.envEmail, admin.email)
+		}
+		if admin.password == "defaultpassword123" || admin.password == "superadminpass123" {
+			log.Printf("Warning: %s not set, using default password", admin.envPass)
+		}
+
+		// Check if this specific admin exists
 		_, err := queries.GetAdminByEmail(ctx, admin.email)
 		if err != nil && err != sql.ErrNoRows {
 			return fmt.Errorf("error checking for existing admin %s: %w", admin.email, err)
@@ -142,32 +111,13 @@ func SeedMultipleAdmins(ctx context.Context, queries db.Store) error {
 		log.Printf("Created admin: %s (%s)", admin.email, admin.adminType)
 	}
 
-	log.Println("Admin seeding completed successfully")
 	return nil
 }
 
-// Helper function to get environment variable with default value
-func getEnvOrDefault(key, defaultValue string) string {
+
+func (a *AdminSeeder) getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return defaultValue
-}
-
-// Usage example in your main seeder file
-func RunAllSeeders(ctx context.Context, queries db.Store) error {
-	// Seed admins first
-	if err := SeedAdmins(ctx, queries); err != nil {
-		return fmt.Errorf("failed to seed admins: %w", err)
-	}
-
-	// Seed plans
-	if err := SeedPlans(ctx, queries); err != nil {
-		return fmt.Errorf("failed to seed plans: %w", err)
-	}
-
-	// Add other seeders here...
-
-	log.Println("All seeders completed successfully")
-	return nil
 }

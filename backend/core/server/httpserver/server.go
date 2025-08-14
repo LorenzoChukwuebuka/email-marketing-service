@@ -92,7 +92,7 @@ func (s *Server) Start() {
 	defer logFile.Close()
 
 	//start the cron jobs
-	c := cronjobs.SetupCronJobs(&s.db)
+	c := cronjobs.SetupCronJobs(s.db)
 	c.Start()
 	log.Println("Cron jobs started")
 
