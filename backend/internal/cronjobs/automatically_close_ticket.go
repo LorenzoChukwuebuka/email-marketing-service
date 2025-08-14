@@ -2,40 +2,48 @@ package cronjobs
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 	db "email-marketing-service/internal/db/sqlc"
 )
 
 type AutoCloseSupportTicket struct {
-	ctx   context.Context
-	store db.Store
+	*BaseJob
 }
 
-func NewAutoCloseSupportTicket(ctx context.Context, store db.Store) *AutoCloseSupportTicket {
+func NewAutoCloseSupportTicket(store db.Store, ctx context.Context) *AutoCloseSupportTicket {
+	baseJob := NewBaseJob(
+		store,
+		ctx,
+		"auto_close_support_tickets",
+		"AutoCloseSupportTicket",
+		"Automatically close stale support tickets that have no replies for 48+ hours",
+	)
+
 	return &AutoCloseSupportTicket{
-		ctx:   ctx,
-		store: store,
+		BaseJob: baseJob,
 	}
 }
 
-func (j *AutoCloseSupportTicket) Run() {
+func (j *AutoCloseSupportTicket) Run() error {
 	log.Println("Starting auto-close support ticket job...")
 
 	// Close stale tickets (no reply for 48+ hours)
 	closedTickets, err := j.store.CloseStaleTickets(j.ctx)
 	if err != nil {
-		log.Printf("Error closing stale tickets: %v", err)
-		return
+		return fmt.Errorf("error closing stale tickets: %w", err)
 	}
 
 	if len(closedTickets) == 0 {
 		log.Println("No stale tickets found to close")
-		return
+		return nil
 	}
 
 	log.Printf("Successfully auto-closed %d stale tickets:", len(closedTickets))
-	
+
 	// Log details of closed tickets and send notification emails
+	emailFailures := 0
 	for _, ticket := range closedTickets {
 		var lastReplyInfo string
 		if ticket.LastReply.Valid {
@@ -43,65 +51,68 @@ func (j *AutoCloseSupportTicket) Run() {
 		} else {
 			lastReplyInfo = "never"
 		}
-		
-		log.Printf("- Ticket #%s (ID: %s) - Last reply: %s", 
-			ticket.TicketNumber, 
-			ticket.ID.String(), 
+
+		log.Printf("- Ticket #%s (ID: %s) - Last reply: %s",
+			ticket.TicketNumber,
+			ticket.ID.String(),
 			lastReplyInfo,
 		)
 
-		// TODO: Send email notification to user about ticket closure
-		// This is generally a good practice to keep users informed about their tickets
-		// 
-		// Email details from ticket:
-		// - Full Name: ticket.Name
-		// - Email: ticket.Email
-		// - Ticket Number: ticket.TicketNumber
-		// - Subject: ticket.Subject
-		//
-		// Example email implementation:
-		// err := j.sendTicketClosedEmail(ticket.Name, ticket.Email, ticket.TicketNumber, ticket.Subject)
-		// if err != nil {
-		//     log.Printf("Failed to send closure email for ticket %s: %v", ticket.TicketNumber, err)
-		// }
+		// Send email notification to user about ticket closure
+		err := j.sendTicketClosedEmail(ticket.Name, ticket.Email, ticket.TicketNumber, ticket.Subject)
+		if err != nil {
+			log.Printf("Failed to send closure email for ticket %s: %v", ticket.TicketNumber, err)
+			emailFailures++
+		}
 	}
 
 	log.Println("Auto-close support ticket job completed successfully")
-}
 
-// sendTicketClosedEmail sends an email notification when a ticket is auto-closed
-// func (j *AutoCloseSupportTicket) sendTicketClosedEmail(fullName, email, ticketNumber, subject string) error {
-//     // Email template for ticket closure
-//     emailSubject := fmt.Sprintf("Ticket #%s has been closed", ticketNumber)
-//     
-//     emailBody := fmt.Sprintf(`
-//         Dear %s,
-//         
-//         Your support ticket has been automatically closed due to inactivity.
-//         
-//         Ticket Details:
-//         - Ticket Number: %s
-//         - Subject: %s
-//         - Status: Closed
-//         - Closed Date: %s
-//         
-//         This ticket was closed because we haven't received a response from you in the past 48 hours.
-//         
-//         If you still need assistance with this issue, please feel free to create a new support ticket
-//         or reply to this email to reopen the ticket.
-//         
-//         Thank you for using our service.
-//         
-//         Best regards,
-//         Support Team
-//     `, fullName, ticketNumber, subject, time.Now().Format("January 2, 2006 at 3:04 PM"))
-//     
-//     // Send email using your email service
-//     // return j.emailService.SendEmail(email, emailSubject, emailBody)
-//     
-//     return nil
-// }
+	// Return an error if too many email failures occurred
+	if emailFailures > len(closedTickets)/2 { // More than 50% failed
+		return fmt.Errorf("high email failure rate: %d out of %d emails failed to send", emailFailures, len(closedTickets))
+	}
+
+	return nil
+}
 
 func (j *AutoCloseSupportTicket) Schedule() string {
 	return "0 0 0 * * *" // Daily at midnight
+}
+
+// sendTicketClosedEmail sends an email notification when a ticket is auto-closed
+func (j *AutoCloseSupportTicket) sendTicketClosedEmail(fullName, email, ticketNumber, subject string) error {
+	// Email template for ticket closure
+	emailSubject := fmt.Sprintf("Ticket #%s has been closed", ticketNumber)
+
+	emailBody := fmt.Sprintf(`
+		Dear %s,
+		
+		Your support ticket has been automatically closed due to inactivity.
+		
+		Ticket Details:
+		- Ticket Number: %s
+		- Subject: %s
+		- Status: Closed
+		- Closed Date: %s
+		
+		This ticket was closed because we haven't received a response from you in the past 48 hours.
+		
+		If you still need assistance with this issue, please feel free to create a new support ticket
+		or reply to this email to reopen the ticket.
+		
+		Thank you for using our service.
+		
+		Best regards,
+		Support Team
+	`, fullName, ticketNumber, subject, time.Now().Format("January 2, 2006 at 3:04 PM"))
+
+	fmt.Print(emailBody, emailSubject)
+
+	// TODO: Replace with actual email service call
+	// Example: return j.emailService.SendEmail(email, emailSubject, emailBody)
+
+	// Simulate potential email failures for testing
+	log.Printf("Would send email to %s for ticket %s", email, ticketNumber)
+	return nil
 }

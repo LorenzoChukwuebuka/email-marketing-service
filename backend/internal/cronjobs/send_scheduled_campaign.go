@@ -27,8 +27,7 @@ import (
 const BATCH_SIZE = 10
 
 type ScheduledCampaignJob struct {
-	store db.Store
-	ctx   context.Context
+	*BaseJob
 }
 
 type SendCampaignUUIDStruct struct {
@@ -62,9 +61,16 @@ type RecipientError struct {
 }
 
 func NewScheduledCampaignJob(store db.Store, ctx context.Context) *ScheduledCampaignJob {
+	baseJob := NewBaseJob(
+		store,
+		ctx,
+		"send_scheduled_campaigns",
+		"SendScheduledCampaigns",
+		"Automatically send scheduled campaigns",
+	)
+
 	return &ScheduledCampaignJob{
-		store: store,
-		ctx:   ctx,
+		BaseJob: baseJob,
 	}
 }
 

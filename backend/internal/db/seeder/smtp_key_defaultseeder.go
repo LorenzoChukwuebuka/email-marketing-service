@@ -3,11 +3,26 @@ package seeders
 import (
 	"context"
 	db "email-marketing-service/internal/db/sqlc"
-	"github.com/google/uuid"
 	"log"
+
+	"github.com/google/uuid"
 )
 
-func SeedSMTPKey(ctx context.Context, q db.Store) error {
+// SMTPSeeder implements the Seeder interface for SMTP keys
+type SMTPSeeder struct{}
+
+// Name returns the seeder name
+func (s *SMTPSeeder) Name() string {
+	return "SMTP Keys"
+}
+
+// Priority returns the execution priority
+func (s *SMTPSeeder) Priority() int {
+	return 2 // Lower priority than plans
+}
+
+// Seed populates the database with SMTP key data
+func (s *SMTPSeeder) Seed(ctx context.Context, q db.Store) error {
 	// Start a transaction to maintain consistency
 	tx, err := q.BeginTx(ctx)
 	if err != nil {

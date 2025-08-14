@@ -3,34 +3,41 @@ package cronjobs
 import (
 	"context"
 	db "email-marketing-service/internal/db/sqlc"
+	"fmt"
 	"log"
 )
 
 type DeleteScheduledUsers struct {
-	ctx   context.Context
-	store db.Store
+	*BaseJob
 }
 
-func NewDeleteScheduledUsers(ctx context.Context, store db.Store) *DeleteScheduledUsers {
+func NewDeleteScheduledUsers( store db.Store,ctx context.Context) *DeleteScheduledUsers {
+	baseJob := NewBaseJob(
+		store,
+		ctx,
+		"delete_users_scheduled_for_deletion",
+		"AutoCloseSupportTicket",
+		"Automatically delete users scheduled for deletion",
+	)
+
 	return &DeleteScheduledUsers{
-		ctx:   ctx,
-		store: store,
+		BaseJob: baseJob,
 	}
 }
 
-func (j *DeleteScheduledUsers) Run() {
+func (j *DeleteScheduledUsers) Run()error {
 	log.Println("Starting delete scheduled users job...")
 
 	// Delete users scheduled for deletion after 30 days
 	deletedUsers, err := j.store.DeleteScheduledUsers(j.ctx)
 	if err != nil {
 		log.Printf("Error deleting scheduled users: %v", err)
-		return
+		return err
 	}
 
 	if len(deletedUsers) == 0 {
 		log.Println("No users found for scheduled deletion")
-		return
+		return fmt.Errorf("no users found for scheduled deletion")
 	}
 
 	log.Printf("Successfully deleted %d scheduled users:", len(deletedUsers))
@@ -72,10 +79,12 @@ func (j *DeleteScheduledUsers) Run() {
 	}
 
 	log.Println("Delete scheduled users job completed successfully")
+	return nil
 }
 
 func (j *DeleteScheduledUsers) Schedule() string {
 	return "0 0 2 * * *" // Daily at 2:00 AM
+	//return "*/10 * * * * *"
 }
 
 // sendAccountDeletedEmail sends an email notification when a user account is permanently deleted
