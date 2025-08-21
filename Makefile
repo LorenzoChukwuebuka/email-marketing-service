@@ -55,6 +55,9 @@ docker-restart:
 docker-dev:
 	docker-compose -f compose.dev.yaml up --build -d
 
+docker-staging:
+	docker-compose -f compose.staging.yaml up --build -d
+
 run:
 	cd $(ROOT_DIR) && go run cmd/api/main.go
 

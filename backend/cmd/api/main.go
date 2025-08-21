@@ -12,13 +12,12 @@ import (
 	"email-marketing-service/internal/logger"
 	smtp_server "email-marketing-service/internal/smtp"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-
-	_ "github.com/lib/pq"
 )
 
 var (
@@ -31,6 +30,7 @@ func main() {
 		log.Printf("Error connecting to database: %v", err)
 		return
 	}
+	
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -88,8 +88,8 @@ func main() {
 		mode := os.Getenv("SERVER_MODE")
 		var err error
 
-		if mode == "production" {
-			// Production configuration with TLS
+		switch mode {
+		case "production", "staging":
 			err = smtp_server.StartSMTPServer(ctx, store,
 				smtp_server.WithPort("587"),
 				smtp_server.WithTLS(
@@ -98,8 +98,8 @@ func main() {
 				),
 				smtp_server.WithInsecureAuth(true),
 			)
-		} else {
-			// Development configuration
+
+		default: // development
 			err = smtp_server.StartSMTPServer(ctx, store,
 				smtp_server.WithInsecureAuth(true),
 				// Port will use default from config
