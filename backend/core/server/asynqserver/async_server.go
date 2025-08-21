@@ -33,6 +33,8 @@ func StartAsynqServer(redisAddr string, dbConn db.Store,ctx context.Context) err
 	// 	return tasks.ProccessAdminNotification(ctx, t, adminNotificationRepo)
 	// })
 
+	//_ = tasks.EnqueueWelcomeEmail(client, "hello@hello.com", "obi")
+
 	// Start the server
 	log.Println("Starting Asynq server...")
 	if err := srv.Run(mux); err != nil {

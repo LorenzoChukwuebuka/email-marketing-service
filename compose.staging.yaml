@@ -3,33 +3,29 @@ version: '3.8'
 services:
   traefik:
     image: traefik:v2.10
-    container_name: crabmailer-staging-traefik
+    container_name: dev-crabmailer-traefik
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--api.insecure=true"  # Only for development
+      - "--api.insecure=true"  # Dashboard for development
       - "--api.dashboard=true"
     ports:
-      - "82:80"
-      - "8082:8080"  # Traefik Dashboard
+      - "80:80"
+      - "8080:8080"  # Dashboard (http://localhost:8080)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - app-network
-
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`crabmailer.local`) && PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.rule=Host(`staging.crabmailer.com`)"
       - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend.priority=10"  # Lower priority
       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
-    ports:
-      - "6000:6000"  
     networks:
       - app-network
     depends_on:
@@ -50,13 +46,12 @@ services:
       dockerfile: Dockerfile.backend
     labels:
       - "traefik.enable=true"
-      # API routing - fix naming to be consistent
-      - "traefik.http.routers.api.rule=Host(`api.crabmailer.local`)"
+      # API HTTP
+      - "traefik.http.routers.api.rule=Host(`api.staging.crabmailer.com`)"
       - "traefik.http.routers.api.entrypoints=web"
-      - "traefik.http.routers.api.priority=100"
       - "traefik.http.services.api.loadbalancer.server.port=9000"
       # WebSocket routing
-      - "traefik.http.routers.ws.rule=Host(`api.crabmailer.local`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.entrypoints=web"
       - "traefik.http.services.ws.loadbalancer.server.port=9001"
     ports:
