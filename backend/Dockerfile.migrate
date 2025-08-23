@@ -1,0 +1,22 @@
+FROM migrate/migrate:latest AS migrate-tool
+
+FROM alpine:latest
+
+# Install postgresql-client
+RUN apk add --no-cache postgresql-client
+
+# Copy migrate binary from official image
+COPY --from=migrate-tool /migrate /usr/local/bin/migrate
+
+# Copy the migration script
+COPY migrate.sh /migrate.sh
+RUN chmod +x /migrate.sh
+
+RUN mkdir -p /migrations
+
+WORKDIR /
+
+# Verify migrate is working
+RUN migrate -version
+
+CMD ["/migrate.sh"]

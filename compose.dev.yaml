@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   traefik:
     image: traefik:v2.10
@@ -11,11 +10,17 @@ services:
       - "--api.dashboard=true"
     ports:
       - "80:80"
-      - "8080:8080"  # Dashboard (http://localhost:8080)
+      - "443:443"
+      - "25:25"     # smtp
+      - "587:587"   # smtp
+      - "465:465"   # smtps
+      - "8080:8080" # dashboard
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik.yaml:/etc/traefik/traefik.yaml:ro"
     networks:
       - app-network
+      
   frontend:
     build:
       context: ./frontend
@@ -55,6 +60,10 @@ services:
       - "traefik.http.routers.ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.entrypoints=web"
       - "traefik.http.services.ws.loadbalancer.server.port=9001"
+      # SMTP routing
+      - "traefik.http.routers.smtp.rule=Host(`smtp.staging.crabmailer.com`)"
+      - "traefik.http.routers.smtp.entrypoints=smtp"
+      - "traefik.http.services.smtp.loadbalancer.server.port=25"
     ports:
       - "9000:9000"  # API
       - "9001:9001"  # WebSockets
@@ -82,6 +91,7 @@ services:
     depends_on:
       - redis
       - postgres-db
+      - db-migrate
 
   postgres-db:
     container_name: crabmailer-dev-postgres-db
@@ -117,6 +127,22 @@ services:
       - app-network
     depends_on:
       - postgres-db
+  
+  db-migrate:
+    container_name: crabmailer-dev-migrate
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.migrate
+    networks:
+      - app-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      DB_URL: "postgres://myuser:mypassword@postgres-db:5432/mydatabase?sslmode=disable"
+    volumes:
+      - ./backend/internal/db/migrations:/migrations
+    command:  ["/migrate.sh"]
 
 networks:
   app-network:

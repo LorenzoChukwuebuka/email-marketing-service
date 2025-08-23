@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   traefik:
     image: traefik:v2.10
-    container_name: staging-crabmailer-traefik
+    container_name: dev-crabmailer-traefik
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -12,20 +10,28 @@ services:
       - "--api.dashboard=true"
     ports:
       - "80:80"
-      - "8080:8080"  # Dashboard (http://localhost:8080)
+      - "443:443"
+      - "25:25"     # smtp
+      - "587:587"   # smtp
+      - "465:465"   # smtps
+      - "8080:8080" # dashboard
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik.yaml:/etc/traefik/traefik.yaml:ro"
     networks:
       - app-network
+      
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend.staging
+      dockerfile: Dockerfile.frontend.dev
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`staging.crabmailer.com`)"
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
+    environment:
+      SERVER_MODE: "staging"
     networks:
       - app-network
     depends_on:
@@ -40,10 +46,10 @@ services:
       - app-network
 
   go-backend:
-    container_name: crabmailer-staging-api
+    container_name: crabmailer-dev-api
     build:
       context: ./backend
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.backend.development
     labels:
       - "traefik.enable=true"
       # API HTTP
@@ -54,6 +60,10 @@ services:
       - "traefik.http.routers.ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.entrypoints=web"
       - "traefik.http.services.ws.loadbalancer.server.port=9001"
+      # SMTP routing
+      - "traefik.http.routers.smtp.rule=Host(`smtp.staging.crabmailer.com`)"
+      - "traefik.http.routers.smtp.entrypoints=smtp"
+      - "traefik.http.services.smtp.loadbalancer.server.port=587"
     ports:
       - "9000:9000"  # API
       - "9001:9001"  # WebSockets
@@ -73,17 +83,18 @@ services:
     cap_add:
       - NET_BIND_SERVICE
     privileged: true
-    env_file: ./backend/.env.staging
+    env_file: ./backend/.env.development
     environment:
-      SERVER_MODE: "staging"
+      SERVER_MODE: "development"
       REDIS_ADDR: "redis:6379"
       DISABLE_TLS: "true"
     depends_on:
       - redis
       - postgres-db
+      - db-migrate
 
   postgres-db:
-    container_name: crabmailer-staging-postgres-db
+    container_name: crabmailer-dev-postgres-db
     image: postgres:16
     restart: always
     environment:
@@ -101,6 +112,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  pgadmin:
+    container_name: crabmailer-dev-pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8082:80"
+    networks:
+      - app-network
+    depends_on:
+      - postgres-db
+  
+  db-migrate:
+    container_name: crabmailer-dev-migrate
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.migrate
+    networks:
+      - app-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      DB_URL: "postgres://myuser:mypassword@postgres-db:5432/mydatabase?sslmode=disable"
+    volumes:
+      - ./backend/internal/db/migrations:/migrations
+    command:  ["/migrate.sh"]
 
 networks:
   app-network:
