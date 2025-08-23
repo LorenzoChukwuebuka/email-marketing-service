@@ -1,0 +1,17 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  smtp:
+    address: ":587"   # for submission (STARTTLS)
+  smtps:
+    address: ":465"   # for implicit TLS if you need it
+
+providers:
+  docker:
+    exposedByDefault: false
+
+api:
+  dashboard: true
+  insecure: true  # ⚠️ only for dev/staging

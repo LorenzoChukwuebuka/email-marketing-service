@@ -12,7 +12,7 @@ WORKDIR /app/backend
 
 # Install bash and nano
 RUN apk update && apk add bash nano vim curl
-
+ 
 # Copy the Go binary from the builder stage
 COPY --from=backend-builder /app/backend/main .
 
@@ -39,4 +39,4 @@ EXPOSE 9000 9001 1025 587
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD /healthcheck.sh
 
 # Start the Go application
-CMD ["./main"]
+ CMD ["./main"]
