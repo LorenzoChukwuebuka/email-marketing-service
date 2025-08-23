@@ -18,7 +18,7 @@ func EnableCORS(handler http.Handler) http.Handler {
 		}
 
 		// For different-origin requests (e.g., during development)
-		allowedOrigins := []string{"*", "http://localhost:5054", "http://crabmailer.local", "https://crabmailer.com", "https://beta.crabmailer.com"}
+		allowedOrigins := []string{"*", "http://localhost:5054", "https://crabmailer.com", "http://staging.crabmailer.com"}
 		origin := r.Header.Get("Origin")
 
 		for _, allowedOrigin := range allowedOrigins {
@@ -40,6 +40,7 @@ func EnableCORS(handler http.Handler) http.Handler {
 	})
 
 }
+
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)

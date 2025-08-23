@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   traefik:
     image: traefik:v2.10
@@ -8,28 +7,26 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--api.insecure=true"  # Only for development
+      - "--api.insecure=true"  # Dashboard for development
       - "--api.dashboard=true"
     ports:
-      - "81:80"
-      - "8080:8080"  # Traefik Dashboard
+      - "80:80"
+      - "8080:8080"  # Dashboard (http://localhost:8080)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - app-network
-
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile.frontend.dev
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`crabmailer.local`) && PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.rule=Host(`staging.crabmailer.com`)"
       - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend.priority=10"  # Lower priority
       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
-    ports:
-      - "6000:6000"  
+    environment:
+      SERVER_MODE: "staging"
     networks:
       - app-network
     depends_on:
@@ -44,19 +41,18 @@ services:
       - app-network
 
   go-backend:
-    container_name: dev-crabmailer-api
+    container_name: crabmailer-dev-api
     build:
       context: ./backend
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.backend.development
     labels:
       - "traefik.enable=true"
-      # API routing - fix naming to be consistent
-      - "traefik.http.routers.api.rule=Host(`api.crabmailer.local`)"
+      # API HTTP
+      - "traefik.http.routers.api.rule=Host(`api.staging.crabmailer.com`)"
       - "traefik.http.routers.api.entrypoints=web"
-      - "traefik.http.routers.api.priority=100"
       - "traefik.http.services.api.loadbalancer.server.port=9000"
       # WebSocket routing
-      - "traefik.http.routers.ws.rule=Host(`api.crabmailer.local`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.entrypoints=web"
       - "traefik.http.services.ws.loadbalancer.server.port=9001"
     ports:
@@ -78,9 +74,9 @@ services:
     cap_add:
       - NET_BIND_SERVICE
     privileged: true
-    env_file: ./backend/.env
+    env_file: ./backend/.env.development
     environment:
-      SERVER_MODE: "production"
+      SERVER_MODE: "development"
       REDIS_ADDR: "redis:6379"
       DISABLE_TLS: "true"
     depends_on:
@@ -88,7 +84,7 @@ services:
       - postgres-db
 
   postgres-db:
-    container_name: dev-crabmailer-postgres-db
+    container_name: crabmailer-dev-postgres-db
     image: postgres:16
     restart: always
     environment:
@@ -106,6 +102,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  pgadmin:
+    container_name: crabmailer-dev-pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8082:80"
+    networks:
+      - app-network
+    depends_on:
+      - postgres-db
 
 networks:
   app-network:
