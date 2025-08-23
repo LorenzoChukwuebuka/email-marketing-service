@@ -3,7 +3,7 @@ services:
     container_name: frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile.frontend.prod
     ports:
       - "5000:80"
     volumes:
@@ -26,7 +26,7 @@ services:
       - "9001:9001"
     environment:
       SERVER_MODE: "production"
-    env_file: ./backend/.env
+    env_file: ./backend/.env.production
     networks:
       - app-network
     healthcheck:

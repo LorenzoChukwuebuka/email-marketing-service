@@ -22,7 +22,6 @@ func AdminJWTMiddleware(next http.Handler) http.Handler {
 		}
 
 		secretKey := []byte(key)
-
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -61,7 +60,6 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		}
 
 		secretKey := []byte(key)
-
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -97,7 +95,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Define the secret key used for verification
 		secretKey := []byte(key)
-
 		// Parse and verify the token with MapClaims
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -116,7 +113,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Ensure claims are of type jwt.MapClaims
 		jwtclaims, ok := token.Claims.(jwt.MapClaims)
-
 		for key, value := range jwtclaims {
 			fmt.Printf("%s: %v\n", key, value)
 		}
@@ -125,7 +121,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			helper.ErrorResponse(w, fmt.Errorf("invalid jwt claims"),nil)
 			return
 		}
-
 		// Set the claims into the request context
 		ctx := context.WithValue(r.Context(), "authclaims", jwtclaims)
 		next.ServeHTTP(w, r.WithContext(ctx))

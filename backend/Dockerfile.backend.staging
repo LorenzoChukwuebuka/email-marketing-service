@@ -20,7 +20,7 @@ COPY --from=backend-builder /app/backend/main .
 COPY --from=backend-builder /app/backend/internal/mailer/templates ./internal/mailer/templates
 
 # Copy .env file for the backend
-COPY .env .
+COPY .env.staging .
 
 # Copy healthcheck script
 COPY ./healthcheck.sh /healthcheck.sh

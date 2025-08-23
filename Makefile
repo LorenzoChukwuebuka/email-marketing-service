@@ -18,6 +18,9 @@ npmi:
 rundev:
 	cd $(FE_DIR) && npm run dev
 
+rundevstaging:
+	cd $(FE_DIR) && npm run dev:staging
+
 buildfe:
 	cd $(FE_DIR) && npm run build
 ifeq ($(OS),Windows_NT)
@@ -57,6 +60,9 @@ docker-dev:
 
 docker-staging:
 	docker-compose -f compose.staging.yaml up --build -d
+
+docker-prod:
+	docker-compose -f compose.production.yaml up --build -d
 
 run:
 	cd $(ROOT_DIR) && go run cmd/api/main.go

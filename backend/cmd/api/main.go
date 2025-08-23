@@ -89,7 +89,16 @@ func main() {
 		var err error
 
 		switch mode {
-		case "production", "staging":
+		case "production":
+			err = smtp_server.StartSMTPServer(ctx, store,
+				smtp_server.WithPort("587"),
+				smtp_server.WithTLS(
+					"/etc/letsencrypt/live/smtp.crabmailer.com/fullchain.pem",
+					"/etc/letsencrypt/live/smtp.crabmailer.com/privkey.pem",
+				),
+				smtp_server.WithInsecureAuth(true),
+			)
+		case "staging":
 			err = smtp_server.StartSMTPServer(ctx, store,
 				smtp_server.WithPort("587"),
 				smtp_server.WithTLS(

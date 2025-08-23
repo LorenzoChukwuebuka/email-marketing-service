@@ -90,10 +90,12 @@ var LoadEnv = func() *Config {
 func determineEnvFile() string {
 	mode := os.Getenv("SERVER_MODE")
 	switch mode {
-	case "production", "staging":
-		return ".env"
+	case "production":
+		return ".env.production"
 	case "test":
 		return ".env.test"
+	case "staging":
+		return ".env.staging"
 	default:
 		return ".env.development"
 	}
