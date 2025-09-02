@@ -31,7 +31,7 @@ services:
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
     environment:
-      SERVER_MODE: "staging"
+      SERVER_MODE: "production"
     networks:
       - app-network
     depends_on:
