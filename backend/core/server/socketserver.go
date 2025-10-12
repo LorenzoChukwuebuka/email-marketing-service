@@ -1,4 +1,4 @@
-package websocketserver
+package server
 
 import (
 	"context"
@@ -284,7 +284,7 @@ func getCpuSection() (CpuData, error) {
 	return data, nil
 }
 
-func StartSocketServer() {
+func (s *Server) StartSocketServer() {
 	// Set up routes
 	http.HandleFunc("/ws", handleWebSocket)
 
@@ -311,7 +311,7 @@ func StartSocketServer() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	<-stop
-	log.Println("Shutting down server...")
+	log.Println("Shutting down socket server...")
 
 	// Close all active WebSocket connections
 	connManager.mu.Lock()

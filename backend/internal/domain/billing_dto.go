@@ -25,4 +25,5 @@ type BasePaymentResponse struct {
 	Status          string  `json:"status"`
 	CompanyID       string  `json:"company_id"`
 	PaymentIntentID string  `json:"payment_intent_id"`
+	Reference       string  `json:"reference"`
 }

@@ -1,0 +1,34 @@
+# traefik.yml
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  smtp:
+    address: ":25"
+  smtp-submission:
+    address: ":587"
+  smtp-ssl:
+    address: ":465"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    watch: true
+    network: app-network
+
+api:
+  dashboard: true
+  insecure: true  # Only for development
+
+# Optional: Enable access logs
+accessLog: {}
+
+# Optional: Enable Traefik logs
+log:
+  level: INFO

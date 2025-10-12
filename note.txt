@@ -1,0 +1,177 @@
+// package worker
+
+// import (
+// 	"context"
+// 	db "email-marketing-service/internal/db/sqlc"
+// 	"fmt"
+// 	"log"
+// 	"sync"
+// 	"time"
+// )
+
+// type TaskType string
+
+// const (
+// 	TaskSendWelcomeEmail      TaskType = "email:send_welcome"
+// 	TaskSendUserNotification  TaskType = "usernotification:send"
+// 	TaskSendAdminNotification TaskType = "adminnotifcation:send"
+// 	TaskSendEmail             TaskType = "email:send"
+// 	TaskUserDetails           TaskType = "user:store_details"
+// 	TaskSMTPSendEmail         TaskType = "smtp:sendemail"
+// 	TaskAuditLogCreate        TaskType = "audit:log_create"
+// 	TaskAuditLogUpdate        TaskType = "audit:log_update"
+// 	TaskAuditLogDelete        TaskType = "audit:log_delete"
+// 	TaskAuditLogLogin         TaskType = "audit:log_login"
+// 	TaskAuditLogFailedLogin   TaskType = "audit:log_failed_login"
+// )
+
+// type Task struct {
+// 	Type       TaskType
+// 	Timestamp  time.Time
+// 	Payload    any
+// 	RetryCount int
+// }
+
+// type Worker struct {
+// 	taskChan     chan Task
+// 	shutdownChan chan struct{}
+// 	wg           sync.WaitGroup
+// 	maxRetries   int
+// 	retryDelay   time.Duration
+// 	mu           sync.Mutex
+// 	Store        db.Store
+// 	// emailClient  EmailClient
+// 	// logger       Logger
+// }
+
+// func NewWorker(maxRetries int, retryDelay time.Duration) *Worker {
+// 	return &Worker{
+// 		taskChan:     make(chan Task), // buffered channel
+// 		shutdownChan: make(chan struct{}),
+// 		maxRetries:   maxRetries,
+// 		retryDelay:   retryDelay,
+// 	}
+// }
+
+// func (w *Worker) Start() {
+// 	w.wg.Add(1)
+// 	go w.run()
+// 	log.Println("Worker started and listening for tasks")
+// }
+
+// func (w *Worker) run() {
+// 	defer w.wg.Done()
+// 	for {
+// 		select {
+// 		case task := <-w.taskChan:
+// 			if err := w.processTaskWithRetry(context.Background(), task); err != nil {
+// 				log.Printf("Unrecoverable error processing task: %v", err)
+// 			}
+// 		case <-w.shutdownChan:
+// 			log.Println("Worker shutting down...")
+// 			return
+// 		}
+// 	}
+// }
+
+// func (w *Worker) processTaskWithRetry(ctx context.Context, task Task) error {
+// 	for attempt := 0; attempt <= w.maxRetries; attempt++ {
+// 		err := w.processTask(ctx, task)
+// 		if err == nil {
+// 			log.Printf("Task %s processed successfully", task.Type)
+// 			return nil
+// 		}
+
+// 		log.Printf("Error processing task %s (attempt %d/%d): %v",
+// 			task.Type, attempt+1, w.maxRetries+1, err)
+
+// 		if attempt == w.maxRetries {
+// 			return fmt.Errorf("failed to process task after %d attempts: %w",
+// 				w.maxRetries+1, err)
+// 		}
+
+// 		// Exponential backoff
+// 		time.Sleep(w.retryDelay * time.Duration(1<<uint(attempt)))
+// 		task.RetryCount++
+// 	}
+// 	return nil
+// }
+
+// func (w *Worker) processTask(ctx context.Context, task Task) error {
+// 	switch task.Type {
+// 	case TaskSendWelcomeEmail:
+// 		payload, ok := task.Payload.(EmailPayload)
+// 		if !ok {
+// 			return fmt.Errorf("invalid payload type for TaskSendWelcomeEmail")
+// 		}
+// 		return ProcessWelcomeEmailTask(ctx, payload)
+
+// 	default:
+// 		return fmt.Errorf("unknown task type: %s", task.Type)
+// 	}
+// }
+
+// func (w *Worker) EnqueueTask(taskType TaskType, payload interface{}) {
+// 	task := Task{
+// 		Type:       taskType,
+// 		Timestamp:  time.Now(),
+// 		Payload:    payload,
+// 		RetryCount: 0,
+// 	}
+
+// 	w.taskChan <- task
+// }
+
+// // Shutdown gracefully shuts down the worker
+// func (w *Worker) Shutdown(ctx context.Context) error {
+// 	close(w.shutdownChan)
+
+// 	// Process remaining tasks
+// 	w.wg.Add(1)
+// 	go func() {
+// 		defer w.wg.Done()
+// 		for task := range w.taskChan {
+// 			if err := w.processTaskWithRetry(ctx, task); err != nil {
+// 				log.Printf("Failed to process task during shutdown: %v", err)
+// 			}
+// 		}
+// 	}()
+
+// 	done := make(chan struct{})
+// 	go func() {
+// 		w.wg.Wait()
+// 		close(w.taskChan)
+// 		close(done)
+// 	}()
+
+// 	select {
+// 	case <-done:
+// 		log.Println("Worker shutdown complete")
+// 		return nil
+// 	case <-ctx.Done():
+// 		return ctx.Err()
+// 	}
+// }
+
+// // ForceShutdown immediately stops the worker without processing remaining tasks
+// func (w *Worker) ForceShutdown() {
+// 	select {
+// 	case <-w.shutdownChan:
+// 		return
+// 	default:
+// 		close(w.shutdownChan)
+// 	}
+// 	log.Println("Worker force shutdown")
+// }
+
+// // GetStats returns basic worker statistics
+// func (w *Worker) GetStats() map[string]interface{} {
+// 	w.mu.Lock()
+// 	defer w.mu.Unlock()
+
+// 	return map[string]interface{}{
+// 		"queue_length": len(w.taskChan),
+// 		"max_retries":  w.maxRetries,
+// 		"retry_delay":  w.retryDelay.String(),
+// 	}
+// }

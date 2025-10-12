@@ -10,29 +10,27 @@ import (
 
 func EnableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if the request is coming from the same origin as the server
-		if r.Header.Get("Origin") == "" {
-			// Same-origin request, no need for CORS headers
-			handler.ServeHTTP(w, r)
-			return
+		origin := r.Header.Get("Origin")
+	 
+
+		allowedOrigins := []string{
+			"http://localhost:5054",
+			"https://crabmailer.com",
+			"http://staging.crabmailer.com",
 		}
 
-		// For different-origin requests (e.g., during development)
-		allowedOrigins := []string{"*", "http://localhost:5054", "https://crabmailer.com", "http://staging.crabmailer.com"}
-		origin := r.Header.Get("Origin")
-
-		for _, allowedOrigin := range allowedOrigins {
-			if origin == allowedOrigin {
+		for _, o := range allowedOrigins {
+			if origin == o {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Origin-Portal")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				break
 			}
 		}
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
@@ -40,7 +38,6 @@ func EnableCORS(handler http.Handler) http.Handler {
 	})
 
 }
-
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)

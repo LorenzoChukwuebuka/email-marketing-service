@@ -1,4 +1,4 @@
-CREATE TABLE job_schedules (
+CREATE TABLE IF NOT EXISTS job_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_name VARCHAR(100) NOT NULL UNIQUE,
     job_type VARCHAR(50) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE job_schedules (
 );
 
 -- Table to log job executions
-CREATE TABLE job_execution_logs (
+CREATE TABLE IF NOT EXISTS job_execution_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_schedule_id UUID REFERENCES job_schedules(id) ON DELETE CASCADE,
     job_name VARCHAR(100) NOT NULL,
@@ -31,15 +31,15 @@ CREATE TABLE job_execution_logs (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_job_schedules_enabled ON job_schedules(enabled);
-CREATE INDEX idx_job_schedules_next_run ON job_schedules(last_run_at) WHERE enabled = true;
-CREATE INDEX idx_job_execution_logs_job_schedule ON job_execution_logs(job_schedule_id);
-CREATE INDEX idx_job_execution_logs_started_at ON job_execution_logs(started_at);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_enabled ON job_schedules(enabled);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_next_run ON job_schedules(last_run_at) WHERE enabled = true;
+CREATE INDEX IF NOT EXISTS idx_job_execution_logs_job_schedule ON job_execution_logs(job_schedule_id);
+CREATE INDEX IF NOT EXISTS idx_job_execution_logs_started_at ON job_execution_logs(started_at);
 
 -- Insert initial job configurations
-INSERT INTO job_schedules (job_name, job_type, cron_schedule, description, enabled) VALUES 
-('auto_close_support_tickets', 'AutoCloseSupportTicket', '0 0 0 * * *', 'Automatically close stale support tickets that have no replies for 48+ hours', true),
-('update_expired_subscriptions', 'UpdateExpiredSubscription', '0 0 2 * * *', 'Update expired subscription statuses', true);
+--INSERT INTO job_schedules (job_name, job_type, cron_schedule, description, enabled) VALUES 
+--('auto_close_support_tickets', 'AutoCloseSupportTicket', '0 0 0 * * *', 'Automatically close stale support tickets that have no replies for 48+ hours', true),
+--('update_expired_subscriptions', 'UpdateExpiredSubscription', '0 0 2 * * *', 'Update expired subscription statuses', true);
 
 -- Function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -51,7 +51,23 @@ END;
 $$ language 'plpgsql';
 
 -- Trigger to automatically update updated_at
-CREATE TRIGGER update_job_schedules_updated_at 
-    BEFORE UPDATE ON job_schedules 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
+--CREATE TRIGGER update_job_schedules_updated_at 
+  --  BEFORE UPDATE ON job_schedules 
+    --FOR EACH ROW 
+    --EXECUTE FUNCTION update_updated_at_column();
+
+
+
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'update_job_schedules_updated_at'
+    ) THEN
+        CREATE TRIGGER update_job_schedules_updated_at
+        BEFORE UPDATE ON job_schedules
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END
+$$;

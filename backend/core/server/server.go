@@ -7,13 +7,15 @@ import (
 	"email-marketing-service/internal/config"
 	"email-marketing-service/internal/cronjobs"
 	db "email-marketing-service/internal/db/sqlc"
+	worker "email-marketing-service/internal/workers"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	 "log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
+	"github.com/gorilla/mux"
+	//"path/filepath"
 	"syscall"
 	"time"
 )
@@ -21,12 +23,14 @@ import (
 type Server struct {
 	router *mux.Router
 	db     db.Store
+	wkr    *worker.Worker
 }
 
-func NewServer(db db.Store) *Server {
+func NewServer(db db.Store, wkr *worker.Worker) *Server {
 	return &Server{
 		router: mux.NewRouter(),
 		db:     db,
+		wkr:    wkr,
 	}
 }
 
@@ -46,45 +50,9 @@ func (s *Server) setupLogger() (*os.File, error) {
 	return logFile, nil
 }
 
-func (s *Server) setupRoutes() {
-	s.router.Use(middleware.RecoveryMiddleware)
-	s.router.Use(middleware.EnableCORS)
-	s.router.Use(middleware.MethodNotAllowedMiddleware)
-	s.router.NotFoundHandler = http.HandlerFunc(middleware.NotFoundHandler)
-	apiV1 := s.router.PathPrefix("/api/v1").Subrouter()
-
-	// Health route
-	apiV1.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
-	}).Methods(http.MethodGet)
-
-	routeMap := map[string]routes.RouteInterface{
-		"auth":      routes.NewAuthRoute(s.db),
-		"admin":     routes.NewAdminRoute(s.db),
-		"contacts":  routes.NewContactRoutes(s.db),
-		"templates": routes.NewTemplateRoute(s.db),
-		"payments":  routes.NewPaymentRoute(s.db),
-		"campaigns": routes.NewCampaignRoute(s.db),
-		"domains":   routes.NewDomainRoute(s.db),
-		"senders":   routes.NewSenderRoute(s.db),
-		"users":     routes.NewUserRoute(s.db),
-		"misc":      routes.NewMiscRoute(s.db),
-		"key":       routes.NewSMTPAPIKeyRoute(s.db),
-		"support":   routes.NewSupportRoute(s.db),
-	}
-
-	for path, route := range routeMap {
-		route.InitRoutes(apiV1.PathPrefix("/" + path).Subrouter())
-	}
-
-	uploadsDir := filepath.Join(".", "uploads", "tickets")
-	s.router.PathPrefix("/uploads/tickets/").Handler(http.StripPrefix("/uploads/tickets/", http.FileServer(http.Dir(uploadsDir))))
-}
-
 func (s *Server) Start() {
-	s.setupRoutes()
+	// Initialize routes
+	routes.InitRoutes(s.router, s.db,s.wkr)
 	logFile, err := s.setupLogger()
 	if err != nil {
 		log.Fatal("Failed to set up logger:", err)
@@ -94,7 +62,7 @@ func (s *Server) Start() {
 	//start the cron jobs
 	c := cronjobs.SetupCronJobs(s.db)
 	c.Start()
-	log.Println("Cron jobs started")
+	slog.Info("Cron jobs started")
 
 	server := &http.Server{
 		Addr:         cfg.APP_PORT,
@@ -105,7 +73,7 @@ func (s *Server) Start() {
 	}
 
 	go func() {
-		log.Println("Server started on port " + cfg.APP_PORT)
+		slog.Info("Server started on port " + cfg.APP_PORT)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe: %v", err)
 		}
@@ -118,9 +86,9 @@ func (s *Server) Start() {
 	fmt.Printf("Received signal: %v\n", sig)
 
 	// Stop cron jobs first
-	log.Println("Stopping cron jobs...")
+	slog.Info("Stopping cron jobs...")
 	c.Stop()
-	log.Println("Cron jobs stopped")
+	slog.Info("Cron jobs stopped")
 
 	// Then shutdown the HTTP server
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

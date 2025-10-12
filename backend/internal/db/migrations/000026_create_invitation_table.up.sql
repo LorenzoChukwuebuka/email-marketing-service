@@ -22,15 +22,25 @@ CREATE TABLE IF NOT EXISTS invitations (
 );
 
 -- Create index for faster lookups
-CREATE INDEX idx_invitations_token ON invitations(token);
-CREATE INDEX idx_invitations_email ON invitations(email);
-CREATE INDEX idx_invitations_company_status ON invitations(company_id, status);
-CREATE INDEX idx_invitations_expires_at ON invitations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
+CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email);
+CREATE INDEX IF NOT EXISTS idx_invitations_company_status ON invitations(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_invitations_expires_at ON invitations(expires_at);
 
--- Add check constraints
-ALTER TABLE invitations 
-ADD CONSTRAINT chk_invitation_status 
-CHECK (status IN ('pending', 'accepted', 'expired', 'cancelled'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_constraint 
+        WHERE conname = 'chk_invitation_status'
+    ) THEN
+        ALTER TABLE invitations 
+        ADD CONSTRAINT chk_invitation_status 
+        CHECK (status IN ('pending', 'accepted', 'expired', 'cancelled'));
+    END IF;
+END
+$$;
+
 
 -- Add trigger to update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -41,7 +51,16 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_invitations_updated_at 
-    BEFORE UPDATE ON invitations 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'update_invitations_updated_at'
+    ) THEN
+        CREATE TRIGGER update_invitations_updated_at
+        BEFORE UPDATE ON invitations
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END
+$$;

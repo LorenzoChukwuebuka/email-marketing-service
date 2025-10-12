@@ -11,12 +11,14 @@ import (
 	"email-marketing-service/internal/enums"
 	"email-marketing-service/internal/factory/paymentFactory"
 	"email-marketing-service/internal/helper"
+	worker "email-marketing-service/internal/workers"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"time"
-
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/sqlc-dev/pqtype"
@@ -24,6 +26,7 @@ import (
 
 type PaymentService struct {
 	store db.Store
+	wkr   *worker.Worker
 }
 
 func NewPaymentService(store db.Store) *PaymentService {
@@ -109,6 +112,47 @@ func (s *PaymentService) InitiateNewTransaction(ctx context.Context, req domain.
 	return result, nil
 }
 
+func (s *PaymentService) HandleWebhook(ctx context.Context, r *http.Request, paymentMethod string) (any, error) {
+
+	httpReq := common.RequestFromCtx(ctx)
+	var ip net.IP
+	if httpReq != nil {
+		ip = s.wkr.GetClientIP(httpReq)
+	}
+
+	paymentService, err := paymentmethodFactory.PaymentFactory(paymentMethod)
+
+	if err != nil {
+		return nil, errors.Join(common.ErrPaymentMethodNotSupported, err)
+	}
+
+	data, err := paymentService.WebhookHandler(r)
+	if err != nil {
+
+		data := worker.AuditCreatePayload{
+			UserID:      uuid.New(),
+			ResourceID:  nil,
+			Method:      r.Method,
+			Endpoint:    r.URL.Path,
+			IP:          ip,
+			Success:     false,
+			RequestBody: r,
+		}
+
+		if _, err := s.wkr.EnqueueTask(ctx, worker.TaskAuditLogFailedLogin, data); err != nil {
+			// Just log the error, don't fail the request
+			log.Printf("Failed to enqueue failed payment intent audit: %v", err)
+		}
+		return nil, nil
+	}
+
+	//call the verify function and pass the payment method and reference with context to it
+
+	//_, err = s.VerifyPayment(ctx, paymentMethod, data.Reference)
+
+	return data, nil
+}
+
 func (s *PaymentService) VerifyPayment(ctx context.Context, paymentMethod, reference string) (any, error) {
 	//call the payment processor
 	paymentService, err := paymentmethodFactory.PaymentFactory(paymentMethod)
@@ -152,7 +196,7 @@ func (s *PaymentService) VerifyPayment(ctx context.Context, paymentMethod, refer
 
 	if intentExists {
 		s.updatePaymentIntentErrorWithReference(ctx, reference, "duplicate intent")
-		return nil, fmt.Errorf("duplicate transaction.Kindly generate a new intent")
+		return nil, nil
 	}
 
 	//start a db transaction
