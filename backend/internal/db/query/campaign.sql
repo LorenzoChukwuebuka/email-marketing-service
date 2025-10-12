@@ -105,10 +105,10 @@ SELECT
     t.deleted_at AS template_deleted_at
 FROM
     campaigns c
-    INNER JOIN users u ON c.user_id = u.id
+    LEFT JOIN users u ON c.user_id = u.id
     AND u.deleted_at IS NULL
     AND u.blocked = FALSE
-    INNER JOIN companies comp ON c.company_id = comp.id
+    LEFT JOIN companies comp ON c.company_id = comp.id
     AND comp.deleted_at IS NULL
     LEFT JOIN templates t ON c.template_id = t.id
     AND t.deleted_at IS NULL
@@ -234,25 +234,54 @@ OFFSET
 -- name: UpdateCampaign :one
 UPDATE campaigns
 SET
-    name = COALESCE(sqlc.narg('name'), name),
-    subject = COALESCE(sqlc.narg('subject'), subject),
-    preview_text = COALESCE(sqlc.narg('preview_text'), preview_text),
-    sender_from_name = COALESCE(sqlc.narg('sender_from_name'), sender_from_name),
-    template_id = COALESCE(sqlc.narg('template_id'), template_id),
-    recipient_info = COALESCE(sqlc.narg('recipient_info'), recipient_info),
-    status = COALESCE(sqlc.narg('status'), status),
-    track_type = COALESCE(sqlc.narg('track_type'), track_type),
-    sender = COALESCE(sqlc.narg('sender'), sender),
-    scheduled_at = COALESCE(sqlc.narg('scheduled_at'), scheduled_at),
-    has_custom_logo = COALESCE(sqlc.narg('has_custom_logo'), has_custom_logo),
-    is_published = COALESCE(sqlc.narg('is_published'), is_published),
-    is_archived = COALESCE(sqlc.narg('is_archived'), is_archived),
+    name = COALESCE(sqlc.narg ('name'), name),
+    subject = COALESCE(
+        sqlc.narg ('subject'),
+        subject
+    ),
+    preview_text = COALESCE(
+        sqlc.narg ('preview_text'),
+        preview_text
+    ),
+    sender_from_name = COALESCE(
+        sqlc.narg ('sender_from_name'),
+        sender_from_name
+    ),
+    template_id = COALESCE(
+        sqlc.narg ('template_id'),
+        template_id
+    ),
+    recipient_info = COALESCE(
+        sqlc.narg ('recipient_info'),
+        recipient_info
+    ),
+    status = COALESCE(sqlc.narg ('status'), status),
+    track_type = COALESCE(
+        sqlc.narg ('track_type'),
+        track_type
+    ),
+    sender = COALESCE(sqlc.narg ('sender'), sender),
+    scheduled_at = COALESCE(
+        sqlc.narg ('scheduled_at'),
+        scheduled_at
+    ),
+    has_custom_logo = COALESCE(
+        sqlc.narg ('has_custom_logo'),
+        has_custom_logo
+    ),
+    is_published = COALESCE(
+        sqlc.narg ('is_published'),
+        is_published
+    ),
+    is_archived = COALESCE(
+        sqlc.narg ('is_archived'),
+        is_archived
+    ),
     updated_at = CURRENT_TIMESTAMP
 WHERE
-    id = sqlc.arg('id')
-    AND user_id = sqlc.arg('user_id')
-    AND deleted_at IS NULL 
-RETURNING *;
+    id = sqlc.arg ('id')
+    AND user_id = sqlc.arg ('user_id')
+    AND deleted_at IS NULL RETURNING *;
 
 -- name: MarkCampaignAsSent :one
 UPDATE campaigns
@@ -315,7 +344,7 @@ SET
 WHERE
     id = $3
     AND user_id = $4;
-    
+
 -- name: ListScheduledCampaignsByCompanyID :many
 SELECT 
     -- Campaign information (all columns)
@@ -633,62 +662,116 @@ WHERE
 SELECT
     COUNT(*) as total_emails_sent,
     COALESCE(SUM(open_count), 0) as total_opens,
-    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COUNT(
+        CASE
+            WHEN open_count > 0 THEN 1
+        END
+    ) as unique_opens,
     COALESCE(SUM(click_count), 0) as total_clicks,
-    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
-    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
-    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
-    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
-    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries
+    COUNT(
+        CASE
+            WHEN click_count > 0 THEN 1
+        END
+    ) as unique_clicks,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'soft' THEN 1
+        END
+    ) as soft_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'hard' THEN 1
+        END
+    ) as hard_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_bounces,
+    COUNT(*) - COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_deliveries
 FROM email_campaign_results ecr
-WHERE ecr.campaign_id IN (
-    SELECT c.id 
-    FROM campaigns c 
-    WHERE c.user_id = $1 
-    AND c.deleted_at IS NULL
-)
-AND ecr.deleted_at IS NULL;
+WHERE
+    ecr.campaign_id IN (
+        SELECT c.id
+        FROM campaigns c
+        WHERE
+            c.user_id = $1
+            AND c.deleted_at IS NULL
+    )
+    AND ecr.deleted_at IS NULL;
 
 -- name: GetAllCampaignsByUser :many
-SELECT 
-    c.id as campaign_id,
-    c.name,
-    c.sent_at
+SELECT c.id as campaign_id, c.name, c.sent_at
 FROM campaigns c
-WHERE c.user_id = $1 
-AND c.deleted_at IS NULL
+WHERE
+    c.user_id = $1
+    AND c.deleted_at IS NULL
 LIMIT $2
-OFFSET $3;
+OFFSET
+    $3;
 
 -- name: GetCampaignStats :one
 SELECT
     COUNT(*) as total_emails_sent,
     COALESCE(SUM(open_count), 0) as total_opens,
-    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COUNT(
+        CASE
+            WHEN open_count > 0 THEN 1
+        END
+    ) as unique_opens,
     COALESCE(SUM(click_count), 0) as total_clicks,
-    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
-    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
-    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
-    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
-    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries,
+    COUNT(
+        CASE
+            WHEN click_count > 0 THEN 1
+        END
+    ) as unique_clicks,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'soft' THEN 1
+        END
+    ) as soft_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'hard' THEN 1
+        END
+    ) as hard_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_bounces,
+    COUNT(*) - COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_deliveries,
     COUNT(unsubscribed_at) as unsubscribed,
-    COUNT(CASE WHEN complaint_status = true THEN 1 END) as complaints
+    COUNT(
+        CASE
+            WHEN complaint_status = true THEN 1
+        END
+    ) as complaints
 FROM email_campaign_results
-WHERE campaign_id = $1
-AND deleted_at IS NULL;
+WHERE
+    campaign_id = $1
+    AND deleted_at IS NULL;
 
 -- name: CreateCampaignError :exec
-INSERT INTO campaign_errors (
-    campaign_id,
-    error_type,
-    error_message
-) VALUES (
-    $1, $2, $3
-);
+INSERT INTO
+    campaign_errors (
+        campaign_id,
+        error_type,
+        error_message
+    )
+VALUES ($1, $2, $3);
 
 -- name: GetScheduledCampaignsDue :many
 -- Get campaigns that are scheduled and due to be sent
-SELECT 
+SELECT
     id,
     company_id,
     name,
@@ -710,20 +793,27 @@ SELECT
     created_at,
     updated_at,
     deleted_at
-FROM campaigns 
-WHERE 
-    scheduled_at IS NOT NULL 
-    AND scheduled_at <= $1 
-    AND (sent_at IS NULL OR sent_at = '1970-01-01 00:00:00')
-    AND (is_archived IS NULL OR is_archived = false)
+FROM campaigns
+WHERE
+    scheduled_at IS NOT NULL
+    AND scheduled_at <= $1
+    AND (
+        sent_at IS NULL
+        OR sent_at = '1970-01-01 00:00:00'
+    )
+    AND (
+        is_archived IS NULL
+        OR is_archived = false
+    )
     AND deleted_at IS NULL
     AND status IN ('draft', 'scheduled')
 ORDER BY scheduled_at ASC;
 
 -- name: ClearCampaignSchedule :exec
 -- Clear the scheduled_at field after processing to prevent reprocessing
-UPDATE campaigns 
-SET scheduled_at = NULL, updated_at = CURRENT_TIMESTAMP
-WHERE id = $1;
-
- 
+UPDATE campaigns
+SET
+    scheduled_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1;

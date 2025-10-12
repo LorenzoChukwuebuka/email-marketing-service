@@ -1,6 +1,19 @@
--- Optional: Enum for consistent action names
-CREATE TYPE audit_action AS ENUM ('CREATE', 'UPDATE', 'DELETE',  'LOGIN',
-    'LOGOUT','LOGIN_FAILED');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type 
+        WHERE typname = 'audit_action'
+    ) THEN
+        CREATE TYPE audit_action AS ENUM (
+            'CREATE', 'UPDATE', 'DELETE', 'LOGIN',
+            'LOGOUT', 'LOGIN_FAILED'
+        );
+    END IF;
+END
+$$;
+
+
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),

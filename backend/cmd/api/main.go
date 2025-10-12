@@ -3,21 +3,22 @@ package main
 import (
 	"context"
 	"database/sql"
-	"email-marketing-service/core/server/asynqserver"
-	"email-marketing-service/core/server/httpserver"
-	"email-marketing-service/core/server/websocketserver"
+	"email-marketing-service/core/server"
 	"email-marketing-service/internal/config"
 	seeders "email-marketing-service/internal/db/seeder"
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/logger"
 	smtp_server "email-marketing-service/internal/smtp"
+	worker "email-marketing-service/internal/workers"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 var (
@@ -30,14 +31,13 @@ func main() {
 		log.Printf("Error connecting to database: %v", err)
 		return
 	}
-	
+
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
 			log.Printf("Error closing to database: %v", err)
 		}
 	}(conn)
-
 	// Test the connection
 	err = conn.Ping()
 	if err != nil {
@@ -47,21 +47,21 @@ func main() {
 	fmt.Println("Connected to the database!")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
 	store := db.NewStore(conn)
-	server := server.NewServer(store)
+	// Configure worker
+	cfg := worker.WorkerConfig{
+		MaxRetries:      3,
+		RetryDelay:      5 * time.Second,
+		PollInterval:    1 * time.Second,
+		StaleTaskWindow: 10 * time.Minute,
+	}
+	// Create worker
+	w := worker.NewWorker(store, cfg)
+	w.Start(ctx, 5)
+
+	server := server.NewServer(store, w)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	//redis...
-	redisAddr := os.Getenv("REDIS_ADDR")
-	if redisAddr == "" {
-		redisAddr = "localhost:6379" // Default for local development
-	}
-
-	asynqserver.Init()
-	client := asynqserver.GetClient()
-	defer client.Close()
 
 	err = logger.InitDefaultLogger("logs/app.log", logger.INFO)
 	if err != nil {
@@ -78,6 +78,49 @@ func main() {
 	go func() {
 		defer wg.Done()
 		server.Start()
+	}()
+
+	// Example: Enqueue some tasks
+	// go func() {
+	// 	// Enqueue immediate task
+	// 	payload := worker.EmailPayload{
+	// 		Sender:  "user@example.com",
+	// 		Subject: "Welcome!",
+	// 		Message: "Welcome to our service",
+	// 	}
+	// 	taskID, err := w.EnqueueTask(ctx, worker.TaskSendWelcomeEmail, payload)
+	// 	if err != nil {
+	// 		log.Printf("Failed to enqueue task: %v", err)
+	// 	} else {
+	// 		log.Printf("Task enqueued with ID: %d", taskID)
+	// 	}
+
+	// 	// Enqueue delayed task (send after 1 hour)
+	// 	delayedTaskID, err := w.EnqueueTaskDelayed(ctx, worker.TaskSendWelcomeEmail, payload, 1*time.Hour)
+	// 	if err != nil {
+	// 		log.Printf("Failed to enqueue delayed task: %v", err)
+	// 	} else {
+	// 		log.Printf("Delayed task enqueued with ID: %d", delayedTaskID)
+	// 	}
+	// }()
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				stats, err := w.GetStats(ctx)
+				if err != nil {
+					log.Printf("Failed to get stats: %v", err)
+					continue
+				}
+				slog.Info("Worker stats", slog.Any("worker stats", stats))
+			}
+		}
 	}()
 
 	//Start the SMTP server with functional options
@@ -123,22 +166,20 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := asynqserver.StartAsynqServer(redisAddr, store, ctx); err != nil {
-			log.Printf("Asynq server error: %v", err)
-			cancel()
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		websocketserver.StartSocketServer()
+		server.StartSocketServer()
 	}()
 
 	// Wait for shutdown signal
 	<-sigChan
 	log.Println("Received shutdown signal")
 	// Cancel the context to initiate shutdown of SMTP server
+	// Graceful shutdown with timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	if err := w.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Error during shutdown: %v", err)
+	}
 	cancel()
 	// Wait for all components to shut down
 	wg.Wait()
@@ -148,10 +189,8 @@ func main() {
 func runSeeders(ctx context.Context, store db.Store) error {
 	// Create seeder manager
 	manager := seeders.NewManager()
-
 	// Register all seeders
 	manager.RegisterAll(seeders.GetAllSeeders()...)
-
 	// Run all seeders
 	return manager.SeedAll(ctx, store)
 }

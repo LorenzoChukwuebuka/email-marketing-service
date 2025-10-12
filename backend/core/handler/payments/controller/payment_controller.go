@@ -58,8 +58,6 @@ func (c *Controller) InitiateNewTransaction(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-
-
 	helper.SuccessResponse(w, http.StatusOK, result)
 }
 
@@ -111,4 +109,16 @@ func (c *Controller) GetAllPayments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+func (c *Controller) PaystackWebhook(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	data, err := c.service.HandleWebhook(ctx, r, "Paystack")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	helper.SuccessResponse(w, http.StatusOK, data)
 }

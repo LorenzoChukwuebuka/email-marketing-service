@@ -45,7 +45,7 @@ const GetAllCampaignComponent: React.FC = () => {
     const [pageSize, setPageSize] = useState(20);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
-    const { data: CampaignData, isLoading } = useCampaignQuery(currentPage, pageSize, debouncedSearchQuery);
+    const { data: CampaignData, isLoading,refetch } = useCampaignQuery(currentPage, pageSize, debouncedSearchQuery);
 
     const deleteCamp = async (uuid: string) => {
         Modal.confirm({
@@ -318,6 +318,7 @@ const GetAllCampaignComponent: React.FC = () => {
                     <CreateCampaignComponent
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
+                        refetch={()=>refetch()}
                     />
                 </div>
             </Content>

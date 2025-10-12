@@ -4,20 +4,24 @@ import (
 	"email-marketing-service/core/handler/auth/controller"
 	"email-marketing-service/core/handler/auth/service"
 	db "email-marketing-service/internal/db/sqlc"
+	worker "email-marketing-service/internal/workers"
+
 	"github.com/gorilla/mux"
 )
 
 type AuthRoute struct {
 	store db.Store
+	wkr   *worker.Worker
 }
 
-func NewAuthRoute(store db.Store) RouteInterface {
+func NewAuthRoute(store db.Store,wkr *worker.Worker) RouteInterface {
 	return &AuthRoute{
 		store: store,
+		wkr: wkr,
 	}
 }
 func (a *AuthRoute) InitRoutes(r *mux.Router) {
-	authService := service.NewAuthService(a.store)
+	authService := service.NewAuthService(a.store,a.wkr)
 	authController := controller.NewAuthController(authService)
 	r.HandleFunc("/testing", authController.Welcome).Methods("GET", "OPTIONS")
 	r.HandleFunc("/signup", authController.SignUp).Methods("POST", "OPTIONS")
@@ -28,5 +32,5 @@ func (a *AuthRoute) InitRoutes(r *mux.Router) {
 	r.HandleFunc("/login", authController.Login).Methods("POST", "OPTIONS")
 	r.HandleFunc("/change-password", authController.ChangePassword).Methods("POST", "OPTIONS")
 	r.HandleFunc("/refresh-token", authController.RefreshTokenHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/verify-login",authController.VerifyUserLogin).Methods("POST","OPTIONS")
+	r.HandleFunc("/verify-login", authController.VerifyUserLogin).Methods("POST", "OPTIONS")
 }

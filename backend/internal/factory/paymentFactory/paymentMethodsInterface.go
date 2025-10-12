@@ -2,6 +2,7 @@ package paymentmethodFactory
 
 import (
 	"email-marketing-service/internal/domain"
+	"net/http"
 )
 
 type PaymentInterface interface {
@@ -11,4 +12,5 @@ type PaymentInterface interface {
 	ProcessRefund()
 	ChargeCard(amount float64)
 	Status() string
+	WebhookHandler(r *http.Request) (*domain.BasePaymentResponse, error)
 }

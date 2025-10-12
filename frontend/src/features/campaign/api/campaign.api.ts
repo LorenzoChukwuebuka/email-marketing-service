@@ -46,7 +46,7 @@ class CampaignApi {
     }
 
     async sendCampaign(value: Record<string, string>): Promise<ResponseT> {
-        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/send-campaign`, value);
+        const response = await axiosInstance.post<ResponseT>(`${this.baseUrl}/send`, value);
         return response.data
 
     }

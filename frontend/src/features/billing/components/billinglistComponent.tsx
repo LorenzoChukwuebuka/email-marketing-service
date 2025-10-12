@@ -15,7 +15,7 @@ const BillingList: React.FC = () => {
 
     // Status color mapping
     const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case 'completed':
                 return 'success';
             case 'active':
@@ -31,7 +31,7 @@ const BillingList: React.FC = () => {
 
     // Subscription status color mapping
     const getSubscriptionStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case 'active':
                 return 'success';
             case 'expired':
@@ -120,14 +120,14 @@ const BillingList: React.FC = () => {
             render: (_, record) => (
                 <Space direction="vertical" size={2}>
                     <Badge 
-                        status={getStatusColor(record.status) as any} 
-                        text={<span style={{ fontSize: '11px' }}>{record.status}</span>}
+                        status={getStatusColor(record?.status) as any} 
+                        text={<span style={{ fontSize: '11px' }}>{record?.status}</span>}
                     />
                     <Tag 
-                        color={getSubscriptionStatusColor(record.subscription.subscriptionstatus)}
+                        color={getSubscriptionStatusColor(record?.subscription?.subscriptionstatus)}
                         style={{ fontSize: '10px', margin: 0 }}
                     >
-                        Sub: {record.subscription.subscriptionstatus}
+                        Sub: {record?.subscription?.subscriptionstatus}
                     </Tag>
                 </Space>
             ),

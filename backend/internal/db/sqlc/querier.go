@@ -31,7 +31,9 @@ type Querier interface {
 	CheckSenderExists(ctx context.Context, arg CheckSenderExistsParams) (bool, error)
 	CheckTemplateExists(ctx context.Context, templateName string) (bool, error)
 	CheckTemplateNameExists(ctx context.Context, arg CheckTemplateNameExistsParams) (bool, error)
+	ClaimNextTask(ctx context.Context) (Task, error)
 	CleanupExpiredInvitations(ctx context.Context) error
+	CleanupOldTasks(ctx context.Context, dollar_1 sql.NullString) error
 	// Clear the scheduled_at field after processing to prevent reprocessing
 	ClearCampaignSchedule(ctx context.Context, id uuid.UUID) error
 	CloseStaleTickets(ctx context.Context) ([]SupportTicket, error)
@@ -81,6 +83,7 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateSupportTicket(ctx context.Context, arg CreateSupportTicketParams) (SupportTicket, error)
 	CreateSystemsSMTPSettings(ctx context.Context, arg CreateSystemsSMTPSettingsParams) (SystemsSmtpSetting, error)
+	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateTemplate(ctx context.Context, arg CreateTemplateParams) (Template, error)
 	CreateTicketFile(ctx context.Context, arg CreateTicketFileParams) (TicketFile, error)
 	CreateTicketMessage(ctx context.Context, arg CreateTicketMessageParams) (TicketMessage, error)
@@ -160,6 +163,7 @@ type Querier interface {
 	GetEnabledJobSchedules(ctx context.Context) ([]JobSchedule, error)
 	// Find subscriptions that are marked as 'active' but have actually expired
 	GetExpiredActiveSubscriptions(ctx context.Context) ([]Subscription, error)
+	GetFailedTasksCount(ctx context.Context) (int64, error)
 	// Fetches all contact groups with their associated contacts for a specific user and company
 	// with pagination support using limit and offset
 	GetGroupsWithContacts(ctx context.Context, arg GetGroupsWithContactsParams) ([]GetGroupsWithContactsRow, error)
@@ -188,12 +192,14 @@ type Querier interface {
 	GetPaymentsByCompanyAndUser(ctx context.Context, arg GetPaymentsByCompanyAndUserParams) ([]GetPaymentsByCompanyAndUserRow, error)
 	GetPaymentsByCompanyAndUserSimple(ctx context.Context, companyID uuid.UUID) ([]GetPaymentsByCompanyAndUserSimpleRow, error)
 	GetPendingInvitationsByEmail(ctx context.Context, email string) ([]GetPendingInvitationsByEmailRow, error)
+	GetPendingTasksCount(ctx context.Context) (int64, error)
 	GetPendingTicketsCount(ctx context.Context) (int64, error)
 	GetPendingTicketsWithPagination(ctx context.Context, arg GetPendingTicketsWithPaginationParams) ([]SupportTicket, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (Plan, error)
 	GetPlanByName(ctx context.Context, name string) (Plan, error)
 	GetPlanFeaturesByPlanID(ctx context.Context, planID uuid.UUID) ([]PlanFeature, error)
 	GetPlanWithDetails(ctx context.Context, id uuid.UUID) (GetPlanWithDetailsRow, error)
+	GetProcessingTasksCount(ctx context.Context) (int64, error)
 	GetSMTPKeyByID(ctx context.Context, arg GetSMTPKeyByIDParams) (SmtpKey, error)
 	GetSMTPKeyUserAndPass(ctx context.Context, arg GetSMTPKeyUserAndPassParams) (SmtpKey, error)
 	GetSMTPMasterKeyAndPass(ctx context.Context, arg GetSMTPMasterKeyAndPassParams) (SmtpMasterKey, error)
@@ -205,6 +211,8 @@ type Querier interface {
 	GetSingleGroupWithContacts(ctx context.Context, arg GetSingleGroupWithContactsParams) ([]GetSingleGroupWithContactsRow, error)
 	GetSingleUser(ctx context.Context, id uuid.UUID) (GetSingleUserRow, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
+	GetTaskByID(ctx context.Context, id int64) (Task, error)
+	GetTasksByStatus(ctx context.Context, arg GetTasksByStatusParams) ([]Task, error)
 	GetTemplateByID(ctx context.Context, arg GetTemplateByIDParams) (GetTemplateByIDRow, error)
 	GetTemplateByIDGallery(ctx context.Context, templateID uuid.UUID) (Template, error)
 	GetTemplateByIDWithoutType(ctx context.Context, arg GetTemplateByIDWithoutTypeParams) (GetTemplateByIDWithoutTypeRow, error)
@@ -259,10 +267,13 @@ type Querier interface {
 	MarkCampaignAsSent(ctx context.Context, id uuid.UUID) (Campaign, error)
 	MarkEmailAsDelivered(ctx context.Context, recipientEmail string) error
 	MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkTaskCompleted(ctx context.Context, id int64) error
+	MarkTaskFailed(ctx context.Context, arg MarkTaskFailedParams) error
 	MarkUserForDeletion(ctx context.Context, arg MarkUserForDeletionParams) (User, error)
 	PlanExists(ctx context.Context, name string) (bool, error)
 	// Soft deletes a contact from a group by setting the deleted_at timestamp
 	RemoveContactFromGroup(ctx context.Context, arg RemoveContactFromGroupParams) error
+	ResetStaleTasks(ctx context.Context, dollar_1 sql.NullString) error
 	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) error
 	// Restores a soft-deleted contact group
 	RestoreContactGroup(ctx context.Context, id uuid.UUID) error

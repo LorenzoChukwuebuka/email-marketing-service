@@ -1,11 +1,15 @@
 package paymentmethodFactory
 
 import (
+	"crypto/hmac"
+	"crypto/sha512"
 	"email-marketing-service/internal/config"
 	"email-marketing-service/internal/domain"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"io"
 	"net/http"
 )
 
@@ -91,6 +95,8 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *domain.BaseProcessPaymentMo
 		return nil, fmt.Errorf("invalid response format")
 	}
 
+	fmt.Printf("Paystack verification data: %+v\n", data)
+
 	amount := data["amount"].(float64) / 100
 	planIDStr, _ := data["metadata"].(map[string]any)["plan_id"].(string)
 	userID, _ := data["metadata"].(map[string]any)["user_id"].(string)
@@ -112,6 +118,67 @@ func (c *PaystackPaymentProcessor) ProcessDeposit(d *domain.BaseProcessPaymentMo
 	}
 
 	return paymentData, nil
+}
+
+func (c *PaystackPaymentProcessor) WebhookHandler(r *http.Request) (*domain.BasePaymentResponse, error) {
+	// Read request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read request body: %w", err)
+	}
+	defer r.Body.Close()
+
+	// Verify Paystack signature
+	signature := r.Header.Get("x-paystack-signature")
+	if !c.verifySignature(body, signature) {
+		return nil, fmt.Errorf("invalid webhook signature")
+	}
+
+	// Decode JSON body
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, fmt.Errorf("invalid payload: %w", err)
+	}
+
+	// Extract event + data
+	event, _ := payload["event"].(string)
+	if event != "charge.success" {
+		// Ignore non-successful charge events
+		return nil, fmt.Errorf("event %s ignored", event)
+	}
+
+	data, ok := payload["data"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("invalid webhook format")
+	}
+
+	// Map webhook payload into BasePaymentResponse
+	amount := data["amount"].(float64) / 100
+	planIDStr, _ := data["metadata"].(map[string]any)["plan_id"].(string)
+	userID, _ := data["metadata"].(map[string]any)["user_id"].(string)
+	duration, _ := data["metadata"].(map[string]any)["duration"].(string)
+	email, _ := data["customer"].(map[string]any)["email"].(string)
+	paymentIntentID, _ := data["metadata"].(map[string]any)["payment_intent_id"].(string)
+	companyIDD, _ := data["metadata"].(map[string]any)["company_id"].(string)
+	status, _ := data["status"].(string)
+
+	return &domain.BasePaymentResponse{
+		Amount:          amount,
+		PlanID:          planIDStr,
+		UserID:          userID,
+		Duration:        duration,
+		Email:           email,
+		Status:          status,
+		PaymentIntentID: paymentIntentID,
+		CompanyID:       companyIDD,
+	}, nil
+}
+
+func (c *PaystackPaymentProcessor) verifySignature(body []byte, signature string) bool {
+	h := hmac.New(sha512.New, []byte(key))
+	h.Write(body)
+	expected := hex.EncodeToString(h.Sum(nil))
+	return hmac.Equal([]byte(expected), []byte(signature))
 }
 
 func (c *PaystackPaymentProcessor) OpenRefund() {

@@ -140,7 +140,6 @@ func (s *AdminSupportService) GetAllTickets(ctx context.Context, search string, 
 	}
 
 	ticket_count, err := s.store.GetAllTicketsCount(ctx)
-
 	if err != nil {
 		return nil, common.ErrFetchingCount
 	}
@@ -164,13 +163,11 @@ func (s *AdminSupportService) GetPendingTickets(ctx context.Context, search stri
 		Limit:   int32(pageSize),
 		Offset:  int32(page),
 	})
-
 	if err != nil {
 		return nil, common.ErrFetchingRecord
 	}
 
 	ticket_count, err := s.store.GetPendingTicketsCount(ctx)
-
 	if err != nil {
 		return nil, common.ErrFetchingCount
 	}
@@ -194,19 +191,16 @@ func (s *AdminSupportService) GetClosedTickets(ctx context.Context, search strin
 		Limit:   int32(pageSize),
 		Offset:  int32(page),
 	})
-
 	if err != nil {
 		return nil, common.ErrFetchingRecord
 	}
 
 	ticket_count, err := s.store.GetClosedTicketsCount(ctx)
-
 	if err != nil {
 		return nil, common.ErrFetchingCount
 	}
 
 	data := adminmapper.MapSupportTicketsToResponse(result)
-
 	items := make([]any, len(data))
 
 	for i, v := range data {

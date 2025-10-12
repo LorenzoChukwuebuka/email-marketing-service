@@ -32,7 +32,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
 
     // Get status color based on campaign status
     const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case 'sent': return 'success';
             case 'draft': return 'default';
             case 'sending': return 'processing';
@@ -57,7 +57,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
     // Get group names from the API response
     const getGroupNames = () => {
         if (campaignData?.groups && campaignData?.groups?.length > 0) {
-            return campaignData?.groups.map(group => group?.group_name);
+            return campaignData?.groups?.map(group => group?.group_name);
         }
         return [];
     };
@@ -76,7 +76,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                             </Title>
                         </div>
                         <Tag color={getStatusColor(campaignData?.status)} style={{ fontSize: '12px' }}>
-                            {campaignData?.status.toUpperCase()}
+                            {campaignData?.status?.toUpperCase()}
                         </Tag>
                     </div>
                 }
@@ -229,7 +229,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                             type="primary"
                                             icon={<EyeOutlined />}
                                             onClick={() => setTemplatePreviewVisible(true)}
-                                            disabled={!campaignData.template?.email_html}
+                                            disabled={!campaignData?.template?.email_html}
                                         >
                                             Preview Template
                                         </Button>
@@ -242,18 +242,18 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                     <Text type="secondary">Template Name</Text>
                                     <div>
                                         <Text strong>
-                                            {campaignData.template?.name || 'No template selected'}
+                                            {campaignData?.template?.name || 'No template selected'}
                                         </Text>
                                     </div>
                                 </div>
 
-                                {campaignData.template && (
+                                {campaignData?.template && (
                                     <>
                                         <div>
                                             <Text type="secondary">Template Type</Text>
                                             <div>
                                                 <Tag color="geekblue">
-                                                    {campaignData.template.type}
+                                                    {campaignData?.template?.type}
                                                 </Tag>
                                             </div>
                                         </div>
@@ -261,7 +261,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                         <div>
                                             <Text type="secondary">Template Description</Text>
                                             <div>
-                                                <Text>{campaignData.template.description}</Text>
+                                                <Text>{campaignData?.template?.description}</Text>
                                             </div>
                                         </div>
                                     </>
@@ -271,7 +271,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                     </Col>
 
                     {/* User & Company Info */}
-                    {(campaignData.user || campaignData.company) && (
+                    {(campaignData?.user || campaignData?.company) && (
                         <Col xs={24}>
                             <Card
                                 type="inner"
@@ -283,7 +283,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                 }
                             >
                                 <Row gutter={[16, 16]}>
-                                    {campaignData.user && (
+                                    {campaignData?.user && (
                                         <Col xs={24} sm={12}>
                                             <div>
                                                 <Text type="secondary">User</Text>
@@ -292,11 +292,11 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                                         <Avatar icon={<UserOutlined />} />
                                                         <div>
                                                             <div>
-                                                                <Text strong>{campaignData.user.user_fullname}</Text>
+                                                                <Text strong>{campaignData?.user?.user_fullname}</Text>
                                                             </div>
                                                             <div>
                                                                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                    {campaignData.user.user_email}
+                                                                    {campaignData?.user?.user_email}
                                                                 </Text>
                                                             </div>
                                                         </div>
@@ -306,12 +306,12 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                                         </Col>
                                     )}
 
-                                    {campaignData.company && (
+                                    {campaignData?.company && (
                                         <Col xs={24} sm={12}>
                                             <div>
                                                 <Text type="secondary">Company</Text>
                                                 <div style={{ marginTop: '8px' }}>
-                                                    <Text strong>{campaignData.company.company_name}</Text>
+                                                    <Text strong>{campaignData?.company?.company_name}</Text>
                                                 </div>
                                             </div>
                                         </Col>
@@ -341,7 +341,7 @@ const CampaignInfo: React.FC<CampaignInfoProps> = ({ campaignData }) => {
                 width="80%"
                 style={{ top: 20 }}
             >
-                {campaignData.template?.email_html ? (
+                {campaignData?.template?.email_html ? (
                     <div
                         style={{
                             border: '1px solid #d9d9d9',

@@ -27,7 +27,7 @@ INSERT INTO audit_logs (
 
 type CreateAuditLogParams struct {
 	UserID      uuid.UUID             `json:"user_id"`
-	Action      AuditAction           `json:"action"`
+	Action      interface{}           `json:"action"`
 	Resource    string                `json:"resource"`
 	ResourceID  uuid.NullUUID         `json:"resource_id"`
 	Method      sql.NullString        `json:"method"`

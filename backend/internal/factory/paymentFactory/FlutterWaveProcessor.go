@@ -3,6 +3,7 @@ package paymentmethodFactory
 import (
 	"email-marketing-service/internal/domain"
 	"fmt"
+	"net/http"
 )
 
 type FlutterwavePaymentProcessor struct {
@@ -24,6 +25,10 @@ func (c *FlutterwavePaymentProcessor) OpenRefund() {
 
 func (c *FlutterwavePaymentProcessor) ProcessRefund() {
 	fmt.Printf("Refunded to Credit Card")
+}
+
+func (c *FlutterwavePaymentProcessor) WebhookHandler(r *http.Request) (*domain.BasePaymentResponse, error) {
+	return nil, nil
 }
 
 func (c *FlutterwavePaymentProcessor) ChargeCard(amount float64) {}

@@ -9,30 +9,30 @@ import (
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/enums"
 	"email-marketing-service/internal/helper"
-	"email-marketing-service/internal/logger"
 	"email-marketing-service/internal/mailer"
+	worker "email-marketing-service/internal/workers"
 	"errors"
 	"fmt"
-	"net"
-	"time"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"log"
+	"net"
+	"time"
 )
 
 type Service struct {
-	store    db.Store
-	auditLog *logger.AuditLogger
+	store db.Store
+	wkr   *worker.Worker
 }
 
 var (
 	otpLength = 8
 )
 
-func NewAuthService(store db.Store) *Service {
-	auditLogger := logger.NewAuditLogger(store)
+func NewAuthService(store db.Store,wkr *worker.Worker) *Service {
 	return &Service{
-		store:    store,
-		auditLog: auditLogger,
+		store: store,
+		wkr: wkr,
 	}
 }
 
@@ -326,15 +326,28 @@ func (s *Service) ResendEmail(ctx context.Context, req *dto.ResendOTPRequest) er
 }
 
 func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse[dto.PublicUser], error) {
-
 	httpReq := common.RequestFromCtx(ctx)
 	var ip net.IP
 	if httpReq != nil {
-		ip = s.auditLog.GetClientIP(httpReq)
+		ip = s.wkr.GetClientIP(httpReq)
+	}
+
+	logFailedLogin := func(username string) {
+		payload := worker.AuditFailedLoginPayload{
+			AttemptedUsername: username,
+			Method:            "POST",
+			Endpoint:          "/auth/login",
+			IP:                ip,
+		}
+		// Enqueue asynchronously - don't wait for result
+		if _, err := s.wkr.EnqueueTask(ctx, worker.TaskAuditLogFailedLogin, payload); err != nil {
+			// Just log the error, don't fail the request
+			log.Printf("Failed to enqueue failed login audit: %v", err)
+		}
 	}
 
 	if err := helper.ValidateData(req); err != nil {
-		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
+		logFailedLogin(req.Email)
 		return nil, errors.Join(common.ErrValidatingRequest, err)
 	}
 
@@ -342,10 +355,10 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	user, err := s.store.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
+			logFailedLogin(req.Email)
 			return nil, common.ErrUserNotFound
 		}
-		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
+		logFailedLogin(req.Email)
 		return nil, common.ErrFetchingUser
 	}
 
@@ -373,13 +386,23 @@ func (s *Service) LoginUser(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		ExpiresAt: sql.NullTime{Time: time.Now().UTC().Add(5 * time.Minute), Valid: true},
 	})
 	if err != nil {
-		_ = s.auditLog.LogFailedLogin(ctx, req.Email, "POST", "/auth/login", ip)
+		logFailedLogin(req.Email)
 		return nil, fmt.Errorf("error creating OTP: %w", err)
 	}
 
 	// Send OTP email
 	go mailer.NewEmailService().VerifyUserLogin(req.Email, user.Fullname, user.ID.String(), otptoken)
-	_ = s.auditLog.LogLogin(ctx, user.ID, "POST", "/auth/login", ip, user.Fullname)
+
+	loginPayload := worker.AuditLoginPayload{
+		UserID:   user.ID,
+		Method:   "POST",
+		Endpoint: "/auth/login",
+		IP:       ip,
+		Username: req.Email,
+	}
+	if _, err := s.wkr.EnqueueTask(ctx, worker.TaskAuditLogLogin, loginPayload); err != nil {
+		log.Printf("Failed to enqueue login audit: %v", err)
+	}
 
 	return &dto.LoginResponse[dto.PublicUser]{
 		Status:  "OTP sent to your email. Please verify to complete login",

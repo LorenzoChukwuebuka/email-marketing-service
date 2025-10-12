@@ -1,183 +1,3 @@
-# services:
-#   traefik:
-#     image: traefik:v2.10
-#     container_name: dev-crabmailer-traefik
-#     command:
-#       - "--providers.docker=true"
-#       - "--providers.docker.exposedbydefault=false"
-#       - "--entrypoints.web.address=:80"
-#       - "--entrypoints.websecure.address=:443"
-#       # TCP entrypoints for SMTP
-#       - "--entrypoints.smtp.address=:25"
-#       - "--entrypoints.smtp-submission.address=:587"
-#       - "--entrypoints.smtp-ssl.address=:465"
-#       - "--api.insecure=true"  # Dashboard for development
-#       - "--api.dashboard=true"
-#       # Enable TCP routing
-#       - "--providers.docker.network=app-network"
-#     ports:
-#       - "80:80"
-#       - "443:443"
-#       - "25:25"     # smtp
-#       - "587:587"   # smtp submission
-#       - "465:465"   # smtps
-#       - "8080:8080" # dashboard
-#     volumes:
-#       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-#     networks:
-#       - app-network
-      
-#   frontend:
-#     build:
-#       context: ./frontend
-#       dockerfile: Dockerfile.frontend.dev
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.frontend.rule=Host(`staging.crabmailer.com`)"
-#       - "traefik.http.routers.frontend.entrypoints=web"
-#       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
-#     environment:
-#       SERVER_MODE: "staging"
-#     networks:
-#       - app-network
-#     depends_on:
-#       - go-backend
-
-#   redis:
-#     image: redis:alpine
-#     container_name: redis
-#     ports:
-#       - "6379:6379"
-#     networks:
-#       - app-network
-
-#   go-backend:
-#     container_name: crabmailer-dev-api
-#     build:
-#       context: ./backend
-#       dockerfile: Dockerfile.backend.development
-#     labels:
-#       - "traefik.enable=true"
-      
-#       # API HTTP routing
-#       - "traefik.http.routers.api.rule=Host(`api.staging.crabmailer.com`)"
-#       - "traefik.http.routers.api.entrypoints=web"
-#       - "traefik.http.services.api.loadbalancer.server.port=9000"
-      
-#       # WebSocket routing
-#       - "traefik.http.routers.ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
-#       - "traefik.http.routers.ws.entrypoints=web"
-#       - "traefik.http.services.ws.loadbalancer.server.port=9001"
-      
-#       # SMTP TCP routing - if your app handles SMTP on port 1025
-#       - "traefik.tcp.routers.smtp-tcp.rule=HostSNI(`*`)"
-#       - "traefik.tcp.routers.smtp-tcp.entrypoints=smtp"
-#       - "traefik.tcp.services.smtp-tcp.loadbalancer.server.port=1025"
-      
-#       # SMTP Submission TCP routing - if your app handles submission on port 587
-#       - "traefik.tcp.routers.smtp-submission-tcp.rule=HostSNI(`*`)"
-#       - "traefik.tcp.routers.smtp-submission-tcp.entrypoints=smtp-submission"
-#       - "traefik.tcp.services.smtp-submission-tcp.loadbalancer.server.port=587"
-      
-#     ports:
-#       - "9000:9000"  # API - for direct access during development
-#       - "9001:9001"  # WebSockets - for direct access during development
-#     networks:
-#       - app-network
-#     healthcheck:
-#       test: ["CMD", "/healthcheck.sh"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 3
-#       start_period: 40s
-#     volumes:
-#       - smtp_settings:/app/backend/smtp_settings
-#       - uploads:/app/backend/uploads
-#       - templates:/app/backend/api/v1/templates
-#       - logs:/app/backend/logs
-#     cap_add:
-#       - NET_BIND_SERVICE
-#     privileged: true
-#     env_file: ./backend/.env.development
-#     environment:
-#       SERVER_MODE: "development"
-#       REDIS_ADDR: "redis:6379"
-#       DISABLE_TLS: "true"
-#     depends_on:
-#       - redis
-#       - postgres-db
-#       - db-migrate
-
-#   postgres-db:
-#     container_name: crabmailer-dev-postgres-db
-#     image: postgres:16
-#     restart: always
-#     environment:
-#       POSTGRES_USER: myuser
-#       POSTGRES_PASSWORD: mypassword
-#       POSTGRES_DB: mydatabase
-#     ports:
-#       - "5432:5432"
-#     networks:
-#       - app-network
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
-  
-#   pgadmin:
-#     container_name: crabmailer-dev-pgadmin
-#     image: dpage/pgadmin4:latest
-#     restart: always
-#     environment:
-#       PGADMIN_DEFAULT_EMAIL: admin@example.com
-#       PGADMIN_DEFAULT_PASSWORD: admin123
-#       PGADMIN_CONFIG_SERVER_MODE: 'False'
-#     ports:
-#       - "8082:80"
-#     networks:
-#       - app-network
-#     depends_on:
-#       - postgres-db
-  
-#   db-migrate:
-#     container_name: crabmailer-dev-migrate
-#     build:
-#       context: ./backend
-#       dockerfile: Dockerfile.migrate
-#     networks:
-#       - app-network
-#     depends_on:
-#       postgres-db:
-#         condition: service_healthy
-#     environment:
-#       DB_URL: "postgres://myuser:mypassword@postgres-db:5432/mydatabase?sslmode=disable"
-#     volumes:
-#       - ./backend/internal/db/migrations:/migrations
-#     command: ["/migrate.sh"]
-
-# networks:
-#   app-network:
-#     driver: bridge
-
-# volumes:
-#   smtp_settings:
-#     driver: local
-#   uploads:
-#     driver: local
-#   templates:
-#     driver: local
-#   logs:
-#     driver: local
-#   postgres_data:
-#     driver: local
-
-
-
-
 services:
   traefik:
     image: traefik:v2.10
@@ -191,31 +11,36 @@ services:
       - "--entrypoints.smtp.address=:25"
       - "--entrypoints.smtp-submission.address=:587"
       - "--entrypoints.smtp-ssl.address=:465"
-      - "--api.insecure=true"  # Dashboard for development
+      - "--api.insecure=true"
       - "--api.dashboard=true"
-      # Enable TCP routing
       - "--providers.docker.network=app-network"
+      # Enable TCP routing explicitly
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.watch=true"
     ports:
       - "80:80"
       - "443:443"
-      - "25:25"     # smtp
-      - "587:587"   # smtp submission
-      - "465:465"   # smtps
-      - "8080:8080" # dashboard
+      - "25:25"
+      - "587:587"
+      - "465:465"
+      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - app-network
-      
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend.dev
+    container_name: crabmailer-dev-frontend
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       - "traefik.http.routers.frontend.rule=Host(`staging.crabmailer.com`)"
       - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.service=frontend"
       - "traefik.http.services.frontend.loadbalancer.server.port=6000"
     environment:
       SERVER_MODE: "staging"
@@ -223,14 +48,16 @@ services:
       - app-network
     depends_on:
       - go-backend
+      - traefik
 
   redis:
     image: redis:alpine
-    container_name: redis
+    container_name: crabmailer-dev-redis
     ports:
       - "6379:6379"
     networks:
       - app-network
+    restart: unless-stopped
 
   go-backend:
     container_name: crabmailer-dev-api
@@ -241,56 +68,79 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=app-network"
       
-      # API HTTP routing - Fixed service name and added priority
+      # API HTTP routing
       - "traefik.http.routers.go-backend-api.rule=Host(`api.staging.crabmailer.com`)"
       - "traefik.http.routers.go-backend-api.entrypoints=web"
       - "traefik.http.routers.go-backend-api.priority=100"
+      - "traefik.http.routers.go-backend-api.service=go-backend-api"
       - "traefik.http.services.go-backend-api.loadbalancer.server.port=9000"
       
-      # WebSocket routing - Fixed service name and added priority
+      # WebSocket routing
       - "traefik.http.routers.go-backend-ws.rule=Host(`api.staging.crabmailer.com`) && PathPrefix(`/ws`)"
       - "traefik.http.routers.go-backend-ws.entrypoints=web"
       - "traefik.http.routers.go-backend-ws.priority=200"
+      - "traefik.http.routers.go-backend-ws.service=go-backend-ws"
       - "traefik.http.services.go-backend-ws.loadbalancer.server.port=9001"
       
-      # SMTP TCP routing - if your app handles SMTP on port 1025
+      # SMTP TCP routing - port 25
       - "traefik.tcp.routers.smtp-tcp.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.smtp-tcp.entrypoints=smtp"
+      - "traefik.tcp.routers.smtp-tcp.service=smtp-tcp"
       - "traefik.tcp.services.smtp-tcp.loadbalancer.server.port=1025"
       
-      # SMTP Submission TCP routing - if your app handles submission on port 587
+      # SMTP Submission TCP routing - port 587
       - "traefik.tcp.routers.smtp-submission-tcp.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.smtp-submission-tcp.entrypoints=smtp-submission"
+      - "traefik.tcp.routers.smtp-submission-tcp.service=smtp-submission-tcp"
       - "traefik.tcp.services.smtp-submission-tcp.loadbalancer.server.port=587"
       
+      # SMTP SSL TCP routing - port 465
+      - "traefik.tcp.routers.smtp-ssl-tcp.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.smtp-ssl-tcp.entrypoints=smtp-ssl"
+      - "traefik.tcp.routers.smtp-ssl-tcp.service=smtp-ssl-tcp"
+      - "traefik.tcp.services.smtp-ssl-tcp.loadbalancer.server.port=465"
+    
+    # Remove these ports if you want everything to go through Traefik
+    # Keep them for direct access during development
     ports:
-      - "9000:9000"  # API - for direct access during development
-      - "9001:9001"  # WebSockets - for direct access during development
+      - "9000:9000"
+      - "9001:9001"
+    
     networks:
       - app-network
+    
     healthcheck:
       test: ["CMD", "/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    
     volumes:
       - smtp_settings:/app/backend/smtp_settings
       - uploads:/app/backend/uploads
       - templates:/app/backend/api/v1/templates
       - logs:/app/backend/logs
+    
     cap_add:
       - NET_BIND_SERVICE
+    
     privileged: true
-    env_file: ./backend/.env.development
+    
+    env_file:
+      - ./backend/.env.development
+    
     environment:
       SERVER_MODE: "development"
       REDIS_ADDR: "redis:6379"
       DISABLE_TLS: "true"
+    
     depends_on:
       - redis
       - postgres-db
       - db-migrate
+    
+    restart: unless-stopped
 
   postgres-db:
     container_name: crabmailer-dev-postgres-db
@@ -311,7 +161,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   pgadmin:
     container_name: crabmailer-dev-pgadmin
     image: dpage/pgadmin4:latest
@@ -320,13 +170,21 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.staging.crabmailer.com`)"
+      - "traefik.http.routers.pgadmin.entrypoints=web"
+      - "traefik.http.routers.pgadmin.service=pgadmin"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+    # Optional: Keep port for direct access
     ports:
       - "8082:80"
     networks:
       - app-network
     depends_on:
       - postgres-db
-  
+
   db-migrate:
     container_name: crabmailer-dev-migrate
     build:
