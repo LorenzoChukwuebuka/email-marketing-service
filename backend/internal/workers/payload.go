@@ -1,8 +1,9 @@
 package worker
 
 import (
-	"github.com/google/uuid"
+	"email-marketing-service/internal/domain"
 	"net"
+	"github.com/google/uuid"
 )
 
 type EmailPayload struct {
@@ -27,7 +28,7 @@ type AdminNotificationPayload struct {
 type UserNotificationPayload struct {
 	UserId           uuid.UUID
 	NotifcationTitle string
-	AdditionalField *string
+	AdditionalField  *string
 }
 
 type UserDetailsPayload struct {
@@ -92,4 +93,10 @@ type SendCampaignEmailPayload struct {
 	CompanyID  uuid.UUID `json:"company_id"`
 	UserID     uuid.UUID `json:"user_id"`
 	CampaignID uuid.UUID `json:"campaign_id"`
+}
+
+type SendAPISMTPEmailsPayload struct {
+	EmailPayload domain.EmailRequest `json:"email_payload"`
+	CompanyId    uuid.UUID           `json:"company_id"`
+	UserId       uuid.UUID           `json:"user_id"`
 }

@@ -26,6 +26,7 @@ const (
 	TaskAuditLogLogin         TaskType = "audit:log_login"
 	TaskAuditLogFailedLogin   TaskType = "audit:log_failed_login"
 	TaskSendCampaignEmail     TaskType = "email:campaign"
+	TaskSendAPISMTPMail TaskType = "email:api"
 )
 
 type TaskStatus string
