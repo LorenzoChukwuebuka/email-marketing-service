@@ -4,9 +4,9 @@ import (
 	"email-marketing-service/core/middleware"
 	db "email-marketing-service/internal/db/sqlc"
 	worker "email-marketing-service/internal/workers"
+	"github.com/gorilla/mux"
 	"net/http"
 	"path/filepath"
-	"github.com/gorilla/mux"
 )
 
 func InitRoutes(r *mux.Router, store db.Store, wkr *worker.Worker) {
@@ -33,7 +33,7 @@ func InitRoutes(r *mux.Router, store db.Store, wkr *worker.Worker) {
 		"domains":   NewDomainRoute(store),
 		"senders":   NewSenderRoute(store),
 		"users":     NewUserRoute(store),
-		"misc":      NewMiscRoute(store),
+		"misc":      NewMiscRoute(store, wkr),
 		"key":       NewSMTPAPIKeyRoute(store),
 		"support":   NewSupportRoute(store),
 	}

@@ -8,24 +8,29 @@ import (
 	db "email-marketing-service/internal/db/sqlc"
 	"email-marketing-service/internal/domain"
 	"email-marketing-service/internal/helper"
+	worker "email-marketing-service/internal/workers"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/mssola/user_agent"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/mssola/user_agent"
 )
 
 type MiscController struct {
 	miscservice *services.MiscService
 	store       db.Store
+	wkr         *worker.Worker
 }
 
-func NewMiscController(miscservice *services.MiscService, store db.Store) *MiscController {
+func NewMiscController(miscservice *services.MiscService, store db.Store, wkr *worker.Worker) *MiscController {
 	return &MiscController{
 		miscservice: miscservice,
 		store:       store,
+		wkr:         wkr,
 	}
 }
 
@@ -107,7 +112,7 @@ func (c *MiscController) SendSMTPMail(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	var reqdata *domain.EmailRequest
+	var reqdata domain.EmailRequest
 
 	if err := helper.DecodeRequestBody(r, &reqdata); err != nil {
 		helper.ErrorResponse(w, fmt.Errorf("unable to decode request body"), nil)
@@ -132,7 +137,19 @@ func (c *MiscController) SendSMTPMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := c.miscservice.PrepareMail(ctx, reqdata, key.CompanyID, key.UserID)
+	payload := worker.SendAPISMTPEmailsPayload{
+		CompanyId:    key.CompanyID,
+		UserId:       key.UserID,
+		EmailPayload: reqdata,
+	}
+
+	if taskId, err := c.wkr.EnqueueTask(ctx, worker.TaskSendAPISMTPMail, payload); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
+	} else {
+		log.Printf("Task enqueued with ID: %d", taskId)
+	}
+
+	result, err := c.miscservice.PrepareMail(ctx, &reqdata, key.CompanyID, key.UserID)
 	if err != nil {
 		helper.ErrorResponse(w, err, nil)
 		return
