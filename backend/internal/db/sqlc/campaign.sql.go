@@ -94,9 +94,12 @@ func (q *Queries) CheckCampaignNameExists(ctx context.Context, arg CheckCampaign
 }
 
 const clearCampaignSchedule = `-- name: ClearCampaignSchedule :exec
-UPDATE campaigns 
-SET scheduled_at = NULL, updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
+UPDATE campaigns
+SET
+    scheduled_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
+WHERE
+    id = $1
 `
 
 // Clear the scheduled_at field after processing to prevent reprocessing
@@ -199,13 +202,13 @@ func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) 
 }
 
 const createCampaignError = `-- name: CreateCampaignError :exec
-INSERT INTO campaign_errors (
-    campaign_id,
-    error_type,
-    error_message
-) VALUES (
-    $1, $2, $3
-)
+INSERT INTO
+    campaign_errors (
+        campaign_id,
+        error_type,
+        error_message
+    )
+VALUES ($1, $2, $3)
 `
 
 type CreateCampaignErrorParams struct {
@@ -350,15 +353,14 @@ func (q *Queries) CreateEmailCampaignResult(ctx context.Context, arg CreateEmail
 }
 
 const getAllCampaignsByUser = `-- name: GetAllCampaignsByUser :many
-SELECT 
-    c.id as campaign_id,
-    c.name,
-    c.sent_at
+SELECT c.id as campaign_id, c.name, c.sent_at
 FROM campaigns c
-WHERE c.user_id = $1 
-AND c.deleted_at IS NULL
+WHERE
+    c.user_id = $1
+    AND c.deleted_at IS NULL
 LIMIT $2
-OFFSET $3
+OFFSET
+    $3
 `
 
 type GetAllCampaignsByUserParams struct {
@@ -443,10 +445,10 @@ SELECT
     t.deleted_at AS template_deleted_at
 FROM
     campaigns c
-    INNER JOIN users u ON c.user_id = u.id
+    LEFT JOIN users u ON c.user_id = u.id
     AND u.deleted_at IS NULL
     AND u.blocked = FALSE
-    INNER JOIN companies comp ON c.company_id = comp.id
+    LEFT JOIN companies comp ON c.company_id = comp.id
     AND comp.deleted_at IS NULL
     LEFT JOIN templates t ON c.template_id = t.id
     AND t.deleted_at IS NULL
@@ -486,22 +488,22 @@ type GetCampaignByIDRow struct {
 	CreatedAt                 sql.NullTime          `json:"created_at"`
 	UpdatedAt                 sql.NullTime          `json:"updated_at"`
 	DeletedAt                 sql.NullTime          `json:"deleted_at"`
-	UserID_2                  uuid.UUID             `json:"user_id_2"`
-	UserFullname              string                `json:"user_fullname"`
-	UserEmail                 string                `json:"user_email"`
+	UserID_2                  uuid.NullUUID         `json:"user_id_2"`
+	UserFullname              sql.NullString        `json:"user_fullname"`
+	UserEmail                 sql.NullString        `json:"user_email"`
 	UserPhonenumber           sql.NullString        `json:"user_phonenumber"`
 	UserPicture               sql.NullString        `json:"user_picture"`
-	UserVerified              bool                  `json:"user_verified"`
-	UserBlocked               bool                  `json:"user_blocked"`
+	UserVerified              sql.NullBool          `json:"user_verified"`
+	UserBlocked               sql.NullBool          `json:"user_blocked"`
 	UserVerifiedAt            sql.NullTime          `json:"user_verified_at"`
-	UserStatus                string                `json:"user_status"`
+	UserStatus                sql.NullString        `json:"user_status"`
 	UserLastLoginAt           sql.NullTime          `json:"user_last_login_at"`
-	UserCreatedAt             time.Time             `json:"user_created_at"`
-	UserUpdatedAt             time.Time             `json:"user_updated_at"`
-	CompanyIDRef              uuid.UUID             `json:"company_id_ref"`
+	UserCreatedAt             sql.NullTime          `json:"user_created_at"`
+	UserUpdatedAt             sql.NullTime          `json:"user_updated_at"`
+	CompanyIDRef              uuid.NullUUID         `json:"company_id_ref"`
 	CompanyName               sql.NullString        `json:"company_name"`
-	CompanyCreatedAt          time.Time             `json:"company_created_at"`
-	CompanyUpdatedAt          time.Time             `json:"company_updated_at"`
+	CompanyCreatedAt          sql.NullTime          `json:"company_created_at"`
+	CompanyUpdatedAt          sql.NullTime          `json:"company_updated_at"`
 	TemplateIDRef             uuid.NullUUID         `json:"template_id_ref"`
 	TemplateUserID            uuid.NullUUID         `json:"template_user_id"`
 	TemplateCompanyID         uuid.NullUUID         `json:"template_company_id"`
@@ -723,18 +725,47 @@ const getCampaignStats = `-- name: GetCampaignStats :one
 SELECT
     COUNT(*) as total_emails_sent,
     COALESCE(SUM(open_count), 0) as total_opens,
-    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COUNT(
+        CASE
+            WHEN open_count > 0 THEN 1
+        END
+    ) as unique_opens,
     COALESCE(SUM(click_count), 0) as total_clicks,
-    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
-    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
-    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
-    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
-    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries,
+    COUNT(
+        CASE
+            WHEN click_count > 0 THEN 1
+        END
+    ) as unique_clicks,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'soft' THEN 1
+        END
+    ) as soft_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'hard' THEN 1
+        END
+    ) as hard_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_bounces,
+    COUNT(*) - COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_deliveries,
     COUNT(unsubscribed_at) as unsubscribed,
-    COUNT(CASE WHEN complaint_status = true THEN 1 END) as complaints
+    COUNT(
+        CASE
+            WHEN complaint_status = true THEN 1
+        END
+    ) as complaints
 FROM email_campaign_results
-WHERE campaign_id = $1
-AND deleted_at IS NULL
+WHERE
+    campaign_id = $1
+    AND deleted_at IS NULL
 `
 
 type GetCampaignStatsRow struct {
@@ -1092,7 +1123,7 @@ func (q *Queries) GetEmailCampaignStats(ctx context.Context, arg GetEmailCampaig
 }
 
 const getScheduledCampaignsDue = `-- name: GetScheduledCampaignsDue :many
-SELECT 
+SELECT
     id,
     company_id,
     name,
@@ -1114,12 +1145,18 @@ SELECT
     created_at,
     updated_at,
     deleted_at
-FROM campaigns 
-WHERE 
-    scheduled_at IS NOT NULL 
-    AND scheduled_at <= $1 
-    AND (sent_at IS NULL OR sent_at = '1970-01-01 00:00:00')
-    AND (is_archived IS NULL OR is_archived = false)
+FROM campaigns
+WHERE
+    scheduled_at IS NOT NULL
+    AND scheduled_at <= $1
+    AND (
+        sent_at IS NULL
+        OR sent_at = '1970-01-01 00:00:00'
+    )
+    AND (
+        is_archived IS NULL
+        OR is_archived = false
+    )
     AND deleted_at IS NULL
     AND status IN ('draft', 'scheduled')
 ORDER BY scheduled_at ASC
@@ -1175,21 +1212,47 @@ const getUserCampaignStats = `-- name: GetUserCampaignStats :one
 SELECT
     COUNT(*) as total_emails_sent,
     COALESCE(SUM(open_count), 0) as total_opens,
-    COUNT(CASE WHEN open_count > 0 THEN 1 END) as unique_opens,
+    COUNT(
+        CASE
+            WHEN open_count > 0 THEN 1
+        END
+    ) as unique_opens,
     COALESCE(SUM(click_count), 0) as total_clicks,
-    COUNT(CASE WHEN click_count > 0 THEN 1 END) as unique_clicks,
-    COUNT(CASE WHEN bounce_status = 'soft' THEN 1 END) as soft_bounces,
-    COUNT(CASE WHEN bounce_status = 'hard' THEN 1 END) as hard_bounces,
-    COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_bounces,
-    COUNT(*) - COUNT(CASE WHEN bounce_status IN ('soft', 'hard') THEN 1 END) as total_deliveries
+    COUNT(
+        CASE
+            WHEN click_count > 0 THEN 1
+        END
+    ) as unique_clicks,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'soft' THEN 1
+        END
+    ) as soft_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status = 'hard' THEN 1
+        END
+    ) as hard_bounces,
+    COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_bounces,
+    COUNT(*) - COUNT(
+        CASE
+            WHEN bounce_status IN ('soft', 'hard') THEN 1
+        END
+    ) as total_deliveries
 FROM email_campaign_results ecr
-WHERE ecr.campaign_id IN (
-    SELECT c.id 
-    FROM campaigns c 
-    WHERE c.user_id = $1 
-    AND c.deleted_at IS NULL
-)
-AND ecr.deleted_at IS NULL
+WHERE
+    ecr.campaign_id IN (
+        SELECT c.id
+        FROM campaigns c
+        WHERE
+            c.user_id = $1
+            AND c.deleted_at IS NULL
+    )
+    AND ecr.deleted_at IS NULL
 `
 
 type GetUserCampaignStatsRow struct {
@@ -1896,24 +1959,53 @@ const updateCampaign = `-- name: UpdateCampaign :one
 UPDATE campaigns
 SET
     name = COALESCE($1, name),
-    subject = COALESCE($2, subject),
-    preview_text = COALESCE($3, preview_text),
-    sender_from_name = COALESCE($4, sender_from_name),
-    template_id = COALESCE($5, template_id),
-    recipient_info = COALESCE($6, recipient_info),
+    subject = COALESCE(
+        $2,
+        subject
+    ),
+    preview_text = COALESCE(
+        $3,
+        preview_text
+    ),
+    sender_from_name = COALESCE(
+        $4,
+        sender_from_name
+    ),
+    template_id = COALESCE(
+        $5,
+        template_id
+    ),
+    recipient_info = COALESCE(
+        $6,
+        recipient_info
+    ),
     status = COALESCE($7, status),
-    track_type = COALESCE($8, track_type),
+    track_type = COALESCE(
+        $8,
+        track_type
+    ),
     sender = COALESCE($9, sender),
-    scheduled_at = COALESCE($10, scheduled_at),
-    has_custom_logo = COALESCE($11, has_custom_logo),
-    is_published = COALESCE($12, is_published),
-    is_archived = COALESCE($13, is_archived),
+    scheduled_at = COALESCE(
+        $10,
+        scheduled_at
+    ),
+    has_custom_logo = COALESCE(
+        $11,
+        has_custom_logo
+    ),
+    is_published = COALESCE(
+        $12,
+        is_published
+    ),
+    is_archived = COALESCE(
+        $13,
+        is_archived
+    ),
     updated_at = CURRENT_TIMESTAMP
 WHERE
     id = $14
     AND user_id = $15
-    AND deleted_at IS NULL 
-RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
+    AND deleted_at IS NULL RETURNING id, company_id, name, subject, preview_text, user_id, sender_from_name, template_id, sent_template_id, recipient_info, is_published, status, track_type, is_archived, sent_at, sender, scheduled_at, has_custom_logo, created_at, updated_at, deleted_at
 `
 
 type UpdateCampaignParams struct {

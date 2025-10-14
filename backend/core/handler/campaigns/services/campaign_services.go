@@ -74,6 +74,21 @@ func (s *Service) CreateCampaign(ctx context.Context, req *dto.CampaignDTO) (*dt
 		return nil, fmt.Errorf("error creating campaign: %w", err)
 	}
 
+	//notify user of campaign creation
+	notificationTitle := fmt.Sprintf("You have successfully created campaign with name '%s' ", req.Name)
+	additionalField := "campaign_creation"
+	payload := worker.UserNotificationPayload{
+		UserId:           _uuid["user"],
+		NotifcationTitle: notificationTitle,
+		AdditionalField:  &additionalField,
+	}
+
+	if taskId, err := s.wrkr.EnqueueTask(ctx, worker.TaskSendUserNotification, payload); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
+	} else {
+		log.Printf("Task enqueued with ID: %d", taskId)
+	}
+
 	return req, nil
 }
 
@@ -146,7 +161,7 @@ func (s *Service) GetSingleCampaign(ctx context.Context, req *dto.FetchCampaignD
 
 	// Map the campaign data to the response DTO
 	groupData := mapper.MapCampaignGroups(campaign_group)
-	campaignData := mapper.MapCampaignResponse(db.ListCampaignsByCompanyIDRow(campaign))
+	campaignData := mapper.MapGetCampaignResponse(campaign)
 
 	// Fetch template separately if template_id exists
 	if campaign.TemplateID.Valid && campaign.TemplateID.UUID != uuid.Nil {
@@ -181,7 +196,6 @@ func (s *Service) UpdateCampaign(ctx context.Context, req *dto.CampaignDTO, camp
 		"user":     req.UserId,
 		"campaign": campaignId,
 	}
-
 	if req.TemplateId != "" {
 		uuidMap["template"] = req.TemplateId
 	}
@@ -212,6 +226,20 @@ func (s *Service) UpdateCampaign(ctx context.Context, req *dto.CampaignDTO, camp
 		return err
 	}
 
+	notificationTitle := fmt.Sprintf("You have successfully updated campaign with name '%s' ", req.Name)
+	additionalField := "campaign_update"
+	payload := worker.UserNotificationPayload{
+		UserId:           _uuid["user"],
+		NotifcationTitle: notificationTitle,
+		AdditionalField:  &additionalField,
+	}
+
+	if taskId, err := s.wrkr.EnqueueTask(ctx, worker.TaskSendUserNotification, payload); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
+	} else {
+		log.Printf("Task enqueued with ID: %d", taskId)
+	}
+
 	return nil
 }
 
@@ -230,9 +258,22 @@ func (s *Service) DeleteCampaign(ctx context.Context, req *dto.FetchCampaignDTO)
 		UserID:    _uuid["user"],
 		ID:        _uuid["campaign"],
 	})
-
 	if err != nil {
 		return common.ErrDeletingRecord
+	}
+
+	notificationTitle := fmt.Sprintf("You have successfully deleted campaign with id '%s' ", req.CampaignID)
+	additionalField := "campaign_deletion"
+	payload := &worker.UserNotificationPayload{
+		UserId:           _uuid["user"],
+		NotifcationTitle: notificationTitle,
+		AdditionalField:  &additionalField,
+	}
+
+	if taskId, err := s.wrkr.EnqueueTask(ctx, worker.TaskSendUserNotification, payload); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
+	} else {
+		log.Printf("Task enqueued with ID: %d", taskId)
 	}
 
 	return nil
@@ -243,7 +284,6 @@ func (s *Service) CreateCampaignGroup(ctx context.Context, req *dto.CampaignGrou
 		"campaign": req.CampaignId,
 		"group":    req.GroupId,
 	})
-
 	if err != nil {
 		return nil, common.ErrInvalidUUID
 	}
@@ -259,7 +299,6 @@ func (s *Service) CreateCampaignGroup(ctx context.Context, req *dto.CampaignGrou
 			CampaignID:     _uuid["campaign"],
 			ContactGroupID: _uuid["group"],
 		})
-
 		if err != nil {
 			return nil, common.ErrUpdatingRecord
 		}
@@ -269,7 +308,6 @@ func (s *Service) CreateCampaignGroup(ctx context.Context, req *dto.CampaignGrou
 		CampaignID:     _uuid["campaign"],
 		ContactGroupID: _uuid["group"],
 	})
-
 	if err != nil {
 		return nil, common.ErrCreatingRecord
 	}
@@ -282,7 +320,6 @@ func (s *Service) GetAllScheduledCampaigns(ctx context.Context, req *dto.FetchCa
 		"company": req.CompanyID,
 		"user":    req.UserID,
 	})
-
 	if err != nil {
 		return nil, common.ErrInvalidUUID
 	}
@@ -294,7 +331,6 @@ func (s *Service) GetAllScheduledCampaigns(ctx context.Context, req *dto.FetchCa
 		Offset:    int32(req.Offset),
 		Column5:   req.SearchQuery,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error fetching scheduled campaigns: %v", err)
 	}
@@ -384,6 +420,21 @@ func (s *Service) SendCampaign(ctx context.Context, req *dto.SendCampaignDTO) (a
 		log.Printf("Failed to enqueue task: %v", err)
 	} else {
 		log.Printf("Task enqueued with ID: %d", taskID)
+	}
+
+	//notification
+	notificationTitle := fmt.Sprintf("Your campaign with name '%s'  is currently processing. We will notify you when it is done", campaign.Name)
+	additionalField := "campaign_processing"
+	payload__ := &worker.UserNotificationPayload{
+		UserId:           _uuid["user"],
+		NotifcationTitle: notificationTitle,
+		AdditionalField:  &additionalField,
+	}
+
+	if taskId, err := s.wrkr.EnqueueTask(ctx, worker.TaskSendUserNotification, payload__); err != nil {
+		log.Printf("Failed to enqueue task: %v", err)
+	} else {
+		log.Printf("Task enqueued with ID: %d", taskId)
 	}
 
 	return nil, nil

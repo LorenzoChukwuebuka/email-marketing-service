@@ -12,12 +12,11 @@ import (
 )
 
 const createUserNotification = `-- name: CreateUserNotification :one
-INSERT INTO
-    user_notifications (
-        user_id,
-        title,
-        additional_field
-    )
+INSERT INTO user_notifications (
+    user_id,
+    title,
+    additional_field
+)
 VALUES ($1, $2, $3) RETURNING id, user_id, title, read_status, additional_field, created_at, updated_at
 `
 
@@ -42,16 +41,121 @@ func (q *Queries) CreateUserNotification(ctx context.Context, arg CreateUserNoti
 	return i, err
 }
 
+const getNotificationCount = `-- name: GetNotificationCount :one
+SELECT COUNT(*)
+FROM user_notifications
+WHERE
+    user_id = $1
+    AND read_status = false
+`
+
+func (q *Queries) GetNotificationCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationCount, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getUnreadNotifications = `-- name: GetUnreadNotifications :many
+SELECT id, user_id, title, read_status, additional_field, created_at, updated_at
+FROM user_notifications
+WHERE
+    user_id = $1
+    AND read_status = false
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetUnreadNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error) {
+	rows, err := q.db.QueryContext(ctx, getUnreadNotifications, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []UserNotification{}
+	for rows.Next() {
+		var i UserNotification
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.ReadStatus,
+			&i.AdditionalField,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserNotifications = `-- name: GetUserNotifications :many
 SELECT id, user_id, title, read_status, additional_field, created_at, updated_at
 FROM user_notifications
 WHERE
     user_id = $1
 ORDER BY created_at DESC
+LIMIT 50
 `
 
 func (q *Queries) GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error) {
 	rows, err := q.db.QueryContext(ctx, getUserNotifications, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []UserNotification{}
+	for rows.Next() {
+		var i UserNotification
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.ReadStatus,
+			&i.AdditionalField,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserNotificationsSinceID = `-- name: GetUserNotificationsSinceID :many
+WITH reference_notification AS (
+  SELECT created_at 
+  FROM user_notifications
+  WHERE user_notifications.id = $2
+)
+SELECT n.id, n.user_id, n.title, n.read_status, n.additional_field, n.created_at, n.updated_at 
+FROM user_notifications n, reference_notification rn
+WHERE n.user_id = $1 
+  AND n.created_at > rn.created_at
+ORDER BY n.created_at DESC
+`
+
+type GetUserNotificationsSinceIDParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
+}
+
+func (q *Queries) GetUserNotificationsSinceID(ctx context.Context, arg GetUserNotificationsSinceIDParams) ([]UserNotification, error) {
+	rows, err := q.db.QueryContext(ctx, getUserNotificationsSinceID, arg.UserID, arg.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +207,15 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE
     user_id = $1
-    AND id = $1
+    AND id = $2
 `
 
-func (q *Queries) MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, markNotificationAsRead, userID)
+type MarkNotificationAsReadParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
+}
+
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationAsRead, arg.UserID, arg.ID)
 	return err
 }

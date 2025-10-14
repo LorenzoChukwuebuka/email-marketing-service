@@ -293,7 +293,7 @@ func (w *Worker) GetStats(ctx context.Context) (map[string]interface{}, error) {
 	}, nil
 }
 
-// CleanupOldTasks removes completed tasks older than specified days
+
 func (w *Worker) CleanupOldTasks(ctx context.Context, daysOld int) error {
 	return w.Store.CleanupOldTasks(ctx, sql.NullString{String: fmt.Sprintf("%d", daysOld), Valid: true})
 }

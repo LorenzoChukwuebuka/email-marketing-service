@@ -92,7 +92,7 @@ func (s *AdminCampaignService) GetSingleCampaign(ctx context.Context, req *dto.A
 
 	// Map the campaign data to the response DTO
 	groupData := campaignMapper.MapCampaignGroups(campaign_group)
-	campaignData := campaignMapper.MapCampaignResponse(db.ListCampaignsByCompanyIDRow(campaign))
+	campaignData := campaignMapper.MapGetCampaignResponse(campaign)
 
 	// Fetch template separately if template_id exists
 	if campaign.TemplateID.Valid && campaign.TemplateID.UUID != uuid.Nil {

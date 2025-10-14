@@ -19,14 +19,15 @@ type EmailExamplePayload struct {
 }
 
 type AdminNotificationPayload struct {
-	UserId            string
+	UserId            uuid.UUID
 	Link              string
 	NotificationTitle string
 }
 
 type UserNotificationPayload struct {
-	UserId           string
+	UserId           uuid.UUID
 	NotifcationTitle string
+	AdditionalField *string
 }
 
 type UserDetailsPayload struct {

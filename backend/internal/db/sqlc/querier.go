@@ -181,6 +181,7 @@ type Querier interface {
 	GetMonthlyEmailTrends(ctx context.Context, arg GetMonthlyEmailTrendsParams) ([]GetMonthlyEmailTrendsRow, error)
 	// Get count of new contacts (less than 10 days old) for a specific user
 	GetNewContactsCount(ctx context.Context, arg GetNewContactsCountParams) (int64, error)
+	GetNotificationCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetOTPByToken(ctx context.Context, token string) (Otp, error)
 	GetPaymentCounts(ctx context.Context, companyID uuid.UUID) (int64, error)
 	GetPaymentIntent(ctx context.Context, id uuid.UUID) (PaymentIntent, error)
@@ -220,10 +221,12 @@ type Querier interface {
 	GetTicketWithMessages(ctx context.Context, id uuid.UUID) ([]GetTicketWithMessagesRow, error)
 	GetTicketsByUserID(ctx context.Context, userID uuid.UUID) ([]SupportTicket, error)
 	GetUnVerifiedUsers(ctx context.Context, arg GetUnVerifiedUsersParams) ([]GetUnVerifiedUsersRow, error)
+	GetUnreadNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
 	GetUserCampaignStats(ctx context.Context, userID uuid.UUID) (GetUserCampaignStatsRow, error)
 	GetUserNotifications(ctx context.Context, userID uuid.UUID) ([]UserNotification, error)
+	GetUserNotificationsSinceID(ctx context.Context, arg GetUserNotificationsSinceIDParams) ([]UserNotification, error)
 	GetUserSMTPKey(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	GetUserSmtpKeys(ctx context.Context, userID uuid.UUID) ([]SmtpKey, error)
 	GetUserWhoAcceptedInvitation(ctx context.Context, id uuid.UUID) (GetUserWhoAcceptedInvitationRow, error)
@@ -266,7 +269,7 @@ type Querier interface {
 	MarkAllUserNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
 	MarkCampaignAsSent(ctx context.Context, id uuid.UUID) (Campaign, error)
 	MarkEmailAsDelivered(ctx context.Context, recipientEmail string) error
-	MarkNotificationAsRead(ctx context.Context, userID uuid.UUID) error
+	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error
 	MarkTaskCompleted(ctx context.Context, id int64) error
 	MarkTaskFailed(ctx context.Context, arg MarkTaskFailedParams) error
 	MarkUserForDeletion(ctx context.Context, arg MarkUserForDeletionParams) (User, error)

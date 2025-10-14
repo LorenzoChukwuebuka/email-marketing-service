@@ -29,7 +29,6 @@ func NewMiscService(store db.Store) *MiscService {
 	return &MiscService{
 		store: store,
 	}
-
 }
 
 const BATCH_SIZE = 100
