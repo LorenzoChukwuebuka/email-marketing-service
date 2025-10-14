@@ -20,7 +20,7 @@ func NewCampaignRoute(store db.Store, wkr *worker.Worker) *CampaignRoute {
 		store: store,
 		wkr:   wkr,
 	}
-}	
+}
 
 func (c *CampaignRoute) InitRoutes(r *mux.Router) {
 	r.Use(middleware.JWTMiddleware)

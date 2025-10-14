@@ -175,3 +175,154 @@
 // 		"retry_delay":  w.retryDelay.String(),
 // 	}
 // }
+
+
+// Long Polling Client Implementation
+class NotificationClient {
+  constructor(baseUrl, token) {
+    this.baseUrl = baseUrl;
+    this.token = token;
+    this.lastSeenId = null;
+    this.polling = false;
+  }
+
+  async startPolling(onNewNotifications) {
+    this.polling = true;
+    
+    while (this.polling) {
+      try {
+        const url = new URL(`${this.baseUrl}/notifications/poll`);
+        if (this.lastSeenId) {
+          url.searchParams.append('lastSeenId', this.lastSeenId);
+        }
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+          // Update lastSeenId to the newest notification
+          this.lastSeenId = Math.max(...data.data.map(n => n.id));
+          
+          // Call the callback with new notifications
+          onNewNotifications(data.data);
+        }
+
+        // Immediately reconnect (this is key for long polling)
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+      } catch (error) {
+        console.error('Polling error:', error);
+        
+        // Wait before retrying on error
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+  }
+
+  stopPolling() {
+    this.polling = false;
+  }
+}
+
+// Usage example
+const client = new NotificationClient(
+  'http://localhost:8080/api', 
+  'your-jwt-token'
+);
+
+client.startPolling((notifications) => {
+  console.log('New notifications:', notifications);
+  // Update UI with new notifications
+  notifications.forEach(notif => {
+    displayNotification(notif);
+  });
+});
+
+// Stop polling when needed (e.g., user logs out)
+// client.stopPolling();
+
+
+
+
+package controllers
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"time"
+)
+
+type UserController struct {
+	userService *services.UserService
+}
+
+func NewUserController(userService *services.UserService) *UserController {
+	return &UserController{
+		userService: userService,
+	}
+}
+
+// GetUserNotifications - Standard endpoint (no long polling)
+func (c *UserController) GetUserNotifications(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	result, err := c.userService.GetUserNotifications(ctx, userId)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
+// GetUserNotificationsLongPoll - Long polling endpoint
+func (c *UserController) GetUserNotificationsLongPoll(w http.ResponseWriter, r *http.Request) {
+	// Long polling typically uses 30-60 second timeout
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	// Optional: Get 'sinceId' from query params
+	// Client sends the UUID of their last received notification
+	var sinceID *string
+	if sinceIDStr := r.URL.Query().Get("sinceId"); sinceIDStr != "" {
+		sinceID = &sinceIDStr
+	}
+
+	// Set headers for long polling
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	result, err := c.userService.GetUserNotificationsLongPoll(ctx, userId, sinceID)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
+}

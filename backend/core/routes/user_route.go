@@ -23,11 +23,11 @@ func (t *UserRoute) InitRoutes(r *mux.Router) {
 	handler := controller.NewUserController(service)
 	r.Use(middleware.JWTMiddleware)
 	r.HandleFunc("/notifications", handler.GetUserNotifications).Methods("GET", "OPTIONS")
+	r.HandleFunc("/notifications/poll", handler.GetUserNotificationsLongPoll).Methods("GET", "OPTIONS")
 	r.HandleFunc("/read-notifications", handler.UpdateReadStatus).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/mark-for-deletion", handler.MarkUserForDeletion).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/cancel-deletion", handler.CancelUserDeletion).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/details", handler.GetUserDetails).Methods("GET", "OPTIONS")
 	r.HandleFunc("/current-running-subscription", handler.GetCurrentRunningSubscription).Methods("GET", "OPTIONS")
 	r.HandleFunc("/edit", handler.EditUser).Methods("PUT", "OPTIONS")
-	
 }

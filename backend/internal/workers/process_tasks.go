@@ -88,6 +88,18 @@ func (w *Worker) ProcessTask(ctx context.Context, task db.Task) error {
 		}
 
 		return err
+	case TaskSendAdminNotification:
+		var payload AdminNotificationPayload
+		if err := json.Unmarshal(task.Payload, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal payload: %w", err)
+		}
+		return w.ProcessAdminNotificationTask(ctx, payload)
+	case TaskSendUserNotification:
+		var payload UserNotificationPayload
+		if err := json.Unmarshal(task.Payload, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal payload: %w", err)
+		}
+		return w.ProcessUserNotificationTask(ctx, payload)
 
 	default:
 		return fmt.Errorf("unknown task type: %s", task.TaskType)

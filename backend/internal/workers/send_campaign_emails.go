@@ -171,6 +171,7 @@ func (p *Worker) ProcessSendCampaignEmailsTask(ctx context.Context, payload Send
 			Err: fmt.Errorf("batch errors: %+v", batchErrors),
 		}
 	}
+
 	log.Printf("Campaign processed successfully: %d batches, %d total contacts", totalBatches, len(contactEmails))
 	return nil
 
@@ -551,19 +552,16 @@ func (s *Worker) signEmail(domainEmail string, companyId uuid.UUID, emailBody []
 		Domain:    domainEmail,
 		CompanyID: companyId,
 	})
-
 	if err != nil || !domain.Verified.Valid {
 		return nil, fmt.Errorf("domain not found or not verified")
 	}
 
 	helper.ValidatePrivateKey(domain.DkimPrivateKey.String)
-
 	// DKIM signing process
 	signedEmail, err := helper.SignEmail(&emailBody, domain.Domain, domain.DkimSelector.String, string(domain.DkimPrivateKey.String))
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign email: %v", err)
 	}
-
 	return signedEmail, nil
 }
 

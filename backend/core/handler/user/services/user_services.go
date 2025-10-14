@@ -36,11 +36,75 @@ func (s *UserService) GetUserNotifications(ctx context.Context, userID string) (
 	}
 
 	notifications, err := s.store.GetUserNotifications(ctx, _uuid["user"])
-
 	if err != nil {
 		return nil, common.ErrFetchingRecord
 	}
 	return notifications, nil
+}
+
+func (s *UserService) GetUserNotificationsLongPoll(ctx context.Context, userID string, sinceID *string) (any, error) {
+	_uuid, err := common.ParseUUIDMap(map[string]string{
+		"user": userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ticker := time.NewTicker(2 * time.Second) // Poll every 2 seconds
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			// Timeout or cancellation - return empty array
+			return []interface{}{}, nil
+
+		case <-ticker.C:
+			// Check for new notifications
+			var notifications any
+			var err error
+
+			if sinceID != nil {
+				// Parse the sinceID UUID
+				sinceUUID, parseErr := common.ParseUUIDMap(map[string]string{
+					"since": *sinceID,
+				})
+				if parseErr != nil {
+					return nil, parseErr
+				}
+
+				// Get notifications created after the notification with sinceID
+				notifications, err = s.store.GetUserNotificationsSinceID(ctx, db.GetUserNotificationsSinceIDParams{
+					UserID: _uuid["user"],
+					ID:     sinceUUID["since"],
+				})
+			} else {
+				// First request - get all notifications
+				notifications, err = s.store.GetUserNotifications(ctx, _uuid["user"])
+			}
+
+			if err != nil && err != sql.ErrNoRows {
+				return nil, common.ErrFetchingRecord
+			}
+
+			// If we found new notifications, return immediately
+			if notifications != nil && s.hasNotifications(notifications) {
+				return notifications, nil
+			}
+		}
+	}
+}
+
+// Helper to check if we have actual notifications
+func (s *UserService) hasNotifications(data any) bool {
+	switch v := data.(type) {
+	case []interface{}:
+		return len(v) > 0
+	case []map[string]interface{}:
+		return len(v) > 0
+	default:
+		return false
+	}
 }
 
 func (s *UserService) GetUserDetails(ctx context.Context, userId string) (any, error) {

@@ -19,7 +19,6 @@ import (
 	db "email-marketing-service/internal/db/sqlc"
 	"github.com/gorilla/mux"
 )
-
 type AdminRoute struct {
 	store db.Store
 }

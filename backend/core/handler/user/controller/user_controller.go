@@ -42,6 +42,37 @@ func (c *UserController) GetUserNotifications(w http.ResponseWriter, r *http.Req
 	helper.SuccessResponse(w, http.StatusOK, result)
 }
 
+func (c *UserController) GetUserNotificationsLongPoll(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	defer cancel()
+
+	userId, _, err := helper.ExtractUserId(r)
+	if err != nil {
+		helper.ErrorResponse(w, fmt.Errorf("can't fetch user id from jwt"), nil)
+		return
+	}
+
+	// Optional: Get 'sinceId' from query params
+	// Client sends the UUID of their last received notification
+	var sinceID *string
+	if sinceIDStr := r.URL.Query().Get("sinceId"); sinceIDStr != "" {
+		sinceID = &sinceIDStr
+	}
+
+	// Set headers for long polling
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	result, err := c.userService.GetUserNotificationsLongPoll(ctx, userId, sinceID)
+	if err != nil {
+		helper.ErrorResponse(w, err, nil)
+		return
+	}
+
+	helper.SuccessResponse(w, http.StatusOK, result)
+}
+
 func (c *UserController) UpdateReadStatus(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
@@ -137,8 +168,7 @@ func (c *UserController) GetCurrentRunningSubscription(w http.ResponseWriter, r 
 	helper.SuccessResponse(w, http.StatusOK, result)
 }
 
-
-func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request){
+func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
@@ -161,5 +191,5 @@ func (c *UserController) EditUser(w http.ResponseWriter, r *http.Request){
 	}
 
 	helper.SuccessResponse(w, http.StatusOK, "User updated successfully")
-	
+
 }

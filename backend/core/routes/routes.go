@@ -6,12 +6,10 @@ import (
 	worker "email-marketing-service/internal/workers"
 	"net/http"
 	"path/filepath"
-
 	"github.com/gorilla/mux"
 )
 
 func InitRoutes(r *mux.Router, store db.Store, wkr *worker.Worker) {
-	// Apply middlewares
 	r.Use(middleware.RecoveryMiddleware)
 	r.Use(middleware.EnableCORS)
 	r.Use(middleware.MethodNotAllowedMiddleware)
@@ -19,21 +17,19 @@ func InitRoutes(r *mux.Router, store db.Store, wkr *worker.Worker) {
 
 	apiV1 := r.PathPrefix("/api/v1").Subrouter()
 
-	// Health route
 	apiV1.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	}).Methods(http.MethodGet)
 
-	// Initialize all sub-routes
 	routeMap := map[string]RouteInterface{
 		"auth":      NewAuthRoute(store, wkr),
 		"admin":     NewAdminRoute(store),
 		"contacts":  NewContactRoutes(store),
 		"templates": NewTemplateRoute(store),
 		"payments":  NewPaymentRoute(store),
-		"campaigns": NewCampaignRoute(store,wkr),
+		"campaigns": NewCampaignRoute(store, wkr),
 		"domains":   NewDomainRoute(store),
 		"senders":   NewSenderRoute(store),
 		"users":     NewUserRoute(store),
