@@ -30,4 +30,4 @@ tmp
 out
 requests.log
 app.log
-
+*.txt
