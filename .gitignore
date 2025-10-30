@@ -23,9 +23,12 @@ go.work
 #env 
 .env
 .env.development
+.deploy.env
 
 #air
 tmp
 out
 requests.log
 app.log
+
+.deploy.env

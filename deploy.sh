@@ -6,6 +6,13 @@ set -e
 # Example: ./deploy.sh staging --push
 # ==========================================================
 
+if [ -f ".deploy.env" ]; then
+  echo "📦 Loading .deploy.env..."
+  set -a
+  source .deploy.env
+  set +a
+fi
+
 ENVIRONMENT=${1:-dev}
 PUSH=${2:-""}
 
@@ -66,7 +73,7 @@ echo "🔨 Building backend..."
 docker build -t $REGISTRY/$OWNER/$BE_NAME:$TAG_SUFFIX -f $BE_DOCKERFILE ./backend &
 
 echo "🔨 Building migration image..."
-docker build -t $REGISTRY/$OWNER/$MG_NAME:$TAG_SUFFIX -f $MG_DOCKERFILE ./migrations &
+docker build -t $REGISTRY/$OWNER/$MG_NAME:$TAG_SUFFIX -f $MG_DOCKERFILE ./backend &
 
 wait
 echo "✅ All builds completed successfully."
@@ -75,9 +82,37 @@ echo "✅ All builds completed successfully."
 # Push images (optional)
 # ================================
 if [ "$PUSH" == "--push" ]; then
+  echo "🔐 Authenticating with GitHub Container Registry..."
+  
+  # Check if GH_TOKEN is set
+  if [ -z "$GH_TOKEN" ]; then
+    echo "❌ GH_TOKEN not found. Please set it in .deploy.env"
+    echo "   Create a token at: https://github.com/settings/tokens"
+    echo "   Required scopes: write:packages, read:packages"
+    exit 1
+  fi
+  
+  # Login to GHCR
+  echo "$GH_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
+  
+  if [ $? -eq 0 ]; then
+    echo "✅ Authentication successful"
+  else
+    echo "❌ Authentication failed. Please check your GH_TOKEN"
+    exit 1
+  fi
+  
   echo "📦 Pushing images to GHCR..."
   docker push $REGISTRY/$OWNER/$FE_NAME:$TAG_SUFFIX
   docker push $REGISTRY/$OWNER/$BE_NAME:$TAG_SUFFIX
   docker push $REGISTRY/$OWNER/$MG_NAME:$TAG_SUFFIX
   echo "✅ Images pushed to $REGISTRY/$OWNER"
+  
+  # Logout after push
+  docker logout ghcr.io
+  echo "🔓 Logged out from GHCR"
 fi
+
+echo ""
+echo "🎉 Deployment process completed for $ENVIRONMENT environment!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
