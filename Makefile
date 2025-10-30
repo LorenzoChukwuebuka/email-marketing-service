@@ -110,3 +110,39 @@ debug-paths:
 	@echo "ROOT_DIR: $(ROOT_DIR)"
 	@echo "DB_MIGRATIONS_DIR: $(DB_MIGRATIONS_DIR)"
 	@echo "Current directory: $(shell pwd)"
+
+
+# ==========================================================
+# Makefile for running deploy.sh
+# Supports both Linux/macOS and Windows (Git Bash / PowerShell)
+# Usage:
+#   make deploy ENV=dev PUSH=true        # For Linux/macOS
+#   make deploy-win ENV=staging PUSH=true # For Windows
+# ==========================================================
+
+SHELL := /bin/bash
+
+ENV ?= dev
+PUSH ?= false
+
+# ===============================
+# Linux/macOS target
+# ===============================
+deploy:
+	@echo "🚀 Running deploy.sh for $(ENV) (Linux/macOS)..."
+ifeq ($(PUSH),true)
+	./deploy.sh $(ENV) --push
+else
+	./deploy.sh $(ENV)
+endif
+
+# ===============================
+# Windows target (PowerShell / Git Bash)
+# ===============================
+deploy-win:
+	@echo "🚀 Running deploy.sh for $(ENV) (Windows)..."
+ifeq ($(PUSH),true)
+	bash ./deploy.sh $(ENV) --push
+else
+	bash ./deploy.sh $(ENV)
+endif

@@ -37,7 +37,7 @@ const GetScheduledCampaignComponent: React.FC = () => {
     const [pageSize, setPageSize] = useState(20);
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    const { data: scheduleCampaignData, isLoading } = useScheduledCampaignQuery(
+    const { data: scheduleCampaignData, isLoading,refetch } = useScheduledCampaignQuery(
         currentPage,
         pageSize,
         debouncedSearchQuery
@@ -251,6 +251,7 @@ const GetScheduledCampaignComponent: React.FC = () => {
                 </Card>
 
                 <CreateCampaignComponent
+                refetch={refetch}
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                 />

@@ -1,117 +1,83 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-# Deployment script for CrabMailer
+# ==========================================================
+# Usage: ./deploy.sh [environment] [--push]
+# Example: ./deploy.sh staging --push
+# ==========================================================
 
-set -e  # Exit on any error
+ENVIRONMENT=${1:-dev}
+PUSH=${2:-""}
 
-echo "🚀 Starting CrabMailer deployment..."
+# GitHub Container Registry settings
+REGISTRY="ghcr.io"
+OWNER="lorenzochukwuebuka"
+FE_NAME="crabmailer-frontend"
+BE_NAME="crabmailer-backend"
+MG_NAME="crabmailer-migrate"
 
-# Configuration
-APP_DIR="/opt/crabmailer"
-BACKUP_DIR="/opt/crabmailer-backups"
-DOCKER_COMPOSE_FILE="docker-compose.prod.yml"
-
-# Create backup directory if it doesn't exist
-mkdir -p $BACKUP_DIR
-
-# Function to backup database
-backup_database() {
-    echo "📦 Creating database backup..."
-    BACKUP_FILE="$BACKUP_DIR/db-backup-$(date +%Y%m%d-%H%M%S).sql"
-    docker exec prod-crabmailer-postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB > $BACKUP_FILE
-    echo "✅ Database backed up to: $BACKUP_FILE"
-}
-
-# Function to backup volumes
-backup_volumes() {
-    echo "📦 Creating volume backups..."
-    BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
-    mkdir -p $BACKUP_DIR/volumes-$BACKUP_DATE
-    
-    # Backup important volumes
-    docker run --rm -v crabmailer_uploads:/data -v $BACKUP_DIR/volumes-$BACKUP_DATE:/backup alpine tar czf /backup/uploads.tar.gz -C /data .
-    docker run --rm -v crabmailer_templates:/data -v $BACKUP_DIR/volumes-$BACKUP_DATE:/backup alpine tar czf /backup/templates.tar.gz -C /data .
-    docker run --rm -v crabmailer_smtp_settings:/data -v $BACKUP_DIR/volumes-$BACKUP_DATE:/backup alpine tar czf /backup/smtp_settings.tar.gz -C /data .
-    
-    echo "✅ Volumes backed up to: $BACKUP_DIR/volumes-$BACKUP_DATE"
-}
-
-# Check if we're in the right directory
-if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-    echo "❌ docker-compose.prod.yml not found in current directory"
-    echo "Please run this script from the application root directory"
+# Choose Dockerfiles based on environment
+case "$ENVIRONMENT" in
+  dev)
+    FE_DOCKERFILE="./frontend/Dockerfile.frontend.dev"
+    BE_DOCKERFILE="./backend/Dockerfile.backend.development"
+    MG_DOCKERFILE="./backend/Dockerfile.migrate"
+    TAG_SUFFIX="dev"
+    ;;
+  staging)
+    FE_DOCKERFILE="./frontend/Dockerfile.frontend.staging"
+    BE_DOCKERFILE="./backend/Dockerfile.backend.staging"
+    MG_DOCKERFILE="./backend/Dockerfile.migrate"
+    TAG_SUFFIX="staging"
+    ;;
+  prod)
+    FE_DOCKERFILE="./frontend/Dockerfile.frontend.prod"
+    BE_DOCKERFILE="./backend/Dockerfile.backend.production"
+    MG_DOCKERFILE="./backend/Dockerfile.migrate"
+    TAG_SUFFIX="latest"
+    ;;
+  *)
+    echo "❌ Invalid environment. Use: dev | staging | prod"
     exit 1
+    ;;
+esac
+
+echo "🚀 Building Docker images for $ENVIRONMENT environment..."
+echo "🧩 Registry: $REGISTRY"
+echo "🧩 Owner: $OWNER"
+echo "🧩 Frontend Image: $FE_NAME:$TAG_SUFFIX"
+echo "🧩 Backend Image: $BE_NAME:$TAG_SUFFIX"
+echo "🧩 Migration Image: $MG_NAME:$TAG_SUFFIX"
+
+# ================================
+# ENV VARIABLES for build context
+# ================================
+export NODE_ENV=$ENVIRONMENT
+export API_URL="https://api.${ENVIRONMENT}.example.com"
+export DATABASE_URL="postgres://user:password@localhost:5432/${ENVIRONMENT}_db"
+
+# ================================
+# Build FE + BE + Migrate simultaneously
+# ================================
+echo "🔨 Building frontend..."
+docker build -t $REGISTRY/$OWNER/$FE_NAME:$TAG_SUFFIX -f $FE_DOCKERFILE ./frontend &
+
+echo "🔨 Building backend..."
+docker build -t $REGISTRY/$OWNER/$BE_NAME:$TAG_SUFFIX -f $BE_DOCKERFILE ./backend &
+
+echo "🔨 Building migration image..."
+docker build -t $REGISTRY/$OWNER/$MG_NAME:$TAG_SUFFIX -f $MG_DOCKERFILE ./migrations &
+
+wait
+echo "✅ All builds completed successfully."
+
+# ================================
+# Push images (optional)
+# ================================
+if [ "$PUSH" == "--push" ]; then
+  echo "📦 Pushing images to GHCR..."
+  docker push $REGISTRY/$OWNER/$FE_NAME:$TAG_SUFFIX
+  docker push $REGISTRY/$OWNER/$BE_NAME:$TAG_SUFFIX
+  docker push $REGISTRY/$OWNER/$MG_NAME:$TAG_SUFFIX
+  echo "✅ Images pushed to $REGISTRY/$OWNER"
 fi
-
-# Load environment variables
-if [ -f ".env.production" ]; then
-    source .env.production
-else
-    echo "❌ .env.production file not found!"
-    exit 1
-fi
-
-# Check if this is an update (containers exist)
-if docker ps -a | grep -q "prod-crabmailer"; then
-    echo "🔄 Existing deployment detected. Creating backups..."
-    
-    # Create backups before update
-    backup_database
-    backup_volumes
-    
-    echo "🛑 Stopping existing containers..."
-    docker compose -f $DOCKER_COMPOSE_FILE down
-else
-    echo "🆕 New deployment detected."
-fi
-
-# Pull latest images
-echo "⬇️ Pulling latest images..."
-docker compose -f $DOCKER_COMPOSE_FILE pull
-
-# Build and start services
-echo "🏗️ Building and starting services..."
-docker compose -f $DOCKER_COMPOSE_FILE up -d --build
-
-# Wait for services to be ready
-echo "⏳ Waiting for services to start..."
-sleep 30
-
-# Check service health
-echo "🔍 Checking service health..."
-docker compose -f $DOCKER_COMPOSE_FILE ps
-
-# Test if services are responding
-echo "🧪 Testing services..."
-
-# Test frontend
-if curl -f -s -o /dev/null "http://localhost:80"; then
-    echo "✅ Frontend is responding"
-else
-    echo "❌ Frontend is not responding"
-fi
-
-# Test API (if it has a health endpoint)
-if curl -f -s -o /dev/null "http://localhost:9000/health" 2>/dev/null; then
-    echo "✅ API is responding"
-else
-    echo "⚠️ API health check failed (this might be normal if no health endpoint exists)"
-fi
-
-# Show running containers
-echo "🐳 Running containers:"
-docker ps --filter "name=prod-crabmailer"
-
-echo "✅ Deployment completed!"
-echo "🌍 Your application should be available at:"
-echo "   - Frontend: https://yourdomain.com"
-echo "   - API: https://api.yourdomain.com"
-echo ""
-echo "📝 Next steps:"
-echo "1. Update your domain names in the docker-compose.prod.yml file"
-echo "2. Update your email in the Let's Encrypt configuration"
-echo "3. Test your SSL certificates"
-echo "4. Configure your DNS MX records for SMTP"
-echo ""
-echo "📊 To view logs: docker compose -f $DOCKER_COMPOSE_FILE logs -f [service_name]"
-echo "🛑 To stop: docker compose -f $DOCKER_COMPOSE_FILE down"
