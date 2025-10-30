@@ -31,4 +31,3 @@ out
 requests.log
 app.log
 
-.deploy.env
